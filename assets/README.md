@@ -1,0 +1,1 @@
+This folder holds non-code content (e.g. images).
