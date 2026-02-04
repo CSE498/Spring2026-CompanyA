@@ -236,6 +236,30 @@ namespace cse498 {
       Load(str_grid);
     }
 
+    /**
+     * Asks this class if the tile in main_grid is of type "floor"
+     * TODO: This needs to be changed when this whole class changes. This function should be simpler
+     * TODO: This was done based on current structure which is not ideal for this at all.
+     * @param pos - world position
+     * @return true if cell is of type "floor"
+     */
+    [[nodiscard]] bool IsWalkable(const WorldPosition& pos) const
+    {
+        if (!IsValid(pos))
+            return false;
+
+        for (size_t i = 0; i < cell_types.size(); i++)
+        {
+            CellType type = cell_types[i];
+            if (type.name == "floor")
+            {
+//                floor_type = i;
+                return cells[ToIndex(pos)] == i;
+            }
+        }
+        return false;
+    }
+
   };
 
 } // End of namespace cse498
