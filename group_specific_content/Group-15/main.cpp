@@ -3,7 +3,7 @@
  * @author Tim Miao
  */
 
-#include "character.h"
+#include "character.cpp"
 #include <iostream>
 
 using namespace std;
