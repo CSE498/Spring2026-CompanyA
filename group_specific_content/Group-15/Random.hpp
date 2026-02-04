@@ -3,6 +3,8 @@
  * It is apart of Green and White Games (Company A) Group 15's module.
  * @brief A class for random generation
  * @note Status: PROPOSAL
+ * Credit notes: This files makes use of the Xoshiro algorithm as described at:
+ *               https://en.wikipedia.org/wiki/Xorshift#xoshiro
  **/
 
 #pragma once
