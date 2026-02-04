@@ -11,7 +11,6 @@
 using ElementID = std::string;
 
 enum class LayoutType { Free, Horizontal, Vertical, Grid };
-enum class Alignment { Start, Center, End, Stretch };
 
 class WebLayout : public IDomElement {
 public:
@@ -33,7 +32,7 @@ public:
 	void Apply();
 	void Clear();
 
-	const std::string& Id() const { return id_; }
+	const std::string& Id() const override { return id_; }
 
 private:
 	emscripten::val root_;

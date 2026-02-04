@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+enum class Alignment { Start, Center, End, Stretch };
+
 class WebLayout; // forward
 
 class IDomElement {

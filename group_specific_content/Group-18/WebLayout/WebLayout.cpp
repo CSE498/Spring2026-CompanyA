@@ -102,7 +102,7 @@ void WebLayout::SetAlignment(const ElementID& id, Alignment a) {
 }
 
 // IDomElement implementations
-void WebLayout::mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) {
+void WebLayout::mountToLayout(WebLayout& parent, Alignment align) {
 	// register this layout element with parent and ensure DOM parent-child relationship
 	parent.AddElement(id_, align);
 }
