@@ -35,8 +35,12 @@ namespace cse498 {
     std::string name;  ///< Unique name for this type of cell (e.g., "wall", "tree", "moon")
     std::string desc;  ///< Full description of what this type of cell is
     char symbol;       ///< Symbol for text representations (files or interface)
-    bool isBreakable;
-    bool locked;
+    std::string file;  ///< File path to associated image for loading
+    bool isBreakable;  ///< Checks if tile is breakable (hidden walls)
+    bool locked;       ///< Boolean checker if tile is locked (chest/door)
+    TileType t_state;  ///< Enum class to get type of Tile, might not need this since name is similar
+    bool traversable;  ///< Determines if Cell is traversable
+    
 
     // DEVELOPER NOTE: More info may be needed here to describe cell types...
     // For example,is it traversable?  Does it have special properties?
@@ -120,17 +124,17 @@ namespace cse498 {
       return IsValid(pos.X(), pos.Y());
     }
 
-    // /// @return The grid state at the provided x and y coordinates
-    // [[nodiscard]] size_t operator[](size_t x, size_t y) const {
-    //   assert(IsValid(x,y));
-    //   return cells[ToIndex(x,y)];
-    // }
+    /// @return The grid state at the provided x and y coordinates
+    [[nodiscard]] size_t operator[](std::pair<size_t, size_t> coordinates) const {
+       assert(IsValid(coordinates.first, coordinates.second));
+       return cells[ToIndex(coordinates.first, coordinates.second)];
+    }
 
-    // /// @return A reference to the grid state at the provided x and y coordinates
-    // [[nodiscard]] size_t & operator[](size_t x, size_t y) {
-    //   assert(IsValid(x,y));
-    //   return cells[ToIndex(x,y)];
-    // }
+     /// @return A reference to the grid state at the provided x and y coordinates
+     [[nodiscard]] size_t & operator[](std::pair<size_t, size_t> coordinates) {
+       assert(IsValid(coordinates.first, coordinates.second));
+       return cells[ToIndex(coordinates.first, coordinates.second)];
+     }
 
     [[nodiscard]] size_t operator[](WorldPosition pos) const { return cells[ToIndex(pos)]; }
     [[nodiscard]] size_t & operator[](WorldPosition pos) { return cells[ToIndex(pos)]; }
@@ -249,5 +253,7 @@ namespace cse498 {
     }
 
   };
+
+
 
 } // End of namespace cse498
