@@ -41,7 +41,7 @@ constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
 namespace cse498 {
     class Random {
         private:
-            long long m_seed;
+            uint64_t m_seed;
 
             ///
             /// Xoshiro generation functions
@@ -68,6 +68,7 @@ namespace cse498 {
             // Uses m_seed to generate the state positions
             void xoshiro356pp_init(struct xoshiro256pp_state *state, uint64_t seed) {
                 struct splitmix64_state sm = {seed};
+
                 state->s[0] = splitmix64(&sm);
                 state->s[1] = splitmix64(&sm);
                 state->s[2] = splitmix64(&sm);
@@ -110,13 +111,16 @@ namespace cse498 {
             // Generates a float
             float float_xoshiro(struct xoshiro256pp_state *state) {
                 uint64_t r = xoshiro256pp(state);
-                return (float)(r >> F_LOWER_41) * (FLOAT_CONVERSION_FACTOR); // Using the top 23 bits
+                return static_cast<float>(r >> F_LOWER_41) * (FLOAT_CONVERSION_FACTOR); // Using the top 23 bits
             }
 
             // Function to reset the seed based on the current time
             void reset_seed() {
                 m_seed =  std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             }
+
+            struct xoshiro256pp_state m_rng;
+            bool m_used = false;
 
         protected:
 
@@ -128,7 +132,7 @@ namespace cse498 {
 
             // Public setter for the current seed.
             // Must be re-set after every generation, if you would like to keep the same seed
-            void SetSeed(long long seed) {m_seed = seed;}
+            void SetSeed(uint64_t seed) {m_seed = seed;}
 
             // Generate and return a random int
             int GetInt(int i_min = 0, int i_max = 100) {
@@ -137,14 +141,15 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetInt(): i_min must be less than i_max.");
                 }
 
-                struct xoshiro256pp_state rng;
-                xoshiro356pp_init(&rng, (uint64_t)m_seed);
+                if (m_used == false) {
+                    xoshiro356pp_init(&m_rng, m_seed);
+                    m_used = true;
+                }
 
                 // generate the range
-                uint64_t r = xoshiro256pp(&rng);
-                int return_i = i_min + (int)(r%(uint64_t)(i_max-i_min+1));
+                uint64_t r = xoshiro256pp(&m_rng);
+                int return_i = i_min + static_cast<int>(r % static_cast<uint64_t>(i_max-i_min+1));
 
-                reset_seed();
                 return return_i;
             }
 
@@ -155,13 +160,14 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetDouble(): d_min must be less than d_max.");
                 }
 
-                struct xoshiro256pp_state rng;
-                xoshiro356pp_init(&rng, (uint64_t)m_seed);
+                if (m_used == false) {
+                    xoshiro356pp_init(&m_rng, m_seed);
+                    m_used = true;
+                }
 
                 // for doubles use the 53 bits
-                double return_d = d_min + (d_max - d_min) * double_xoshiro(&rng);
+                double return_d = d_min + (d_max - d_min) * double_xoshiro(&m_rng);
 
-                reset_seed();
                 return return_d;
             }
 
@@ -172,13 +178,14 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetFloat(): f_min must be less than f_max.");
                 }
 
-                struct xoshiro256pp_state rng;
-                xoshiro356pp_init(&rng, (uint64_t)m_seed);
+                if (m_used == false) {
+                    xoshiro356pp_init(&m_rng, m_seed);
+                    m_used = true;
+                }
 
                 // for floats use the top 23 bits
-                float return_f = f_min + (f_max - f_min) * float_xoshiro(&rng);
+                float return_f = f_min + (f_max - f_min) * float_xoshiro(&m_rng);
 
-                reset_seed();
                 return return_f;
             }
 
@@ -189,14 +196,15 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetChar(): c_min must be less than c_max.");
                 }
 
-                struct xoshiro256pp_state rng;
-                xoshiro356pp_init(&rng, (uint64_t)m_seed);
+                if (m_used == false) {
+                    xoshiro356pp_init(&m_rng, m_seed);
+                    m_used = true;
+                }
                 
-                // Treat chars and ints
-                uint64_t r = xoshiro256pp(&rng);
-                char return_c = (char)(c_min + (r % (uint64_t)(c_max - c_min + 1)));
+                // Treat chars as ints
+                uint64_t r = xoshiro256pp(&m_rng);
+                char return_c = static_cast<char>(c_min + (r % static_cast<uint64_t>(c_max - c_min + 1)));
 
-                reset_seed();
                 return return_c;
             }
 
@@ -218,13 +226,14 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetP(): probability must be between 0 and 1.");
                 }
 
-                struct xoshiro256pp_state rng;
-                xoshiro356pp_init(&rng, (uint64_t)m_seed);
+                if (m_used == false) {
+                    xoshiro356pp_init(&m_rng, m_seed);
+                    m_used = true;
+                }
 
                 // Uses the double generation to determine true/false
-                bool return_p = double_xoshiro(&rng) < probability;
+                bool return_p = double_xoshiro(&m_rng) < probability;
 
-                reset_seed();
                 return return_p;
             }
     };
