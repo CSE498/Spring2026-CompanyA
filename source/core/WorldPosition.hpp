@@ -59,6 +59,12 @@ namespace cse498 {
         return quantize(x) == quantize(other.x) && quantize(y) == quantize(other.y);
     }
 
+    WorldPosition & Set(double in_x, double in_y) {
+      x = in_x;
+      y = in_y;
+      return *this;
+    }
+
     // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
 
     /// Return a the WorldPosition at the requested offset.

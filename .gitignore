@@ -39,4 +39,8 @@
 
 # debug information files
 *.dwo
-.idea/
+
+**/.DS_Store
+
+# JetBrains IDE
+.idea
