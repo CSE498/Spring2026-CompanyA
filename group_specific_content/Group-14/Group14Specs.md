@@ -10,7 +10,14 @@ Person taking lead - Ho Wang Ho
 
 #### Class Description
 
-The EventQueue class manages time-based or priority-based events in the game world. It mostly controls in-game events to be scheduled for future execution, enabling cooldowns, delayed effects. The EventQueue itself does not interpret event contents; it is responsible only for ordering, timing, and retrieval of events. This design could let the class remain generic in different event types.
+The EventQueue class stores scheduled events and provides fast access to the next event to execute based on time (or priority). It supports cooldowns, delayed effects, and future event schedules by allowing systems to schedule work in the future.
+
+An event is a small record containing:
+a scheduled TimePoint (or priority value),
+a unique EventID,
+a Payload that describes what should happen when the event triggers.
+
+Payload definition (initial plan): Payload will be a generic type (either templated EventQueue<PayloadT> or a fixed type like std::function<void()> or std::variant<...>). 
 
 #### Similar Classes
 
