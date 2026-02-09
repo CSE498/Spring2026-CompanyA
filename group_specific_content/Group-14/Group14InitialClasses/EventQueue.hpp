@@ -24,7 +24,7 @@ namespace cse498 {
     //https://stackoverflow.com/questions/19535644/how-to-use-the-priority-queue-stl-for-objects
     bool operator<(const Event& other) const {
       if (time != other.time) return time > other.time;  // smaller time first
-      return order > other.order;                        // FIFO if same time
+      return order > other.order;
     }
   };
 
@@ -68,7 +68,6 @@ namespace cse498 {
     }
 
     bool CancelEvent(EventID id) {
-      // lazy cancel: mark it, and we skip it later
       return cancelled.insert(id).second;
     }
 
@@ -78,4 +77,4 @@ namespace cse498 {
     }
   };
 
-} // namespace cse498
+}
