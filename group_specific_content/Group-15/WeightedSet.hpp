@@ -52,9 +52,7 @@ namespace cse498 {
 
 		void Insert(const T& id, double weight){
 			if (weight <= 0.0) {
-				throw std::invalid_argument(
-					"weight must be greater than 0"
-				);
+				throw std::invalid_argument("weight must be greater than 0");
 			}
 			if (item_idx.contains(id)) {
 				throw std::invalid_argument("duplicate item");
@@ -69,14 +67,27 @@ namespace cse498 {
 			FixSum(idx, weight);
 		}
 
+		void Update(const T& id, double weight) {
+			if (weight <= 0.0) {
+				throw std::invalid_argument("weight must be greater than 0");
+			}
+
+			if (!item_idx.contains(id)) {
+				throw std::invalid_argument("item to update does not exist");
+			}
+
+			int idx = item_idx[id];
+			double change = weight - weights[idx];
+			weights[idx] = weight;
+			FixSum(idx, change);
+		}
+
 		T Sample(double num){
 			if (sum_tree.empty() || sum_tree[0] <= TOL){
 				throw std::runtime_error("Cannot sample from an empty WeightedSet");
 			}
 			if (num < 0 || num > sum_tree[0] + TOL) {
-				throw std::invalid_argument(
-					"Sample number invalid"
-				);
+				throw std::invalid_argument("Sample number invalid");
 			}
 
 			int idx = 0;
