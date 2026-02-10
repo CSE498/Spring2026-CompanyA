@@ -3,6 +3,7 @@
  * It is apart of Green and White Games (Company A) Group 15's module.
  * @brief A class for random generation
  * @note Status: PROPOSAL
+ * @author Rachel Loren
  * Credit notes: This files makes use of the Xoshiro algorithm as described at:
  *               https://en.wikipedia.org/wiki/Xorshift#xoshiro
  **/
@@ -35,16 +36,18 @@ constexpr int F_LOWER_41 = 41;
 constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
 
 
-
-
-
 namespace cse498 {
     class Random {
         private:
             uint64_t m_seed;
 
+
+
+
+            ////////////////////////////////////////////////////////////
             ///
             /// Xoshiro generation functions
+            /// adapted from the credited source above
             ///
 
             // keeps an internal state of 4 64 unsigned 64-bit ints
@@ -102,6 +105,10 @@ namespace cse498 {
                 return result;
             }
 
+            ///
+            ////////////////////////////////////////////////////////////
+
+            
             // Generates a double
             double double_xoshiro(struct xoshiro256pp_state *state) {
                 uint64_t r = xoshiro256pp(state);
@@ -130,9 +137,12 @@ namespace cse498 {
             }
             virtual ~Random() = default;
 
-            // Public setter for the current seed.
-            // Must be re-set after every generation, if you would like to keep the same seed
-            void SetSeed(uint64_t seed) {m_seed = seed;}
+            // Public getter and setter for the current seed.
+            void SetSeed(uint64_t seed) {
+                m_seed = seed;
+                m_used = false;
+            }
+            uint64_t GetSeed() {return m_seed;}
 
             // Generate and return a random int
             int GetInt(int i_min = 0, int i_max = 100) {
