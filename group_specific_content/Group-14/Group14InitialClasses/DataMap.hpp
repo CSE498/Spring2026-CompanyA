@@ -67,10 +67,7 @@ namespace cse498 {
 	    void Clear() { map.clear(); }
 	    /// Checks if the map is empty
 	    bool Empty() { return map.empty(); }
-<<<<<<< HEAD
 	    /// Returns the number of elements in the map
 	    int Size() { return map.size(); }
-=======
->>>>>>> f1b8a424bae611700866ce9a375892b3990447f1
 	};
 }
