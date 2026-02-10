@@ -33,9 +33,15 @@ public:
     [[nodiscard]] bool Empty() const;
 
     [[nodiscard]] const WorldPosition& At(std::size_t index) const;
+
+    // Direct read-only access (legacy/compat).
     [[nodiscard]] const std::vector<WorldPosition>& Points() const;
 
+    // Preferred read-only view that does not expose the storage type.
+    [[nodiscard]] std::span<const WorldPosition> Span() const noexcept;
+
     [[nodiscard]] double Length() const;
+
     [[nodiscard]] bool SelfIntersects() const;
 
     // Returns indices of the two furthest points in the path.
@@ -47,8 +53,6 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const WorldPath& path);
 
+} // namespace cse498
 
-}
-
-
-#endif //SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H
+#endif // SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H

@@ -18,12 +18,15 @@ namespace cse498
 
 namespace
 {
+// Epsilon used for floating-point comparisons in geometry utilities.
+constexpr double kEps = 1e-9;
+
 // Straight-line distance between two world positions.
 [[nodiscard]] double Dist(const WorldPosition& a, const WorldPosition& b)
 {
     const double dx = a.X() - b.X();
     const double dy = a.Y() - b.Y();
-    return std::sqrt(dx * dx + dy * dy);
+    return std::hypot(dx, dy);
 }
 
 // Small 2D vector used for intersection math (kept local to this file).
@@ -43,9 +46,15 @@ struct Vec2
 [[nodiscard]] Vec2 Sub(const Vec2& a, const Vec2& b) { return {a.x - b.x, a.y - b.y}; }
 
 // Floating-point comparison with a small tolerance.
-[[nodiscard]] bool NearlyEqual(double a, double b, double eps = 1e-9)
+[[nodiscard]] bool NearlyEqual(double a, double b, double eps = kEps)
 {
     return std::abs(a - b) <= eps;
+}
+
+// True if two world positions are effectively the same point.
+[[nodiscard]] bool SamePoint(const WorldPosition& a, const WorldPosition& b)
+{
+    return NearlyEqual(a.X(), b.X()) && NearlyEqual(a.Y(), b.Y());
 }
 
 // True if p lies on the segment a-b (assuming collinearity).
@@ -56,7 +65,7 @@ struct Vec2
     const double miny = std::min(a.y, b.y);
     const double maxy = std::max(a.y, b.y);
 
-    return p.x >= minx - 1e-9 && p.x <= maxx + 1e-9 && p.y >= miny - 1e-9 && p.y <= maxy + 1e-9;
+    return p.x >= minx - kEps && p.x <= maxx + kEps && p.y >= miny - kEps && p.y <= maxy + kEps;
 }
 
 // Segment/segment intersection test for path self-intersection checks.
@@ -87,7 +96,7 @@ struct Vec2
     const double t = Cross(q_p, s) / rxs;
     const double u = Cross(q_p, r) / rxs;
 
-    return t >= -1e-9 && t <= 1.0 + 1e-9 && u >= -1e-9 && u <= 1.0 + 1e-9;
+    return t >= -kEps && t <= 1.0 + kEps && u >= -kEps && u <= 1.0 + kEps;
 }
 } // namespace
 
@@ -98,7 +107,14 @@ WorldPath::WorldPath(std::span<const WorldPosition> path) : mPoints(path.begin()
 void WorldPath::Clear() { mPoints.clear(); }
 
 // Append a point to the end of the path.
-void WorldPath::AddPoint(const WorldPosition& p) { mPoints.push_back(p); }
+void WorldPath::AddPoint(const WorldPosition& p)
+{
+    // Avoid consecutive duplicates to reduce degenerate segments.
+    if (!mPoints.empty() && SamePoint(mPoints.back(), p))
+        return;
+
+    mPoints.push_back(p);
+}
 
 // Number of points currently in the path.
 std::size_t WorldPath::Size() const { return mPoints.size(); }
@@ -111,6 +127,9 @@ const WorldPosition& WorldPath::At(std::size_t index) const { return mPoints.at(
 
 // Direct read-only access to the underlying points container.
 const std::vector<WorldPosition>& WorldPath::Points() const { return mPoints; }
+
+// Preferred read-only view that does not expose the storage type.
+std::span<const WorldPosition> WorldPath::Span() const noexcept { return mPoints; }
 
 // Total length computed by summing distances between consecutive points.
 double WorldPath::Length() const
