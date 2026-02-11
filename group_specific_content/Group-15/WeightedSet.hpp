@@ -10,19 +10,14 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <iostream>
+#include <cassert>
+#include <stdexcept>
 #include <vector>
 #include  <unordered_map>
 
 constexpr double TOL = 1e-9;
 
 namespace cse498 {
-
-	using std::string;
-	using std::cout;
-	using std::endl;
 
 	template <typename T>
 	class WeightedSet {
@@ -90,47 +85,46 @@ namespace cse498 {
 				throw std::invalid_argument("Sample number invalid");
 			}
 
+			//lower and upper endpoints of the full range of values. Ex; [0.0, 5.1]
+			double outer_lo = 0.0;
+			double outer_up = sum_tree[0];
 			int idx = 0;
 			int tree_size = static_cast<int>(sum_tree.size());
 
-			while (true){
+			while(true){
+				assert(num >= outer_lo - TOL && num <= outer_up + TOL);
+
 				int l_idx = 2*idx + 1;
-				int r_idx = 2*idx + 2;
+    			int r_idx = 2*idx + 2;
 
-				double l_sum = 0.0;
-				if (l_idx < tree_size){
-					l_sum = sum_tree[l_idx]; 
+				double left_sum = (l_idx < tree_size) ? sum_tree[l_idx] : 0.0;
+
+				//interval of "node" at current index 
+				double inner_lo = outer_lo + left_sum;
+				double inner_up = inner_lo + weights[idx];
+
+				//Case 1: number in the left subtree interval
+				if (num <= inner_lo + TOL && l_idx < tree_size) {
+					outer_up = inner_lo;
+					idx = l_idx;
+					continue;
 				}
 
-				//Travel down left subtree
-				if (num <= l_sum + TOL){
-					if (l_idx < tree_size){ //If left child exists
-						idx = l_idx;
-					}
-					else{
-						break; //found correct node
-					}
+				//Case 2: num in current inverval (a, b]
+				if (num > inner_lo - TOL && num <= inner_up + TOL) {
+					break; //Found corresponding item
 				}
-				else{
-					//Check item at current index
-					num -= l_sum;
-					if (num <= weights[idx] + TOL){
-						break; //We found the correct item
-					}
 
-					//Travel down right subtree
-					num -= weights[idx];
-
-					if (r_idx >= tree_size) { //Accounts for a tolerance error
-						break;
-					}
-					idx = r_idx;
+				//Case 3: number in the right subtree interval
+				if (r_idx >= tree_size) { //for safety - this shouldnt run (Case 1 should have)
+					assert(r_idx < tree_size); 
+					break; //return this node since there is no left or right
 				}
+				outer_lo = inner_up;
+				idx = r_idx;
 			}
 			return items[idx];
 		}
 	};
 
 } // End of namespace cse498
-
-
