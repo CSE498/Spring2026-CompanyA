@@ -18,10 +18,10 @@
 #include <string>
 #include <optional>
 
-size_t WIDTH = 300; //width of the grid (MAY NEED TO MAKE CONST)
-size_t HEIGHT = 300; //hegiht of the grid (MAY NEED TO MAKE CONST)
-size_t THRESHOLD_VALUE = 50; // min height/wdith value before cut-off
-size_t ITERATIONS = 3; //number of cuts into the grid
+int WIDTH = 300; //width of the grid (MAY NEED TO MAKE CONST)
+int HEIGHT = 300; //hegiht of the grid (MAY NEED TO MAKE CONST)
+int THRESHOLD_VALUE = 50; // min height/wdith value before cut-off
+int ITERATIONS = 3; //number of cuts into the grid
 
 namespace cse498 {
     /// @brief Holds basic information of the grids
@@ -29,10 +29,8 @@ namespace cse498 {
         
         int left_child = -1;
         int right_child = -1;
-
         int x, y, width, height;
-        std::string name;
-
+        std::string name = "";
 
     };
 
@@ -57,7 +55,7 @@ namespace cse498 {
         /// @param iter 
         /// @return 
         int insert_split(int iter) {
-            auto root_node{Node(-1, -1, 0 , 0, WIDTH, HEIGHT, "Container")}; // creation of root node
+            Node root_node = Node{-1, -1, 0 , 0, WIDTH, HEIGHT, std::string("Container")}; // creation of root node
 
             return insert_split(root_node, iter);
         }
