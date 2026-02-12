@@ -1,6 +1,7 @@
 #include "WebImage.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #include <cassert>
+#include <iostream>
 #include <emscripten.h>
 
 using emscripten::val;
@@ -31,11 +32,9 @@ WebImage::WebImage(const std::string& src, const std::string& alt_text)
   element_.set("id", id_);
   element_.set("src", src_);
   element_.set("alt", alt_text_);
-  element_["style"].set("position", std::string("absolute"));
-  element_["style"].set("objectFit", std::string("contain"));
   doc["body"].call<void>("appendChild", element_);
 
-  AttachLoadListener();
+  AttachListeners();
 }
 
 WebImage::~WebImage() {
@@ -53,21 +52,23 @@ WebImage::WebImage(WebImage&& other) noexcept
       alt_text_(std::move(other.alt_text_)),
       width_(other.width_),
       height_(other.height_),
-      x_(other.x_),
-      y_(other.y_),
-      maintain_aspect_ratio_(other.maintain_aspect_ratio_),
+      opacity_(other.opacity_),
       is_visible_(other.is_visible_),
       is_loaded_(other.is_loaded_),
+      has_error_(other.has_error_),
+      error_mode_(other.error_mode_),
+      placeholder_color_(std::move(other.placeholder_color_)),
       on_load_callback_(std::move(other.on_load_callback_)),
+      on_error_callback_(std::move(other.on_error_callback_)),
       element_(other.element_),
       id_(std::move(other.id_)) {
   other.element_ = val::null();
   other.width_ = 0;
   other.height_ = 0;
-  other.x_ = 0;
-  other.y_ = 0;
+  other.opacity_ = 1.0;
   other.is_visible_ = false;
   other.is_loaded_ = false;
+  other.has_error_ = false;
 }
 
 WebImage& WebImage::operator=(WebImage&& other) noexcept {
@@ -84,22 +85,24 @@ WebImage& WebImage::operator=(WebImage&& other) noexcept {
     alt_text_ = std::move(other.alt_text_);
     width_ = other.width_;
     height_ = other.height_;
-    x_ = other.x_;
-    y_ = other.y_;
-    maintain_aspect_ratio_ = other.maintain_aspect_ratio_;
+    opacity_ = other.opacity_;
     is_visible_ = other.is_visible_;
     is_loaded_ = other.is_loaded_;
+    has_error_ = other.has_error_;
+    error_mode_ = other.error_mode_;
+    placeholder_color_ = std::move(other.placeholder_color_);
     on_load_callback_ = std::move(other.on_load_callback_);
+    on_error_callback_ = std::move(other.on_error_callback_);
     element_ = other.element_;
     id_ = std::move(other.id_);
 
     other.element_ = val::null();
     other.width_ = 0;
     other.height_ = 0;
-    other.x_ = 0;
-    other.y_ = 0;
+    other.opacity_ = 1.0;
     other.is_visible_ = false;
     other.is_loaded_ = false;
+    other.has_error_ = false;
   }
   return *this;
 }
@@ -108,9 +111,12 @@ WebImage& WebImage::operator=(WebImage&& other) noexcept {
 
 void WebImage::SetSource(const std::string& src) {
   src_ = src;
-  is_loaded_ = false;  // Reset loaded state when source changes
+  is_loaded_ = false;
+  has_error_ = false;
   if (!element_.isNull()) {
+    // Reset to <img> in case we had replaced it with a placeholder <div>
     element_.set("src", src_);
+    element_["style"].set("backgroundColor", std::string(""));
   }
 }
 
@@ -129,7 +135,7 @@ std::string WebImage::GetAltText() const {
   return alt_text_;
 }
 
-// ----- Geometry -----
+// ----- Sizing -----
 
 void WebImage::SetSize(int width_px, int height_px) {
   assert(width_px >= 0 && "SetSize: width must be non-negative");
@@ -143,6 +149,23 @@ void WebImage::SetSize(int width_px, int height_px) {
     if (height_px > 0) {
       element_["style"].set("height", ToPx(height_px));
     }
+    // Stretch to exact dimensions (no aspect ratio preservation)
+    element_["style"].set("objectFit", std::string("fill"));
+  }
+}
+
+void WebImage::Resize(int width_px, int height_px, bool maintain_aspect_ratio) {
+  assert(width_px > 0 && "Resize: width must be positive");
+  assert(height_px > 0 && "Resize: height must be positive");
+  width_ = width_px;
+  height_ = height_px;
+  if (!element_.isNull()) {
+    element_["style"].set("width", ToPx(width_px));
+    element_["style"].set("height", ToPx(height_px));
+    // "contain" scales to fit within the box keeping aspect ratio
+    // "fill" stretches to fill exact dimensions
+    element_["style"].set("objectFit",
+        std::string(maintain_aspect_ratio ? "contain" : "fill"));
   }
 }
 
@@ -154,36 +177,18 @@ int WebImage::GetHeight() const {
   return height_;
 }
 
-void WebImage::SetPosition(int x, int y) {
-  x_ = x;
-  y_ = y;
+// ----- Opacity / Transparency -----
+
+void WebImage::SetOpacity(double alpha) {
+  assert(alpha >= 0.0 && alpha <= 1.0 && "SetOpacity: alpha must be in [0.0, 1.0]");
+  opacity_ = alpha;
   if (!element_.isNull()) {
-    element_["style"].set("left", ToPx(x));
-    element_["style"].set("top", ToPx(y));
+    element_["style"].set("opacity", std::to_string(alpha));
   }
 }
 
-int WebImage::GetX() const {
-  return x_;
-}
-
-int WebImage::GetY() const {
-  return y_;
-}
-
-// ----- Aspect Ratio & Fitting -----
-
-void WebImage::SetMaintainAspectRatio(bool enabled) {
-  maintain_aspect_ratio_ = enabled;
-  if (!element_.isNull()) {
-    // "contain" preserves aspect ratio, "fill" stretches to fit
-    element_["style"].set("objectFit",
-        std::string(enabled ? "contain" : "fill"));
-  }
-}
-
-bool WebImage::GetMaintainAspectRatio() const {
-  return maintain_aspect_ratio_;
+double WebImage::GetOpacity() const {
+  return opacity_;
 }
 
 // ----- Visibility -----
@@ -206,7 +211,7 @@ bool WebImage::IsVisible() const {
   return is_visible_;
 }
 
-// ----- Loading State -----
+// ----- Loading State & Error Handling -----
 
 void WebImage::MarkLoaded(bool loaded) {
   is_loaded_ = loaded;
@@ -216,8 +221,24 @@ bool WebImage::IsLoaded() const {
   return is_loaded_;
 }
 
+bool WebImage::HasError() const {
+  return has_error_;
+}
+
 void WebImage::SetOnLoadCallback(std::function<void()> callback) {
   on_load_callback_ = std::move(callback);
+}
+
+void WebImage::SetOnErrorCallback(std::function<void()> callback) {
+  on_error_callback_ = std::move(callback);
+}
+
+void WebImage::SetErrorMode(ImageErrorMode mode) {
+  error_mode_ = mode;
+}
+
+void WebImage::SetPlaceholderColor(const std::string& css_color) {
+  placeholder_color_ = css_color;
 }
 
 // ----- IDomElement Interface -----
@@ -247,10 +268,7 @@ void WebImage::syncFromModel() {
     element_["style"].set("height", ToPx(height_));
   }
 
-  element_["style"].set("left", ToPx(x_));
-  element_["style"].set("top", ToPx(y_));
-  element_["style"].set("objectFit",
-      std::string(maintain_aspect_ratio_ ? "contain" : "fill"));
+  element_["style"].set("opacity", std::to_string(opacity_));
   element_["style"].set("display",
       std::string(is_visible_ ? "" : "none"));
 }
@@ -269,9 +287,35 @@ void WebImage::draw(WebCanvas& canvas) {
   (void)canvas;  // Suppress unused parameter warning
 }
 
+// ----- Event Handlers -----
+
+void WebImage::HandleLoad() {
+  is_loaded_ = true;
+  has_error_ = false;
+  if (on_load_callback_) {
+    on_load_callback_();
+  }
+}
+
+void WebImage::HandleError() {
+  has_error_ = true;
+  is_loaded_ = false;
+  std::cerr << "WebImage error: failed to load image '" << src_
+            << "' (id=" << id_ << ")" << std::endl;
+
+  if (error_mode_ == ImageErrorMode::BlankRect) {
+    ApplyPlaceholder();
+  }
+  // NoOp: do nothing, leave the broken image as-is
+
+  if (on_error_callback_) {
+    on_error_callback_();
+  }
+}
+
 // ----- Private Helpers -----
 
-void WebImage::AttachLoadListener() {
+void WebImage::AttachListeners() {
   if (element_.isNull()) return;
 
   WebImage* self = this;
@@ -282,23 +326,51 @@ void WebImage::AttachLoadListener() {
     el.addEventListener("load", function() {
       Module._WebImage_handleLoad(ptrVal);
     });
+    el.addEventListener("error", function() {
+      Module._WebImage_handleError(ptrVal);
+    });
   }, element_.as_handle(), reinterpret_cast<intptr_t>(self));
 }
 
-void WebImage::HandleLoad() {
-  is_loaded_ = true;
-  if (on_load_callback_) {
-    on_load_callback_();
+void WebImage::ApplyPlaceholder() {
+  if (element_.isNull()) return;
+
+  // Hide the broken image icon by removing the src
+  element_.set("src", std::string(""));
+
+  // Show a colored rectangle instead
+  val style = element_["style"];
+  style.set("backgroundColor", placeholder_color_);
+  style.set("display", std::string("inline-block"));
+
+  // Ensure the placeholder has visible dimensions
+  if (width_ > 0) {
+    style.set("width", ToPx(width_));
+  } else {
+    style.set("width", std::string("100px"));
+  }
+  if (height_ > 0) {
+    style.set("height", ToPx(height_));
+  } else {
+    style.set("height", std::string("100px"));
   }
 }
 
-// C function that JS calls when image loads
+// C functions that JS calls for image events
 extern "C" {
   EMSCRIPTEN_KEEPALIVE
   void WebImage_handleLoad(intptr_t ptr) {
     WebImage* img = reinterpret_cast<WebImage*>(ptr);
     if (img) {
       img->HandleLoad();
+    }
+  }
+
+  EMSCRIPTEN_KEEPALIVE
+  void WebImage_handleError(intptr_t ptr) {
+    WebImage* img = reinterpret_cast<WebImage*>(ptr);
+    if (img) {
+      img->HandleError();
     }
   }
 }

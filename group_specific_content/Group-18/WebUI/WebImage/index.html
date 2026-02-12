@@ -21,7 +21,7 @@
       border-left: 4px solid #2196F3;
     }
     #output {
-      margin-top: 400px;
+      margin-top: 20px;
       padding: 10px;
       background-color: #fff;
       border: 1px solid #ddd;
@@ -33,25 +33,34 @@
 <body>
   <h1>WebImage Demo</h1>
   <div class="info">
-    <p>This demo shows three WebImage instances:</p>
+    <p>This demo shows four WebImage instances:</p>
     <ul>
-      <li><strong>Image 1</strong> (top): 200x150 placeholder with aspect ratio maintained</li>
-      <li><strong>Image 2</strong> (middle): 100x100 stretched to 150x100 (no aspect ratio)</li>
-      <li><strong>Image 3</strong>: Hidden image (not visible)</li>
+      <li><strong>Image 1</strong>: 200x150 with Resize (maintain aspect ratio)</li>
+      <li><strong>Image 2</strong>: Stretched to 200x100 with 60% opacity</li>
+      <li><strong>Image 3</strong>: Invalid URL, error mode = BlankRect (red placeholder)</li>
+      <li><strong>Image 4</strong>: Invalid URL, error mode = NoOp (broken icon)</li>
     </ul>
   </div>
-  <div id="output">Console output will appear here...</div>
+  <div id="output">Console output will appear here...
+</div>
 
   <script>
     // Capture console output
     (function() {
       var output = document.getElementById('output');
       var originalLog = console.log;
+      var originalErr = console.error;
       console.log = function() {
         var args = Array.prototype.slice.call(arguments);
         var message = args.join(' ');
         output.textContent += message + '\n';
         originalLog.apply(console, arguments);
+      };
+      console.error = function() {
+        var args = Array.prototype.slice.call(arguments);
+        var message = '[ERROR] ' + args.join(' ');
+        output.textContent += message + '\n';
+        originalErr.apply(console, arguments);
       };
     })();
   </script>

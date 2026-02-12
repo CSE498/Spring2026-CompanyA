@@ -5,11 +5,20 @@
 #include <functional>
 #include <emscripten/val.h>
 
-#include "../WebLayout/IDomElement.hpp"
-#include "../WebCanvas/ICanvasElement.hpp"
+#include "../internal/IDomElement.hpp"
+#include "../internal/ICanvasElement.hpp"
+
+/// Behavior when an image source fails to load.
+enum class ImageErrorMode {
+  BlankRect,  ///< Show a blank colored rectangle as placeholder
+  NoOp        ///< Do nothing; the element remains invisible/broken
+};
 
 /// Manages an HTML <img> element from C++ via Emscripten.
 /// Can be rendered as a DOM element via WebLayout or drawn on a WebCanvas.
+///
+/// Positioning is NOT handled by WebImage. Use WebLayout (Flex/Grid/Free)
+/// to control where the image appears on the page.
 class WebImage : public IDomElement, public ICanvasElement {
  public:
   /// Construct a WebImage with a source URL/path and optional alt text.
@@ -37,28 +46,33 @@ class WebImage : public IDomElement, public ICanvasElement {
   /// Get the alternative text.
   std::string GetAltText() const;
 
-  // ----- Geometry (logical size & position, in pixels) -----
+  // ----- Sizing -----
 
-  /// Set the display size of the image.
+  /// Set the display size of the image (does not preserve aspect ratio).
+  /// @param width_px  Width in pixels (must be >= 0)
+  /// @param height_px Height in pixels (must be >= 0)
   void SetSize(int width_px, int height_px);
+
+  /// Resize the image. If maintain_aspect_ratio is true, the image is
+  /// scaled to fit within the given bounding box while preserving its
+  /// original aspect ratio (CSS object-fit: contain). Otherwise it
+  /// stretches to fill the exact dimensions (CSS object-fit: fill).
+  /// @param width_px              Target width in pixels (must be > 0)
+  /// @param height_px             Target height in pixels (must be > 0)
+  /// @param maintain_aspect_ratio If true, scale to fit; if false, stretch.
+  void Resize(int width_px, int height_px, bool maintain_aspect_ratio = false);
+
   /// Get the display width.
   int GetWidth() const;
   /// Get the display height.
   int GetHeight() const;
 
-  /// Set the position of the image.
-  void SetPosition(int x, int y);
-  /// Get the X coordinate.
-  int GetX() const;
-  /// Get the Y coordinate.
-  int GetY() const;
+  // ----- Opacity / Transparency -----
 
-  // ----- Aspect Ratio & Fitting -----
-
-  /// Enable or disable maintaining aspect ratio when resizing.
-  void SetMaintainAspectRatio(bool enabled);
-  /// Check if aspect ratio is being maintained.
-  bool GetMaintainAspectRatio() const;
+  /// Set the opacity of the image (0.0 = fully transparent, 1.0 = fully opaque).
+  void SetOpacity(double alpha);
+  /// Get the current opacity.
+  double GetOpacity() const;
 
   // ----- Visibility -----
 
@@ -69,15 +83,29 @@ class WebImage : public IDomElement, public ICanvasElement {
   /// Check if the image is visible.
   bool IsVisible() const;
 
-  // ----- Loading State -----
+  // ----- Loading State & Error Handling -----
 
   /// Mark the image as loaded or not (for tracking async loading).
   void MarkLoaded(bool loaded);
   /// Check if the image has been loaded.
   bool IsLoaded() const;
+  /// Check if the image source failed to load.
+  bool HasError() const;
 
   /// Set a callback to be invoked when the image finishes loading.
   void SetOnLoadCallback(std::function<void()> callback);
+
+  /// Set a callback to be invoked when the image fails to load.
+  void SetOnErrorCallback(std::function<void()> callback);
+
+  /// Set the behavior when an image fails to load.
+  /// BlankRect: renders a colored placeholder rectangle.
+  /// NoOp: does nothing (element stays as-is).
+  void SetErrorMode(ImageErrorMode mode);
+
+  /// Set the placeholder color shown when image fails to load
+  /// (only used when error mode is BlankRect). Any valid CSS color.
+  void SetPlaceholderColor(const std::string& css_color);
 
   // ----- IDomElement Interface -----
 
@@ -92,25 +120,31 @@ class WebImage : public IDomElement, public ICanvasElement {
 
   /// Handle load event (called when image finishes loading).
   void HandleLoad();
+  /// Handle error event (called when image fails to load).
+  void HandleError();
 
  private:
   std::string src_;
   std::string alt_text_;
   int width_ = 0;
   int height_ = 0;
-  int x_ = 0;
-  int y_ = 0;
-  bool maintain_aspect_ratio_ = true;
+  double opacity_ = 1.0;
   bool is_visible_ = true;
   bool is_loaded_ = false;
+  bool has_error_ = false;
+  ImageErrorMode error_mode_ = ImageErrorMode::BlankRect;
+  std::string placeholder_color_ = "#CCCCCC";
   std::function<void()> on_load_callback_;
+  std::function<void()> on_error_callback_;
   emscripten::val element_;
   std::string id_;
 
   static int next_id_counter_;
 
-  /// Attach the onload event listener to the DOM element.
-  void AttachLoadListener();
+  /// Attach the onload/onerror event listeners to the DOM element.
+  void AttachListeners();
+  /// Apply the blank-rect placeholder fallback.
+  void ApplyPlaceholder();
 };
 
 #endif  // WEBIMAGE_HPP_
