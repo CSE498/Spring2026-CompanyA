@@ -28,4 +28,3 @@ public:
     std::expected<double, std::string> Median();
 
 };
-
