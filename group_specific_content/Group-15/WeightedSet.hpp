@@ -13,9 +13,9 @@
 #include <cassert>
 #include <stdexcept>
 #include <vector>
-#include  <unordered_map>
+#include <unordered_map>
 
-constexpr double TOL = 1e-9;
+constexpr double TOL = 1e-12;
 
 namespace cse498 {
 
@@ -27,6 +27,7 @@ namespace cse498 {
 		std::vector<T> items{};
 		std::vector<double> weights{};
 		std::vector<double> sum_tree{}; 
+		int size = 0;
 
 		void FixSum(int idx, double weight) {
 			while (idx > 0){
@@ -46,11 +47,16 @@ namespace cse498 {
 		~WeightedSet() = default;
 
 		void Insert(const T& id, double weight){
-			if (weight <= 0.0) {
-				throw std::invalid_argument("weight must be greater than 0");
+			if (weight < 0.0) {
+				throw std::invalid_argument("weight must be non-negative");
 			}
 			if (item_idx.contains(id)) {
 				throw std::invalid_argument("duplicate item");
+			}
+
+			//Tiny weights below tolerance that are not 0 can cause strange sample outputs
+			if (weight < TOL) {
+				weight = 0.0; //Tiny weights now treated as 0.0
 			}
 
 			int idx = static_cast<int>(sum_tree.size());
@@ -58,17 +64,23 @@ namespace cse498 {
 			items.push_back(id);
 			weights.push_back(weight);
 			sum_tree.push_back(0.0);
+			++size;
 
 			FixSum(idx, weight);
 		}
 
 		void Update(const T& id, double weight) {
-			if (weight <= 0.0) {
-				throw std::invalid_argument("weight must be greater than 0");
+			if (weight < 0.0) {
+				throw std::invalid_argument("weight must be non-negative");
 			}
 
 			if (!item_idx.contains(id)) {
 				throw std::invalid_argument("item to update does not exist");
+			}
+
+			//Tiny weights below tolerance that are not 0 can cause strange sample outputs
+			if (weight < TOL) {
+				weight = 0.0; //Tiny weights now treated as 0.0
 			}
 
 			int idx = item_idx[id];
@@ -77,7 +89,7 @@ namespace cse498 {
 			FixSum(idx, change);
 		}
 
-		T Sample(double num){
+		T Sample(double num) const {
 			if (sum_tree.empty() || sum_tree[0] <= TOL){
 				throw std::runtime_error("Cannot sample from an empty WeightedSet");
 			}
@@ -104,14 +116,20 @@ namespace cse498 {
 				double inner_up = inner_lo + weights[idx];
 
 				//Case 1: number in the left subtree interval
-				if (num <= inner_lo + TOL && l_idx < tree_size) {
+				if (num <= inner_lo + TOL 
+					&& l_idx < tree_size 
+					&& left_sum > TOL) {
+
 					outer_up = inner_lo;
 					idx = l_idx;
 					continue;
 				}
 
 				//Case 2: num in current inverval (a, b]
-				if (num > inner_lo - TOL && num <= inner_up + TOL) {
+				if (num > inner_lo - TOL 
+					&& num <= inner_up + TOL 
+					&& weights[idx] > TOL) {
+						
 					break; //Found corresponding item
 				}
 
@@ -125,6 +143,10 @@ namespace cse498 {
 			}
 			return items[idx];
 		}
+
+		int GetSize() const { return size; }
+		double GetItemSum(T item) { return sum_tree[item_idx[item]]; }
+		double GetWeight(T item) { return weights[item_idx[item]]; }
 	};
 
 } // End of namespace cse498
