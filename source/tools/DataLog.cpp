@@ -5,13 +5,23 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <chrono>
 
-void DataLog::Add(double value, double timestamp){
+DataLog::DataLog() : start_timestamp(std::chrono::steady_clock::now()){
+
+}
+
+void DataLog::Add(double value){
     //use the timer class to get the timestamp
-    std::pair<double, double> combined_data = {value, timestamp};
+    auto current_timestamp = std::chrono::steady_clock::now();
+    auto duration = current_timestamp - start_timestamp;
+    std::pair<double, double> combined_data = {value, std::chrono::duration<double>(duration).count()};
     data_values.push_back(combined_data);
 }
 
+const std::vector<std::pair<double,double>>& DataLog::DataSamples() const{
+    return data_values;
+}
 
 void DataLog::Clear(){
     data_values.clear();

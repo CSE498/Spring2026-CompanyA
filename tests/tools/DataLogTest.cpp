@@ -1,16 +1,17 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/DataLog.hpp"
 
+
 TEST_CASE("Initial Test", "[tools]"){
 
     DataLog log;
     CHECK(log.Count() == 0);
 
-    log.Add(10.0,0.0);
-    log.Add(12.0,1.0);
-    log.Add(14.0,2.0);
-    log.Add(16.0,3.0);
-    log.Add(18.0,4.0);
+    log.Add(10.0);
+    log.Add(12.0);
+    log.Add(14.0);
+    log.Add(16.0);
+    log.Add(18.0);
 
     CHECK(log.Count() == 5);
     CHECK(log.Median() == 14);
@@ -54,7 +55,7 @@ TEST_CASE("Empty Log Test", "[tools]"){
 TEST_CASE("Single Entry Test", "[tools]"){
 
     DataLog log;
-    log.Add(10.1,1.0);
+    log.Add(10.1);
 
     CHECK(log.Count() == 1);
     CHECK(log.Median() == 10.1);
@@ -71,10 +72,10 @@ TEST_CASE("Single Entry Test", "[tools]"){
 TEST_CASE("Multiple Entry Test", "[tools]"){
 
     DataLog log;
-    log.Add(10.0,1.0);
-    log.Add(12.6,2.0);
-    log.Add(14.1,5.0);
-    log.Add(11.1,6.0);
+    log.Add(10.0);
+    log.Add(12.6);
+    log.Add(14.1);
+    log.Add(11.1);
 
     CHECK(log.Count() == 4);
     CHECK(log.Median() == Approx(11.85));
@@ -90,11 +91,11 @@ TEST_CASE("Multiple Entry Test", "[tools]"){
 TEST_CASE("Negative Value Entry Test", "[tools]"){
 
     DataLog log;
-    log.Add(10.0,1.0);
-    log.Add(-12.6,2.0);
-    log.Add(-14.1,5.0);
-    log.Add(-11.1,8.0);
-    log.Add(0,9.0);
+    log.Add(10.0);
+    log.Add(-12.6);
+    log.Add(-14.1);
+    log.Add(-11.1);
+    log.Add(0);
 
     CHECK(log.Count() == 5);
     CHECK(log.Median() == Approx(-11.1));
@@ -110,8 +111,8 @@ TEST_CASE("Negative Value Entry Test", "[tools]"){
 TEST_CASE("Invalid Timestamp Impact", "[tools]"){
 
     DataLog log;
-    log.Add(1.0,1000);
-    log.Add(2.0, -1000);
+    log.Add(1.0);
+    log.Add(2.0);
 
     CHECK(log.Count() == 2);
     CHECK(log.Median() == Approx(1.5));
@@ -124,3 +125,25 @@ TEST_CASE("Invalid Timestamp Impact", "[tools]"){
     CHECK(log.Count() == 0);
 }
 
+
+TEST_CASE("Check samples function", "[tools]"){
+
+    DataLog log;
+    log.Add(1.0);
+    log.Add(2.0);
+
+    CHECK(log.Count() == 2);
+    CHECK(log.Median() == Approx(1.5));
+    CHECK(log.Mean() == Approx(1.5));
+    CHECK(log.Min() == 1.0);
+    CHECK(log.Max() == 2.0);
+
+//     std::vector<std::pair<double, double>> data_values = {
+//     {1.0, 0.0},
+//     {2.0, 1.0}
+// };
+
+//     REQUIRE(log.DataSamples() == data_values);
+
+
+}

@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <chrono>
 
 
 class DataLog{
@@ -12,8 +13,13 @@ private:
     //(data_value, timestamp)
     std::vector<std::pair<double, double>> data_values;
 
+    std::chrono::steady_clock::time_point start_timestamp;
+
 public:
-    void Add(double value, double timestamp);
+    DataLog();
+    //void Add(double value, double timestamp);
+    void Add(double value);
+    const std::vector<std::pair<double,double>>& DataSamples() const;
     void Clear();
     std::size_t Count();
     std::expected<double, std::string> Min();
