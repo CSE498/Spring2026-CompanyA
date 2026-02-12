@@ -48,10 +48,10 @@ namespace cse498 {
 
 		void Insert(const T& id, double weight){
 			if (weight < 0.0) {
-				throw std::invalid_argument("weight must be non-negative");
+				throw std::invalid_argument("cse498::WeightedSet::Insert(): weight must be non-negative");
 			}
 			if (item_idx.contains(id)) {
-				throw std::invalid_argument("duplicate item");
+				throw std::invalid_argument("cse498::WeightedSet::Insert(): duplicate item");
 			}
 
 			//Tiny weights below tolerance that are not 0 can cause strange sample outputs
@@ -71,11 +71,11 @@ namespace cse498 {
 
 		void Update(const T& id, double weight) {
 			if (weight < 0.0) {
-				throw std::invalid_argument("weight must be non-negative");
+				throw std::invalid_argument("cse498::WeightedSet::Update(): weight must be non-negative");
 			}
 
 			if (!item_idx.contains(id)) {
-				throw std::invalid_argument("item to update does not exist");
+				throw std::invalid_argument("cse498::WeightedSet::Update(): item to update does not exist");
 			}
 
 			//Tiny weights below tolerance that are not 0 can cause strange sample outputs
@@ -91,10 +91,10 @@ namespace cse498 {
 
 		T Sample(double num) const {
 			if (sum_tree.empty() || sum_tree[0] <= TOL){
-				throw std::runtime_error("Cannot sample from an empty WeightedSet");
+				throw std::runtime_error("cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
 			}
 			if (num < 0 || num > sum_tree[0] + TOL) {
-				throw std::invalid_argument("Sample number invalid");
+				throw std::invalid_argument("cse498::WeightedSet::Sample(): Sample number invalid");
 			}
 
 			//lower and upper endpoints of the full range of values. Ex; [0.0, 5.1]
