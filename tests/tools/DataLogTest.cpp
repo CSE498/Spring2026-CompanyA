@@ -2,37 +2,13 @@
 #include "../../source/tools/DataLog.hpp"
 
 
-TEST_CASE("Initial Test", "[tools]"){
-
-    DataLog log;
-    CHECK(log.Count() == 0);
-
-    log.Add(10.0);
-    log.Add(12.0);
-    log.Add(14.0);
-    log.Add(16.0);
-    log.Add(18.0);
-
-    CHECK(log.Count() == 5);
-    CHECK(log.Median() == 14);
-    CHECK(log.Mean() == 14);
-    CHECK(log.Min() == 10);
-    CHECK(log.Max() == 18);
-
-    log.Clear();
-
-    CHECK(log.Count() == 0);
-    CHECK(log.Min().error() == "Data is empty.");
-    CHECK(log.Max().error() == "Data is empty.");
-    CHECK(log.Mean().error() == "Data is empty.");
-    CHECK(log.Median().error() == "Data is empty.");
- 
-}
-
 TEST_CASE("Empty Log Test", "[tools]"){
 
     DataLog log;
     CHECK(log.Count() == 0);
+
+    CHECK(log.DataSamples().empty());
+    CHECK(log.DataSamples().size() == log.Count());
 
     //Checks if the error msg is returned when a log is empty
     CHECK(log.Min().error() == "Data is empty.");
@@ -58,6 +34,9 @@ TEST_CASE("Single Entry Test", "[tools]"){
     log.Add(10.1);
 
     CHECK(log.Count() == 1);
+    CHECK(log.DataSamples().size() == log.Count());
+    CHECK(log.DataSamples()[0].first == 10.1);
+
     CHECK(log.Median() == 10.1);
     CHECK(log.Mean() == 10.1);
     CHECK(log.Min() == 10.1);
@@ -66,6 +45,8 @@ TEST_CASE("Single Entry Test", "[tools]"){
     log.Clear();
 
     CHECK(log.Count() == 0);
+    CHECK(log.DataSamples().empty());
+    CHECK(log.DataSamples().size() == log.Count());
 
 }
 
@@ -86,6 +67,8 @@ TEST_CASE("Multiple Entry Test", "[tools]"){
     log.Clear();
 
     CHECK(log.Count() == 0);
+    CHECK(log.DataSamples().empty());
+    CHECK(log.DataSamples().size() == log.Count());
 }
 
 TEST_CASE("Negative Value Entry Test", "[tools]"){
@@ -106,44 +89,19 @@ TEST_CASE("Negative Value Entry Test", "[tools]"){
     log.Clear();
 
     CHECK(log.Count() == 0);
+    CHECK(log.DataSamples().empty());
+    CHECK(log.DataSamples().size() == log.Count());
 }
 
-TEST_CASE("Invalid Timestamp Impact", "[tools]"){
+TEST_CASE("Timestamp order check", "[tools]"){
 
     DataLog log;
     log.Add(1.0);
     log.Add(2.0);
+    log.Add(3.0);
 
-    CHECK(log.Count() == 2);
-    CHECK(log.Median() == Approx(1.5));
-    CHECK(log.Mean() == Approx(1.5));
-    CHECK(log.Min() == 1.0);
-    CHECK(log.Max() == 2.0);
-
-    log.Clear();
-
-    CHECK(log.Count() == 0);
-}
-
-
-TEST_CASE("Check samples function", "[tools]"){
-
-    DataLog log;
-    log.Add(1.0);
-    log.Add(2.0);
-
-    CHECK(log.Count() == 2);
-    CHECK(log.Median() == Approx(1.5));
-    CHECK(log.Mean() == Approx(1.5));
-    CHECK(log.Min() == 1.0);
-    CHECK(log.Max() == 2.0);
-
-//     std::vector<std::pair<double, double>> data_values = {
-//     {1.0, 0.0},
-//     {2.0, 1.0}
-// };
-
-//     REQUIRE(log.DataSamples() == data_values);
-
-
+    CHECK(log.DataSamples().size() == 3);
+    CHECK(log.DataSamples()[2].second >= log.DataSamples()[1].second);
+    CHECK(log.DataSamples()[1].second >= log.DataSamples()[0].second);
+    CHECK(log.DataSamples()[0].second >= 0);
 }
