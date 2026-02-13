@@ -1,5 +1,5 @@
 /**
- * @file WorldPath.h
+* @file WorldPath.h
  * @author Luke Antone
  *
  * WorldPath stores an ordered sequence of 2D positions for an agent to follow.
@@ -20,35 +20,40 @@
 namespace cse498
 {
 
-class WorldPath
-{
-public:
-    WorldPath() = default;
-    explicit WorldPath(std::span<const WorldPosition> path);
+    class WorldPath
+    {
+    public:
+        WorldPath() = default;
+        explicit WorldPath(std::span<const WorldPosition> path);
 
-    void Clear();
-    void AddPoint(const WorldPosition& p);
+        void Clear();
+        void AddPoint(const WorldPosition& p);
 
-    [[nodiscard]] std::size_t Size() const;
-    [[nodiscard]] bool Empty() const;
+        [[nodiscard]] std::size_t Size() const;
+        [[nodiscard]] bool Empty() const;
 
-    [[nodiscard]] const WorldPosition& At(std::size_t index) const;
-    [[nodiscard]] const std::vector<WorldPosition>& Points() const;
+        [[nodiscard]] const WorldPosition& At(std::size_t index) const;
 
-    [[nodiscard]] double Length() const;
-    [[nodiscard]] bool SelfIntersects() const;
+        // Direct read-only access (legacy/compat).
+        [[nodiscard]] const std::vector<WorldPosition>& Points() const;
 
-    // Returns indices of the two furthest points in the path.
-    [[nodiscard]] std::optional<std::pair<std::size_t, std::size_t>> FurthestPointPair() const;
+        // Preferred read-only view that does not expose the storage type.
+        [[nodiscard]] std::span<const WorldPosition> Span() const noexcept;
 
-private:
-    std::vector<WorldPosition> mPoints;
-};
+        [[nodiscard]] double Length() const;
 
-std::ostream& operator<<(std::ostream& os, const WorldPath& path);
+        [[nodiscard]] bool SelfIntersects() const;
 
+        // Returns indices of the two furthest points in the path.
+        [[nodiscard]] std::optional<std::pair<std::size_t, std::size_t>> FurthestPointPair() const;
 
-}
+    private:
+        std::vector<WorldPosition> mPoints;
+    };
 
+    std::ostream& operator<<(std::ostream& os, const WorldPath& path);
 
-#endif //SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H
+} // namespace cse498
+
+#endif // SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H
+
