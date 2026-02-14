@@ -5,8 +5,7 @@
  * Catch2 unit tests for WorldPath.
  */
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../WorldPath.h"                 // adjust path if your tests folder differs
 #include "../../../source/core/WorldPosition.hpp"  // adjust if needed
