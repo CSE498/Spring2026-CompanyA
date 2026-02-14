@@ -3,7 +3,7 @@
  * @author Ty Maksimowski
  */
 
-#include "ActionMap.h"
+#include "ActionMap.hpp"
 
 bool ActionMap::AddFunction(std::string name, std::function<void()> fn)
 {

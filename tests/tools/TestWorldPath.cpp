@@ -5,11 +5,10 @@
  * Catch2 unit tests for WorldPath.
  */
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../WorldPath.h"                 // adjust path if your tests folder differs
-#include "../../../source/core/WorldPosition.hpp"  // adjust if needed
+#include "../../source/tools/WorldPath.hpp"                 // adjust path if your tests folder differs
+#include "../../source/core/WorldPosition.hpp"  // adjust if needed
 
 #include <sstream>
 #include <vector>
@@ -18,15 +17,15 @@ using namespace cse498;
 
 namespace
 {
-    // TODO: Adjust this ONE helper to match your WorldPosition API.
-    // Common possibilities:
-    //   return WorldPosition{x, y};
-    //   return WorldPosition(x, y);
-    //   return WorldPosition::FromXY(x, y);
-    [[nodiscard]] WorldPosition WP(double x, double y)
-    {
-        return WorldPosition{x, y};
-    }
+// TODO: Adjust this ONE helper to match your WorldPosition API.
+// Common possibilities:
+//   return WorldPosition{x, y};
+//   return WorldPosition(x, y);
+//   return WorldPosition::FromXY(x, y);
+[[nodiscard]] WorldPosition WP(double x, double y)
+{
+    return WorldPosition{x, y};
+}
 }
 
 TEST_CASE("WorldPath: default construction", "[WorldPath]")
@@ -45,8 +44,8 @@ TEST_CASE("WorldPath: construct from span", "[WorldPath]")
     const WorldPath p{std::span<const WorldPosition>{pts}};
     REQUIRE_FALSE(p.Empty());
     REQUIRE(p.Size() == pts.size());
-    REQUIRE(p.At(0).X() == Catch::Approx(0.0));
-    REQUIRE(p.At(0).Y() == Catch::Approx(0.0));
+    REQUIRE(p.At(0).X() == Approx(0.0));
+    REQUIRE(p.At(0).Y() == Catch::Detail::Approx(0.0));
 }
 
 TEST_CASE("WorldPath: AddPoint / Points / Clear", "[WorldPath]")
@@ -58,12 +57,12 @@ TEST_CASE("WorldPath: AddPoint / Points / Clear", "[WorldPath]")
     REQUIRE(p.Size() == 2);
     REQUIRE_FALSE(p.Empty());
 
-    const auto& v = p.Points();
+    const auto &v = p.Points();
     REQUIRE(v.size() == 2);
-    REQUIRE(v[0].X() == Catch::Approx(1.0));
-    REQUIRE(v[0].Y() == Catch::Approx(2.0));
-    REQUIRE(v[1].X() == Catch::Approx(3.0));
-    REQUIRE(v[1].Y() == Catch::Approx(4.0));
+    REQUIRE(v[0].X() == Catch::Detail::Approx(1.0));
+    REQUIRE(v[0].Y() == Catch::Detail::Approx(2.0));
+    REQUIRE(v[1].X() == Catch::Detail::Approx(3.0));
+    REQUIRE(v[1].Y() == Catch::Detail::Approx(4.0));
 
     p.Clear();
     REQUIRE(p.Empty());
@@ -88,10 +87,10 @@ TEST_CASE("WorldPath: Length with 0/1/2+ points", "[WorldPath]")
     REQUIRE(p.Length() == 0.0);
 
     p.AddPoint(WP(3, 4)); // distance = 5
-    REQUIRE(p.Length() == Catch::Approx(5.0));
+    REQUIRE(p.Length() == Catch::Detail::Approx(5.0));
 
     p.AddPoint(WP(3, 0)); // +4
-    REQUIRE(p.Length() == Catch::Approx(9.0));
+    REQUIRE(p.Length() == Catch::Detail::Approx(9.0));
 }
 
 TEST_CASE("WorldPath: SelfIntersects false for simple polyline", "[WorldPath]")
@@ -147,7 +146,7 @@ TEST_CASE("WorldPath: FurthestPointPair returns correct indices", "[WorldPath]")
     const double dx = p.At(i).X() - p.At(j).X();
     const double dy = p.At(i).Y() - p.At(j).Y();
     const double d = std::sqrt(dx * dx + dy * dy);
-    REQUIRE(d == Catch::Approx(5.0));
+    REQUIRE(d == Catch::Detail::Approx(5.0));
 }
 
 TEST_CASE("WorldPath: operator<< prints basic info", "[WorldPath]")

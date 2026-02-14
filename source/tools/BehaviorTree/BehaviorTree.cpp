@@ -1,4 +1,4 @@
-#include "BehaviorTree.h"
+#include "BehaviorTree.hpp"
 #include <algorithm>
 #include <utility>
 

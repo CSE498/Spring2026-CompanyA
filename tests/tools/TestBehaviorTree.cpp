@@ -5,9 +5,10 @@
  * Catch2 unit tests for BehaviorTree.
  */
 
-#include <catch2/catch_test_macros.hpp>
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "BehaviorTree.h"
+
+#include "../../source/tools/BehaviorTree/BehaviorTree.hpp"
 
 #include <vector>
 #include <string>

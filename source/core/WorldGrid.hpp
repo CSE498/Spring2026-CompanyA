@@ -251,6 +251,10 @@ namespace cse498 {
         for (size_t i = 0; i < cell_types.size(); i++)
         {
             CellType type = cell_types[i];
+            // NOTE: while it would be more efficient to save this, it feels REALLY AWKWARD since this is saved
+            // in the MazeWorld instantiation class, so I'd be double saving data. I really want this to be redone
+            // and restructured so tiles know if they are walls or floors and not the world / grid. I hope this
+            // motivates a world maker to redo all this.
             if (type.name == "floor")
             {
 //                floor_type = i;

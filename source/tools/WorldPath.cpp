@@ -6,10 +6,11 @@
  * This is an initial milestone implementation and is expected to evolve.
  */
 
-#include "WorldPath.h"
+#include "WorldPath.hpp"
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <ostream>
 
@@ -192,11 +193,30 @@ std::optional<std::pair<std::size_t, std::size_t>> WorldPath::FurthestPointPair(
 
     return bestPair;
 }
+WorldPath & WorldPath::extend(const WorldPath &other)
+{
+    for (const auto& each : other.mPoints)
+    {
+        AddPoint(each);
+    }
+    return *this;
+}
 
 // Compact debug print (count + total length).
 std::ostream& operator<<(std::ostream& os, const WorldPath& path)
 {
-    os << "WorldPath{points=" << path.Size() << ", length=" << path.Length() << "}";
+    os << "WorldPath{points=" << path.Size() << ", length=" << path.Length() << "}\n";
+
+    for (const auto& each : path.mPoints)
+        os << "{" << each.X() << "," << each.Y() << "}, ";
+    os << std::endl;
+    os << "DESMOS PRINT: \n";
+
+    for (const auto& each : path.mPoints)
+        os << "(" << each.X() << ",-" << each.Y() << "), ";
+    os << std::endl;
+
+
     return os;
 }
 

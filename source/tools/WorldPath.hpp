@@ -11,11 +11,12 @@
 
 #include <cstddef>
 #include <iosfwd>
+#include <algorithm>
 #include <optional>
 #include <span>
 #include <utility>
 #include <vector>
-#include "../../source/core/WorldPosition.hpp"
+#include "../core/WorldPosition.hpp"
 
 namespace cse498
 {
@@ -46,14 +47,26 @@ namespace cse498
 
         // Returns indices of the two furthest points in the path.
         [[nodiscard]] std::optional<std::pair<std::size_t, std::size_t>> FurthestPointPair() const;
+        /**
+         * Reverses the world path in place.
+         */
+        WorldPath& reverse()
+        {
+            std::ranges::reverse(mPoints);
+            return *this;
+        }
 
+
+        bool operator==(const WorldPath&) const = default;
+        friend std::ostream& operator<<(std::ostream& os, const WorldPath& path);
+        WorldPath& extend(const WorldPath& other);
     private:
         std::vector<WorldPosition> mPoints;
     };
 
-    std::ostream& operator<<(std::ostream& os, const WorldPath& path);
+};
 
-} // namespace cse498
+
 
 #endif // SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H
 
