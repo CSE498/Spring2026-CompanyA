@@ -42,7 +42,7 @@ namespace cse498 {
     std::string GetFilename() const { return m_filename; }
 
     template <typename T> std::string StoreData(int id, std::string type, T data) {
-        std::string data_stored = static_cast<std::string> (id);
+        std::string data_stored = std::to_string(id);
         data_stored += "\t";
         
         if(type == "Tile" || type == "Agent" || type == "Background") {
