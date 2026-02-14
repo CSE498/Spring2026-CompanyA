@@ -1,7 +1,9 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/DataLog.hpp"
 
-
+/*
+Test checks functions of the datalog with no samples
+*/
 TEST_CASE("Empty Log Test", "[tools]"){
 
     DataLog log;
@@ -28,6 +30,9 @@ TEST_CASE("Empty Log Test", "[tools]"){
 
 }
 
+/*
+Test checks the functions of a datalog with one sample
+*/
 TEST_CASE("Single Entry Test", "[tools]"){
 
     DataLog log;
@@ -35,12 +40,12 @@ TEST_CASE("Single Entry Test", "[tools]"){
 
     CHECK(log.Count() == 1);
     CHECK(log.DataSamples().size() == log.Count());
-    CHECK(log.DataSamples()[0].first == 10.1);
+    CHECK(log.DataSamples()[0].first == Approx(10.1));
 
-    CHECK(log.Median() == 10.1);
-    CHECK(log.Mean() == 10.1);
-    CHECK(log.Min() == 10.1);
-    CHECK(log.Max() == 10.1);
+    CHECK(log.Median().value() == Approx(10.1));
+    CHECK(log.Mean().value() == Approx(10.1));
+    CHECK(log.Min().value() == Approx(10.1));
+    CHECK(log.Max().value() == Approx(10.1));
 
     log.Clear();
 
@@ -50,6 +55,9 @@ TEST_CASE("Single Entry Test", "[tools]"){
 
 }
 
+/*
+Test checks the functions of the datalog with multiple samples
+*/
 TEST_CASE("Multiple Entry Test", "[tools]"){
 
     DataLog log;
@@ -59,10 +67,10 @@ TEST_CASE("Multiple Entry Test", "[tools]"){
     log.Add(11.1);
 
     CHECK(log.Count() == 4);
-    CHECK(log.Median() == Approx(11.85));
-    CHECK(log.Mean() == Approx(11.95));
-    CHECK(log.Min() == 10.0);
-    CHECK(log.Max() == 14.1);
+    CHECK(log.Median().value() == Approx(11.85));
+    CHECK(log.Mean().value() == Approx(11.95));
+    CHECK(log.Min().value() == Approx(10.0));
+    CHECK(log.Max().value() == Approx(14.1));
 
     log.Clear();
 
@@ -71,6 +79,9 @@ TEST_CASE("Multiple Entry Test", "[tools]"){
     CHECK(log.DataSamples().size() == log.Count());
 }
 
+/*
+Test checks the functions of the datalog with positive and negative values
+*/
 TEST_CASE("Negative Value Entry Test", "[tools]"){
 
     DataLog log;
@@ -81,10 +92,10 @@ TEST_CASE("Negative Value Entry Test", "[tools]"){
     log.Add(0);
 
     CHECK(log.Count() == 5);
-    CHECK(log.Median() == Approx(-11.1));
-    CHECK(log.Mean() == Approx(-5.56));
-    CHECK(log.Min() == -14.1);
-    CHECK(log.Max() == 10.0);
+    CHECK(log.Median().value() == Approx(-11.1));
+    CHECK(log.Mean().value() == Approx(-5.56));
+    CHECK(log.Min().value() == Approx(-14.1));
+    CHECK(log.Max().value() == Approx(10.0));
 
     log.Clear();
 
@@ -93,6 +104,9 @@ TEST_CASE("Negative Value Entry Test", "[tools]"){
     CHECK(log.DataSamples().size() == log.Count());
 }
 
+/*
+Test checks that the timestamps associated with the data values are in increasing order
+*/
 TEST_CASE("Timestamp order check", "[tools]"){
 
     DataLog log;

@@ -1,3 +1,13 @@
+/**
+ * 
+ * @author Aneesh Joshi
+ * @note Status: PROPOSAL
+ * 
+ * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
+ * Samples are stored in the format of (Value, timestamp/seconds since start)
+ * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
+ **/
+
 #pragma once
 #include <vector>
 #include <cstddef>
@@ -16,15 +26,50 @@ private:
     std::chrono::steady_clock::time_point start_timestamp;
 
 public:
+    /*
+    Constructs a Datalog class and sets the start_timestamp to now
+    */
     DataLog();
-    //void Add(double value, double timestamp);
-    void Add(double value);
-    const std::vector<std::pair<double,double>>& DataSamples() const;
-    void Clear();
-    std::size_t Count();
-    std::expected<double, std::string> Min();
-    std::expected<double, std::string> Max();
-    std::expected<double, std::string> Mean();
-    std::expected<double, std::string> Median();
 
-};
+    /*
+    Adds a new data value and the fuction associates a timestamp with the data
+    */
+    void Add(double value);
+
+    /*
+    Function returns a reference to the collection of data samples in the format (data_value, timestamp)
+    */
+    const std::vector<std::pair<double,double>>& DataSamples() const;
+
+    /*
+    Function clears all samples from the data log
+    Timestamp is not reset
+    */
+    void Clear();
+
+    /*
+    Function returns the number of samples stored in the data log
+    */
+    std::size_t Count() const;
+
+    /*
+    Function returns the smallest value in the data log
+    */
+    std::expected<double, std::string> Min() const;
+
+    /*
+    Function returns the largest value in the data log
+    */
+    std::expected<double, std::string> Max() const;
+
+    /*
+    Function returns the average of the values in the data log
+    */
+    std::expected<double, std::string> Mean() const;
+
+    /*
+    Function returns the median of the values in the data log
+    */
+    std::expected<double, std::string> Median() const;
+
+}; 
