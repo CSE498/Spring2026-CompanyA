@@ -328,6 +328,9 @@ TEST_CASE("Basic Functionality of the 4 path generators", "[group2]")
     CHECK(WorldPathApprox(WorldPath(circ2_exp_path), circ2_exp.value().circle_path));
     CHECK(WorldPathApprox(WorldPath(circ2_exp_path_to), circ2_exp.value().path_to_circle));
 
+
+
+
     /*
      * Now we test the last function. Rectangular loops
      */
@@ -354,6 +357,10 @@ TEST_CASE("Basic Functionality of the 4 path generators", "[group2]")
     };
     CHECK(WorldPathApprox(WorldPath(rectangle2_path), rectangle2.value().circle_path));
     CHECK(WorldPathApprox(WorldPath(rectangle2_path_to), rectangle2.value().path_to_circle));
+
+
+
+
 
     // TODO: Need to test backwards CCW CW flags on everything.
     // TODO test opposite direction generation
@@ -430,7 +437,7 @@ TEST_CASE("Path Generation - Doubles testing", "[group2]")
         {7.21621, 1.79093}, {7.47997, 2.75552}, {7.49623, 3.75539}, {7.26398, 4.72804}, {6.79773, 5.6127},
         {6.12663, 6.35406}, {5.2926, 6.90579}, {4.34779, 7.23341}, {3.35125, 7.31644}, {2.36525, 7.14969},
         {1.45142, 6.74359}, {2.45142, 5.74359}, {3.45142, 4.74359}, {4.45142, 3.74359}, {5.45142, 3.74359},
-        {6.45142, 2.74359}, {7.45142, 1.74359}, {7.19001, 1.72908}
+        {6.45142, 2.74359}, {7.45142, 1.74359}
     };
     CHECK(WorldPathApprox(WorldPath(circle1_path_to), circle1.value().path_to_circle));
     CHECK(WorldPathApprox(WorldPath(circle1_path), circle1.value().circle_path));
@@ -448,10 +455,11 @@ TEST_CASE("Path Generation - Doubles testing", "[group2]")
         {6.12663, 6.35406}, {5.2926, 6.90579}, {4.34779, 7.23341}, {3.35125, 7.31644}, {2.36525, 7.14969},
         {1.45142, 6.74359}, {1.45142, 5.74359}, {1.45142, 4.74359}, {1.45142, 3.74359}, {1.45142, 2.74359},
         {1.45142, 1.74359}, {2.45142, 1.74359}, {3.45142, 1.74359}, {4.45142, 1.74359}, {5.45142, 1.74359},
-        {6.45142, 1.74359}, {7.19001, 1.72908}
+        {6.45142, 1.74359}
     };
     CHECK(WorldPathApprox(WorldPath(circle1_exp_path_to), circle1_exp.value().path_to_circle));
     CHECK(WorldPathApprox(WorldPath(circle1_exp_path), circle1_exp.value().circle_path));
+
 
     // TODO check circle generation against walls
 }
@@ -487,6 +495,6 @@ TEST_CASE("Path Generation -- Parts of path outside of area")
     auto man1 = PathGenerator::FindManhattanPath({1,-1}, {-4,4}, request1);
     CHECK(!man1);
 
-
-
 }
+
+// test case - shortest path with obstacles.

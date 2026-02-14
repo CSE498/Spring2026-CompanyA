@@ -46,7 +46,6 @@
 # CMake
 cmake-build-debug/
 .gitignore
-
 **/.DS_Store
-
 .tests/build
+./CMakeLists.txt

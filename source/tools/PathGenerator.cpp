@@ -158,7 +158,7 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
         {
             if (path.size() >= 2)
                 result.insert(result.end(), path.begin()+1, path.end()-1);
-            if (IsPointBefore(next, start, circ_center, circle_flag))
+            if (IsPointBefore(next, start, circ_center, circle_flag) && EuclideanDistance(result.back(), start) > 1)
                 result.push_back(next);
         }
         else
@@ -206,7 +206,7 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
         // This case is different from the previous ending connection because in this case we are
         // always technically very close to the starting position so we only worry if it is a missing point
         // to fill the gap
-        if (IsPointBefore(next, start, circ_center, circle_flag))
+        if (IsPointBefore(next, start, circ_center, circle_flag) && EuclideanDistance(result.back(), start) > 1)
         {
             const size_t size_temp = result.size();
             inner(); // call it one more time with that position

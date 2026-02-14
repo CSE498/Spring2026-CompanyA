@@ -226,7 +226,14 @@ public:
     static std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bot_left,
                                                               const WorldPosition &top_right,
                                                               const PathRequest &request,
-                                                              const CircleDirectionFlag flag);
+                                                              CircleDirectionFlag flag);
+    /**
+     * Creates Shortest path from start to end progressing in step counts of 1 and ending on same tile found
+     * @param start - start position of path
+     * @param end - end position of path (relative to the tile)
+     * @param request - request information
+     * @return
+     */
     static std::optional<WorldPath> FindShortestPath(const WorldPosition& start, const WorldPosition& end, const PathRequest& request);
     /**
      * This is a strict function. If any tiles are blocked then it won't return anything. Only works if all free
