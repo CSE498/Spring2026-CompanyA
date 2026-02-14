@@ -6,12 +6,13 @@ FLAGS_all     = $(FLAGS_version) $(FLAGS_warn)
 SDL_DIR    = ../third-party/SDL2
 FLAGS_all += -I$(SDL_DIR)/include
 SRCS       := $(shell find Agents core Interfaces tools Worlds -name '*.cpp')
-SDL_LIBS   = -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image
+SDL_LIBS   = -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image -lSDL2_ttf
 
 FLAGS_debug   = $(FLAGS_all) -g                     # Setup for running a debugger
 FLAGS_opt     = $(FLAGS_all) -O3 -DNDEBUG           # Fastest possible executable
 FLAGS_quick   = $(FLAGS_all) -DNDEBUG               # Fastest possible compilation
 FLAGS_grumpy  = $(FLAGS_all) -Wconversion -Weffc++  # Some extra picky warnings
+
 
 CXX = c++
 
