@@ -1,5 +1,5 @@
 /**
- * @file PathGeneratorTests.cpp
+ * @file TestPathGenerator.cpp
  * @author lrima
  */
 
