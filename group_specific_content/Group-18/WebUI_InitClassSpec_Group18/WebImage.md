@@ -5,7 +5,7 @@
 
 # Group 18's Write-up for Initial C++ Class (WebUI)
 
-*Last updated: Feb 4, 2026*
+*Last updated: Feb 12, 2026*
 
 ## 3.1 `WebImage` Class Specification
 
@@ -13,11 +13,11 @@
 
 ### 3.1.1 Class Description
 
-A C++ class that represents an image used in the Web UI. It manages the image's source (URL or asset key), logical size, position, alternative text, and basic display properties such as visibility and aspect-ratio behavior.
+A C++ class that represents an image used in the Web UI. It manages the image's source (URL or asset key), logical size, alternative text, opacity, and basic display properties such as visibility and error-handling behavior.
 
-`WebImage` is designed as a reusable content container: it stores *what* image to show and *how* it should look (dimensions, alt text, layout hints), but not *where* it is rendered. Rendering can be performed either:
+`WebImage` is designed as a reusable content container: it stores *what* image to show and *how* it should look (dimensions, alt text, transparency), but **not** *where* it is rendered. Positioning is handled by the layout system:
 
-- as a DOM `<img>` element via `WebLayout`, or
+- as a DOM `<img>` element positioned by `WebLayout` (Flex / Grid / Free), or
 - as a drawn sprite/texture inside an HTML5 `<canvas>` via `WebCanvas`.
 
 The class implements two interfaces:
@@ -31,8 +31,7 @@ The goal is to provide a simple C++ interface for using images in the game witho
 ### 3.1.2 Similar Standard Library Classes
 
 - **`std::string`** – for storing image source paths, alt text, and CSS-like hints  
-- **`std::optional`** – for representing optional layout hints or metadata  
-- **`std::function`** – for load-completion callbacks or notification hooks  
+- **`std::function`** – for load/error callbacks  
 - **Emscripten's `val`** – for DOM manipulation and JavaScript interoperability
 
 ---
@@ -63,110 +62,93 @@ WebImage& operator=(WebImage&& other) noexcept;
 
 ```cpp
 /// Set the image source (URL or asset path).
-/// Changing the source resets the loaded state.
+/// Resets the loaded/error state.
 void SetSource(const std::string& src);
-
-/// Get the current image source.
 std::string GetSource() const;
 
-/// Set the alternative text for accessibility.
+/// Set/get the alternative text for accessibility.
 void SetAltText(const std::string& alt_text);
-
-/// Get the alternative text.
 std::string GetAltText() const;
 ```
 
-#### Geometry (logical size & position, in pixels)
+#### Sizing
 
 ```cpp
 /// Set the display size of the image.
-/// @param width_px  Width in pixels (must be >= 0)
-/// @param height_px Height in pixels (must be >= 0)
+/// Does NOT preserve aspect ratio (stretches to exact dimensions).
 void SetSize(int width_px, int height_px);
 
-/// Get the display width.
+/// Resize the image with optional aspect-ratio preservation.
+/// When maintain_aspect_ratio = true, the image scales to fit within
+/// the bounding box (CSS object-fit: contain).
+/// When false, stretches to exact dimensions (CSS object-fit: fill).
+void Resize(int width_px, int height_px, bool maintain_aspect_ratio = false);
+
 int GetWidth() const;
-
-/// Get the display height.
 int GetHeight() const;
-
-/// Set the position of the image (absolute positioning).
-void SetPosition(int x, int y);
-
-/// Get the X coordinate.
-int GetX() const;
-
-/// Get the Y coordinate.
-int GetY() const;
 ```
 
-#### Aspect Ratio & Fitting
+> **Design note (per instructor feedback):** The old `SetMaintainAspectRatio(bool)` was
+> ambiguous about when the ratio was enforced. `Resize()` makes it explicit:
+> each call decides whether to preserve the ratio or stretch.
+
+#### Opacity / Transparency
 
 ```cpp
-/// Enable or disable maintaining aspect ratio when resizing.
-/// When enabled, uses CSS `object-fit: contain`.
-/// When disabled, uses CSS `object-fit: fill` (stretches to fit).
-void SetMaintainAspectRatio(bool enabled);
-
-/// Check if aspect ratio is being maintained.
-bool GetMaintainAspectRatio() const;
+/// Set the opacity (0.0 = fully transparent, 1.0 = fully opaque).
+void SetOpacity(double alpha);
+double GetOpacity() const;
 ```
 
 #### Visibility
 
 ```cpp
-/// Show the image (sets CSS display to default).
 void Show();
-
-/// Hide the image (sets CSS display to "none").
 void Hide();
-
-/// Check if the image is visible.
 bool IsVisible() const;
 ```
 
-#### Loading State
+#### Loading State & Error Handling
 
 ```cpp
-/// Mark the image as loaded or not (for tracking async loading).
 void MarkLoaded(bool loaded);
-
-/// Check if the image has been loaded.
 bool IsLoaded() const;
+bool HasError() const;
 
-/// Set a callback to be invoked when the image finishes loading.
-/// The callback is triggered by the browser's "load" event.
+/// Callback invoked when the image finishes loading.
 void SetOnLoadCallback(std::function<void()> callback);
 
-/// Handle load event (called internally when image finishes loading).
-void HandleLoad();
+/// Callback invoked when the image fails to load.
+void SetOnErrorCallback(std::function<void()> callback);
+
+/// Set the behavior when an image source fails to load.
+///   BlankRect – renders a colored placeholder rectangle (default).
+///   NoOp     – does nothing; the element stays as-is.
+void SetErrorMode(ImageErrorMode mode);
+
+/// Set the placeholder color for BlankRect mode (any valid CSS color).
+void SetPlaceholderColor(const std::string& css_color);
 ```
+
+> **Design note (per instructor feedback):** When an image file is not found
+> or fails to load, the default behavior (`BlankRect`) replaces the broken
+> icon with a colored rectangle at the specified dimensions. Callers can
+> switch to `NoOp` if they prefer to handle failures entirely in their
+> own error callback.
 
 #### IDomElement Interface
 
 ```cpp
-/// Mount this image to a WebLayout container.
-/// @param parent The parent layout to mount to.
-/// @param align  Alignment within the layout (default: Start).
 void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
-
-/// Unmount this image from its parent layout.
 void unmount() override;
-
-/// Synchronize DOM element properties from the model state.
-/// Re-applies all properties (src, alt, size, position, visibility).
 void syncFromModel() override;
-
-/// Get the unique DOM element ID.
 const std::string& Id() const override;
 ```
 
 #### ICanvasElement Interface
 
 ```cpp
-/// Draw the image on a WebCanvas.
-/// (Stub implementation - primarily supports DOM-based rendering)
-void draw(WebCanvas& canvas) override;
+void draw(WebCanvas& canvas) override;  // stub for future canvas rendering
 ```
 
 ---
@@ -178,33 +160,32 @@ void draw(WebCanvas& canvas) override;
 #include <iostream>
 
 int main() {
-  // Create an image with URL and alt text
-  WebImage img("https://example.com/image.png", "Example Image");
-  
-  // Set size and position
-  img.SetSize(200, 150);
-  img.SetPosition(50, 100);
-  
-  // Configure aspect ratio behavior
-  img.SetMaintainAspectRatio(true);  // Preserve aspect ratio
-  
-  // Set up load callback
+  // Create an image
+  WebImage img("assets/hero.png", "Hero sprite");
+
+  // Resize keeping aspect ratio
+  img.Resize(200, 150, true);
+
+  // Set transparency
+  img.SetOpacity(0.8);
+
+  // Handle load success
   img.SetOnLoadCallback([]() {
-    std::cout << "Image loaded successfully!" << std::endl;
+    std::cout << "Image loaded!" << std::endl;
   });
-  
-  // Control visibility
-  img.Show();   // Make visible
-  img.Hide();   // Hide the image
-  
-  // Change source dynamically
-  img.SetSource("https://example.com/another.png");
-  
+
+  // Handle load failure
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.SetPlaceholderColor("#FF0000");
+  img.SetOnErrorCallback([]() {
+    std::cout << "Image failed to load." << std::endl;
+  });
+
   // Check state
-  if (img.IsLoaded() && img.IsVisible()) {
-    std::cout << "Image is ready and visible" << std::endl;
+  if (img.HasError()) {
+    std::cout << "Image has an error" << std::endl;
   }
-  
+
   return 0;
 }
 ```
@@ -215,8 +196,10 @@ int main() {
 
 | Condition | Behavior |
 |-----------|----------|
-| `SetSize()` with negative values | Assertion failure (debug mode) |
-| `SetSource()` with invalid URL | Image shows broken icon; `IsLoaded()` remains false |
+| `SetSize()` / `Resize()` with negative values | Assertion failure (debug mode) |
+| `SetOpacity()` outside [0.0, 1.0] | Assertion failure (debug mode) |
+| Image source not found / fails to load | `HasError()` returns true; behavior depends on `ImageErrorMode` |
+| `SetSource()` with new URL | Resets `IsLoaded()` and `HasError()` state |
 | Move from moved-from object | Moved-from object has null element; safe to destroy |
 | DOM element removed externally | Methods check for null element before operations |
 
@@ -224,7 +207,7 @@ int main() {
 
 ### 3.1.6 Expected Challenges
 
-1. **Asynchronous Loading**: Images load asynchronously in the browser. The `onload` callback mechanism addresses this, but callers must handle the possibility that an image is not yet ready.
+1. **Asynchronous Loading**: Images load asynchronously in the browser. The `onload`/`onerror` callback mechanism addresses this, but callers must handle the possibility that an image is not yet ready.
 
 2. **Cross-Origin Resources**: Loading images from different domains may be subject to CORS restrictions. The implementation does not handle CORS headers automatically.
 
@@ -238,33 +221,35 @@ int main() {
 
 | Class | Interaction |
 |-------|-------------|
-| `WebLayout` | WebImage implements `IDomElement` and can be mounted to a layout via `mountToLayout()`. The layout manages positioning within its container. |
+| `WebLayout` | WebImage implements `IDomElement` and can be mounted to a layout via `mountToLayout()`. **Positioning is fully managed by WebLayout** (Flex/Grid/Free). WebImage does NOT control its own position. |
 | `WebCanvas` | WebImage implements `ICanvasElement` and can be drawn on a canvas via `draw()`. (Currently stub implementation) |
-| `WebButton` | Similar DOM manipulation patterns; shares the Emscripten `val` approach for JavaScript interop. |
+| `WebButton` / `WebTextbox` | Similar DOM manipulation patterns; shares the Emscripten `val` approach for JavaScript interop. |
 
 ---
 
 ### 3.1.8 File Structure
 
 ```
-WebImage/
-├── WebImage.hpp      # Header file with class declaration
+WebUI/WebImage/
+├── WebImage.hpp      # Header with class declaration
 ├── WebImage.cpp      # Implementation using Emscripten
+├── test_WebImage.cpp # Unit tests
+├── test_WebImage.html # Generated test page after build
 ├── main.cpp          # Demo/test program
 └── index.html        # Test HTML page
 ```
 
 ### 3.1.9 Build Instructions
 
-Compile with Emscripten:
+Compile with Emscripten (C++23):
 
 ```bash
 em++ -std=c++23 -O2 \
   -s WASM=1 \
-  -s EXPORTED_FUNCTIONS="['_main', '_WebImage_handleLoad']" \
+  -s EXPORTED_FUNCTIONS="['_main', '_WebImage_handleLoad', '_WebImage_handleError']" \
   -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']" \
   --bind \
-  -I.. \
+  -I.. -I../internal \
   WebImage.cpp ../WebLayout/WebLayout.cpp main.cpp \
   -o webimage_demo.js
 ```
@@ -275,3 +260,39 @@ Run with a local server:
 python3 -m http.server 8080
 # Open http://localhost:8080/index.html
 ```
+
+### 3.1.10 Unit Test Run Instructions (`test_WebImage.cpp`)
+
+From `WebUI/WebImage/`, compile tests with dependencies:
+
+```bash
+em++ test_WebImage.cpp WebImage.cpp ../WebLayout/WebLayout.cpp \
+  -I../internal \
+  -o test_WebImage.html \
+  -s WASM=1 \
+  --bind
+```
+
+Start a local server in the same directory:
+
+```bash
+python3 -m http.server 8000
+# Open http://localhost:8000/test_WebImage.html
+```
+
+Open browser DevTools Console to read test results. Success is indicated by:
+
+```text
+Results: 35 passed, 0 failed, 35 total
+All tests passed!
+```
+
+---
+
+### 3.1.11 Changelog
+
+| Date | Changes |
+|------|---------|
+| Jan 30, 2026 | Initial specification |
+| Feb 4, 2026 | First implementation with full API |
+| Feb 12, 2026 | **v2**: Removed position control (handled by WebLayout); replaced `SetMaintainAspectRatio` with `Resize()`; added opacity support; added image error handling (`BlankRect` / `NoOp`); fixed include paths for new directory structure |
