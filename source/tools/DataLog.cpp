@@ -1,3 +1,13 @@
+/**
+ * 
+ * @author Aneesh Joshi
+ * @note Status: PROPOSAL
+ * 
+ * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
+ * Samples are stored in the format of (Value, timestamp/seconds since start)
+ * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
+ **/
+
 #include "DataLog.hpp"
 #include <vector>
 #include <cstddef>
@@ -7,31 +17,49 @@
 #include <algorithm>
 #include <chrono>
 
+/*
+Constructs a Datalog class and sets the start_timestamp to now
+*/
 DataLog::DataLog() : start_timestamp(std::chrono::steady_clock::now()){
 
 }
 
+/*
+Adds a new data value and the fuction associates a timestamp with the data
+*/
 void DataLog::Add(double value){
-    //use the timer class to get the timestamp
     auto current_timestamp = std::chrono::steady_clock::now();
     auto duration = current_timestamp - start_timestamp;
     std::pair<double, double> combined_data = {value, std::chrono::duration<double>(duration).count()};
     data_values.push_back(combined_data);
 }
 
+/*
+Function returns a reference to the collection of data samples in the format (data_value, timestamp)
+*/
 const std::vector<std::pair<double,double>>& DataLog::DataSamples() const{
     return data_values;
 }
 
+/*
+Function clears all samples from the data log
+Timestamp is not reset
+*/
 void DataLog::Clear(){
     data_values.clear();
 }
 
-std::size_t DataLog::Count(){
+/*
+Function returns the number of samples stored in the data log
+*/
+std::size_t DataLog::Count() const{
     return data_values.size();
 }
 
-std::expected<double, std::string> DataLog::Min(){
+/*
+Function returns the smallest value in the data log
+*/
+std::expected<double, std::string> DataLog::Min() const{
 
     if(data_values.empty()){
         return std::unexpected("Data is empty.");
@@ -47,7 +75,10 @@ std::expected<double, std::string> DataLog::Min(){
     return min;
 }
 
-std::expected<double, std::string> DataLog::Max(){
+/*
+Function returns the largest value in the data log
+*/
+std::expected<double, std::string> DataLog::Max() const{
     if(data_values.empty()){
         return std::unexpected("Data is empty.");
     }
@@ -63,7 +94,10 @@ std::expected<double, std::string> DataLog::Max(){
     return max;
 }
 
-std::expected<double, std::string> DataLog::Mean(){
+/*
+Function returns the average of the values in the data log
+*/
+std::expected<double, std::string> DataLog::Mean() const{
 
     if(data_values.empty()){
         return std::unexpected("Data is empty.");
@@ -79,7 +113,10 @@ std::expected<double, std::string> DataLog::Mean(){
     return sum / num_size;
 }
 
-std::expected<double, std::string> DataLog::Median(){
+/*
+Function returns the median of the values in the data log
+*/
+std::expected<double, std::string> DataLog::Median() const{
     if(data_values.empty()){
         return std::unexpected("Data is empty.");
     }
@@ -103,4 +140,4 @@ std::expected<double, std::string> DataLog::Median(){
     double median = (stored_data[midpoint] + stored_data[midpoint - 1]) / 2.0;
     return median;
     
-}
+} 

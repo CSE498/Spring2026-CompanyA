@@ -15,6 +15,11 @@
 #include <chrono>
 #include <string_view>
 #include <mutex>
+#include <functional>
+#include <vector>
+#include <functional>
+#include <fstream>
+
 
 /*@enum LogLevel
  * @brief Different levels of logging severity
@@ -69,6 +74,7 @@ enum class LogCategory : uint8_t
     Network
 };
 
+using LogSink = std::function<void(std::string_view)>;
 
 /*@class OutputManager
  * @brief Logging system for game engine
@@ -118,12 +124,38 @@ public:
     */
     static std::string_view CategoryName(LogCategory category);
 
+    /*@brief Adds a sink that receives each formatted log line
+     * @param sink The sink callback to add
+     */
+    void AddSink(LogSink sink);
+
+    /*@brief Clears all registered sinks
+     * @details
+     * After clearing sinks, Log() will not output anywhere until a sink is added.
+    */
+    void ClearSinks();
+
+    /*@brief Enables or disables CSV logging
+     * @param enabled True to enable CSV logging, false to disable
+    */
+    void EnableCsv(bool enabled);
+
+    /*@brief Sets the CSV output file path
+     * @param path File path to write CSV rows to
+     * @param append True to append, false to overwrite
+    */
+    void SetCsvPath(const std::string& path, bool append = true);
+
 private:
     mutable std::mutex m_mutex; /// Mutex for thread operations
     LogLevel m_min{LogLevel::Info}; /// Minimum log level
 
     bool m_timestamps{false}; /// Flag for timestamps
     std::chrono::steady_clock::time_point m_startTime; /// Start time
+    std::vector<LogSink> m_sinks; /// Registered output sinks
 
-
+    bool m_csvEnabled{false};          /// CSV enabled flag
+    std::string m_csvPath;             /// CSV output file path
+    std::ofstream m_csv;               /// CSV stream
+    bool m_csvHeaderWritten{false};    /// Header written flag
 };
