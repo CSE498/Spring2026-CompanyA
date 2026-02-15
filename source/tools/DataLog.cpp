@@ -11,7 +11,7 @@
 #include "DataLog.hpp"
 #include <vector>
 #include <cstddef>
-#include <expected>
+#include <optional>
 #include <string>
 #include <utility>
 #include <algorithm>
@@ -59,10 +59,10 @@ std::size_t DataLog::Count() const{
 /*
 Function returns the smallest value in the data log
 */
-std::expected<double, std::string> DataLog::Min() const{
+std::optional<double> DataLog::Min() const{
 
     if(data_values.empty()){
-        return std::unexpected("Data is empty.");
+        return std::nullopt;
     }
 
     double min = data_values[0].first;
@@ -78,9 +78,9 @@ std::expected<double, std::string> DataLog::Min() const{
 /*
 Function returns the largest value in the data log
 */
-std::expected<double, std::string> DataLog::Max() const{
+std::optional<double> DataLog::Max() const{
     if(data_values.empty()){
-        return std::unexpected("Data is empty.");
+        return std::nullopt;
     }
 
     double max = data_values[0].first;
@@ -97,10 +97,10 @@ std::expected<double, std::string> DataLog::Max() const{
 /*
 Function returns the average of the values in the data log
 */
-std::expected<double, std::string> DataLog::Mean() const{
+std::optional<double> DataLog::Mean() const{
 
     if(data_values.empty()){
-        return std::unexpected("Data is empty.");
+        return std::nullopt;
     }
 
     double sum = 0.0;
@@ -116,9 +116,9 @@ std::expected<double, std::string> DataLog::Mean() const{
 /*
 Function returns the median of the values in the data log
 */
-std::expected<double, std::string> DataLog::Median() const{
+std::optional<double> DataLog::Median() const{
     if(data_values.empty()){
-        return std::unexpected("Data is empty.");
+        return std::nullopt;
     }
 
     std::vector<double> stored_data;

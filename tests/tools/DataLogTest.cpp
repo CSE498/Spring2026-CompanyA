@@ -12,13 +12,7 @@ TEST_CASE("Empty Log Test", "[tools]"){
     CHECK(log.DataSamples().empty());
     CHECK(log.DataSamples().size() == log.Count());
 
-    //Checks if the error msg is returned when a log is empty
-    CHECK(log.Min().error() == "Data is empty.");
-    CHECK(log.Max().error() == "Data is empty.");
-    CHECK(log.Mean().error() == "Data is empty.");
-    CHECK(log.Median().error() == "Data is empty.");
-
-    //Checks if the error msg is returned
+    //Checks if there exists no values in the data log
     CHECK_FALSE(log.Min().has_value());
     CHECK_FALSE(log.Max().has_value());
     CHECK_FALSE(log.Mean().has_value());

@@ -11,7 +11,7 @@
 #pragma once
 #include <vector>
 #include <cstddef>
-#include <expected>
+#include <optional>
 #include <string>
 #include <utility>
 #include <algorithm>
@@ -55,21 +55,21 @@ public:
     /*
     Function returns the smallest value in the data log
     */
-    std::expected<double, std::string> Min() const;
+    std::optional<double> Min() const;
 
     /*
     Function returns the largest value in the data log
     */
-    std::expected<double, std::string> Max() const;
+    std::optional<double> Max() const;
 
     /*
     Function returns the average of the values in the data log
     */
-    std::expected<double, std::string> Mean() const;
+    std::optional<double> Mean() const;
 
     /*
     Function returns the median of the values in the data log
     */
-    std::expected<double, std::string> Median() const;
+    std::optional<double> Median() const;
 
 }; 
