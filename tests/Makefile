@@ -40,7 +40,7 @@ OBJ_FILES := \
 
 DEP_FILES := $(OBJ_FILES:.o=.d)
 
-.PHONY: all build test clean list
+.PHONY: all build test clean list install
 
 all: test
 
@@ -79,3 +79,51 @@ clean:
 
 # Auto-deps
 -include $(DEP_FILES)
+
+# SDL2 Installation Target
+SDL_VERSION = 2.30.0
+SDL_IMAGE_VERSION = 2.8.2
+SDL_TTF_VERSION = 2.22.0
+
+install:
+	@echo "Installing SDL2 libraries..."
+
+	# Create directories
+	@mkdir -p third-party/SDL2/lib
+	@mkdir -p third-party/SDL2/include
+
+	# Check if Homebrew SDL2 is installed
+	@if command -v brew >/dev/null 2>&1; then \
+		echo "Found Homebrew, copying SDL2 libraries..."; \
+		if brew list sdl2 >/dev/null 2>&1; then \
+			cp -n /opt/homebrew/Cellar/sdl2/*/lib/*.dylib third-party/SDL2/lib/ 2>/dev/null || \
+			cp -n /usr/local/lib/libSDL2*.dylib third-party/SDL2/lib/ 2>/dev/null || true; \
+		else \
+			echo "SDL2 not found, installing via Homebrew..."; \
+			brew install sdl2; \
+			cp /opt/homebrew/Cellar/sdl2/*/lib/*.dylib third-party/SDL2/lib/; \
+		fi; \
+		if brew list sdl2_image >/dev/null 2>&1; then \
+			cp -n /opt/homebrew/Cellar/sdl2_image/*/lib/*.dylib third-party/SDL2/lib/ 2>/dev/null || \
+			cp -n /usr/local/lib/libSDL2_image*.dylib third-party/SDL2/lib/ 2>/dev/null || true; \
+		else \
+			echo "SDL2_image not found, installing via Homebrew..."; \
+			brew install sdl2_image; \
+			cp /opt/homebrew/Cellar/sdl2_image/*/lib/*.dylib third-party/SDL2/lib/; \
+		fi; \
+		if brew list sdl2_ttf >/dev/null 2>&1; then \
+			cp -n /opt/homebrew/Cellar/sdl2_ttf/*/lib/*.dylib third-party/SDL2/lib/ 2>/dev/null || \
+			cp -n /usr/local/lib/libSDL2_ttf*.dylib third-party/SDL2/lib/ 2>/dev/null || true; \
+		else \
+			echo "SDL2_ttf not found, installing via Homebrew..."; \
+			brew install sdl2_ttf; \
+			cp /opt/homebrew/Cellar/sdl2_ttf/*/lib/*.dylib third-party/SDL2/lib/; \
+		fi; \
+	else \
+		echo "ERROR: Homebrew not found. Please install Homebrew first."; \
+		echo "Visit: https://brew.sh"; \
+		exit 1; \
+	fi
+
+	@echo "SDL2 installation complete!"
+	@ls -lh third-party/SDL2/lib/*.dylib
