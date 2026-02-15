@@ -5,6 +5,12 @@
  *
  * This link helped me to understand how to trigger functions to build a new row in the file:
  * https://stackoverflow.com/questions/67628186/how-to-write-the-result-of-a-function-to-a-file-c
+ * 
+ * The function data_to_string(const T & data) used this link to help me understand how to convert different data types to a string for storage in the file:
+ * https://chatgpt.com/share/69925206-3bf4-8013-b807-859d6d7d1f89 
+ * 
+ * Learned and understand to check if two different types are convertible using std::is_convertible_v from this link: 
+ * https://www.geeksforgeeks.org/cpp/stdis_convertible-template-in-c-with-examples/
  */
 
 
@@ -33,13 +39,11 @@ namespace cse498 {
     WorldBase *m_world; // This will be a unique_ptr stored in the world file once that file is complete
 
     template <typename T>
-    std::string data_to_string(const T & data) {
-        if constexpr (std::is_convertible_v<T, std::string_view>) {
-            return std::string(data);
-        }
 
-        else if constexpr (std::is_same_v<T, const char*>) {
-          return std::string(data);
+    // Helper function to convert various data types to a string representation for file storage. 
+    std::string data_to_string(const T & data) {
+        if constexpr (std::is_convertible_v<T, std::string>) {
+            return std::string(data);
         }
         
         else if constexpr (std::is_same_v<T, std::vector<std::vector<char>>>) {
@@ -48,7 +52,6 @@ namespace cse498 {
                 for (const auto & cell : row) {
                     result += cell;
                 }
-                result += "\n"; // Newline after each row
             }
             return result;
         }
@@ -56,33 +59,19 @@ namespace cse498 {
             std::string result;
             for (const auto & cell_type : data) {
               if (cell_type)
-                result += std::to_string(cell_type) + "\n";
+                result += std::to_string(cell_type);
             }
             return result;
         }
         else if constexpr (std::is_same_v<T, std::unordered_map<char, size_t>>) {
           std::vector<std::pair<char, size_t>> items(data.begin(), data.end());
-          std::sort(items.begin(), items.end(),
-                    [](auto &a, auto &b){ return a.first < b.first; });
 
           std::string result;
           for (const auto & item : items) {
-            result += item.first;
-            result += ":";
+            result += std::to_string(item.first);
             result += std::to_string(item.second);
-            result += "\n";
           }
           return result;
-        }
-        else if constexpr (std::is_same_v<T, std::vector<std::tuple<size_t, size_t, char>>>) {
-            std::string result;
-            for (const auto & info : data) {
-                size_t id, x, y;
-                char symbol;
-                std::tie(id, x, y, symbol) = info;
-                result += "ID: " + std::to_string(id) + ", X: " + std::to_string(x) + ", Y: " + std::to_string(y) + ", Symbol: " + symbol + "\n";
-            }
-            return result;
         }
         else {
             throw std::runtime_error("cse498::DataFileManager::data_to_string(): Unsupported data type");
@@ -92,15 +81,19 @@ namespace cse498 {
 
 
   public:
+    // Constructor to initialize the DataFileManager with a filename and a pointer to the world. 
     DataFileManager(const std::string & filename, WorldBase *world)
     {
       m_filename = filename;
       m_world = world;
     }
 
+    // Getter for the filename, allowing retrieval of the current filename being used by the DataFileManager. 
     std::string GetFilename() const { return m_filename; }
 
     template <typename T> 
+
+    // Function to store data in a specific format, taking an ID, a type, and the data itself. 
     std::string StoreData(int id, std::string type, const T & data) {
         std::string data_stored = std::to_string(id);
         data_stored += "\t";
@@ -120,6 +113,7 @@ namespace cse498 {
         return data_stored;
     }
 
+    // Function to update the data file with the current state of the world, including tile and agent information. 
     void Update()
     {
       std::ofstream file;
