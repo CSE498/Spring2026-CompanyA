@@ -5,27 +5,6 @@
 
 #include "ActionMap.hpp"
 
-bool ActionMap::AddFunction(std::string name, std::function<void()> fn)
-{
-    // Catches bad usage during development
-    assert(static_cast<bool>(fn) && "ActionMap::AddFunction requires a non-empty function");
-
-    // Runtime validation to keep behavior safe even when asserts are disabled.
-    if (!IsValidName(name))
-    {
-        return false;
-    }
-    if (!fn)
-    {
-        return false;
-    }
-
-    // Use emplace() because it only inserts if the key does not already exist. This is used to prevent
-    // silent overwrites
-    auto [it, inserted] = mActions.emplace(std::move(name), ActionEntry{std::move(fn)});
-    return inserted;
-}
-
 bool ActionMap::RemoveFunction(std::string_view name)
 {
     if (!IsValidName(name))
@@ -33,39 +12,25 @@ bool ActionMap::RemoveFunction(std::string_view name)
         return false;
     }
 
-    // erase() returns the number of elements removed (0 or 1 in this case)
-    return mActions.erase(std::string(name)) > 0;
-}
-
-bool ActionMap::Trigger(std::string_view name) const
-{
-    if (!IsValidName(name))
-    {
-        return false;
-    }
-
-    // Keys are stored as std::string, so this v1 implementation converts string_view to
-    // std::string for lookup. This is simple and correct, but if we want to avoid the conversion, we
-    // can switch to transparent hashing later.
-    auto it = mActions.find(std::string(name));
+    auto it = Find(name);
     if (it == mActions.end())
     {
         return false;
     }
 
-    // Call the action.
-    it->second.fn();
+    // Erase by iterator to avoid a second lookup.
+    mActions.erase(it);
     return true;
 }
 
 std::vector<std::string> ActionMap::ListActions() const
 {
     std::vector<std::string> names;
-    names.reserve(mActions.size()); // avoids repeated reallocations
+    names.reserve(mActions.size());
 
-    for (const auto& [name, entry] : mActions)
+    for (const auto& [name, unused] : mActions)
     {
-        (void)entry;
+        (void)unused;
         names.push_back(name);
     }
     return names;
@@ -88,21 +53,54 @@ bool ActionMap::Rename(std::string_view oldName, std::string newName)
         return false;
     }
 
-    // Find existing action
-    auto oldIt = mActions.find(std::string(oldName));
+    auto oldIt = Find(oldName);
     if (oldIt == mActions.end())
     {
         return false;
     }
 
-    // Check to not overwrite existing actions
-    if (mActions.find(newName) != mActions.end())
+    if (Find(newName) != mActions.end())
     {
         return false;
     }
 
-    // Move the action to the new key and erase old one
+    // Move the entry under the new key, then erase the old key.
     mActions.emplace(std::move(newName), std::move(oldIt->second));
     mActions.erase(oldIt);
+    return true;
+}
+
+std::optional<std::string> ActionMap::GetDescription(std::string_view name) const
+{
+    if (!IsValidName(name))
+    {
+        return std::nullopt;
+    }
+
+    auto it = Find(name);
+    if (it == mActions.end())
+    {
+        return std::nullopt;
+    }
+
+    // Return a copy of the optional description.
+    return it->second.description;
+}
+
+bool ActionMap::SetDescription(std::string_view name, std::optional<std::string> description)
+{
+    if (!IsValidName(name))
+    {
+        return false;
+    }
+
+    auto it = Find(name);
+    if (it == mActions.end())
+    {
+        return false;
+    }
+
+    // Overwrite existing description (or clear it).
+    it->second.description = std::move(description);
     return true;
 }
