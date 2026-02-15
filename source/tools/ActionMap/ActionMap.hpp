@@ -4,6 +4,17 @@
  *
  * This class serves as a command registry that maps string action names
  * to callable functions.
+ *
+ * AI Assistance:
+ * Portions of this implementation were developed with assistance from AI tools
+ * (ChatGPT) as a brainstorming and learning aid. The assistance was primarily
+ * focused on:
+ * - Designing the typed action system (supporting functions with arguments
+ *   and return values).
+ * - Exploring type-erasure patterns using std::any and std::function.
+ * - Discussing alternative API designs and improving template structure.
+ * All final design decisions, implementation details, and testing
+ * were reviewed, modified, and validated by the author (Ty Maksimowski).
  */
 
 #pragma once
