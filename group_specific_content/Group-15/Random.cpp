@@ -3,28 +3,22 @@
  * It is apart of Green and White Games (Company A) Group 15's module.
  * @brief A test file for Random.hpp
  * @note Status: PROPOSAL
- * @author Rachel Loren
  **/
 
 #define CATCH_CONFIG_MAIN
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-
-//g++ -std=c++17 -Wall -I/../../third-party/Catch/single_include/catch2/catch.hpp Random.cpp -o ran
-
 #include "Random.hpp"
 #include <vector>
 
 
-TEST_CASE("Test Random Seeds", "[core]") {
+TEST_CASE("Test Seed Setting", "[core]") {
     cse498::Random ran1;
     cse498::Random ran2;
+    uint64_t generatedSeed = ran2.GetSeed();
     ran2.SetSeed(1000);   // Manually Set the seed
+    CHECK(ran2.GetSeed() != generatedSeed);
     CHECK(ran2.GetSeed() == 1000);
-
-    // Check that the seed is default set based on the time from the computer
-    cse498::Random ran3;
-    CHECK(ran1.GetSeed() != ran3.GetSeed());
 }
 
 TEST_CASE("Test Random Generation with Set Seed", "[core]") {

@@ -3,7 +3,6 @@
  * It is apart of Green and White Games (Company A) Group 15's module.
  * @brief A class for random generation
  * @note Status: PROPOSAL
- * @author Rachel Loren
  * Credit notes: This files makes use of the Xoshiro algorithm as described at:
  *               https://en.wikipedia.org/wiki/Xorshift#xoshiro
  **/
@@ -69,8 +68,8 @@ namespace cse498 {
             }
 
             // Uses m_seed to generate the state positions
-            void xoshiro356pp_init(struct xoshiro256pp_state *state, uint64_t seed) {
-                struct splitmix64_state sm = {seed};
+            void xoshiro356pp_init(struct xoshiro256pp_state *state) {
+                struct splitmix64_state sm = {m_seed};
 
                 state->s[0] = splitmix64(&sm);
                 state->s[1] = splitmix64(&sm);
@@ -121,11 +120,6 @@ namespace cse498 {
                 return static_cast<float>(r >> F_LOWER_41) * (FLOAT_CONVERSION_FACTOR); // Using the top 23 bits
             }
 
-            // Function to reset the seed based on the current time
-            void reset_seed() {
-                m_seed =  std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            }
-
             struct xoshiro256pp_state m_rng;
             bool m_used = false;
 
@@ -133,7 +127,7 @@ namespace cse498 {
 
         public:
             Random() {
-                reset_seed();
+                m_seed =  std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             }
             virtual ~Random() = default;
 
@@ -152,12 +146,13 @@ namespace cse498 {
                 }
 
                 if (m_used == false) {
-                    xoshiro356pp_init(&m_rng, m_seed);
+                    xoshiro356pp_init(&m_rng);
                     m_used = true;
                 }
 
-                // generate the range
+                // generate the bits
                 uint64_t r = xoshiro256pp(&m_rng);
+                // make use of the bits useful for a integer
                 int return_i = i_min + static_cast<int>(r % static_cast<uint64_t>(i_max-i_min+1));
 
                 return return_i;
@@ -171,7 +166,7 @@ namespace cse498 {
                 }
 
                 if (m_used == false) {
-                    xoshiro356pp_init(&m_rng, m_seed);
+                    xoshiro356pp_init(&m_rng);
                     m_used = true;
                 }
 
@@ -189,7 +184,7 @@ namespace cse498 {
                 }
 
                 if (m_used == false) {
-                    xoshiro356pp_init(&m_rng, m_seed);
+                    xoshiro356pp_init(&m_rng);
                     m_used = true;
                 }
 
@@ -207,7 +202,7 @@ namespace cse498 {
                 }
 
                 if (m_used == false) {
-                    xoshiro356pp_init(&m_rng, m_seed);
+                    xoshiro356pp_init(&m_rng);
                     m_used = true;
                 }
                 
@@ -237,7 +232,7 @@ namespace cse498 {
                 }
 
                 if (m_used == false) {
-                    xoshiro356pp_init(&m_rng, m_seed);
+                    xoshiro356pp_init(&m_rng);
                     m_used = true;
                 }
 
