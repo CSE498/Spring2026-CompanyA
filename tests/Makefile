@@ -24,7 +24,7 @@ CXXFLAGS ?= -O2 -g
 WARNFLAGS ?= -Wall -Wextra -Wpedantic
 CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(SDL_DIR)/include	# added SDL
 LDFLAGS  ?=
-LDLIBS   += -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image	# added SDL
+LDLIBS   += -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image -lSDL2_ttf	# added SDL
 
 # Pick up .cpp from tests/
 TEST_FILES := $(shell find $(TEST_DIR) -type f -name '*.cpp')
