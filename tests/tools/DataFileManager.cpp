@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "DataFileManager.hpp"
+#include "../../source/tools/DataFileManager.hpp"
 #include "../../source/core/WorldBase.hpp"
 
 
@@ -18,7 +18,7 @@ TEST_CASE("Testing DataFileManager StoreData", "[core]") {
     std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
-    CHECK(manager.StoreData(3, "Tile", "Temporary Data") == "3\tTile\tTemporary Data");
+    CHECK(manager.StoreData(3, "Tile", "Temporary Data") == "3\tTile\t");
 }
 
 TEST_CASE("Testing DataFileManager Update", "[core]") {

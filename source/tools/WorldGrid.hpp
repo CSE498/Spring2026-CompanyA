@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Location.hpp"
+#include "../core/Location.hpp"
 #include "../tools/io_utils.hpp"
 #include "../tools/io_utils.hpp"
 
