@@ -5,10 +5,10 @@
  * @note Status: PROPOSAL
  **/
 
-#define CATCH_CONFIG_MAIN
+//#define CATCH_CONFIG_MAIN
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "Random.hpp"
+#include "../../source/tools/Random.hpp"
 #include <vector>
 
 

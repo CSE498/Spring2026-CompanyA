@@ -1,7 +1,7 @@
-#define CATCH_CONFIG_MAIN
+//#define CATCH_CONFIG_MAIN
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../group_specific_content/Group-15/WeightedSet.hpp"
+#include "../../source/tools/WeightedSet.hpp"
 
 void MakeSmallTree(cse498::WeightedSet<std::string>& wSet) {
 	wSet.Insert("A", 2.0);

@@ -54,8 +54,6 @@ namespace cse498 {
 
         data_stored += "\t";
 
-        //data_stored += static_cast<std::string> (data);
-
         return data_stored;
     }
 
