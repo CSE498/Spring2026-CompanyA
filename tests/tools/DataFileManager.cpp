@@ -18,7 +18,7 @@ TEST_CASE("Testing DataFileManager StoreData", "[core]") {
     std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
-    CHECK(manager.StoreData(3, "Tile", "Temporary Data") == "3\tTile\t");
+    CHECK(manager.StoreData(3, "Tile", "Temporary Data") == "3\tTile\tTemporary Data");
 }
 
 TEST_CASE("Testing DataFileManager Update", "[core]") {
