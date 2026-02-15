@@ -74,7 +74,7 @@ namespace cse498 {
           return result;
         }
         else {
-            throw std::runtime_error("cse498::DataFileManager::data_to_string(): Unsupported data type");
+            throw std::runtime_error("cse498::DataFileManager::data_to_string(): Unconvertible data type");
         }
     }
 
