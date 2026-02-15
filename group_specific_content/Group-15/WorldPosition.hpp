@@ -29,9 +29,9 @@ namespace cse498 {
   public:
     WorldPosition() = default;
     WorldPosition(double x, double y) : x(x), y(y) { }
-    // template <std::integral T, std::integral U>
-    // WorldPosition(T x, U y)
-    //   : WorldPosition(static_cast<double>(x), static_cast<double>(y)) {}
+ 	  template <std::integral T, std::integral U>
+ 	  WorldPosition(T x, U y)
+   		  : WorldPosition(static_cast<double>(x), static_cast<double>(y)) {}
 
     WorldPosition(const WorldPosition &) = default;
     WorldPosition & operator=(const WorldPosition &) = default;
@@ -54,7 +54,8 @@ namespace cse498 {
     }
 
     /// Enable all comparison operators (==, !=, <, <=, >, >=)
-    //auto operator<=>(const WorldPosition &) const = default;
+    auto operator<=>(const WorldPosition &) const = default;
+
 
     // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
     [[nodiscard]] bool isColliding(const WorldPosition& other) const
