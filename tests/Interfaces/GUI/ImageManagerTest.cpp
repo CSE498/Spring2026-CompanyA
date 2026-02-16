@@ -1,6 +1,9 @@
 /**
  * @file ImageManagerTest.cpp
  * @author Sitara Baxendale
+ *
+ * AI Dislaimer: Used ChatGPT to create the SDLMock class for
+ * creating & destroying a test window and renderer.
  */
 
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"

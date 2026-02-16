@@ -2,7 +2,9 @@
  * @file ImageManager.cpp
  * @author Sitara Baxendale
  *
- *
+ * AI Dislaimer: Used ChatGPT to check overall class correctness. It helped me
+ * adjust my destructor to properly destory pointers & to throw runtime errors
+ * in the load_image class.
  */
  
 #include "ImageManager.hpp"
