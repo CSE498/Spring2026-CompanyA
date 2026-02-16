@@ -1,6 +1,6 @@
 # sdl pkg-config source file
 
-prefix=/opt/homebrew
+prefix=/Users/Lily/Desktop/MSU/CSE498/Spring2026-CompanyA/third-party/SDL2
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
