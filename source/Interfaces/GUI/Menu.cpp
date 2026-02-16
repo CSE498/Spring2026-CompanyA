@@ -6,6 +6,7 @@
 #include "Menu.hpp"
 using namespace cse498;
 
+ // no selection
 Menu::Menu() : selected_index(-1) {}
 
 void Menu::add_option(const std::string& label, std::function<void()> callback) {
@@ -133,6 +134,6 @@ void Menu::handle_input(int input_code) {
   }
 }
 
-void Menu::draw(int x, int y, int width, int height) {
-  // TO DO
-}
+// void Menu::draw(int x, int y, int width, int height) {
+//   // TO DO
+// }

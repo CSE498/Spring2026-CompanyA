@@ -3,6 +3,7 @@
  * @author Kiana May
  *
  * A text rendering class for styled text display in the GUI interface.
+ * Disclaimer: Code clean up and comments utilized Claude Sonnet 4.5
  *
  */
 
@@ -20,10 +21,10 @@ namespace cse498 {
 
 /// Color structure for text rendering
 struct Color {
-    unsigned char r = 255;  ///< Red component (0-255)
-    unsigned char g = 255;  ///< Green component (0-255)
-    unsigned char b = 255;  ///< Blue component (0-255)
-    unsigned char a = 255;  ///< Alpha/transparency (0-255)
+    unsigned char r = 255;  ///Red component (0-255)
+    unsigned char g = 255;  ///Green component (0-255)
+    unsigned char b = 255;  ///Blue component (0-255)
+    unsigned char a = 255;  ///Alpha/transparency (0-255)
 
     Color() = default;
     Color(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255)
@@ -41,18 +42,18 @@ struct Color {
 
 class Text {
 protected:
-    std::string mContent;           ///< Text content to render
-    std::string mFontPath;          ///< Path to current font file
-    Color mColor;                   ///< Text color
-    int mFontSize;                  ///< Font size in points
-    bool mBold;                     ///< Bold style flag
-    bool mItalic;                   ///< Italic style flag
+    std::string mContent;           ///Text content to render
+    std::string mFontPath;          ///Path to current font file
+    Color mColor;                   ///Text color
+    int mFontSize;                  ///Font size in points
+    bool mBold;                     ///Bold style flag
+    bool mItalic;                   ///Italic style flag
 
-    SDL_Renderer* mRenderer;        ///< SDL renderer for drawing
-    TTF_Font* mFont;                ///< Loaded SDL font object
+    SDL_Renderer* mRenderer;        ///SDL renderer for drawing
+    TTF_Font* mFont;                ///Loaded SDL font object
 
-    static const std::string DEFAULT_FONT;  ///< Default font path
-    static const int DEFAULT_SIZE = 16;     ///< Default font size
+    static const std::string DEFAULT_FONT;  ///Default font path
+    static const int DEFAULT_SIZE = 16;     ///Default font size
 
     /// Reload the font with current settings (size, style)
     /// @throws std::runtime_error if font loading fails

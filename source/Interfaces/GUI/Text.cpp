@@ -2,6 +2,7 @@
  * @file Text.cpp
  * @author Kiana May
  * Implementation of the Text class for styled text rendering.
+ * Disclaimer: Code clean up and comments utilized Claude Sonnet 4.5
  **/
 
 #include "Text.hpp"
