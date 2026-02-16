@@ -2,9 +2,10 @@
 #include <iostream>
 #include <string>
 
+
 /*@brief Constructs an OutputManager and initializes the timestamp start point
  */
-OutputManager::OutputManager()
+cse498::OutputManager::OutputManager()
     : m_startTime(std::chrono::steady_clock::now())
 {
     //default sink that prints to std::cout
@@ -16,7 +17,7 @@ OutputManager::OutputManager()
 /*@brief Sets the minimum log level for output
  * @param level The minimum log level to set
 */
-void OutputManager::SetMinLogLevel(LogLevel level) 
+void cse498::OutputManager::SetMinLogLevel(LogLevel level) 
 {
     std::scoped_lock lock(m_mutex); // Lock mutex
     m_min = level;
@@ -25,7 +26,7 @@ void OutputManager::SetMinLogLevel(LogLevel level)
 /*@brief Gets the minimum log level for output
  * @return The minimum log level
 */
-LogLevel OutputManager::GetMinLogLevel() const 
+LogLevel cse498::OutputManager::GetMinLogLevel() const 
 {
     std::scoped_lock lock(m_mutex); //Lock mutex
     return m_min;
@@ -34,7 +35,7 @@ LogLevel OutputManager::GetMinLogLevel() const
 /*@brief Enables or disables timestamps in log output
  * @param enabled True to enable timestamps, false to disable
 */
-void OutputManager::EnableTimestamps(bool enabled) 
+void cse498::OutputManager::EnableTimestamps(bool enabled) 
 {
     std::scoped_lock lock(m_mutex); //Lock mutex
     m_timestamps = enabled;
@@ -43,7 +44,7 @@ void OutputManager::EnableTimestamps(bool enabled)
 /*@brief Checks if a message at a given level should be logged
  * @param level The log level to check
 */
-bool OutputManager::ShouldLog(LogLevel level) const 
+bool cse498::OutputManager::ShouldLog(LogLevel level) const 
 {
     std::scoped_lock lock(m_mutex); //Lock mutex
 
@@ -59,7 +60,7 @@ bool OutputManager::ShouldLog(LogLevel level) const
  * @param category The log category of the message
  * @param message The message to log
 */
-void OutputManager::Log(LogLevel level, LogCategory category, std::string_view message) 
+void cse498::OutputManager::Log(LogLevel level, LogCategory category, std::string_view message) 
 {   
     bool time_stamp_enabled = true;
     std::chrono::steady_clock::time_point start_copy;
@@ -89,7 +90,7 @@ void OutputManager::Log(LogLevel level, LogCategory category, std::string_view m
 // Build the string for standard sinks (Console, etc.)
     std::string output;
     auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_copy).count();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_copy).count(); // Calculate elapsed time for timestamp
 
     if (time_stamp_enabled) {
         output += "[" + std::to_string(elapsed) + "ms] ";
@@ -113,7 +114,7 @@ void OutputManager::Log(LogLevel level, LogCategory category, std::string_view m
  * @param category The log category to convert
  * @return A string view representing the log category
 */
-std::string_view OutputManager::LevelName(LogLevel level) 
+std::string_view cse498::OutputManager::LevelName(LogLevel level) 
 {
     switch (level) 
     {
@@ -131,7 +132,7 @@ std::string_view OutputManager::LevelName(LogLevel level)
  * @param category The log category to convert
  * @return A string view representing the log category
 */
-std::string_view OutputManager::CategoryName(LogCategory category) 
+std::string_view cse498::OutputManager::CategoryName(LogCategory category) 
 {
     switch (category) 
     {
@@ -154,7 +155,7 @@ std::string_view OutputManager::CategoryName(LogCategory category)
 /*@brief Adds a log sink to the output manager
  * @param sink The LogSink callback to add
 */
-void OutputManager::AddSink(LogSink sink)
+void cse498::OutputManager::AddSink(LogSink sink)
 {
     std::scoped_lock lock(m_mutex); //Lock mutex
     m_sinks.emplace_back(std::move(sink));
@@ -164,7 +165,7 @@ void OutputManager::AddSink(LogSink sink)
  * @details
  * After clearing sinks, Log() will not output anywhere until a sink is added.
 */
-void OutputManager::ClearSinks()
+void cse498::OutputManager::ClearSinks()
 {
     std::scoped_lock lock(m_mutex); //Lock mutex
     m_sinks.clear();
@@ -173,7 +174,7 @@ void OutputManager::ClearSinks()
 /* @brief Enables or disables CSV logging
  * @param enabled True to enable CSV logging, false to disable
 */
-void OutputManager::EnableCsv(bool enabled)
+void cse498::OutputManager::EnableCsv(bool enabled)
 {
     std::scoped_lock lock(m_mutex); //Lock mutex
     m_csvEnabled = enabled;
@@ -184,7 +185,7 @@ void OutputManager::EnableCsv(bool enabled)
  * @param append True to append, false to overwrite
 */
 
-void OutputManager::SetCsvPath(const std::string& path, bool append) 
+void cse498::OutputManager::SetCsvPath(const std::string& path, bool append) 
 {
     std::scoped_lock lock(m_mutex);
     m_csvPath = path;
