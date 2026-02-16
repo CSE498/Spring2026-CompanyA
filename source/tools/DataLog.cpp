@@ -32,6 +32,7 @@ Used AI to help create duration in seconds using std::chrono
 */
 void DataLog::Add(double value){
     auto current_timestamp = std::chrono::steady_clock::now();
+    // Calculate the duration in seconds since the start timestamp
     auto duration = current_timestamp - start_timestamp;
     std::pair<double, double> combined_data = {value, std::chrono::duration<double>(duration).count()};
     data_values.push_back(combined_data);
@@ -124,6 +125,7 @@ std::optional<double> DataLog::Median() const{
         return std::nullopt;
     }
 
+    //Get values from the data log to sort them to find the median
     std::vector<double> stored_data;
 
     for(const auto& val : data_values){
@@ -135,7 +137,7 @@ std::optional<double> DataLog::Median() const{
     const auto size = stored_data.size();
     const auto midpoint = size/2;
 
-    //check if odd
+    //check if the size of the data log is odd or even to calculate the median
     if(size % 2 == 1){
         return stored_data[midpoint];
     }
