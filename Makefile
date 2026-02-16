@@ -18,6 +18,9 @@
 #   make test-build
 #   make test-list
 
+# AI Disclaimer: Used ChatGPT to create the 'make install' target in order to
+# download the SDL library for both macOS & Linux users.
+
 .PHONY: default all build test clean debug opt quick grumpy \
         src-% test-% help
 
