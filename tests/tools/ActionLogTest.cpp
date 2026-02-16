@@ -1,8 +1,9 @@
-#include "ActionLog.hpp"
+#include "../../source/tools/ActionLog.hpp"
+
 #include <cassert>
 #include <iostream>
 
-int main() {
+int main1() {
     ActionLog log;
 
     // inital state

@@ -1,8 +1,8 @@
-#define CATCH_CONFIG_MAIN
 #include "../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "ActionLog.hpp"
-#include "ReplayDriver.h"
+#include "../../source/tools/ActionLog.hpp"
+
+#include "../../source/tools/ReplayDriver.hpp"
 
 #include <fstream>
 #include <string>
