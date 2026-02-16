@@ -2,6 +2,8 @@
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief A high-performance hash map using open addressing with robin hood hashing.
  * @note Status: PROPOSAL
+ * @citation: Used Claude Code Opus 4.6 to help me understand the algorithm and implement it.
+ * @note: Took around 10 total hours to implement this. (Including test cases and documentation)
  **/
 
 #pragma once
@@ -57,9 +59,7 @@ namespace cse498 {
     using key_equal   = KeyEqual;
 
   private:
-    // ================================================================
     //  Internal bucket structure
-    // ================================================================
 
     /// @brief A single slot in the open-addressing table.
     struct Bucket {
@@ -68,9 +68,7 @@ namespace cse498 {
       bool occupied = false;        ///< True if this bucket holds a valid entry
     };
 
-    // ================================================================
     //  Constants and member data
-    // ================================================================
 
     static constexpr size_type DEFAULT_CAPACITY = 16;
     static constexpr double DEFAULT_MAX_LOAD_FACTOR = 0.60; // honestly not sure what the best load factor is, 
@@ -79,16 +77,14 @@ namespace cse498 {
                                                             // this will be changed as an input parameter for anyone using the map.
                                                             // so feel free to change it, but keep in mind that the default is 0.60.
 
-    std::vector<Bucket> buckets_;   ///< Contiguous bucket array
-    size_type size_ = 0;            ///< Number of stored key-value pairs
-    size_type capacity_;            ///< Current number of buckets
-    double max_load_factor_;        ///< Load ratio that triggers a rehash
-    Hash hash_fn_;                  ///< Hash function instance
-    KeyEqual key_eq_;               ///< Key equality comparator instance
+    std::vector<Bucket> buckets_;  
+    size_type size_ = 0;
+    size_type capacity_;
+    double max_load_factor_;
+    Hash hash_fn_;
+    KeyEqual key_eq_;
 
-    // ================================================================
     //  Private helpers
-    // ================================================================
 
     /// @brief Compute the ideal bucket index for a given key.
     [[nodiscard]] size_type BucketIndex(const Key & key) const {
@@ -187,9 +183,7 @@ namespace cse498 {
     }
 
   public:
-    // ================================================================
     //  Iterator
-    // ================================================================
 
     /// @brief Forward iterator over stored key-value pairs.
     /// @warning Invalidated by any insert, operator[], or rehash operation.
@@ -274,9 +268,7 @@ namespace cse498 {
     using iterator       = Iterator;
     using const_iterator = ConstIterator;
 
-    // ================================================================
     //  Construction
-    // ================================================================
 
     /// @brief Construct an empty RobinHoodMap.
     /// @param initial_capacity Starting bucket count (default 16).
@@ -299,9 +291,6 @@ namespace cse498 {
     }
 
     /// @brief Construct from an initializer list of key-value pairs.
-    /// @code
-    ///   RobinHoodMap<std::string, int> map = {{"a", 1}, {"b", 2}};
-    /// @endcode
     RobinHoodMap(std::initializer_list<value_type> init,
                  const Hash & hash_fn    = Hash{},
                  const KeyEqual & key_eq = KeyEqual{})
@@ -319,9 +308,7 @@ namespace cse498 {
     RobinHoodMap & operator=(RobinHoodMap &&) noexcept = default;
     ~RobinHoodMap() = default;
 
-    // ================================================================
     //  Capacity
-    // ================================================================
 
     /// @brief Return the number of stored key-value pairs.
     [[nodiscard]] size_type Size() const { return size_; }
@@ -358,9 +345,7 @@ namespace cse498 {
       }
     }
 
-    // ================================================================
     //  Lookup
-    // ================================================================
 
     /// @brief Find the value associated with a key.
     /// @return Pointer to the value if found, nullptr otherwise.
@@ -383,9 +368,7 @@ namespace cse498 {
       return FindIndex(key) != capacity_;
     }
 
-    // ================================================================
     //  Modifiers
-    // ================================================================
 
     /// @brief Insert a key-value pair, or update the value if the key exists.
     /// @return true if a new element was inserted; false if an existing value
@@ -451,9 +434,7 @@ namespace cse498 {
       size_ = 0;
     }
 
-    // ================================================================
     //  Iteration  (lowercase names required for range-based for loops)
-    // ================================================================
 
     iterator begin() {
       return Iterator(buckets_.data(), 0, capacity_);
@@ -480,4 +461,4 @@ namespace cse498 {
     }
   };
 
-} // End of namespace cse498
+}
