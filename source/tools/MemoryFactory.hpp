@@ -4,6 +4,8 @@
  * @note Status: PROPOSAL
  **/
 
+ // Refactored this class to use smart pointers using an LLM
+
 #pragma once
 #include <memory>
 #include <vector>
@@ -91,6 +93,9 @@ namespace cse498 {
             Node* next;
             alignas(T) unsigned char data[sizeof(T)];
         };
+
+        static_assert(sizeof(Node)  >= sizeof(T), "Node storage must be at least as large as T");
+        static_assert(alignof(Node) >= alignof(T), "Node alignment must satisfy T's alignment requirement");
         
         // How many nodes in each allocated block
         std::size_t blockSize;

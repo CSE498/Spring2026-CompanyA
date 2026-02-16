@@ -2,9 +2,16 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/MemoryFactory.hpp"
 
+#include "../../source/core/AgentBase.hpp"
+#include "../../source/Worlds/MazeWorld.hpp"
+#include "../../source/Agents/PacingAgent.hpp"
+
 #include <cstdint>
 #include <string>
 #include <vector>
+
+// Generated some test cases with the use of an LLM to help ensure better test coverage
+// Created structs via LLM to track constructor/destructor calls and ensure proper memory management
 
 TEST_CASE("MemoryFactory: basic create/destroy", "[tools][MemoryFactory]")
 {
@@ -56,7 +63,6 @@ TEST_CASE("MemoryFactory: destroy(nullptr) is safe", "[tools][MemoryFactory]")
 {
   cse498::MemoryFactory<int> pool(4);
   pool.destroy(nullptr);
-  //SUCCEED();
 }
 
 TEST_CASE("MemoryFactory: reuses freed slot", "[tools][MemoryFactory]")
@@ -148,6 +154,58 @@ TEST_CASE("MemoryFactory: stress test", "[tools][MemoryFactory]")
   for (auto* p : ptrs) {
     pool.destroy(p);
   }
+}
 
-  //SUCCEED();
+TEST_CASE("MemoryFactory with Agents: can construct/destroy PacingAgent with MazeWorld",
+          "[tools][MemoryFactory][agents]")
+{
+  cse498::MazeWorld world;
+  cse498::MemoryFactory<cse498::PacingAgent> pool(4);
+
+  auto* a = pool.create(0, std::string("pace"), world);
+  REQUIRE(a != nullptr);
+
+  CHECK(a->IsAgent());
+  CHECK(a->GetSymbol() == '*');
+  a->SetSymbol('P');
+  CHECK(a->GetSymbol() == 'P');
+
+  pool.destroy(a);
+}
+
+TEST_CASE("MemoryFactory with Agents: slot reuse works with PacingAgent",
+          "[tools][MemoryFactory][agents]")
+{
+  cse498::MazeWorld world;
+  cse498::MemoryFactory<cse498::PacingAgent> pool(1);
+
+  auto* a1 = pool.create(0, std::string("a1"), world);
+  pool.destroy(a1);
+
+  auto* a2 = pool.create(1, std::string("a2"), world);
+
+  CHECK(a2 == a1);
+
+  pool.destroy(a2);
+}
+
+TEST_CASE("MemoryFactory and Agents: make() returns memory to pool for PacingAgent",
+          "[tools][MemoryFactory][agents]")
+{
+  cse498::MazeWorld world;
+  cse498::MemoryFactory<cse498::PacingAgent> pool(1);
+
+  cse498::PacingAgent* raw = nullptr;
+  {
+    auto up = pool.make(0, std::string("pace"), world);
+    raw = up.get();
+    REQUIRE(raw != nullptr);
+    raw->SetSymbol('X');
+    CHECK(raw->GetSymbol() == 'X');
+  } 
+
+  auto* again = pool.create(1, std::string("again"), world);
+  CHECK(again == raw);
+
+  pool.destroy(again);
 }
