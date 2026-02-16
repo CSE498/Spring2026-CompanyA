@@ -1,39 +1,100 @@
 #include "WebTextbox.hpp"
+#include "WebLayout.hpp"
 #include <iostream>
 #include <emscripten.h>
 
-// Global pointers so elements persist after main() ends
-WebTextbox* t1 = nullptr;
-WebTextbox* t2 = nullptr;
-WebTextbox* t3 = nullptr;
+// Globals so they persist
+WebLayout* root = nullptr;
+WebTextbox* hud = nullptr;
+WebTextbox* battle_log = nullptr;
+WebTextbox* debug = nullptr;
 
-int main() {
-  // Basic HUD text
-  t1 = new WebTextbox("Player HP: 100/100");
-  t1->SetPosition(20, 70);
-  t1->SetFontFamily("Arial");
-  t1->SetFontSize(20);
-  t1->SetColor("black");
-  t1->SetBold(true);
+int player_hp = 100;
 
-  // A multi-line textbox 
-  t2 = new WebTextbox("Battle Log:\n");
-  t2->SetPosition(20, 120);
-  t2->SetFontFamily("Times New Roman");
-  t2->SetFontSize(16);
-  t2->SetColor("red");
-  t2->SetMaxWidth(300);
+// Simulate HP ticking down
+void Tick() 
+{
+  player_hp -= 1;
+  if (player_hp < 0) player_hp = 100;
 
-  // Append some test output
-  t2->AppendText("You hit the Bat for 6 damage.\n");
-  t2->AppendText("The Bat has fled the battle.\n");
+  hud->SetText("Player HP: " + std::to_string(player_hp) + "/100");
 
-  // A hidden debug textbox
-  t3 = new WebTextbox("DEBUG: agent_test1 = 10, agent_test2 = 4");
-  t3->SetPosition(20, 200);
-  t3->SetColor("purple");
-  t3->Hide();
+  if (player_hp % 10 == 0) 
+  {
+    battle_log->AppendText("Player took damage! HP now " + std::to_string(player_hp) + "\n");
+  }
 
-  std::cout << "WebTextbox demo loaded" << std::endl;
+  // Toggle debug visibility occasionally
+  if (player_hp % 25 == 0) 
+  {
+    debug->Show();
+  } 
+  else if (player_hp % 25 == 10) 
+  {
+    debug->Hide();
+  }
+}
+
+int main() 
+{
+  // ----------------------------------------------------
+  // Root layout 
+  // ----------------------------------------------------
+  root = new WebLayout();                
+  root->SetLayoutType(LayoutType::Vertical);
+  root->SetSpacing(10);
+  root->Apply();  
+
+  // ----------------------------------------------------
+  // HUD Text
+  // ----------------------------------------------------
+  hud = new WebTextbox("Player HP: 100/100");
+  hud->SetFontFamily("Arial");
+  hud->SetFontSize(22);
+  hud->SetBold(true);
+  hud->SetColor("#222222");
+
+  hud->mountToLayout(*root, Alignment::Start);
+
+  // ----------------------------------------------------
+  // Battle Log
+  // ----------------------------------------------------
+  battle_log = new WebTextbox("Battle Log:\n");
+  battle_log->SetFontFamily("Courier New");
+  battle_log->SetFontSize(16);
+  battle_log->SetColor("#AA0000");
+  battle_log->SetMaxWidth(400);
+  battle_log->SetWrap(true);
+  battle_log->SetBackgroundColor("#FFFFFF"); // debug background
+
+  battle_log->AppendText("You hit the Bat for 6 damage.\n");
+  battle_log->AppendText("The Bat has fled the battle.\n");
+
+  battle_log->mountToLayout(*root, Alignment::Start);
+
+  // ----------------------------------------------------
+  // Debug Text
+  // ----------------------------------------------------
+  debug = new WebTextbox("DEBUG: agent_test1 = 10, agent_test2 = 4");
+  debug->SetFontFamily("monospace");
+  debug->SetFontSize(14);
+  debug->SetColor("purple");
+  debug->SetBackgroundColor("#EEEEFF");
+  debug->Hide();
+
+  debug->mountToLayout(*root, Alignment::Start);
+
+  // ----------------------------------------------------
+  // Print bounding box demo
+  // ----------------------------------------------------
+  auto box = hud->GetBoundingBoxPx();
+  std::cout << "HUD size: " << box.w << " x " << box.h << std::endl;
+
+  // ----------------------------------------------------
+  // Simulate game loop updates
+  // ----------------------------------------------------
+  emscripten_set_main_loop(Tick, 1, 1);
+
+  std::cout << "WebTextbox enhanced demo loaded." << std::endl;
   return 0;
 }
