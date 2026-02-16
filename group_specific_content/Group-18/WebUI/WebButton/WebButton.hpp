@@ -5,53 +5,62 @@
 #include <functional>
 #include <emscripten/val.h>
 
-/// Manages an HTML <button> element from C++ via Emscripten
-class WebButton {
+#include "../internal/IDomElement.hpp"
+
+class WebButton : public IDomElement {
  public:
-  explicit WebButton(const std::string& label);
+  explicit WebButton(const std::string& label = "");
   ~WebButton();
 
-  // Each instance owns a unique DOM element
   WebButton(const WebButton&) = delete;
   WebButton& operator=(const WebButton&) = delete;
 
-  // Transfers DOM ownership
   WebButton(WebButton&& other) noexcept;
   WebButton& operator=(WebButton&& other) noexcept;
 
-  // Label
   void SetLabel(const std::string& text);
   std::string GetLabel() const;
 
-  // Callback
   void SetCallback(std::function<void()> callback);
   void Click();
 
-  // Size and position
   void SetSize(int width, int height);
-  void SetPosition(int x, int y);
+  int GetWidth() const;
+  int GetHeight() const;
 
-  // Styling (any valid CSS color string)
   void SetBackgroundColor(const std::string& color);
   void SetTextColor(const std::string& color);
 
-  // State
   void Enable();
   void Disable();
   bool IsEnabled() const;
+
   void Show();
   void Hide();
   bool IsVisible() const;
+
+  void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  void unmount() override;
+  void syncFromModel() override;
+  const std::string& Id() const override;
+
+  void HandleClick();
 
  private:
   std::string label_;
   std::function<void()> callback_;
   bool is_enabled_ = true;
   bool is_visible_ = true;
+  int width_ = 0;
+  int height_ = 0;
+  std::string bg_color_;
+  std::string text_color_;
   emscripten::val element_;
+  std::string id_;
+
+  static int next_id_counter_;
 
   void AttachClickListener();
-  void HandleClick();
 };
 
-#endif 
+#endif
