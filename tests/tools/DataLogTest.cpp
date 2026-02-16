@@ -6,7 +6,7 @@ Test checks functions of the datalog with no samples
 */
 TEST_CASE("Empty Log Test", "[tools]"){
 
-    DataLog log;
+    cse498::DataLog log;
     CHECK(log.Count() == 0);
 
     CHECK(log.DataSamples().empty());
@@ -29,7 +29,7 @@ Test checks the functions of a datalog with one sample
 */
 TEST_CASE("Single Entry Test", "[tools]"){
 
-    DataLog log;
+    cse498::DataLog log;
     log.Add(10.1);
 
     CHECK(log.Count() == 1);
@@ -54,7 +54,7 @@ Test checks the functions of the datalog with multiple samples
 */
 TEST_CASE("Multiple Entry Test", "[tools]"){
 
-    DataLog log;
+    cse498::DataLog log;
     log.Add(10.0);
     log.Add(12.6);
     log.Add(14.1);
@@ -78,7 +78,7 @@ Test checks the functions of the datalog with positive and negative values
 */
 TEST_CASE("Negative Value Entry Test", "[tools]"){
 
-    DataLog log;
+    cse498::DataLog log;
     log.Add(10.0);
     log.Add(-12.6);
     log.Add(-14.1);
@@ -103,7 +103,7 @@ Test checks that the timestamps associated with the data values are in increasin
 */
 TEST_CASE("Timestamp order check", "[tools]"){
 
-    DataLog log;
+    cse498::DataLog log;
     log.Add(1.0);
     log.Add(2.0);
     log.Add(3.0);

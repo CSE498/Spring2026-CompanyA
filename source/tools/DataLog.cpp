@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <chrono>
 
+namespace cse498{
+
 /*
 Constructs a Datalog class and sets the start_timestamp to now
 */
@@ -26,6 +28,7 @@ DataLog::DataLog() : start_timestamp(std::chrono::steady_clock::now()){
 
 /*
 Adds a new data value and the fuction associates a timestamp with the data
+Used AI to help create duration in seconds using std::chrono
 */
 void DataLog::Add(double value){
     auto current_timestamp = std::chrono::steady_clock::now();
@@ -141,3 +144,5 @@ std::optional<double> DataLog::Median() const{
     return median;
     
 } 
+
+}
