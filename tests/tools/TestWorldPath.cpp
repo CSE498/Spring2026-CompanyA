@@ -5,6 +5,7 @@
  * Catch2 unit tests for WorldPath.
  */
 
+#define CATCH_CONFIG_MAIN
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../source/tools/WorldPath.hpp"                 // adjust path if your tests folder differs
@@ -12,6 +13,8 @@
 
 #include <sstream>
 #include <vector>
+#include <span>
+#include <cmath>
 
 using namespace cse498;
 

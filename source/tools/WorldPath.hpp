@@ -30,23 +30,23 @@ namespace cse498
         void Clear();
         void AddPoint(const WorldPosition& p);
 
-        [[nodiscard]] std::size_t Size() const;
-        [[nodiscard]] bool Empty() const;
+        std::size_t Size() const;
+        bool Empty() const;
 
-        [[nodiscard]] const WorldPosition& At(std::size_t index) const;
+        const WorldPosition& At(std::size_t index) const;
 
         // Direct read-only access (legacy/compat).
-        [[nodiscard]] const std::vector<WorldPosition>& Points() const;
+        const std::vector<WorldPosition>& Points() const;
 
         // Preferred read-only view that does not expose the storage type.
-        [[nodiscard]] std::span<const WorldPosition> Span() const noexcept;
+        std::span<const WorldPosition> Span() const noexcept;
 
-        [[nodiscard]] double Length() const;
+        double Length() const;
 
-        [[nodiscard]] bool SelfIntersects() const;
+        bool SelfIntersects() const;
 
         // Returns indices of the two furthest points in the path.
-        [[nodiscard]] std::optional<std::pair<std::size_t, std::size_t>> FurthestPointPair() const;
+        std::optional<std::pair<std::size_t, std::size_t>> FurthestPointPair() const;
         /**
          * Reverses the world path in place.
          */
@@ -69,4 +69,3 @@ namespace cse498
 
 
 #endif // SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H
-

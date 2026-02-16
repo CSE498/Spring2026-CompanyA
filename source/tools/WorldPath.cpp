@@ -23,7 +23,7 @@ namespace
 constexpr double kEps = 1e-9;
 
 // Straight-line distance between two world positions.
-[[nodiscard]] double Dist(const WorldPosition& a, const WorldPosition& b)
+double Dist(const WorldPosition& a, const WorldPosition& b)
 {
     const double dx = a.X() - b.X();
     const double dy = a.Y() - b.Y();
@@ -38,28 +38,28 @@ struct Vec2
 };
 
 // Convert a WorldPosition into a plain 2D vector.
-[[nodiscard]] Vec2 ToVec2(const WorldPosition& p) { return {p.X(), p.Y()}; }
+Vec2 ToVec2(const WorldPosition& p) { return {p.X(), p.Y()}; }
 
 // 2D cross product (scalar).
-[[nodiscard]] double Cross(const Vec2& a, const Vec2& b) { return a.x * b.y - a.y * b.x; }
+double Cross(const Vec2& a, const Vec2& b) { return a.x * b.y - a.y * b.x; }
 
 // Vector subtraction.
-[[nodiscard]] Vec2 Sub(const Vec2& a, const Vec2& b) { return {a.x - b.x, a.y - b.y}; }
+Vec2 Sub(const Vec2& a, const Vec2& b) { return {a.x - b.x, a.y - b.y}; }
 
 // Floating-point comparison with a small tolerance.
-[[nodiscard]] bool NearlyEqual(double a, double b, double eps = kEps)
+bool NearlyEqual(double a, double b, double eps = kEps)
 {
     return std::abs(a - b) <= eps;
 }
 
 // True if two world positions are effectively the same point.
-[[nodiscard]] bool SamePoint(const WorldPosition& a, const WorldPosition& b)
+bool SamePoint(const WorldPosition& a, const WorldPosition& b)
 {
     return NearlyEqual(a.X(), b.X()) && NearlyEqual(a.Y(), b.Y());
 }
 
 // True if p lies on the segment a-b (assuming collinearity).
-[[nodiscard]] bool OnSegment(const Vec2& a, const Vec2& b, const Vec2& p)
+bool OnSegment(const Vec2& a, const Vec2& b, const Vec2& p)
 {
     const double minx = std::min(a.x, b.x);
     const double maxx = std::max(a.x, b.x);
@@ -70,7 +70,7 @@ struct Vec2
 }
 
 // Segment/segment intersection test for path self-intersection checks.
-[[nodiscard]] bool SegmentsIntersect(const WorldPosition& a0,
+bool SegmentsIntersect(const WorldPosition& a0,
                                     const WorldPosition& a1,
                                     const WorldPosition& b0,
                                     const WorldPosition& b1)
@@ -221,4 +221,3 @@ std::ostream& operator<<(std::ostream& os, const WorldPath& path)
 }
 
 } // namespace cse498
-
