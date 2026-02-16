@@ -76,8 +76,9 @@ public:
   void handle_input(int input_code);
 
   // draw function for menu button
-  void draw(int x, int y, int width, int height);
+  // void draw(int x, int y, int width, int height);
 
+    ~Menu() = default;
 };
 
 }
