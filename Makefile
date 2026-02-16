@@ -81,7 +81,7 @@ SDL_IMAGE_VERSION = 2.8.8
 SDL_TTF_VERSION   = 2.24.0
 
 SDL_PREFIX = $(CURDIR)/third-party/SDL2
-SDL_BUILD  = $(CURDIR)/third-party/build
+SDL_BUILD  = $(CURDIR)/third-party/sdl-build
 SDL_STAMP  = $(SDL_PREFIX)/.installed
 
 UNAME_S := $(shell uname -s)
@@ -150,5 +150,5 @@ $(SDL_STAMP):
 	@echo "SDL installation complete."
 
 install-clean:
-	rm -rf third-party/build
+	rm -rf third-party/sdl-build
 	rm -rf third-party/SDL2
