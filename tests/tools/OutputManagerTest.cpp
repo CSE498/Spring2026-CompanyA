@@ -45,7 +45,7 @@ private:
 */
 TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shouldlog]")
 {
-    OutputManager om;
+    cse498::OutputManager om;
 
     SECTION("Min = DEBUG allows DEBUG..ERROR")
     {
@@ -118,7 +118,7 @@ TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shoul
 */
 TEST_CASE("OutputManager::Log is filtered when below minimum level", "[output][log][filter]")
 {
-    OutputManager om;
+    cse498::OutputManager om;
 
     CoutCapture cap;
     om.SetMinLogLevel(LogLevel::Warn);
@@ -129,7 +129,7 @@ TEST_CASE("OutputManager::Log is filtered when below minimum level", "[output][l
 
 TEST_CASE("OutputManager::Log formats level/category/message (timestamps disabled)", "[output][log][format]")
 {
-    OutputManager om;
+    cse498::OutputManager om;
     om.SetMinLogLevel(LogLevel::Info);
     om.EnableTimestamps(false);
 
@@ -164,7 +164,7 @@ TEST_CASE("OutputManager::Log formats level/category/message (timestamps disable
 */
 TEST_CASE("OutputManager timestamp toggling affects output", "[output][log][timestamp]")
 {
-    OutputManager om;
+    cse498::OutputManager om;
 
     CoutCapture cap;
     om.SetMinLogLevel(LogLevel::Info);
@@ -177,7 +177,7 @@ TEST_CASE("OutputManager timestamp toggling affects output", "[output][log][time
 */
 TEST_CASE("OutputManager sink behavior (Step 3)", "[output][sink]")
 {
-    OutputManager om;
+    cse498::OutputManager om;
     std::vector<std::string> lines;
 
     // Force logs to the vector for testing by clearing default sinks and adding a custom one
@@ -222,7 +222,7 @@ TEST_CASE("OutputManager sink behavior (Step 3)", "[output][sink]")
 /* @brief Tests for OutputManager visual timestamp demo*/
 TEST_CASE("Visual timestamp demo (prints to console)", "[output][manual][visual]")
 {
-    OutputManager om;
+    cse498::OutputManager om;
 
     std::cout << "\n=== Visual Timestamp Demo (should show ms) ===\n";
 
@@ -246,7 +246,7 @@ TEST_CASE("Visual timestamp demo (prints to console)", "[output][manual][visual]
 */
 TEST_CASE("CSV Exporting writes header and rows", "[output][csv]")
 {
-    OutputManager om;
+    cse498::OutputManager om;
 
     std::cout << "\n=== Testing CSV Export ===\n";
     const std::string testFile = "test_log.csv";
