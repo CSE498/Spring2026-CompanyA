@@ -38,8 +38,11 @@ namespace cse498 {
       return functions.size() != old_size;
     }
 
-    // Remove all functions.
-    void Clear() { functions.clear(); }
+    // Remove all functions and reset the ID.
+    void Clear() { 
+      functions.clear(); 
+      next_id = 0; 
+    }
 
     // How many functions are stored.
     std::size_t Size() const { return functions.size(); }
@@ -70,7 +73,7 @@ namespace cse498 {
     };
 
     std::vector<Entry> functions;  // stored functions in insertion order
-    FunctionID next_id = 0;        // next ID to assign
+    FunctionID next_id = 0;
 
     // Mutable so CallAll can stay const while tracking last-call status.
     mutable std::size_t last_call_failures = 0;
