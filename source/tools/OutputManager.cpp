@@ -54,7 +54,11 @@ bool OutputManager::ShouldLog(LogLevel level) const
     // Compare log levels as uint8_t for correct ordering
     return static_cast<uint8_t>(level) >= static_cast<uint8_t>(m_min);
 }
-
+/*@brief Logs a message with the specified level and category
+ * @param level The log level of the message
+ * @param category The log category of the message
+ * @param message The message to log
+*/
 void OutputManager::Log(LogLevel level, LogCategory category, std::string_view message) 
 {   
     bool time_stamp_enabled = true;

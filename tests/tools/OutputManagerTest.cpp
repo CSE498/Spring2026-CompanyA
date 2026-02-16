@@ -6,12 +6,18 @@
 #include <string>
 #include <chrono>
 #include <thread>
+
+/** @brief Returns true if haystack contains needle\
+ * @param haystack The string to search within
+ * @param needle The string to search for
+ */
 static bool Contains(const std::string& haystack, const std::string& needle)
 {
     return haystack.find(needle) != std::string::npos;
 }
 
-/*@brief Captures anything written to std::cout during the lifetime of this object */
+/*@brief Captures anything written to std::cout during the lifetime of this object 
+*/
 class CoutCapture
 {
 public:
@@ -35,6 +41,8 @@ private:
     std::streambuf* m_old;
 };
 
+/* @brief Tests for OutputManager functionality: log level filtering
+*/
 TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shouldlog]")
 {
     OutputManager om;
@@ -43,69 +51,71 @@ TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shoul
     {
         om.SetMinLogLevel(LogLevel::DEBUG);
 
-        REQUIRE(om.ShouldLog(LogLevel::DEBUG));
-        REQUIRE(om.ShouldLog(LogLevel::Verbose));
-        REQUIRE(om.ShouldLog(LogLevel::Info));
-        REQUIRE(om.ShouldLog(LogLevel::Warn));
-        REQUIRE(om.ShouldLog(LogLevel::Error));
+        CHECK(om.ShouldLog(LogLevel::DEBUG));
+        CHECK(om.ShouldLog(LogLevel::Verbose));
+        CHECK(om.ShouldLog(LogLevel::Info));
+        CHECK(om.ShouldLog(LogLevel::Warn));
+        CHECK(om.ShouldLog(LogLevel::Error));
     }
 
     SECTION("Min = Verbose filters DEBUG, allows Verbose..ERROR")
     {
         om.SetMinLogLevel(LogLevel::Verbose);
 
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::DEBUG));
-        REQUIRE(om.ShouldLog(LogLevel::Verbose));
-        REQUIRE(om.ShouldLog(LogLevel::Info));
-        REQUIRE(om.ShouldLog(LogLevel::Warn));
-        REQUIRE(om.ShouldLog(LogLevel::Error));
+        CHECK_FALSE(om.ShouldLog(LogLevel::DEBUG));
+        CHECK(om.ShouldLog(LogLevel::Verbose));
+        CHECK(om.ShouldLog(LogLevel::Info));
+        CHECK(om.ShouldLog(LogLevel::Warn));
+        CHECK(om.ShouldLog(LogLevel::Error));
     }
 
     SECTION("Min = Info filters DEBUG/Verbose, allows Info..Error")
     {
         om.SetMinLogLevel(LogLevel::Info);
 
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::DEBUG));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Verbose));
-        REQUIRE(om.ShouldLog(LogLevel::Info));
-        REQUIRE(om.ShouldLog(LogLevel::Warn));
-        REQUIRE(om.ShouldLog(LogLevel::Error));
+        CHECK_FALSE(om.ShouldLog(LogLevel::DEBUG));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Verbose));
+        CHECK(om.ShouldLog(LogLevel::Info));
+        CHECK(om.ShouldLog(LogLevel::Warn));
+        CHECK(om.ShouldLog(LogLevel::Error));
     }
 
     SECTION("Min = Warn filters <Warn, allows Warn..Error")
     {
         om.SetMinLogLevel(LogLevel::Warn);
 
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::DEBUG));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Verbose));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Info));
-        REQUIRE(om.ShouldLog(LogLevel::Warn));
-        REQUIRE(om.ShouldLog(LogLevel::Error));
+        CHECK_FALSE(om.ShouldLog(LogLevel::DEBUG));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Verbose));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Info));
+        CHECK(om.ShouldLog(LogLevel::Warn));
+        CHECK(om.ShouldLog(LogLevel::Error));
     }
 
     SECTION("Min = Error filters <Error, allows Error only")
     {
         om.SetMinLogLevel(LogLevel::Error);
 
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::DEBUG));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Verbose));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Info));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Warn));
-        REQUIRE(om.ShouldLog(LogLevel::Error));
+        CHECK_FALSE(om.ShouldLog(LogLevel::DEBUG));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Verbose));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Info));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Warn));
+        CHECK(om.ShouldLog(LogLevel::Error));
     }
 
     SECTION("Min = Silent filters everything (including DEBUG..ERROR)")
     {
         om.SetMinLogLevel(LogLevel::Silent);
 
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::DEBUG));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Verbose));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Info));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Warn));
-        REQUIRE_FALSE(om.ShouldLog(LogLevel::Error));
+        CHECK_FALSE(om.ShouldLog(LogLevel::DEBUG));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Verbose));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Info));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Warn));
+        CHECK_FALSE(om.ShouldLog(LogLevel::Error));
     }
 }
 
+/* @brief Tests for OutputManager::Log behavior with category filtering, formatting, and timestamp toggling
+*/
 TEST_CASE("OutputManager::Log is filtered when below minimum level", "[output][log][filter]")
 {
     OutputManager om;
@@ -114,7 +124,7 @@ TEST_CASE("OutputManager::Log is filtered when below minimum level", "[output][l
     om.SetMinLogLevel(LogLevel::Warn);
     om.Log(LogLevel::Info, LogCategory::System, "This should NOT print");
 
-    REQUIRE(cap.Str().empty());
+    CHECK(cap.Str().empty());
 }
 
 TEST_CASE("OutputManager::Log formats level/category/message (timestamps disabled)", "[output][log][format]")
@@ -129,11 +139,11 @@ TEST_CASE("OutputManager::Log formats level/category/message (timestamps disable
         om.Log(LogLevel::Info, LogCategory::Combat, "Goblin hit player");
         const std::string out = cap.Str();
 
-        REQUIRE_FALSE(out.empty());
-        REQUIRE(Contains(out, "[INFO]"));
-        REQUIRE(Contains(out, "[COMBAT]"));
-        REQUIRE(Contains(out, "Goblin hit player"));
-        REQUIRE_FALSE(Contains(out, "ms]"));
+        CHECK_FALSE(out.empty());
+        CHECK(Contains(out, "[INFO]"));
+        CHECK(Contains(out, "[COMBAT]"));
+        CHECK(Contains(out, "Goblin hit player"));
+        CHECK_FALSE(Contains(out, "ms]"));
     }
 
     SECTION("Puzzle category")
@@ -142,14 +152,16 @@ TEST_CASE("OutputManager::Log formats level/category/message (timestamps disable
         om.Log(LogLevel::Info, LogCategory::Puzzle, "Player solved riddle");
         const std::string out = cap.Str();
 
-        REQUIRE_FALSE(out.empty());
-        REQUIRE(Contains(out, "[INFO]"));
-        REQUIRE(Contains(out, "[PUZZLE]"));
-        REQUIRE(Contains(out, "Player solved riddle"));
-        REQUIRE_FALSE(Contains(out, "ms]"));
+        CHECK_FALSE(out.empty());
+        CHECK(Contains(out, "[INFO]"));
+        CHECK(Contains(out, "[PUZZLE]"));
+        CHECK(Contains(out, "Player solved riddle"));
+        CHECK_FALSE(Contains(out, "ms]"));
     }
 }
 
+/* @brief Tests for OutputManager::Log behavior with timestamp toggling
+*/
 TEST_CASE("OutputManager timestamp toggling affects output", "[output][log][timestamp]")
 {
     OutputManager om;
@@ -159,15 +171,16 @@ TEST_CASE("OutputManager timestamp toggling affects output", "[output][log][time
     om.EnableTimestamps(true);
     om.Log(LogLevel::Info, LogCategory::System, "Startup");
 
-    REQUIRE(Contains(cap.Str(), "ms]"));
+    CHECK(Contains(cap.Str(), "ms]"));
 }
-
+/* @brief Tests for OutputManager sink behavior, including filtering, formatting, and timestamp toggling
+*/
 TEST_CASE("OutputManager sink behavior (Step 3)", "[output][sink]")
 {
     OutputManager om;
     std::vector<std::string> lines;
 
-    // Quiet the test: route output to our vector sink
+    // Force logs to the vector for testing by clearing default sinks and adding a custom one
     om.ClearSinks();
     om.AddSink([&](std::string_view s) { lines.emplace_back(s); });
 
@@ -178,7 +191,7 @@ TEST_CASE("OutputManager sink behavior (Step 3)", "[output][sink]")
         om.EnableTimestamps(false);
         om.Log(LogLevel::Info, LogCategory::System, "Should not appear");
 
-        REQUIRE(lines.empty());
+        CHECK(lines.empty());
     }
 
     SECTION("Allowed log emits exactly one formatted line")
@@ -188,11 +201,11 @@ TEST_CASE("OutputManager sink behavior (Step 3)", "[output][sink]")
         om.EnableTimestamps(false);
         om.Log(LogLevel::Info, LogCategory::Combat, "Goblin hit player");
 
-        REQUIRE(lines.size() == 1);
-        REQUIRE(Contains(lines[0], "[INFO]"));
-        REQUIRE(Contains(lines[0], "[COMBAT]"));
-        REQUIRE(Contains(lines[0], "Goblin hit player"));
-        REQUIRE_FALSE(Contains(lines[0], "ms]"));
+        CHECK(lines.size() == 1);
+        CHECK(Contains(lines[0], "[INFO]"));
+        CHECK(Contains(lines[0], "[COMBAT]"));
+        CHECK(Contains(lines[0], "Goblin hit player"));
+        CHECK_FALSE(Contains(lines[0], "ms]"));
     }
 
     SECTION("Timestamp toggle affects sink output")
@@ -202,11 +215,11 @@ TEST_CASE("OutputManager sink behavior (Step 3)", "[output][sink]")
         om.EnableTimestamps(true);
         om.Log(LogLevel::Info, LogCategory::System, "Startup");
 
-        REQUIRE(lines.size() == 1);
-        REQUIRE(Contains(lines[0], "ms]"));
+        CHECK(lines.size() == 1);
+        CHECK(Contains(lines[0], "ms]"));
     }
 }
-
+/* @brief Tests for OutputManager visual timestamp demo*/
 TEST_CASE("Visual timestamp demo (prints to console)", "[output][manual][visual]")
 {
     OutputManager om;
@@ -226,9 +239,11 @@ TEST_CASE("Visual timestamp demo (prints to console)", "[output][manual][visual]
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
     om.Log(LogLevel::Info, LogCategory::System, "Visual test: second message (later)");
 
-    SUCCEED(); // This test is intentionally "visual"
+    SUCCEED(); // Test passed
 }
 
+/* @brief Tests for OutputManager CSV exporting
+*/
 TEST_CASE("CSV Exporting writes header and rows", "[output][csv]")
 {
     OutputManager om;
@@ -243,24 +258,23 @@ TEST_CASE("CSV Exporting writes header and rows", "[output][csv]")
     om.Log(LogLevel::Info, LogCategory::System, "CSV Test Message 1");
     om.Log(LogLevel::Error, LogCategory::AI, "CSV Test Message 2");
 
-    // Encourage flushing/closing if your implementation does so on disable
-    om.EnableCsv(false);
+    om.EnableCsv(false); // Close the CSV file to flush contents
 
     std::ifstream file(testFile);
-    REQUIRE(file.is_open());
+    CHECK(file.is_open());
 
     std::string line;
 
-    REQUIRE(std::getline(file, line));
-    REQUIRE(line == "Timestamp(ms),Level,Category,Message");
+    CHECK(std::getline(file, line));
+    CHECK(line == "Timestamp(ms),Level,Category,Message");
 
-    REQUIRE(std::getline(file, line));
-    REQUIRE(Contains(line, "INFO"));
-    REQUIRE(Contains(line, "SYSTEM"));
-    REQUIRE(Contains(line, "CSV Test Message 1"));
+    CHECK(std::getline(file, line));
+    CHECK(Contains(line, "INFO"));
+    CHECK(Contains(line, "SYSTEM"));
+    CHECK(Contains(line, "CSV Test Message 1"));
 
-    REQUIRE(std::getline(file, line));
-    REQUIRE(Contains(line, "ERROR"));
-    REQUIRE(Contains(line, "AI"));
-    REQUIRE(Contains(line, "CSV Test Message 2"));
+    CHECK(std::getline(file, line));
+    CHECK(Contains(line, "ERROR"));
+    CHECK(Contains(line, "AI"));
+    CHECK(Contains(line, "CSV Test Message 2"));
 }
