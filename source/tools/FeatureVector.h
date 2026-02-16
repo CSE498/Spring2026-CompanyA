@@ -2,6 +2,8 @@
 #include <cstddef>
 #include <vector>
 
+namespace cse498
+{
 
 class FeatureVector
 {
@@ -22,4 +24,6 @@ class FeatureVector
 
         void normalize();
 };
+
+} // namespace cse498
 

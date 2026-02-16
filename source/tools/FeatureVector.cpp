@@ -7,6 +7,9 @@
 #include <iostream>
 
 
+namespace cse498 
+{
+
 FeatureVector::FeatureVector(std::vector <double> values) 
 : values_(std::move(values)) 
 {
@@ -48,4 +51,5 @@ void FeatureVector::normalize()
     {
         v /= norm;
     }
+}
 }

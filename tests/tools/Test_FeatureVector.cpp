@@ -2,6 +2,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+using cse498::FeatureVector;
+
 TEST_CASE("FeatureVector dot product", "[dot]")
 {
     FeatureVector v1 ({1.0, 2.0, 3.0});
