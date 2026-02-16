@@ -8,7 +8,7 @@
 /**
  * Constructor for a Timer.
  */
-Timer::Timer()
+cse498::Timer::Timer()
 {
 }
 
@@ -16,7 +16,7 @@ Timer::Timer()
  * Starts a timer, adding it to the map of timers using the provided
  * timer name as the key, and the current time as the value.
  */
-void Timer::start(std::string timerName)
+void cse498::Timer::start(std::string timerName)
 {
     if (mTimers.find(timerName) != mTimers.end())
     {
@@ -40,7 +40,7 @@ void Timer::start(std::string timerName)
  * Stops the timer with the provided name, addings it's elapsed time to the
  * accumulated duration and marking it as stopped. Does nothing if the timer doesn't exist.
  */
-void Timer::stop(std::string timerName)
+void cse498::Timer::stop(std::string timerName)
 {
     if (mTimers.find(timerName) != mTimers.end())
     {
@@ -56,7 +56,7 @@ void Timer::stop(std::string timerName)
 /**
  * Restarts the timer with the provided name, resetting its accumulated duration to 0 and starting it again.
  */
-void Timer::restart(std::string timerName)
+void cse498::Timer::restart(std::string timerName)
 {
     mTimers[timerName].startTime = std::chrono::steady_clock::now();
     mTimers[timerName].isRunning = true;
@@ -67,7 +67,7 @@ void Timer::restart(std::string timerName)
  * Get the duration the timer has run for, adding in the current running time if the timer is still running.
  * Returns a duration of 0 if the timer doesn't exist.
  */
-double Timer::getTime(std::string timerName)
+double cse498::Timer::getTime(std::string timerName)
 {
     if (mTimers.find(timerName) != mTimers.end())
     {
