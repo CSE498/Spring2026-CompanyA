@@ -43,3 +43,46 @@ TEST_CASE("Test Timer Constructor and Basic Functionality", "[tools]")
     auto duration6 = timer.getTime("test1");
     REQUIRE(duration6 == Approx(4.0).margin(0.01)); // Should be close to 4 seconds after sleeping for 4 seconds.
 }
+
+TEST_CASE("Test Multiple Timers", "[tools]")
+{
+    cse498::Timer timer;
+
+    // Start multiple timers and ensure they track time independently.
+    timer.start("timerA");
+    timer.start("timerB");
+    REQUIRE(timer.isRunning("timerA") == true);
+    REQUIRE(timer.isRunning("timerB") == true);
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Check that both timers have accumulated approximately 1 second.
+    auto durationA1 = timer.getTime("timerA");
+    auto durationB1 = timer.getTime("timerB");
+    REQUIRE(durationA1 == Approx(1.0).margin(0.01));
+    REQUIRE(durationB1 == Approx(1.0).margin(0.01));
+
+    // Test that timer A correctly stops while timer B continues to run.
+    timer.stop("timerA");
+    REQUIRE(timer.isRunning("timerA") == false);
+    REQUIRE(timer.isRunning("timerB") == true);
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    // Test that the timer A doesn't increase it's time, while B correctly does.
+    auto durationA2 = timer.getTime("timerA");
+    auto durationB2 = timer.getTime("timerB");
+    REQUIRE(durationA2 == Approx(1.0).margin(0.01));
+    REQUIRE(durationB2 == Approx(3.0).margin(0.01));
+
+    // Add a third timer and make sure everything still works as expected.
+    timer.start("timerC");
+    REQUIRE(timer.isRunning("timerC") == true);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto durationA3 = timer.getTime("timerA");
+    auto durationB3 = timer.getTime("timerB");
+    auto durationC1 = timer.getTime("timerC");
+    REQUIRE(durationA3 == Approx(1.0).margin(0.01));
+    REQUIRE(durationB3 == Approx(4.0).margin(0.01));
+    REQUIRE(durationC1 == Approx(1.0).margin(0.01));
+}
