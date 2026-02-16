@@ -53,6 +53,7 @@ void ImageGrid::Clear() {
 
 /**
  * resize grid while preserving overlapping region.
+ * *AIGENERATED double for-loop* 
  */
 void ImageGrid::Resize(size_t new_width, size_t new_height)
 {
@@ -77,6 +78,7 @@ void ImageGrid::Resize(size_t new_width, size_t new_height)
  * draw the entire grid.
  * converts grid coordinates to pixel coordinates
  * using the configured tile dimensions.
+ *  *AIGENERATED* 
  */
 void ImageGrid::Draw(const ImageManager& image_manager) const
 {
@@ -84,7 +86,7 @@ void ImageGrid::Draw(const ImageManager& image_manager) const
     for (size_t y = 0; y < mHeight; ++y) {
 
       const std::string& image_name =
-          mCells[ToIndex(x, y)];
+          mCells[ToIndex(x, y)];      
 
       if (!image_name.empty()) {
 
