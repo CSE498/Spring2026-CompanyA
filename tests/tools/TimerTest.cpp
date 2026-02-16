@@ -5,7 +5,7 @@
 
 TEST_CASE("Test Timer Constructor and Basic Functionality", "[tools]")
 {
-    Timer timer;
+    cse498::Timer timer;
 
     // Test that a new timer can be started and that its time is approximately 0 seconds.
     timer.start("test1");
