@@ -57,9 +57,9 @@ namespace cse498 {
         }
         else if constexpr (std::is_same_v<T, std::vector<size_t>>) {
             std::string result;
-            for (const auto & cell_type : data) {
-              if (cell_type)
-                result += std::to_string(cell_type);
+            for (const auto & cell_info : data) {
+              if (cell_info)
+                result += std::to_string(cell_info);
             }
             return result;
         }
