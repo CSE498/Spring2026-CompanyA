@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WebLayout Demo</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    #app-root {
+      padding: 12px;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .header {
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h2>WebLayout Demo</h2>
+    <p>Open the browser console to see runtime logs.</p>
+  </div>
+
+  <!-- Container used by the C++ demo (WebLayout("app-root")) -->
+  <div id="app-root"></div>
+
+  <!-- Emscripten output (replace with the generated filename) -->
+  <script src="weblayout_demo.js"></script>
+
+  <script>
+    // Helpful note: Emscripten may call main automatically.
+    window.addEventListener('load', function () {
+      console.log('Page loaded - check console for WebLayout demo output.');
+    });
+  </script>
+</body>
+
+</html>
