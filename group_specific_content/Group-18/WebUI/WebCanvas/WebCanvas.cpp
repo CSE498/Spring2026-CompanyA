@@ -4,6 +4,29 @@
 #include <algorithm>  // std::stable_sort
 #include <vector>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
+// --------------------
+// External JS library functions (from WebCanvas.js via --js-library)
+// --------------------
+#ifdef __EMSCRIPTEN__
+extern "C" {
+    void webcanvas__clear(const char* id, const char* cssColor);
+    void webcanvas__draw_line(const char* id, float x1, float y1, float x2, float y2,
+                              float lineWidth, const char* strokeColor);
+    void webcanvas__draw_circle(const char* id, float cx, float cy, float r,
+                                const char* strokeColor, float lineWidth, const char* fillColor);
+    void webcanvas__draw_polygon(const char* id, const float* coordsXY, int count,
+                                 const char* strokeColor, float lineWidth, const char* fillColor);
+}
+#endif
+
+// --------------------
+// WebCanvas
+// --------------------
+
 WebCanvas::WebCanvas(std::string id)
   : m_id(std::move(id))
 {
@@ -15,7 +38,6 @@ WebCanvas::WebCanvas(std::string id)
 // ---- IDomElement ----
 void WebCanvas::mountToLayout(WebLayout& parent, Alignment align)
 {
-    // Early stage: record the mount relationship only (no real DOM operations yet).
     m_parent  = &parent;
     m_align   = align;
     m_mounted = true;
@@ -23,27 +45,22 @@ void WebCanvas::mountToLayout(WebLayout& parent, Alignment align)
 
 void WebCanvas::unmount()
 {
-    // Early stage: clear mount state only.
     m_parent  = nullptr;
     m_mounted = false;
 }
 
 void WebCanvas::syncFromModel()
 {
-    // Early stage: no-op (will later sync size/style/attributes to the real <canvas>).
+    // Safe no-op placeholder for now.
 }
 
-const std::string& WebCanvas::Id() const
-{
-    return m_id;
-}
-
-// ---- Canvas management ----
+// ---- Canvas content management ----
 void WebCanvas::addElement(std::unique_ptr<ICanvasElement> element)
 {
-    if (element) {
-        m_elements.push_back(std::move(element));
+    if (!element) {
+        return;
     }
+    m_elements.emplace_back(std::move(element));
 }
 
 void WebCanvas::clearElements()
@@ -53,14 +70,11 @@ void WebCanvas::clearElements()
 
 void WebCanvas::renderFrame()
 {
-    // Build a non-owning view for scheduling without modifying ownership order.
+    // Collect raw pointers for stable sorting without moving ownership.
     std::vector<ICanvasElement*> ordered;
     ordered.reserve(m_elements.size());
-
-    for (auto& up : m_elements) {
-        if (up) {
-            ordered.push_back(up.get());
-        }
+    for (auto& e : m_elements) {
+        ordered.push_back(e.get());
     }
 
     // Stable sort by zIndex (ascending). Elements with the same zIndex keep insertion order.
@@ -76,4 +90,69 @@ void WebCanvas::renderFrame()
         }
         e->draw(*this);
     }
+}
+
+// ---- Immediate-mode primitives ----
+void WebCanvas::Clear(const std::string& cssColor)
+{
+#ifdef __EMSCRIPTEN__
+    webcanvas__clear(m_id.c_str(), cssColor.c_str());
+#else
+    (void)cssColor;
+#endif
+}
+
+void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
+                         float lineWidth, const std::string& strokeColor)
+{
+#ifdef __EMSCRIPTEN__
+    webcanvas__draw_line(m_id.c_str(), x1, y1, x2, y2, lineWidth, strokeColor.c_str());
+#else
+    (void)x1; (void)y1; (void)x2; (void)y2; (void)lineWidth; (void)strokeColor;
+#endif
+}
+
+void WebCanvas::DrawCircle(float centerX, float centerY, float radius,
+                           const std::string& strokeColor, float lineWidth,
+                           const std::string& fillColor)
+{
+#ifdef __EMSCRIPTEN__
+    webcanvas__draw_circle(m_id.c_str(), centerX, centerY, radius,
+                           strokeColor.c_str(), lineWidth, fillColor.c_str());
+#else
+    (void)centerX; (void)centerY; (void)radius; (void)strokeColor; (void)lineWidth; (void)fillColor;
+#endif
+}
+
+void WebCanvas::DrawPoint(float x, float y, float radius, const std::string& fillColor)
+{
+    // Treat point as a filled circle with no stroke.
+    DrawCircle(x, y, radius, /*stroke*/ "#000000", /*lineWidth*/ 0.0f, fillColor);
+}
+
+void WebCanvas::DrawPolygon(const std::vector<Vec2>& points,
+                            const std::string& strokeColor, float lineWidth,
+                            const std::string& fillColor)
+{
+    if (points.size() < 2) {
+        return;
+    }
+
+#ifdef __EMSCRIPTEN__
+    std::vector<float> coords;
+    coords.reserve(points.size() * 2);
+    for (const auto& p : points) {
+        coords.push_back(p.x);
+        coords.push_back(p.y);
+    }
+
+    webcanvas__draw_polygon(m_id.c_str(),
+                            coords.data(),
+                            static_cast<int>(points.size()),
+                            strokeColor.c_str(),
+                            lineWidth,
+                            fillColor.c_str());
+#else
+    (void)points; (void)strokeColor; (void)lineWidth; (void)fillColor;
+#endif
 }
