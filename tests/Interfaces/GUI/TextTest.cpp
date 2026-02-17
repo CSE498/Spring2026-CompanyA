@@ -1,6 +1,7 @@
 /**
  * @file TextTest.cpp
  * @author Kiana May
+ * Disclaimer: Code clean up and comments utilized Claude Sonnet 4.5
  */
 
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
