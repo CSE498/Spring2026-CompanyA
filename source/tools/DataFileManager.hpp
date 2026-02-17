@@ -49,8 +49,8 @@ namespace cse498 {
         else if constexpr (std::is_same_v<T, std::vector<std::vector<char>>>) {
             std::string result;
             for (const auto & row : data) {
-                for (const auto & cell : row) {
-                    result += cell;
+                for (const auto & col : row) {
+                    result += col;
                 }
             }
             return result;
