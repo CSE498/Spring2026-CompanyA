@@ -156,7 +156,7 @@ Person taking lead - Caleb Shin
 
 #### Class Description
 
-Schedules a set of processes based on a “priority” measure and returns the ID of which one should go next. The priority of a process should be proportional to how often it is scheduled. This class can be built to be probabilistic or evenly integrated.
+Implements a probabilistic scheduler that utilizes weighted probability to determine the next process to schedule. The selection distribution is weighted such that a process's scheduling frequency correlates directly to its priority value.
 
 #### Similar Classes
 
@@ -255,4 +255,5 @@ A tool that takes in an expression in the form of a string and returns a functio
     
 -   Use case definition (user or internally facing)
     
+
 -   Integration with outside groups given the specificity required
