@@ -6,8 +6,8 @@
 #pragma once
 
 // From Dr. Ofria's https://cse.msu.edu/~cse450/Emplex/Emplex.html
-#include "util/lexer.hpp"
-#include "util/tinyexpr.h"
+#include "../../../third-party/Emplex/lexer.hpp"
+#include "../../../third-party/Tinyexpr/tinyexpr.h"
 
 #include <algorithm>
 #include <cassert>

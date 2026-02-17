@@ -1,5 +1,5 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../source/tools/Scheduler.hpp"
+#include "../../source/tools/InteractiveWorld/Scheduler.hpp"
 
 using namespace cse498;
 
