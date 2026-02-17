@@ -1,7 +1,7 @@
-#define CATCH_CONFIG_MAIN
-#include "../../../../third-party/Catch/single_include/catch2/catch.hpp"
+//#define CATCH_CONFIG_MAIN
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "WebButton.hpp"
+#include "../../../source/Interfaces/WebUI/WebButton/WebButton.hpp"
 #include <string>
 #include <type_traits>
 

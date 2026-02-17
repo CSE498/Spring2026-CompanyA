@@ -8,15 +8,9 @@
 #include <string>
 #include <utility>
 
-//// For: tests/Interfaces/WebUI/WebCanvasTest.cpp
-// #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
-// #include "../../../source/Interfaces/WebUI/WebCanvas.hpp"
-// #include "../../../source/Interfaces/WebUI/internal/ICanvasElement.hpp"
-//// For: group_specific_content/Group-18/WebUI/WebCanvas/WebCanvasTest.cpp
-#define CATCH_CONFIG_MAIN
-#include "../../../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "./WebCanvas.hpp"
-#include "../internal/ICanvasElement.hpp"
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../../source/Interfaces/WebUI/WebCanvas/WebCanvas.hpp"
+#include "../../../source/Interfaces/WebUI/internal/ICanvasElement.hpp"
 
 // A minimal WebLayout stub for unit tests.
 // This avoids pulling in the real WebLayout implementation (which may depend on emscripten).

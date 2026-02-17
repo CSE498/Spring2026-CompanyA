@@ -11,9 +11,9 @@
 
 // Define CATCH_CONFIG_MAIN in this file only (first test file)
 #define CATCH_CONFIG_MAIN
-#include "../../../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "./WebLayout.hpp"
-#include "../internal/IDomElement.hpp"
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../../source/Interfaces/WebUI/WebLayout/WebLayout.hpp"
+#include "../../../source/Interfaces/WebUI/internal/IDomElement.hpp"
 
 // ---------------------------
 // Test Helpers & Stubs

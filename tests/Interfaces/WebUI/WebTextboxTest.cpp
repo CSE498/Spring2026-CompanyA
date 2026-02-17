@@ -1,5 +1,5 @@
-#include "WebTextbox.hpp"
-#include "WebLayout.hpp"
+#include "../../../source/Interfaces/WebUI/WebTextbox/WebTextbox.hpp"
+#include "../../../source/Interfaces/WebUI/WebLayout/WebLayout.hpp"
 
 #include <cassert>
 #include <iostream>
