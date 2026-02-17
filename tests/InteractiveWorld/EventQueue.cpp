@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_MAIN
-
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../group_specific_content/Group-14/Group14InitialClasses/EventQueue.hpp"
 

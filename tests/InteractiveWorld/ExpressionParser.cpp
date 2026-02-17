@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_MAIN
-
 #include "../../group_specific_content/Group-14/Group14InitialClasses/ExpressionParser.hpp"
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
