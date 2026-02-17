@@ -48,3 +48,5 @@
 third-party/sdl-build/
 third-party/SDL2/
 
+/source/simple
+/tests/build/run_tests
