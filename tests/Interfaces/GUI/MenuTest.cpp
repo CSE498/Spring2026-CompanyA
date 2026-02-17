@@ -1,9 +1,15 @@
 /**
  * @file MenuTest.cpp
  * @author Anagha Jammalamadaka
+ *
+ * AI Disclaimer:
+ *  Identify critical error cases requiring validation (empty labels,
+ *  null callbacks, invalid indices, empty menu activation)
+ *  Verify test coverage completeness and edge case handling
+ *
  */
 
-//#define CATCH_CONFIG_MAIN
+
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../../source/Interfaces/GUI/Menu.hpp"
 

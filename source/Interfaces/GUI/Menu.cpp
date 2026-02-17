@@ -1,6 +1,13 @@
 /**
  * @file Menu.cpp
  * @author Anagha Jammalamadaka
+ *
+*  AI Disclaimer:
+*  - Verify correctness of callback handling and navigation logic
+ * - Ensure proper exception handling (std::invalid_argument,
+ *   std::out_of_range, std::runtime_error)
+ * - Debug compilation issues and build system configuration
+ * - Explain C++ concepts (std::function, RAII, memory management)
  */
  
 #include "Menu.hpp"
