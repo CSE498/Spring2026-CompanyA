@@ -18,7 +18,7 @@ BIN       := $(BUILD_DIR)/run_tests
 # create the relative path to the SDL library
 SDL_DIR := ../third-party/SDL2
 
-CATCH_INC := third-party/Catch/single_include
+CATCH_INC := ../third-party/Catch/single_include
 
 CXXFLAGS ?= -O2 -g
 WARNFLAGS ?= -Wall -Wextra -Wpedantic
