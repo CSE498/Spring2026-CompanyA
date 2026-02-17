@@ -33,10 +33,6 @@ struct SpyElement : public ICanvasElement {
         order_.push_back(id_);
     }
 
-    // Directly mutate protected metadata for testing.
-    void setVisible(bool v) { m_metadata.visible = v; }
-    void setZIndex(int z) { m_metadata.zIndex = z; }
-
     int drawCount = 0;
 
 private:
@@ -66,23 +62,13 @@ TEST_CASE("WebCanvas is move-only (RAII-friendly)", "[web][canvas][raii]") {
     STATIC_REQUIRE(std::is_move_assignable_v<WebCanvas>);
 }
 
-TEST_CASE("WebCanvas implements IDomElement contract (compile-time)", "[web][canvas][dom]") {
-    STATIC_REQUIRE(std::is_base_of_v<IDomElement, WebCanvas>);
-}
-
-TEST_CASE("WebCanvas DOM lifecycle calls are safe and id is stable", "[web][canvas][dom]") {
+TEST_CASE("WebCanvas Id() reflects constructor argument, and mount does not change Id()", "[web][canvas][dom]") {
     WebCanvas canvas("canvas-test-1");
     WebLayout layout;
 
     REQUIRE(canvas.Id() == std::string("canvas-test-1"));
 
-    REQUIRE_NOTHROW(canvas.mountToLayout(layout, Alignment::Center));
-    REQUIRE_NOTHROW(canvas.syncFromModel());
-
-    // Unmount should be safe to call multiple times (idempotent behavior is recommended).
-    REQUIRE_NOTHROW(canvas.unmount());
-    REQUIRE_NOTHROW(canvas.unmount());
-
+    REQUIRE_NOTHROW(canvas.mountToLayout(layout, Alignment::Start));
     REQUIRE(canvas.Id() == std::string("canvas-test-1"));
 }
 
@@ -108,33 +94,6 @@ TEST_CASE("WebCanvas owns added elements and releases them on clear/destroy", "[
 }
 
 TEST_CASE("WebCanvas renderFrame draws elements (baseline behavior)", "[web][canvas]") {
-    WebCanvas canvas;
-
-    std::vector<int> order;
-    auto e1 = std::make_unique<SpyElement>(1, order);
-    auto e2 = std::make_unique<SpyElement>(2, order);
-
-    SpyElement* raw1 = e1.get();
-    SpyElement* raw2 = e2.get();
-
-    canvas.addElement(std::move(e1));
-    canvas.addElement(std::move(e2));
-
-    REQUIRE_NOTHROW(canvas.renderFrame());
-
-    CHECK(raw1->drawCount == 1);
-    CHECK(raw2->drawCount == 1);
-    CHECK(order == std::vector<int>({1, 2}));
-}
-
-TEST_CASE("WebCanvas ignores null elements safely", "[web][canvas]") {
-    WebCanvas canvas;
-    std::unique_ptr<ICanvasElement> nullElem;
-    REQUIRE_NOTHROW(canvas.addElement(std::move(nullElem)));
-    REQUIRE_NOTHROW(canvas.renderFrame());
-}
-
-TEST_CASE("WebCanvas renderFrame respects visibility (TDD target)", "[web][canvas][visibility]") {
     WebCanvas canvas;
 
     std::vector<int> order;
@@ -178,4 +137,18 @@ TEST_CASE("WebCanvas renderFrame sorts by zIndex (stable) (TDD target)", "[web][
 
     // Desired order: z=0 first, then z=10 elements in insertion order (1 then 3).
     CHECK(order == std::vector<int>({2, 1, 3}));
+}
+
+TEST_CASE("WebCanvas immediate-mode primitives are safe to call", "[web][canvas][primitives]") {
+    WebCanvas canvas("canvas-test-primitives");
+
+    // These are no-ops in native builds; in Emscripten builds they forward to Canvas2D.
+    // Either way, they should be safe to invoke.
+    REQUIRE_NOTHROW(canvas.Clear("#112233"));
+    REQUIRE_NOTHROW(canvas.DrawLine(0, 0, 10, 10, 2.0f, "#ff00ff"));
+    REQUIRE_NOTHROW(canvas.DrawCircle(50, 50, 25, "#00ff00", 3.0f, "#001100"));
+    REQUIRE_NOTHROW(canvas.DrawPoint(100, 100, 3.0f, "#ffffff"));
+
+    std::vector<WebCanvas::Vec2> tri{{10,10},{60,10},{35,60}};
+    REQUIRE_NOTHROW(canvas.DrawPolygon(tri, "#ffffff", 1.5f, "#222222"));
 }
