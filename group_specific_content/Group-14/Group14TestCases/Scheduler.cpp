@@ -1,5 +1,5 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../source/tools/Scheduler.hpp"
+#include "../../group_specific_content/Group-14/Group14InitialClasses/Scheduler.hpp"
 
 using namespace cse498;
 
