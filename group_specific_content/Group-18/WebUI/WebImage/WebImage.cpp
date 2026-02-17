@@ -244,7 +244,7 @@ void WebImage::SetPlaceholderColor(const std::string& css_color) {
 // ----- IDomElement Interface -----
 
 void WebImage::mountToLayout(WebLayout& parent, Alignment align) {
-  parent.AddElement(id_, align);
+  parent.AddElement(this, align);
 }
 
 void WebImage::unmount() {

@@ -173,7 +173,7 @@ bool WebButton::IsVisible() const {
 }
 
 void WebButton::mountToLayout(WebLayout& parent, Alignment align) {
-  parent.AddElement(id_, align);
+  parent.AddElement(this, align);
 }
 
 void WebButton::unmount() {
