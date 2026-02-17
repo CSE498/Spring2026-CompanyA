@@ -27,7 +27,7 @@ namespace cse498 {
         ) const;
 
         // Tag management helper functions
-        bool HasTag(ObjectId owner, std::string_view tag);
+        bool HasTag(ObjectId owner, std::string_view tag) const;
         void Clear();
 
     private:
@@ -36,7 +36,7 @@ namespace cse498 {
         using ObjectSet = std::unordered_set<ObjectId>;
         using TagMap = std::unordered_map<std::string, ObjectSet>;
 
-        const ObjectSet* FindSet(std::string_view tag);
+        const ObjectSet* FindSet(std::string_view tag) const;
 
         TagMap    mTagToObjects;
         ObjectSet mAllObjects; // "universe" of all known owners that ever had a tag

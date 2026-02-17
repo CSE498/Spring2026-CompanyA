@@ -10,7 +10,7 @@ namespace cse498
         assert(!tag.empty() && "TagManager: tag must not be empty");
     }
 
-    const TagManager::ObjectSet* TagManager::FindSet(std::string_view tag) const noexcept
+    const TagManager::ObjectSet* TagManager::FindSet(std::string_view tag) const
     {
         auto it = mTagToObjects.find(std::string(tag));
         return (it == mTagToObjects.end()) ? nullptr : &it->second;
@@ -121,7 +121,7 @@ namespace cse498
         return out;
     }
 
-    bool TagManager::HasTag(ObjectId owner, std::string_view tag)
+    bool TagManager::HasTag(ObjectId owner, std::string_view tag) const
     {
         AssertValidTag(tag);
         const auto* setPtr = FindSet(tag);
