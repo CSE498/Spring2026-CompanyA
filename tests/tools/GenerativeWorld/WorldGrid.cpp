@@ -1,8 +1,8 @@
 //#define CATCH_CONFIG_MAIN
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/tools/WorldGrid.hpp"
-#include "../../source/core/Location.hpp"
+#include "../../../source/tools/WorldGrid.hpp"
+#include "../../../source/core/Location.hpp"
 
 #include <sstream>
 #include <string>
