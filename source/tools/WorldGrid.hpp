@@ -19,14 +19,18 @@
 
 namespace cse498 {
 
-  enum class TileType {
-    WALKABLE_PATH,
-    DAMAGE_TILE,
-    TREASURE_TILE,
-    ENVIRONMENT,
-    WALL,
-    DOOR,
-    NULL_TILE
+
+  struct CellTypeModifiers { 
+    bool isBreakable = false;  ///< Checks if tile is breakable (hidden walls)
+    bool locked = false;       ///< Boolean checker if tile is locked (chest/door)
+    bool traversable = false;  ///< Determines if Cell is traversable
+    
+    //... and more added depnding on utility needs
+
+    CellTypeModifiers() = default;
+    CellTypeModifiers(bool breakable, bool locked, bool traversable) : isBreakable(breakable), locked(locked), traversable(traversable) {}
+    
+
   };
 
   /// @brief Simple data structure to hold info about a TYPE of cell in the world.
@@ -35,16 +39,13 @@ namespace cse498 {
     std::string name;  ///< Unique name for this type of cell (e.g., "wall", "tree", "moon")
     std::string desc;  ///< Full description of what this type of cell is
     char symbol;       ///< Symbol for text representations (files or interface)
-    std::string file;  ///< File path to associated image for loading
-    bool isBreakable;  ///< Checks if tile is breakable (hidden walls)
-    bool locked;       ///< Boolean checker if tile is locked (chest/door)
-    TileType t_state;  ///< Enum class to get type of Tile, might not need this since name is similar
-    bool traversable;  ///< Determines if Cell is traversable
+    CellTypeModifiers mods; ///< struct object to determine modifiers of the cell
     
 
     // DEVELOPER NOTE: More info may be needed here to describe cell types...
     // For example,is it traversable?  Does it have special properties?
   };
+
 
   /// @class WorldGrid
   /// @brief Represents a 2D grid of cells.
@@ -56,9 +57,9 @@ namespace cse498 {
 
     // Track all of the possible types of cells that can be in this grid.
     // A "cell ID" refers to the index in this cell_types vector.
-    std::vector<CellType> cell_types; ///< Types of cells possible in this grid.
+    std::vector<CellType> cell_types{}; ///< Types of cells possible in this grid.
 
-    std::vector<size_t> cells;  ///< Matrix of world cells, by rows, top to bottom; value is cell ID.
+    std::vector<size_t> cells{};  ///< Matrix of world cells, by rows, top to bottom; value is cell ID.
 
     // -- Helper functions --
 
@@ -102,7 +103,9 @@ namespace cse498 {
       // positions in a cell grid (e.g., for a non-rectangular world).
       AddCellType("Unknown", "This is an invalid cell type and should not be reachable.");
     }
-    WorldGrid() : WorldGrid(0, 0, 0) { }
+    WorldGrid() : width(0), height(0), cells() {
+      AddCellType("Unknown", "This is an invalid cell type and should not be reachable.");
+    }
     WorldGrid(const WorldGrid &) = default;
     WorldGrid(WorldGrid &&) = default;
     
@@ -150,8 +153,10 @@ namespace cse498 {
     /// @param desc A longer description of the cell type
     /// @param symbol An (optional) unique symbol for text IO (files, command line)
     /// @return A unique ID associated with this cell type (position in type_options vector)
-    size_t AddCellType(const std::string & name, const std::string & desc="", char symbol='\0') {
-      cell_types.push_back(CellType{name, desc, symbol});
+    size_t AddCellType(const std::string & name, const std::string & desc="", char symbol='\0', 
+                        CellTypeModifiers mod = {}) 
+    {
+      cell_types.push_back(CellType{name, desc, symbol, mod});
       return cell_types.size() - 1;
     }
 
@@ -175,7 +180,7 @@ namespace cse498 {
       return cell_types[id].symbol;
     }
 
-
+    
 
     // Size adjustments.
     void Resize(size_t new_width, size_t new_height, size_t default_type=0) {
