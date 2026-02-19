@@ -42,3 +42,16 @@ RemoveProcess deletes a process if it exists and returns whether the removal was
 UpdatePriority allows priorities to change dynamically, which is useful for AI or simulation systems where importance changes over time. It does this by first checking if a process exists, then updating its priority value.
 
 Clear removes all processes from the scheduler, and Empty checks if the scheduler is empty.
+
+
+# EventQueue
+
+Hi, my name is Ho Wang Ho, or Howard. I am responsible for implementing the EventQueue class in our Interactive World module.
+
+The EventQueue class is designed to store and manage scheduled events in the game world. Each event contains a time value, a unique ID, an insertion order, and a payload function that will be executed later. The queue always returns the event with the smallest time first. If two events have the same time, the one that was inserted earlier will be processed first.
+
+The ScheduleEvent function adds a new event into the queue and automatically assigns it a unique ID and insertion order. The PeekNextEvent function allows us to see which event will happen next without removing it from the queue. The PopNextEvent function removes and returns the next event in order.
+The CancelEvent function uses a technique called lazy cancellation. Instead of removing the event immediately from the priority queue, it marks the event as cancelled in a separate set. When a cancelled event reaches the top of the queue, it will be skipped automatically. This keeps the implementation simple and efficient.
+
+Finally, the Empty function checks whether there are any remaining valid events in the queue.
+Overall, this class focuses on ordering and managing events efficiently, and it can be used to implement features like cooldown timers, delayed actions, or scheduled world updates in our game system.
