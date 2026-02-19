@@ -42,7 +42,7 @@ void cse498::Timer::start(std::string timerName)
  */
 void cse498::Timer::stop(std::string timerName)
 {
-    if (mTimers.find(timerName) != mTimers.end())
+    if (mTimers.find(timerName) != mTimers.end() && mTimers[timerName].isRunning)
     {
         // If the timer exists, calculate how long it ran for, add that to the accumulated duration,
         // and mark it as stopped.
