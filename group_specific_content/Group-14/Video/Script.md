@@ -55,3 +55,18 @@ The CancelEvent function uses a technique called lazy cancellation. Instead of r
 
 Finally, the Empty function checks whether there are any remaining valid events in the queue.
 Overall, this class focuses on ordering and managing events efficiently, and it can be used to implement features like cooldown timers, delayed actions, or scheduled world updates in our game system.
+
+# Data Map (Riley)
+
+This is the DataMap class which maps strings to an any data type. The main adavantages of the DataMap is that the caller does not have to perform any casts and the types held in the map are explicit at the call site. Any mismatches in data types will be handled up front by the Data Map. 
+The value stored in the map is an Entry stuct. This struct holds the type of the the stored entry as std::type_index and the value of the stored entry as std::any. Under the hood DataMap uses std::unordered_map, which has an average time complexity of O(1) for insertion, deletion, and search making it very fast. 
+
+The Set function takes in a key as a const string reference and a value of any type. If the pair does not exist then it will be added to the map. If it does already exist then it will check the types of the values and assert that they match. Then it will update the value.
+The Get function takes in a key as a const string reference. It will return the value stored in the key value pair if it exists. There is an assert for ensuring the types of the return match the stored value type. There is another assert to ensure the key value pair exists.
+The Has function takes in a key as a const string reference. It will return a bool representing if there is a key value pair in the map with that key. It will return false if the key value pair does not exist in the map and true if it does. 
+The Remove function takes in a key as a const string reference. It will return a bool representing the success of deletion. If there is not key value pair then it will return false indication failure of deletion. If the deletion was successful then it will return true.
+The Clear function will remove all key value pairs in the map.
+The Empty function will check to see if the map is empty. It returns true if it is empty and false if it is not.
+The Size fuction will return the number of elements in the map.
+
+The DataMap would likely useful for storing any type of generic data in a class. For example stats for a weapon or player could be held in one class.
