@@ -70,3 +70,25 @@ The Empty function will check to see if the map is empty. It returns true if it 
 The Size fuction will return the number of elements in the map.
 
 The DataMap would likely useful for storing any type of generic data in a class. For example stats for a weapon or player could be held in one class.
+
+# Function Set (Henry) 
+
+FunctionSet is a class that stores a bunch of functions, and every function has to have the exact same signature. 
+
+Each stored function is saved as an entry with two fields, an ID and the function itself. All the entries are stored in a vector, which keeps them in the order they were added. There’s also a next_id counter that starts at zero and increases each time a function is added.
+
+When you call AddFunction, it takes the current value of next_id as the function’s ID, increments next_id, stores the function in the vector with that ID, and returns the ID back to you. That ID is what lets you remove a specific function later.
+
+When you call RemoveFunction, it deletes any entry whose ID matches the one you passed in. It checks the vector size before and after and returns true if something was actually removed.
+
+Clear wipes everything in the vector and resets next_id back to zero. 
+
+Size returns how many functions are currently stored. 
+
+CallAll takes the same arguments as the stored functions, loops through every stored entry, and calls each function. Each call is wrapped in a try-catch, so if one function throws, it catches the exception and keeps going instead of stopping.
+
+LastCallFailureCount returns the stored number of failures, which is how many functions threw during the most recent CallAll.
+
+
+
+
