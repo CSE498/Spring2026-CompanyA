@@ -14,18 +14,17 @@
 #include <cassert>       /// For assertions
 
 namespace cse498 {
-
-	/// @struct Entry
-	/// @brief Contains data for an entry in the DataMap
-	struct Entry {
-		std::type_index type;   /// Entry type
-		std::any value;         /// Entry value
-	};
-
 	/// @class DataMap
 	/// @brief Map strings to an arbitrary data type.
 	class DataMap {
 	private:
+		/// @struct Entry
+		/// @brief Contains data for an entry in the DataMap
+		struct Entry {
+			std::type_index type;   /// Entry type
+			std::any value;         /// Entry value
+		};
+
 	    std::unordered_map<std::string, Entry> map;       /// Main map
 	public:
 	    /// Set a key value pair
@@ -71,3 +70,4 @@ namespace cse498 {
 	    int Size() { return map.size(); }
 	};
 }
+
