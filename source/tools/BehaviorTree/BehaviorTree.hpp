@@ -2,7 +2,6 @@
 @author Jacob Bettinger
 @date 2026-02-04
 @brief Behavior Tree implementation
-TODO: Add decorator note, Inverter's later
 TODO: Implement an example tree implementation for testing purposes
 TODO: Add debugging capabilities
 */
@@ -23,6 +22,7 @@ namespace BehaviorTrees {
 class Blackboard;
 class Node;
 class Composite;
+class Decorator;
 
 
 // This mainly covers data sharing between nodes
@@ -94,6 +94,17 @@ protected:
     std::vector<std::unique_ptr<Node>> children;
     size_t currentChild = 0;
 };
+
+// Base for nodes that hold exactly one child, I.E. Decorators
+class Decorator : public Node {
+public:
+    void SetChild(std::unique_ptr<Node> child);
+    void Reset() override;
+    const std::unique_ptr<Node>& GetChild() const;
+
+protected:
+    std::unique_ptr<Node> child;
+};
 // Strategy Pattern that determines actions (No implementation yet but setup for future)
 class Action : public Node {
 public:
@@ -135,6 +146,30 @@ private:
     std::string name;
 };
 
+// CONCRETE DECORATORS (CAN ADD MORE)
+class Invert : public Decorator {
+public:
+    explicit Invert(const std::string& name);
+    std::string GetName() const override;
+
+protected:
+    Status OnUpdate(ExecutionContext& context) override;
+
+private:
+    std::string name;
+};
+
+class ContinuallyRepeat : public Decorator {
+public:
+    explicit ContinuallyRepeat(const std::string& name);
+    std::string GetName() const override;
+
+protected:
+    Status OnUpdate(ExecutionContext& context) override;
+
+private:
+    std::string name;
+};
 
 // Helper for building the tree
 class TreeBuilder {
@@ -142,6 +177,8 @@ public:
     static std::unique_ptr<Sequence> Seq(const std::string& name);
     static std::unique_ptr<Selector> Sel(const std::string& name);
     static std::unique_ptr<Action> Act(const std::string& name, Action::ActionFunc func);
+    static std::unique_ptr<Invert> Inv(const std::string& name);
+    static std::unique_ptr<ContinuallyRepeat> Repeat(const std::string& name);
 
 };
 

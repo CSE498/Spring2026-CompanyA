@@ -62,6 +62,21 @@ const std::vector<std::unique_ptr<Node>>& Composite::GetChildren() const {
     return children;
 }
 
+// Decorator implementation
+void Decorator::SetChild(std::unique_ptr<Node> child) {
+    this->child = std::move(child);
+}
+
+void Decorator::Reset() {
+    if (child) {
+        child->Reset();
+    }
+}
+
+const std::unique_ptr<Node>& Decorator::GetChild() const {
+    return child;
+}
+
 // Strategy Method Implementation
 Action::Action(const std::string& name, ActionFunc action)
     : name(name), action(action) {}
@@ -139,6 +154,58 @@ Node::Status Sequence::OnUpdate(ExecutionContext& context) {
 }
 
 // =============================================================================
+// INVERT IMPLEMENTATION
+// =============================================================================
+Invert::Invert(const std::string& name) : name(name) {}
+
+std::string Invert::GetName() const {
+    return name;
+}
+
+Node::Status Invert::OnUpdate(ExecutionContext& context) {
+    if (!child) {
+        return Status::Failure;
+    }
+    
+    Status status = child->Tick(context);
+    
+    switch (status) {
+        case Status::Success:
+            return Status::Failure;
+        case Status::Failure:
+            return Status::Success;
+        case Status::Running:
+            return Status::Running;
+    }
+    return Status::Failure;
+}
+
+// =============================================================================
+// CONTINUALLY REPEAT IMPLEMENTATION
+// =============================================================================
+ContinuallyRepeat::ContinuallyRepeat(const std::string& name) : name(name) {}
+
+std::string ContinuallyRepeat::GetName() const {
+    return name;
+}
+
+Node::Status ContinuallyRepeat::OnUpdate(ExecutionContext& context) {
+    if (!child) {
+        return Status::Running;
+    }
+    
+    Status status = child->Tick(context);
+    
+    // If child completed (Success or Failure), reset it so it can run again
+    if (status == Status::Success || status == Status::Failure) {
+        child->Reset();
+    }
+    
+    // Always return Running to keep repeating
+    return Status::Running;
+}
+
+// =============================================================================
 // TREE BUILDER IMPLEMENTATION
 // =============================================================================
 std::unique_ptr<Sequence> TreeBuilder::Seq(const std::string& name) {
@@ -151,6 +218,14 @@ std::unique_ptr<Selector> TreeBuilder::Sel(const std::string& name) {
 
 std::unique_ptr<Action> TreeBuilder::Act(const std::string& name, Action::ActionFunc func) {
     return std::make_unique<Action>(name, func);
+}
+
+std::unique_ptr<Invert> TreeBuilder::Inv(const std::string& name) {
+    return std::make_unique<Invert>(name);
+}
+
+std::unique_ptr<ContinuallyRepeat> TreeBuilder::Repeat(const std::string& name) {
+    return std::make_unique<ContinuallyRepeat>(name);
 }
 
 } // namespace BehaviorTrees
