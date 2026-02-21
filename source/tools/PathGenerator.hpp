@@ -226,6 +226,10 @@ private:
                                                                         CircleDirectionFlag flag);
 
 public:
+    PathGenerator() = delete;
+    PathGenerator(const PathGenerator&) = delete;
+    PathGenerator(PathGenerator&&) = delete;
+
     /**
      * This isn't *fully* functional intentionally because the correct world doesn't exist yet for this.
      * This is a _rough_ class ensuring the key components are done for adaptation:

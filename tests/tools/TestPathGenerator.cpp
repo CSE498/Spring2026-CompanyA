@@ -1,6 +1,6 @@
 /**
  * @file TestPathGenerator.cpp
- * @author lrima
+ * @author Logan
  */
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
@@ -16,6 +16,7 @@ using cse498::WorldPath;
 using cse498::PathGenerator;
 using cse498::WorldPosition;
 using cse498::PathRequest;
+using std::vector;
 
 namespace cse498
 {
@@ -42,7 +43,7 @@ public:
         // NOTE: Top left cell is (0,0) and moving right (x,0) and down (0,y).
     }
     ~TestWorldBase() override = default;
-    int DoAction(AgentBase &agent, size_t action_id) override { return 0; }
+    int DoAction([[maybe_unused]] AgentBase &agent, [[maybe_unused]] size_t action_id) override { return 0; }
 };
 
 class TestWorld1 : public TestWorldBase
@@ -147,6 +148,12 @@ public:
 };
 }
 
+/**
+ * checks points are approximately equal in a world path
+ * @param p1 - point 1
+ * @param p2 - point 2
+ * @return t/f -- true if all points in path are approx equal
+ */
 bool WorldPathApprox(const WorldPath &p1, const WorldPath &p2)
 {
     if (p1.Size() != p2.Size())
@@ -159,15 +166,24 @@ bool WorldPathApprox(const WorldPath &p1, const WorldPath &p2)
     return true;
 }
 
+
+
+
 /*
- * Use TEST_CASE, REQUIRE, CHECK, SECTION where appropriate
- *
+ * Note there is no constructor so we can't test that obviously.
  */
-TEST_CASE("Basic Functionality of the 4 path generators", "[group2]")
+
+
+
+TEST_CASE("No Constructor", "[PathGenerator, Constructor]")
 {
-    /*
-     * Shortest Path:
-     */
+    CHECK(!std::is_constructible<PathGenerator>::value);
+    CHECK(!std::is_copy_constructible<PathGenerator>::value);
+    CHECK(!std::is_move_constructible<PathGenerator>::value);
+}
+
+TEST_CASE("Shortest Path Generation -- Simple cases for functionality", "[ShorestPath]")
+{
     cse498::TestWorld1 world1;
     PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
     cse498::TestWorld2 world2;
@@ -244,47 +260,47 @@ TEST_CASE("Basic Functionality of the 4 path generators", "[group2]")
     std::reverse(complex1_answer.begin(), complex1_answer.end());
     CHECK(complex1_back.value() == WorldPath(complex1_answer));
 
-    /*
-     * Manhattan Path: This is relatively simple function so not a lot of options for errors
-     */
+}
 
-    // Straight line vertical test
-    auto man_simple1 = PathGenerator::FindManhattanPath({1, 1}, {1, 5}, request2);
-    std::vector<WorldPosition> man_simple1_answer = {{1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}};
-    CHECK(man_simple1.value() == WorldPath(man_simple1_answer));
+TEST_CASE("Shortest Path Generation -- Edge Cases", "[ShortestPath]")
+{
+    cse498::TestWorld2 world2;
+    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    cse498::TestWorld1 world1;
+    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
 
-    // Actual manhattan L shape. CW goes --> then down (v) -- FAILURE
-    auto man_simple2 = PathGenerator::FindManhattanPath({1, 1}, {15, 5}, request3);
-    CHECK(!man_simple2);
-    // This goes down then across (v) --> Success
-    auto man_simple2_1 = PathGenerator::FindManhattanPath({1, 1}, {15, 5}, request3, cse498::CircleDirectionFlag::CCW);
-    std::vector<WorldPosition> man_simple2_1answer = {
-        {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {5, 5}, {6, 5}, {7, 5}, {8, 5}, {9, 5}, {10, 5},
-        {11, 5}, {12, 5}, {
-            13, 5
-        },
-        {14, 5}, {15, 5}
-    };
-    CHECK(WorldPath(man_simple2_1answer) == man_simple2_1.value());
+    // 0 to 0
+    auto none2none = PathGenerator::FindShortestPath({1, 1}, {1, 1}, request1);
+    vector<WorldPosition> none2none_answer = {{1,1}};
+    CHECK(none2none.value() == WorldPath(none2none_answer));
 
-    // x=3-->13 y=1-->5
-    auto man_different_coord = PathGenerator::FindManhattanPath({3, 1},
-                                                                {15, 5},
-                                                                request3,
-                                                                cse498::CircleDirectionFlag::CCW);
-    // Clockwise direction which is reverse of above
-    auto man_different_coord_rev = PathGenerator::FindManhattanPath({15, 5}, {3, 1}, request3);
-    CHECK(man_different_coord.value() == man_different_coord_rev.value().reverse());
+    // invalid position to invalid position
+    auto in2in = PathGenerator::FindShortestPath({0, 2}, {0, 0}, request2);
+    CHECK(!in2in);
 
-    //{19,4} - {1.8} this is (v) <-- and --> then ^
-    auto man_p1 = PathGenerator::FindManhattanPath({19, 4}, {1, 8}, request3);
-    auto man_p1_rev = PathGenerator::FindManhattanPath({1, 8}, {19, 4}, request3, cse498::CircleDirectionFlag::CCW);
-    CHECK(man_p1.value() == man_p1_rev.value().reverse());
+    // valid to invalid
+    auto v2in = PathGenerator::FindShortestPath({1, 2}, {0, 0}, request2);
+    CHECK(!v2in);
 
-    /*
-     * Circle Generation
-     */
-    cse498::CircleWorld circle_world; // x=[1-18] y=[1,8]
+    // valid to valid (same position)
+    auto v2v = PathGenerator::FindShortestPath({1, 2}, {1, 2}, request2);
+    std::vector<WorldPosition> v2v_answer = {{1, 2}};
+    CHECK(v2v.value() == WorldPath(v2v_answer));
+
+    // Trapped and can't move case
+    auto trapped = PathGenerator::FindShortestPath({1, 9}, {1, 1}, request1);
+    CHECK(!trapped);
+}
+
+TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
+{
+    cse498::TestWorld1 world1;
+    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    cse498::TestWorld2 world2;
+    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    cse498::TestWorld3 world3;
+    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    cse498::CircleWorld circle_world;
     PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
 
     // Couple of quick simple tests to ensure it is working in general when pressed into a wall and in free space
@@ -329,11 +345,90 @@ TEST_CASE("Basic Functionality of the 4 path generators", "[group2]")
     CHECK(WorldPathApprox(WorldPath(circ2_exp_path_to), circ2_exp.value().path_to_circle));
 
 
+}
+
+TEST_CASE("Circular Path Generation -- Edge Cases", "[CirclePath]")
+{
+
+}
 
 
-    /*
-     * Now we test the last function. Rectangular loops
-     */
+
+
+TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
+{
+    cse498::TestWorld1 world1;
+    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    cse498::TestWorld2 world2;
+    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    cse498::TestWorld3 world3;
+    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+
+    // Straight line vertical test
+    auto man_simple1 = PathGenerator::FindManhattanPath({1, 1}, {1, 5}, request2);
+    std::vector<WorldPosition> man_simple1_answer = {{1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}};
+    CHECK(man_simple1.value() == WorldPath(man_simple1_answer));
+
+    // Actual manhattan L shape. CW goes --> then down (v) -- FAILURE
+    auto man_simple2 = PathGenerator::FindManhattanPath({1, 1}, {15, 5}, request3);
+    CHECK(!man_simple2);
+    // This goes down then across (v) --> Success
+    auto man_simple2_1 = PathGenerator::FindManhattanPath({1, 1}, {15, 5}, request3, cse498::CircleDirectionFlag::CCW);
+    std::vector<WorldPosition> man_simple2_1answer = {
+        {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {5, 5}, {6, 5}, {7, 5}, {8, 5}, {9, 5}, {10, 5},
+        {11, 5}, {12, 5}, {
+            13, 5
+        },
+        {14, 5}, {15, 5}
+    };
+    CHECK(WorldPath(man_simple2_1answer) == man_simple2_1.value());
+
+    // x=3-->13 y=1-->5
+    auto man_different_coord = PathGenerator::FindManhattanPath({3, 1},
+                                                                {15, 5},
+                                                                request3,
+                                                                cse498::CircleDirectionFlag::CCW);
+    // Clockwise direction which is reverse of above
+    auto man_different_coord_rev = PathGenerator::FindManhattanPath({15, 5}, {3, 1}, request3);
+    CHECK(man_different_coord.value() == man_different_coord_rev.value().reverse());
+
+    //{19,4} - {1.8} this is (v) <-- and --> then ^
+    auto man_p1 = PathGenerator::FindManhattanPath({19, 4}, {1, 8}, request3);
+    auto man_p1_rev = PathGenerator::FindManhattanPath({1, 8}, {19, 4}, request3, cse498::CircleDirectionFlag::CCW);
+    CHECK(man_p1.value() == man_p1_rev.value().reverse());
+}
+
+
+TEST_CASE("Manhattan Path Generation -- Edge Cases", "[ManhattanPath]")
+{
+    cse498::TestWorld1 world1;
+    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    cse498::TestWorld2 world2;
+    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    cse498::TestWorld3 world3;
+    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+
+
+    auto man_p1 = PathGenerator::FindManhattanPath({1, 1}, {1, 1}, request1);
+    std::vector<WorldPosition> man_p1_ans = {{1, 1}};
+    CHECK(man_p1.value() == WorldPath(man_p1_ans));
+
+    auto man_p1_inv = PathGenerator::FindManhattanPath({0, 1}, {1, 1}, request1);
+    CHECK(!man_p1_inv);
+}
+
+
+TEST_CASE("Rectangular Loop Generation -- Simple Cases", "[RectangularLoop]")
+{
+    cse498::TestWorld1 world1;
+    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    cse498::TestWorld2 world2;
+    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    cse498::TestWorld3 world3;
+    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    cse498::CircleWorld circle_world;
+    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+
 
     auto rectangle1 = PathGenerator::FindRectangularLoopPath({1, 1}, {2.5, 5}, {5.5, 1}, circle_request);
     std::vector<WorldPosition> rectangle1_path_to = {{1, 1}, {2, 1}, {2.5, 1}};
@@ -358,53 +453,19 @@ TEST_CASE("Basic Functionality of the 4 path generators", "[group2]")
     CHECK(WorldPathApprox(WorldPath(rectangle2_path), rectangle2.value().circle_path));
     CHECK(WorldPathApprox(WorldPath(rectangle2_path_to), rectangle2.value().path_to_circle));
 
-
-
-
-
-    // TODO: Need to test backwards CCW CW flags on everything.
-    // TODO test opposite direction generation
 }
 
-TEST_CASE("Path Generation Edge Cases", "[group2]")
+TEST_CASE("Rectangular Loop Generation -- Edge Cases", "[RectangularLoop]")
 {
-    // test invalid position to valid
-    cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
-    cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
 
-    // invalid position to invalid position
-    auto in2in = PathGenerator::FindShortestPath({0, 2}, {0, 0}, request2);
-    CHECK(!in2in);
-
-    // valid to invalid
-    auto v2in = PathGenerator::FindShortestPath({1, 2}, {0, 0}, request2);
-    CHECK(!v2in);
-
-    // valid to valid (same position)
-    auto v2v = PathGenerator::FindShortestPath({1, 2}, {1, 2}, request2);
-    std::vector<WorldPosition> v2v_answer = {{1, 2}};
-    CHECK(v2v.value() == WorldPath(v2v_answer));
-
-    // Trapped and can't move case
-    auto trapped = PathGenerator::FindShortestPath({1, 9}, {1, 1}, request1);
-    CHECK(!trapped);
-
-    auto man_p1 = PathGenerator::FindManhattanPath({1, 1}, {1, 1}, request1);
-    std::vector<WorldPosition> man_p1_ans = {{1, 1}};
-    CHECK(man_p1.value() == WorldPath(man_p1_ans));
-
-    auto man_p1_inv = PathGenerator::FindManhattanPath({0, 1}, {1, 1}, request1);
-    CHECK(!man_p1_inv);
 }
 
-TEST_CASE("Obstacles", "[group2]")
-{
-    // Avoid tiles making a trapped box
-    // Skipped due to this already being too much to do in too little time.
-    // Will flesh this out later if this all sticks around.
-}
+
+
+
+
+
+
 
 TEST_CASE("Path Generation - Doubles testing", "[group2]")
 {
@@ -465,7 +526,7 @@ TEST_CASE("Path Generation - Doubles testing", "[group2]")
 }
 
 
-TEST_CASE("Path Generation -- Parts of path outside of area")
+TEST_CASE("Path Generation ALL - testing paths outside of bounds")
 {
     cse498::TestWorld1 world1;
     PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
@@ -497,4 +558,3 @@ TEST_CASE("Path Generation -- Parts of path outside of area")
 
 }
 
-// test case - shortest path with obstacles.
