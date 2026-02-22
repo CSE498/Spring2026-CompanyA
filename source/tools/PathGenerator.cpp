@@ -47,9 +47,13 @@ PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPositio
         auto pth = AStarSearch(from, request, SingleGoalHeuristic{to}, vec.getMagnitude() * 2, false);
         if (!pth.empty())
         {
-            if (pth.back() != to)
-                pth.push_back(to); // add correct endpoint (it only brings us to the right tile not the right pos.
-            // We need it to be the right position for calculations on the circle and it would look better for movement
+            // it brings us to the right tile but we change the actual position on that tile to what we want.
+            // This will be generally better though some spots that are longer but if we can get to the tile then we
+            // can get to a specific position on that tile type of thing.
+            // TODO: warning if the agent has hitbox > 0 then this may push agent into the wall to get to this position
+            pth.pop_back();
+            pth.push_back(to);
+
             return {true, pth};
         }
         return {false, pth};
@@ -153,7 +157,8 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
         {
             if (path.size() >= 2)
                 result.insert(result.end(), path.begin() + 1, path.end() - 1);
-            if (IsPointBefore(next, start, circ_center, circle_flag) && EuclideanDistance(result.back(), start) > 1)
+            if (IsPointBefore(next, start, circ_center, circle_flag) && EuclideanDistance(result.back(), start) >
+                STEP_SIZE * STEP_CIRCLE_TOLERANCE)
                 result.push_back(next);
         }
         else
@@ -183,7 +188,8 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
                 result.push_back(next); // We do not extend paths. Just need to know it is possible or not
             else
             {
-                const double search_distance = PathVector(result.back(), next).getMagnitude() * 2.2; // arbitrary 2
+                const double search_distance = PathVector(result.back(), next).getMagnitude() *
+                    CIRCLE_EXPAND_MULTIPLIER;
                 auto path = AStarSearch(result.back(), request, SingleGoalHeuristic{next}, search_distance, true);
                 if (path.size() > 1)
                     result.insert(result.end(), path.begin() + 1, path.end()); // skip first pos for repeats

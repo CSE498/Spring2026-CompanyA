@@ -65,7 +65,11 @@ class PathGenerator
 private:
     static constexpr int MAX_SEARCH_DISTANCE = 300;
     static constexpr double EP = 1e-6;
+    // Consider this hard coded. Logic depends on it. though I do want to change this just need more structure
     static constexpr double STEP_SIZE = 1.0;
+    static constexpr double STEP_CIRCLE_TOLERANCE = 1.4; // this * step_size
+    // Max search distance relative to circle radius of whatever distance to get there. -- arbitrary and could add param for it
+    static constexpr double CIRCLE_EXPAND_MULTIPLIER = 2.2;
 
     static constexpr double EuclideanDistance(const WorldPosition &p1, const WorldPosition &p2)
     {
