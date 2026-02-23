@@ -45,27 +45,28 @@ public:
     // Notes:
     // - In non-Emscripten builds these are safe no-ops (useful for unit tests).
     // - In Emscripten builds these issue Canvas2D calls on the <canvas id="Id()">.
-    void Clear(const std::string& cssColor = "#000000");
+    // void Clear(const std::string& cssColor = "#000000");
+    void Clear(const std::string& cssColor);
 
     void DrawLine(float x1, float y1, float x2, float y2,
-                  float lineWidth = 1.0f,
-                  const std::string& strokeColor = "#ffffff");
+                  float lineWidth, // = 1.0f,
+                  const std::string& strokeColor); // = "#ffffff");
 
     // If fillColor is empty => no fill.
     void DrawCircle(float centerX, float centerY, float radius,
-                    const std::string& strokeColor = "#ffffff",
-                    float lineWidth = 1.0f,
-                    const std::string& fillColor = "");
+                    const std::string& strokeColor, // = "#ffffff",
+                    float lineWidth, // = 1.0f,
+                    const std::string& fillColor); // = "");
 
     void DrawPoint(float x, float y,
-                   float radius = 2.0f,
-                   const std::string& fillColor = "#ffffff");
+                   float radius, // = 2.0f,
+                   const std::string& fillColor); // = "#ffffff");
 
     // If fillColor is empty => no fill.
     void DrawPolygon(const std::vector<Vec2>& points,
-                     const std::string& strokeColor = "#ffffff",
-                     float lineWidth = 1.0f,
-                     const std::string& fillColor = "");
+                     const std::string& strokeColor, // = "#ffffff",
+                     float lineWidth, // = 1.0f,
+                     const std::string& fillColor); // = "");
 
 private:
     std::vector<std::unique_ptr<ICanvasElement>> m_elements;
