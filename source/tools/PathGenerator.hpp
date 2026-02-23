@@ -79,6 +79,30 @@ private:
     }
 
     /**
+     * These are the nodes used for A* search
+     */
+    struct ANode
+    {
+        WorldPosition pos;
+        double g = 0; // cost from start position (total distance traveled)
+        double f = 0; // g + h
+        /// This is for reconstruction. Not sure what is best here maybe std::optional<WorldPosition> and just copy store it
+        std::shared_ptr<ANode> prev;
+        ANode(const WorldPosition& pos, double g, double f, std::shared_ptr<ANode> other) : pos(pos), g(g), f(f), prev(std::move(other)) {}
+    };
+
+    /**
+     * comparison operaor for the priority queue
+     */
+    struct ANodeCompare
+    {
+        bool operator()(const std::shared_ptr<ANode> &a, const std::shared_ptr<ANode> &b) const
+        {
+            return a->f > b->f;
+        }
+    };
+
+    /**
      * Return Struct for 2 values.
      */
     struct CircleTravel
@@ -300,28 +324,7 @@ public:
  * ------------------------------------------------------------------------------------------------------
  */
 
-/**
- * These are the nodes used for A* search
- */
-struct ANode
-{
-    WorldPosition pos;
-    double g = 0; // cost from start position (total distance traveled)
-    double f = 0; // g + h
-    /// This is for reconstruction. Not sure what is best here maybe std::optional<WorldPosition> and just copy store it
-    std::shared_ptr<ANode> prev;
-};
 
-/**
- * comparison operaor for the priority queue
- */
-struct ANodeCompare
-{
-    bool operator()(const std::shared_ptr<ANode> &a, const std::shared_ptr<ANode> &b) const
-    {
-        return a->f > b->f;
-    }
-};
 
 struct PathRequest
 {
@@ -363,11 +366,12 @@ struct CirclePath
  * A*, we have a priority queue sorted by distances and find the path from A --> G and return the full length of the path
  *
  */
-template<typename Heu> std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
-                                                                             const PathRequest &request,
-                                                                             Heu h,
-                                                                             const double max_search_dist,
-                                                                             const bool closest)
+template<typename Heu>
+std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
+                                                      const PathRequest &request,
+                                                      Heu h,
+                                                      const double max_search_dist,
+                                                      const bool closest)
 {
     if (!request.world_grid.IsWalkable(from))
         return {};
