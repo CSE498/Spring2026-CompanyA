@@ -69,7 +69,7 @@ bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
     // Again clockwise = Counterclockwise and vise versa. Everything is opposite and it hurts my head
     // Assume both points are on the circle
     const PathVector center_to_test(test_pt, center);
-    const PathVector center_to_relative(test_pt, center);
+    const PathVector center_to_relative(relative_pt, center);
     assert(std::abs(center_to_relative.getMagnitude() - center_to_test.getMagnitude()) < 1e-6);
 
     const PathVector test(test_pt.X() - center.X(), test_pt.Y() - center.Y());
