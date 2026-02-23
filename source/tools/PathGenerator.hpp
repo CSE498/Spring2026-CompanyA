@@ -31,9 +31,15 @@
 #include <unordered_set>
 #include <vector>
 #include <memory>
+#include <cmath>
+#include <algorithm>
+#include <limits>
+#include <array>
+#include <cassert>
 #include "../core/WorldGrid.hpp"
 #include "../core/WorldPosition.hpp"
 #include "WorldPath.hpp"
+#include "PathVector.hpp"
 
 namespace cse498
 {

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <unordered_map>
 #include <unordered_set>
+#include <numbers>
 #include <algorithm>
 #include "PathGenerator.hpp"
 #include "WorldPath.hpp"
