@@ -13,6 +13,7 @@
 #include <iosfwd>
 #include <algorithm>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <utility>
 #include <vector>
@@ -50,21 +51,30 @@ namespace cse498
         /**
          * Reverses the world path in place.
          */
-        WorldPath& reverse()
+        WorldPath& Reverse() noexcept
         {
             std::ranges::reverse(mPoints);
             return *this;
         }
 
+        // Backwards-compatible alias.
+        WorldPath& reverse() noexcept { return Reverse(); }
+
 
         bool operator==(const WorldPath&) const = default;
         friend std::ostream& operator<<(std::ostream& os, const WorldPath& path);
-        WorldPath& extend(const WorldPath& other);
+        /**
+         * Appends points from another path to this path.
+         */
+        WorldPath& Extend(const WorldPath& other);
+
+        // Backwards-compatible alias.
+        WorldPath& extend(const WorldPath& other) { return Extend(other); }
     private:
         std::vector<WorldPosition> mPoints;
     };
 
-};
+} // namespace cse498
 
 
 
