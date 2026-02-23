@@ -1,5 +1,5 @@
 /**
- * This file is part of the Fall 2026, CSE 498, section 2, course project.
+ * This file is part of the Spring 2026, CSE 498, section 2, course project.
  * @brief 
  * @note Status: PROPOSAL
  * Credit notes: This files makes use parts of the Array implementation of a Binary Tree described at:
@@ -15,9 +15,9 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr double TOL = 1e-12;
-
 namespace cse498 {
+
+	constexpr double WEIGHTED_SET_TOL = 1e-12;
 
 	template <typename T>
 	class WeightedSet {
@@ -27,14 +27,21 @@ namespace cse498 {
 		std::vector<T> items{};
 		std::vector<double> weights{};
 		std::vector<double> sum_tree{}; 
-		int size = 0;
+		std::size_t set_size = 0;
 
-		void FixSum(int idx, double weight) {
+		void FixSum(int idx, double w_change) {
 			while (idx > 0){
-				sum_tree[idx] += weight;
+				sum_tree[idx] += w_change;
 				idx = (idx - 1) / 2; //Travel up parents
 			}
-			sum_tree[0] += weight; //Fix the root
+			sum_tree[0] += w_change; //Fix the root
+		}
+
+		void FixTinyNum(double& weight){
+			//Tiny weights below tolerance that are not 0 can cause strange sample outputs
+			if (weight < WEIGHTED_SET_TOL) {
+				weight = 0.0; //Tiny weights now treated as 0.0
+			}
 		}
 
 		public:
@@ -54,17 +61,14 @@ namespace cse498 {
 				throw std::invalid_argument("cse498::WeightedSet::Insert(): duplicate item");
 			}
 
-			//Tiny weights below tolerance that are not 0 can cause strange sample outputs
-			if (weight < TOL) {
-				weight = 0.0; //Tiny weights now treated as 0.0
-			}
+			FixTinyNum(weight);
 
-			int idx = static_cast<int>(sum_tree.size());
+			int idx = static_cast<int>(set_size);
 			item_idx[id] = idx;
 			items.push_back(id);
 			weights.push_back(weight);
 			sum_tree.push_back(0.0);
-			++size;
+			++set_size;
 
 			FixSum(idx, weight);
 		}
@@ -78,10 +82,7 @@ namespace cse498 {
 				throw std::invalid_argument("cse498::WeightedSet::Update(): item to update does not exist");
 			}
 
-			//Tiny weights below tolerance that are not 0 can cause strange sample outputs
-			if (weight < TOL) {
-				weight = 0.0; //Tiny weights now treated as 0.0
-			}
+			FixTinyNum(weight);
 
 			int idx = item_idx[id];
 			double change = weight - weights[idx];
@@ -90,10 +91,10 @@ namespace cse498 {
 		}
 
 		T Sample(double num) const {
-			if (sum_tree.empty() || sum_tree[0] <= TOL){
+			if (sum_tree.empty() || sum_tree[0] <= WEIGHTED_SET_TOL){
 				throw std::runtime_error("cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
 			}
-			if (num < 0 || num > sum_tree[0] + TOL) {
+			if (num < 0 || num > sum_tree[0] + WEIGHTED_SET_TOL) {
 				throw std::invalid_argument("cse498::WeightedSet::Sample(): Sample number invalid");
 			}
 
@@ -104,7 +105,7 @@ namespace cse498 {
 			int tree_size = static_cast<int>(sum_tree.size());
 
 			while(true){
-				assert(num >= outer_lo - TOL && num <= outer_up + TOL);
+				assert(num >= outer_lo - WEIGHTED_SET_TOL && num <= outer_up + WEIGHTED_SET_TOL);
 
 				int l_idx = 2*idx + 1;
     			int r_idx = 2*idx + 2;
@@ -116,9 +117,9 @@ namespace cse498 {
 				double inner_up = inner_lo + weights[idx];
 
 				//Case 1: number in the left subtree interval
-				if (num <= inner_lo + TOL 
+				if (num <= inner_lo + WEIGHTED_SET_TOL 
 					&& l_idx < tree_size 
-					&& left_sum > TOL) {
+					&& left_sum > WEIGHTED_SET_TOL) {
 
 					outer_up = inner_lo;
 					idx = l_idx;
@@ -126,9 +127,9 @@ namespace cse498 {
 				}
 
 				//Case 2: num in current inverval (a, b]
-				if (num > inner_lo - TOL 
-					&& num <= inner_up + TOL 
-					&& weights[idx] > TOL) {
+				if (num > inner_lo - WEIGHTED_SET_TOL 
+					&& num <= inner_up + WEIGHTED_SET_TOL 
+					&& weights[idx] > WEIGHTED_SET_TOL) {
 						
 					break; //Found corresponding item
 				}
@@ -144,9 +145,9 @@ namespace cse498 {
 			return items[idx];
 		}
 
-		int GetSize() const { return size; }
-		double GetItemSum(T item) { return sum_tree[item_idx[item]]; }
-		double GetWeight(T item) { return weights[item_idx[item]]; }
+		int GetSize() const { return set_size; }
+		double GetItemSum(const T& item) const { return sum_tree.at(item_idx.at(item)); }
+		double GetWeight(const T& item) const { return weights.at(item_idx.at(item)); }
 	};
 
 } // End of namespace cse498
