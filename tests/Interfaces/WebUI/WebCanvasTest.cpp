@@ -12,6 +12,10 @@
 #include "../../../source/Interfaces/WebUI/WebCanvas/WebCanvas.hpp"
 #include "../../../source/Interfaces/WebUI/internal/ICanvasElement.hpp"
 
+using cse498::WebCanvas;
+using cse498::ICanvasElement;
+//using cse498::Alignment;
+
 // A minimal WebLayout stub for unit tests.
 // This avoids pulling in the real WebLayout implementation (which may depend on emscripten).
 class WebLayout {};

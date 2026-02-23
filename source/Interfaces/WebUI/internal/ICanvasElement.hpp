@@ -1,5 +1,7 @@
 #pragma once
 
+namespace cse498 {
+
 class WebCanvas;
 
 /**
@@ -25,3 +27,5 @@ protected:
 
     Metadata m_metadata;
 };
+
+} // namespace cse498

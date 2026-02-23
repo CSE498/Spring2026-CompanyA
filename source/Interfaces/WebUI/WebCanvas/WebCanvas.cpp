@@ -8,6 +8,8 @@
 #include <emscripten.h>
 #endif
 
+namespace cse498 {
+
 // --------------------
 // External JS library functions (from WebCanvas.js via --js-library)
 // --------------------
@@ -102,7 +104,7 @@ void WebCanvas::Clear(const std::string& cssColor)
 #endif
 }
 
-const void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
+void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
                          float lineWidth, const std::string& strokeColor)
 {
 #ifdef __EMSCRIPTEN__
@@ -156,3 +158,5 @@ void WebCanvas::DrawPolygon(const std::vector<Vec2>& points,
     (void)points; (void)strokeColor; (void)lineWidth; (void)fillColor;
 #endif
 }
+
+} // namespace cse498
