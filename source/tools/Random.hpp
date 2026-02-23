@@ -136,7 +136,7 @@ namespace cse498 {
                 m_seed = seed;
                 m_used = false;
             }
-            uint64_t GetSeed() {return m_seed;}
+            uint64_t GetSeed() const {return m_seed;}
 
             // Generate and return a random int
             int GetInt(int i_min = 0, int i_max = 100) {
@@ -228,7 +228,7 @@ namespace cse498 {
             bool P(double probability = 0.5){
                 // Error handling: probability must be between 0 and 1
                 if (0 > probability || 1 < probability) {
-                    throw std::runtime_error("cse498::Random::GetP(): probability must be between 0 and 1.");
+                    throw std::runtime_error("cse498::Random::P(): probability must be between 0 and 1.");
                 }
 
                 if (m_used == false) {
