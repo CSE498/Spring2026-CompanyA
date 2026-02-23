@@ -45,7 +45,7 @@ public:
     // - In Emscripten builds these issue Canvas2D calls on the <canvas id="Id()">.
     void Clear(const std::string& cssColor = "#000000");
 
-    void DrawLine(float x1, float y1, float x2, float y2,
+    const void DrawLine(float x1, float y1, float x2, float y2,
                   float lineWidth = 1.0f,
                   const std::string& strokeColor = "#ffffff");
 

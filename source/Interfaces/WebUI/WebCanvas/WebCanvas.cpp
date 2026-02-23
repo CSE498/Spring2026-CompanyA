@@ -102,7 +102,7 @@ void WebCanvas::Clear(const std::string& cssColor)
 #endif
 }
 
-void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
+const void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
                          float lineWidth, const std::string& strokeColor)
 {
 #ifdef __EMSCRIPTEN__
