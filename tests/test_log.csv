@@ -1,3 +1,0 @@
-Timestamp(ms),Level,Category,Message
-1,INFO,SYSTEM,"CSV Test Message 1"
-1,ERROR,AI,"CSV Test Message 2"
