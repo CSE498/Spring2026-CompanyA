@@ -89,12 +89,12 @@ private:
      */
     struct ANode
     {
-        WorldPosition pos;
-        double g = 0; // cost from start position (total distance traveled)
-        double f = 0; // g + h
+        WorldPosition mPos;
+        double mg = 0; // cost from start position (total distance traveled)
+        double mf = 0; // g + h
         /// This is for reconstruction. Not sure what is best here maybe std::optional<WorldPosition> and just copy store it
-        std::shared_ptr<ANode> prev;
-        ANode(const WorldPosition& pos, double g, double f, std::shared_ptr<ANode> other) : pos(pos), g(g), f(f), prev(std::move(other)) {}
+        std::shared_ptr<ANode> mPrev;
+        ANode(const WorldPosition& pos, double g, double f, std::shared_ptr<ANode> other) : mPos(pos), mg(g), mf(f), mPrev(std::move(other)) {}
     };
 
     /**
@@ -104,7 +104,7 @@ private:
     {
         bool operator()(const std::shared_ptr<ANode> &a, const std::shared_ptr<ANode> &b) const
         {
-            return a->f > b->f;
+            return a->mf > b->mf;
         }
     };
 
@@ -113,8 +113,8 @@ private:
      */
     struct CircleTravel
     {
-        bool possible;
-        std::vector<WorldPosition> path;
+        bool mPossible;
+        std::vector<WorldPosition> mPath;
     };
 
     /**
@@ -146,16 +146,16 @@ private:
      */
     struct SingleGoalHeuristic
     {
-        const WorldPosition goal;
+        const WorldPosition mGoal;
         double operator()(const WorldPosition &p1) const
         {
-            return EuclideanDistance(p1, goal);
+            return EuclideanDistance(p1, mGoal);
         }
         [[nodiscard]] bool equals(const WorldPosition &p1) const
         {
-            if (!goal.IsValid() || !p1.IsValid())
+            if (!mGoal.IsValid() || !p1.IsValid())
                 return false;
-            return round(goal) == round(p1);
+            return round(mGoal) == round(p1);
         }
     };
 
@@ -191,7 +191,7 @@ private:
      * @param flag - default CW, optional CCW
      * @return - the next point CIRCLE UNITS away from the previous in straight line distance - could change obv
      */
-    static WorldPosition findNextCirclePos(const WorldPosition &start,
+    static WorldPosition FindNextCirclePos(const WorldPosition &start,
                                            const WorldPosition &center,
                                            double radius,
                                            CircleDirectionFlag flag = CircleDirectionFlag::CW);
@@ -238,7 +238,7 @@ private:
      * @param circle_flag - CCW or CW
      * @return
      */
-    static WorldPath makeCircle(const WorldPosition &start,
+    static WorldPath MakeCircle(const WorldPosition &start,
                                 const WorldPosition &circ_center,
                                 double circ_radius,
                                 const PathRequest &request,
@@ -336,9 +336,9 @@ struct PathRequest
 {
 public:
     /// the points known to complete a path between and ensure valid
-    std::unordered_set<WorldPosition> avoid_tiles;
-    const AgentAbility &ability;
-    const WorldGrid &world_grid;
+    std::unordered_set<WorldPosition> mAvoidTiles;
+    const AgentAbility &mAbility;
+    const WorldGrid &mWorldGrid;
 
     /**
      *
@@ -349,8 +349,8 @@ public:
      */
     PathRequest(std::unordered_set<WorldPosition> avoid_tiles,
                 const AgentAbility &ability,
-                const WorldGrid &world_grid) : avoid_tiles(std::move(avoid_tiles)), ability(ability),
-                                               world_grid(world_grid)
+                const WorldGrid &world_grid) : mAvoidTiles(std::move(avoid_tiles)), mAbility(ability),
+                                               mWorldGrid(world_grid)
     {
     }
 };
@@ -379,7 +379,7 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
                                                       const double max_search_dist,
                                                       const bool closest)
 {
-    if (!request.world_grid.IsWalkable(from))
+    if (!request.mWorldGrid.IsWalkable(from))
         return {};
 
     const auto directions = std::to_array<PathVector>({
@@ -398,7 +398,7 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
         auto node = pq.top();
         pq.pop();
         // Just check if the node is too far away from the goal and this is our current best estimate then stop looking
-        if (node->f > max_search_dist) // Could change this to distance traveled instead
+        if (node->mf > max_search_dist) // Could change this to distance traveled instead
         {
             if (closest && closest_node != nullptr)
             {
@@ -408,7 +408,7 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
         }
         if (closest)
         {
-            double close_test = h(node->pos);
+            double close_test = h(node->mPos);
             if (close_test < closest_distance)
             {
                 closest_distance = close_test;
@@ -416,21 +416,21 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
             }
         }
 
-        if (h.equals(node->pos)) // Checks
+        if (h.equals(node->mPos)) // Checks
         {
             return AStarReconstruction(node);
         }
         // Otherwise continue adding to priority queue
         for (const auto &dir : directions)
         {
-            WorldPosition neighbor = node->pos + dir;
+            WorldPosition neighbor = node->mPos + dir;
             // if the neighbor is not a valid walking tile then skip it
             // Travelable checks other conditions (banned list, possible for immediate movement) + Walkablility
-            if (!IsTravelable(node->pos, dir, request))
+            if (!IsTravelable(node->mPos, dir, request))
                 continue;
 
             // Order of arguments is Node, g, f, prev node
-            double g = node->g + dir.getMagnitude();
+            double g = node->mg + dir.getMagnitude();
             if (!visited.contains(neighbor))
             {
                 pq.push(std::make_shared<ANode>(neighbor, g, g + h(round(neighbor)), node));

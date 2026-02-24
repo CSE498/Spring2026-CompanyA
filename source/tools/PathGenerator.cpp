@@ -19,7 +19,7 @@ namespace cse498
 bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &dir, const PathRequest &request)
 {
     auto next_pos = from + dir;
-    if (!request.world_grid.IsWalkable(next_pos) || request.avoid_tiles.contains(round(next_pos)))
+    if (!request.mWorldGrid.IsWalkable(next_pos) || request.mAvoidTiles.contains(round(next_pos)))
         return false;
     if (dir.X() == 0 || dir.Y() == 0) // You can always move in the 4 cardinals given tile is valid
         return true;
@@ -33,7 +33,7 @@ bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &di
      */
     const WorldPosition test1 = from + dir.mult({1, 0});
     const WorldPosition test2 = from + dir.mult({0, 1});
-    return request.world_grid.IsWalkable(test1) && request.world_grid.IsWalkable(test2);
+    return request.mWorldGrid.IsWalkable(test1) && request.mWorldGrid.IsWalkable(test2);
 }
 
 PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPosition &from,
@@ -95,18 +95,18 @@ std::vector<WorldPosition> PathGenerator::AStarReconstruction(const std::shared_
 {
     std::vector<WorldPosition> result;
     // Reconstruct the path and return.
-    result.push_back(node->pos);
-    auto prev = node->prev;
+    result.push_back(node->mPos);
+    auto prev = node->mPrev;
     while (prev)
     {
-        result.push_back(prev->pos);
-        prev = prev->prev;
+        result.push_back(prev->mPos);
+        prev = prev->mPrev;
     }
     std::ranges::reverse(result);
     return result;
 }
 
-WorldPosition PathGenerator::findNextCirclePos(const WorldPosition &start,
+WorldPosition PathGenerator::FindNextCirclePos(const WorldPosition &start,
                                                const WorldPosition &center,
                                                const double radius,
                                                const CircleDirectionFlag flag)
@@ -124,7 +124,7 @@ WorldPosition PathGenerator::findNextCirclePos(const WorldPosition &start,
     return center + center_to_start.rotate(angle * direction_decider);
 }
 
-WorldPath PathGenerator::makeCircle(const WorldPosition &start,
+WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
                                     const WorldPosition &circ_center,
                                     const double circ_radius,
                                     const PathRequest &request,
@@ -133,13 +133,13 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
 {
     std::vector<WorldPosition> result;
     // Assert that the first tile is good
-    assert(request.world_grid.IsWalkable(start));
+    assert(request.mWorldGrid.IsWalkable(start));
     // Now we should be good to make the circle from here and take whatever strategy to make it.
     result.push_back(start);
 
     if (flag == PathFlag::Skip)
     {
-        WorldPosition next = findNextCirclePos(start, circ_center, circ_radius, circle_flag);
+        WorldPosition next = FindNextCirclePos(start, circ_center, circ_radius, circle_flag);
 
         while (EuclideanDistance(start, next) > STEP_SIZE / 2)
         {
@@ -149,7 +149,7 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
                 // Possible to optimize this. but result isn't always >= 2 size ....
                 result.insert(result.end(), path.begin() + 1, path.end());
             }
-            next = findNextCirclePos(next, circ_center, circ_radius, circle_flag);
+            next = FindNextCirclePos(next, circ_center, circ_radius, circle_flag);
         }
         // add the last point provided that 1. it is a valid tile and 2. that it comes before the start of the circle
 
@@ -179,7 +179,7 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
         // TODO: Update this once physics and more information about positions exists, size of player, etc.
         //TODO: Expand is supposed to hug walls and corners but is impossible without size of player/collision test
         // This case is also really slow but I think it is useful for calculating things and saving them in jsons
-        WorldPosition next = findNextCirclePos(start, circ_center, circ_radius);
+        WorldPosition next = FindNextCirclePos(start, circ_center, circ_radius);
 
         auto inner = [&]
         {
@@ -195,7 +195,7 @@ WorldPath PathGenerator::makeCircle(const WorldPosition &start,
                 if (path.size() > 1)
                     result.insert(result.end(), path.begin() + 1, path.end()); // skip first pos for repeats
             }
-            next = findNextCirclePos(next, circ_center, circ_radius);
+            next = FindNextCirclePos(next, circ_center, circ_radius);
         };
 
         // default step unit is coded as 1 for travel directions. this is 1/2
@@ -257,7 +257,7 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
     else
     {
         // Try to find start point
-        WorldPosition next = findNextCirclePos(start_point, circ_center, circ_radius, circle_flag);
+        WorldPosition next = FindNextCirclePos(start_point, circ_center, circ_radius, circle_flag);
         while (EuclideanDistance(start_point, next) > STEP_SIZE / 2)
         {
             auto [possible, path] = IsTravelableCircle(agent_pos, next, request);
@@ -268,7 +268,7 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
                 start_point = next;
                 break;
             }
-            next = findNextCirclePos(next, circ_center, circ_radius, circle_flag);
+            next = FindNextCirclePos(next, circ_center, circ_radius, circle_flag);
         }
     }
     if (path_to_circle.empty())
@@ -276,7 +276,7 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
 
     // We should have a valid path now to the start of the circle and a position of the circle.
     // Now we just need to know how to loop around the circle
-    const auto circle_path = makeCircle(start_point, circ_center, circ_radius, request, flag, circle_flag);
+    const auto circle_path = MakeCircle(start_point, circ_center, circ_radius, request, flag, circle_flag);
 
     // Need to fully write it out here.
     return CirclePath(WorldPath(path_to_circle), circle_path);
@@ -305,7 +305,7 @@ std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(cons
         {
             result.push_back(cur);
             cur = cur + directions.at(i);
-            if (request.avoid_tiles.contains(round(cur)))
+            if (request.mAvoidTiles.contains(round(cur)))
                 return {};
         }
     }
