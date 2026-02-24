@@ -151,6 +151,69 @@ TEST_CASE("WorldPath: FurthestPointPair returns correct indices", "[WorldPath]")
     REQUIRE(d == Catch::Detail::Approx(5.0));
 }
 
+TEST_CASE("WorldPath: Reverse reverses point order", "[WorldPath]")
+{
+    WorldPath p;
+    p.AddPoint(WP(0, 0));
+    p.AddPoint(WP(1, 0));
+    p.AddPoint(WP(2, 0));
+
+    const double lenBefore = p.Length();
+
+    // Use the PascalCase API (preferred).
+    p.Reverse();
+
+    REQUIRE(p.Size() == 3);
+    REQUIRE(p.At(0) == WP(2, 0));
+    REQUIRE(p.At(1) == WP(1, 0));
+    REQUIRE(p.At(2) == WP(0, 0));
+
+    // Reversing should not change length.
+    REQUIRE(p.Length() == Catch::Detail::Approx(lenBefore));
+}
+
+TEST_CASE("WorldPath: Extend appends points and skips consecutive duplicates", "[WorldPath]")
+{
+    WorldPath a;
+    a.AddPoint(WP(0, 0));
+    a.AddPoint(WP(1, 0));
+
+    WorldPath b;
+    b.AddPoint(WP(1, 0)); // duplicate of a's last point (consecutive)
+    b.AddPoint(WP(2, 0));
+    b.AddPoint(WP(3, 0));
+
+    a.Extend(b);
+
+    REQUIRE(a.Size() == 4);
+    REQUIRE(a.At(0) == WP(0, 0));
+    REQUIRE(a.At(1) == WP(1, 0));
+    REQUIRE(a.At(2) == WP(2, 0));
+    REQUIRE(a.At(3) == WP(3, 0));
+}
+
+TEST_CASE("WorldPath: operator== compares paths by point sequence", "[WorldPath]")
+{
+    WorldPath a;
+    a.AddPoint(WP(0, 0));
+    a.AddPoint(WP(1, 1));
+
+    WorldPath b;
+    b.AddPoint(WP(0, 0));
+    b.AddPoint(WP(1, 1));
+
+    WorldPath c;
+    c.AddPoint(WP(0, 0));
+    c.AddPoint(WP(1, 0));
+
+    REQUIRE(a == b);
+    REQUIRE_FALSE(a == c);
+
+    // Same points but different order should not be equal.
+    b.Reverse();
+    REQUIRE_FALSE(a == b);
+}
+
 TEST_CASE("WorldPath: operator<< prints basic info", "[WorldPath]")
 {
     WorldPath p;
