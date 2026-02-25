@@ -179,7 +179,7 @@ void test_sync_from_model()
   tb.SetWrap(true);
   tb.Hide();
 
-  tb.syncFromModel();
+  tb.SyncFromModel();
 
   CHECK(tb.GetText() == "hi", "text should remain");
   CHECK(tb.IsVisible() == false, "visibility should remain hidden");
@@ -341,7 +341,7 @@ void test_mount_creates_dom_element()
   root.Apply();
 
   WebTextbox tb("hello");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   val el = ById(tb.Id());
@@ -360,10 +360,10 @@ void test_unmount_removes_dom_element()
   root.Apply();
 
   WebTextbox tb("bye");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
-  tb.unmount();
+  tb.Unmount();
   val el = ById(tb.Id());
   CHECK(el.isNull() || el.isUndefined(), "element should not exist after unmount");
   PASS();
@@ -380,7 +380,7 @@ void test_settext_updates_dom_textContent()
   root.Apply();
 
   WebTextbox tb("old");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetText("new text");
@@ -400,7 +400,7 @@ void test_append_updates_dom_textContent()
   root.Apply();
 
   WebTextbox tb("A");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.AppendText("B");
@@ -420,7 +420,7 @@ void test_show_hide_affects_display_style()
   root.Apply();
 
   WebTextbox tb("x");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.Hide();
@@ -445,7 +445,7 @@ void test_font_size_computed()
   root.Apply();
 
   WebTextbox tb("size");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetFontSize(24.0f);
@@ -466,7 +466,7 @@ void test_bold_italic_computed()
   root.Apply();
 
   WebTextbox tb("style");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetBold(true);
@@ -493,7 +493,7 @@ void test_color_computed()
   root.Apply();
 
   WebTextbox tb("color");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetColor("rgb(255, 0, 0)");
@@ -516,7 +516,7 @@ void test_alignment_computed()
   root.Apply();
 
   WebTextbox tb("align");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetAlignment("center");
@@ -537,7 +537,7 @@ void test_max_width_computed()
   root.Apply();
 
   WebTextbox tb("max width");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetMaxWidth(123.0f);
@@ -559,7 +559,7 @@ void test_wrap_changes_white_space()
   root.Apply();
 
   WebTextbox tb("wrap");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetWrap(true);
@@ -584,7 +584,7 @@ void test_background_color_computed()
   root.Apply();
 
   WebTextbox tb("bg");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetBackgroundColor("rgb(1, 2, 3)");
@@ -605,7 +605,7 @@ void test_bounding_box_after_mount_nonzero()
   root.Apply();
 
   WebTextbox tb("Hello bounding box");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   auto r = tb.GetBoundingBoxPx();
@@ -626,7 +626,7 @@ void test_multiline_increases_height()
 
   WebTextbox tb("Line1");
   tb.SetFontSize(20.0f);
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   double h1 = tb.GetHeightPx();
@@ -649,7 +649,7 @@ void test_layout_alignment_sets_alignself()
   root.Apply();
 
   WebTextbox tb("align-self");
-  tb.mountToLayout(root, Alignment::End);
+  tb.MountToLayout(root, Alignment::End);
   root.Apply();
 
   val el = ById(tb.Id());
@@ -672,7 +672,7 @@ void test_sync_repairs_style_mutation()
 
   WebTextbox tb("repair");
   tb.SetFontSize(18.0f);
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   val el = ById(tb.Id());
@@ -682,7 +682,7 @@ void test_sync_repairs_style_mutation()
   CHECK(fs_bad.find("2") != std::string::npos, "font-size should be 2px after mutation");
 
   // Repair from model
-  tb.syncFromModel();
+  tb.SyncFromModel();
   std::string fs_fixed = GetComputedStyleStr(el, "font-size");
   CHECK(fs_fixed.find("18") != std::string::npos, "font-size should be restored to ~18px");
   PASS();
@@ -702,7 +702,7 @@ void test_move_then_mount_element_exists()
   std::string id = a.Id();
 
   WebTextbox b(std::move(a));
-  b.mountToLayout(root, Alignment::Start);
+  b.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   val el = ById(id);
@@ -723,8 +723,8 @@ void test_layout_ordering()
 
   WebTextbox a("A");
   WebTextbox b("B");
-  a.mountToLayout(root, Alignment::Start);
-  b.mountToLayout(root, Alignment::Start);
+  a.MountToLayout(root, Alignment::Start);
+  b.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   val rootEl = ById(root.Id());
@@ -759,7 +759,7 @@ void test_textbox_can_live_inside_button_dom()
 
   // Mount textbox, then move its DOM node into the button
   WebTextbox tb("Label");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   val tbEl = ById(tb.Id());
@@ -793,7 +793,7 @@ void test_clear_background_transparent()
   root.Apply();
 
   WebTextbox tb("bg-clear");
-  tb.mountToLayout(root, Alignment::Start);
+  tb.MountToLayout(root, Alignment::Start);
   root.Apply();
 
   tb.SetBackgroundColor("rgb(9, 9, 9)");

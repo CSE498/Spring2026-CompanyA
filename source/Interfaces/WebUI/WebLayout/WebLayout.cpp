@@ -5,7 +5,7 @@
 
 using emscripten::val;
 
-int WebLayout::nextIdCounter_ = 1;
+int WebLayout::mNextIdCounter = 1;
 
 /// Helper function to convert a pixel value to a CSS string.
 /// @param v Pixel value (non-negative)
@@ -22,60 +22,60 @@ static std::string px(int v) noexcept {
 /// it is used as the root. Otherwise, a new div is created and appended to
 /// body.
 WebLayout::WebLayout(const std::string& rootId) noexcept {
-  document_ = val::global("document");
+  mDocument = val::global("document");
   if (!rootId.empty()) {
-    val found = document_.call<val>("getElementById", rootId);
+    val found = mDocument.call<val>("getElementById", rootId);
     if (!found.isNull() && !found.isUndefined()) {
-      root_ = found;
+      mRoot = found;
     } else {
       // create a container div with the requested id and append to body
-      root_ = document_.call<val>("createElement", std::string("div"));
-      root_.set("id", rootId);
-      document_["body"].call<void>("appendChild", root_);
+      mRoot = mDocument.call<val>("createElement", std::string("div"));
+      mRoot.set("id", rootId);
+      mDocument["body"].call<void>("appendChild", mRoot);
     }
-    id_ = rootId;
-    val style = root_["style"];
+    mId = rootId;
+    val style = mRoot["style"];
     style.set("boxSizing", std::string("border-box"));
     return;
   }
 
   // no id passed: create a container div and append to body with generated id
-  id_ = "weblayout-" + std::to_string(nextIdCounter_++);
-  root_ = document_.call<val>("createElement", std::string("div"));
-  root_.set("id", id_);
-  val style = root_["style"];
+  mId = "weblayout-" + std::to_string(mNextIdCounter++);
+  mRoot = mDocument.call<val>("createElement", std::string("div"));
+  mRoot.set("id", mId);
+  val style = mRoot["style"];
   style.set("boxSizing", std::string("border-box"));
-  document_["body"].call<void>("appendChild", root_);
-  assert(!root_.isNull() && !root_.isUndefined());
-  assert(root_["id"].as<std::string>() == id_);
+  mDocument["body"].call<void>("appendChild", mRoot);
+  assert(!mRoot.isNull() && !mRoot.isUndefined());
+  assert(mRoot["id"].as<std::string>() == mId);
 }
 
 /// Destructor removes the root element from the DOM and cleans up references.
 WebLayout::~WebLayout() noexcept {
   // remove the root element from DOM if present
-  val parent = root_["parentNode"];
+  val parent = mRoot["parentNode"];
   if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", root_);
+    parent.call<void>("removeChild", mRoot);
   }
-  document_ = val::undefined();
-  root_ = val::undefined();
+  mDocument = val::undefined();
+  mRoot = val::undefined();
 }
 
 /// Sets the layout type and stores it for later application to the DOM.
-void WebLayout::SetLayoutType(LayoutType t) noexcept { type_ = t; }
+void WebLayout::SetLayoutType(LayoutType t) noexcept { mType = t; }
 
 /// Sets the justification mode for the main axis alignment.
 void WebLayout::SetJustification(Justification j) noexcept {
-  justification_ = j;
+  mJustification = j;
 }
 
 /// Sets the cross-axis alignment for child elements.
-void WebLayout::SetAlignItems(Alignment a) noexcept { alignItems_ = a; }
+void WebLayout::SetAlignItems(Alignment a) noexcept { mAlignItems = a; }
 
 /// Sets the gap/spacing between child elements.
 void WebLayout::SetSpacing(int pxv) noexcept {
   assert(pxv >= 0);
-  spacing_ = pxv;
+  mSpacing = pxv;
 }
 
 /// Adds a child element to this layout.
@@ -86,28 +86,28 @@ bool WebLayout::AddElement(IDomElement* elem, Alignment align) noexcept {
   const ElementID& id = elem->Id();
   if (id.empty()) return false;
 
-  val el = document_.call<val>("getElementById", id);
+  val el = mDocument.call<val>("getElementById", id);
   if (el.isNull() || el.isUndefined()) {
     return false;
   }
 
   // attach now; Apply() will re-check parent when re-applying
-  root_.call<void>("appendChild", el);
-  children_.push_back(elem);
-  params_[elem] = align;
+  mRoot.call<void>("appendChild", el);
+  mChildren.push_back(elem);
+  mParams[elem] = align;
   return true;
 }
 
 /// Removes a child element from this layout and removes it from the DOM.
 bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
   if (!elem) return false;
-  auto it = std::find(children_.begin(), children_.end(), elem);
-  if (it == children_.end()) return false;
-  children_.erase(it);
-  params_.erase(elem);
+  auto it = std::find(mChildren.begin(), mChildren.end(), elem);
+  if (it == mChildren.end()) return false;
+  mChildren.erase(it);
+  mParams.erase(elem);
 
   const ElementID& id = elem->Id();
-  val el = document_.call<val>("getElementById", id);
+  val el = mDocument.call<val>("getElementById", id);
   if (!el.isNull() && !el.isUndefined()) {
     val parent = el["parentNode"];
     if (!parent.isNull() && !parent.isUndefined()) {
@@ -120,8 +120,8 @@ bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
 /// Updates the alignment of a specific child element.
 void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
   if (!elem) return;
-  auto it = params_.find(elem);
-  if (it == params_.end()) return;
+  auto it = mParams.find(elem);
+  if (it == mParams.end()) return;
   it->second = a;
 }
 
@@ -129,83 +129,83 @@ void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
 
 /// Sets the background color for this layout.
 void WebLayout::SetBackgroundColor(const std::string& color) noexcept {
-  backgroundColor_ = color;
+  mBackgroundColor = color;
 }
 
 /// Sets the border color for this layout.
 void WebLayout::SetBorderColor(const std::string& color) noexcept {
-  borderColor_ = color;
+  mBorderColor = color;
 }
 
 /// Sets the border width in pixels.
 void WebLayout::SetBorderWidth(int width) noexcept {
   assert(width >= 0);
-  borderWidth_ = width;
+  mBorderWidth = width;
 }
 
 /// Sets the border radius for rounded corners.
 void WebLayout::SetBorderRadius(int radius) noexcept {
   assert(radius >= 0);
-  borderRadius_ = radius;
+  mBorderRadius = radius;
 }
 
 /// Sets the padding in pixels.
 void WebLayout::SetPadding(int padding) noexcept {
   assert(padding >= 0);
-  padding_ = padding;
+  mPadding = padding;
 }
 
 /// Sets the margin in pixels.
 void WebLayout::SetMargin(int margin) noexcept {
   assert(margin >= 0);
-  margin_ = margin;
+  mMargin = margin;
 }
 
 /// Sets the width in pixels.
 void WebLayout::SetWidth(int width) noexcept {
   assert(width > 0);
-  width_ = width;
+  mWidth = width;
 }
 
 /// Sets the height in pixels.
 void WebLayout::SetHeight(int height) noexcept {
   assert(height > 0);
-  height_ = height;
+  mHeight = height;
 }
 
 /// Sets the opacity/transparency level (0.0 = transparent, 1.0 = opaque).
 void WebLayout::SetOpacity(double opacity) noexcept {
   assert(opacity >= 0.0 && opacity <= 1.0);
-  opacity_ = opacity;
+  mOpacity = opacity;
 }
 
 /// Sets the box shadow CSS property.
 void WebLayout::SetBoxShadow(const std::string& shadow) noexcept {
-  boxShadow_ = shadow;
+  mBoxShadow = shadow;
 }
 
 /// Toggles the visibility of this layout between hidden and visible.
-void WebLayout::ToggleVisibility() noexcept { isVisible_ = !isVisible_; }
+void WebLayout::ToggleVisibility() noexcept { mIsVisible = !mIsVisible; }
 
 // ===== IDomElement Interface Implementations =====
 /// Mounts this layout as a child within a parent layout.
 /// Registers with the parent and establishes the DOM parent-child relationship.
-void WebLayout::mountToLayout(WebLayout& parent, Alignment align) noexcept {
+void WebLayout::MountToLayout(WebLayout& parent, Alignment align) noexcept {
   // register this layout element with parent and ensure DOM parent-child
   // relationship
   parent.AddElement(this, align);
 }
 
 /// Unmounts this layout from its DOM parent.
-void WebLayout::unmount() noexcept {
-  val parent = root_["parentNode"];
+void WebLayout::Unmount() noexcept {
+  val parent = mRoot["parentNode"];
   if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", root_);
+    parent.call<void>("removeChild", mRoot);
   }
 }
 
 /// Synchronizes the layout state with the DOM by calling Apply().
-void WebLayout::syncFromModel() noexcept {
+void WebLayout::SyncFromModel() noexcept {
   // default sync behavior: re-apply layout to reflect params/state
   Apply();
 }
@@ -214,39 +214,39 @@ void WebLayout::syncFromModel() noexcept {
 /// This method synchronizes the stored state with the actual DOM element
 /// and all child elements. Call this after making configuration changes.
 void WebLayout::Apply() noexcept {
-  val style = root_["style"];
+  val style = mRoot["style"];
 
   // Apply styling properties
-  if (!backgroundColor_.empty()) {
-    style.set("backgroundColor", backgroundColor_);
+  if (!mBackgroundColor.empty()) {
+    style.set("backgroundColor", mBackgroundColor);
   }
-  if (borderWidth_ > 0) {
-    style.set("borderWidth", px(borderWidth_));
+  if (mBorderWidth > 0) {
+    style.set("borderWidth", px(mBorderWidth));
     style.set("borderStyle", std::string("solid"));
-    if (!borderColor_.empty()) {
-      style.set("borderColor", borderColor_);
+    if (!mBorderColor.empty()) {
+      style.set("borderColor", mBorderColor);
     }
   }
-  if (borderRadius_ > 0) {
-    style.set("borderRadius", px(borderRadius_));
+  if (mBorderRadius > 0) {
+    style.set("borderRadius", px(mBorderRadius));
   }
-  if (padding_ > 0) {
-    style.set("padding", px(padding_));
+  if (mPadding > 0) {
+    style.set("padding", px(mPadding));
   }
-  if (margin_ > 0) {
-    style.set("margin", px(margin_));
+  if (mMargin > 0) {
+    style.set("margin", px(mMargin));
   }
-  if (width_ > 0) {
-    style.set("width", px(width_));
+  if (mWidth > 0) {
+    style.set("width", px(mWidth));
   }
-  if (height_ > 0) {
-    style.set("height", px(height_));
+  if (mHeight > 0) {
+    style.set("height", px(mHeight));
   }
-  if (opacity_ < 1.0) {
-    style.set("opacity", opacity_);
+  if (mOpacity < 1.0) {
+    style.set("opacity", mOpacity);
   }
-  if (!boxShadow_.empty()) {
-    style.set("boxShadow", boxShadow_);
+  if (!mBoxShadow.empty()) {
+    style.set("boxShadow", mBoxShadow);
   }
 
   // Helper lambda to convert Justification to CSS justify-content string.
@@ -286,49 +286,49 @@ void WebLayout::Apply() noexcept {
     }
   };
 
-  switch (type_) {
+  switch (mType) {
     case LayoutType::Free:
       style.set("position", std::string("relative"));
       style.set("display",
-                isVisible_ ? std::string("block") : std::string("none"));
+                mIsVisible ? std::string("block") : std::string("none"));
       break;
     case LayoutType::Horizontal:
       style.set("display",
-                isVisible_ ? std::string("flex") : std::string("none"));
+                mIsVisible ? std::string("flex") : std::string("none"));
       style.set("flexDirection", std::string("row"));
-      style.set("alignItems", getAlignItemsStr(alignItems_));
-      style.set("justifyContent", getJustifyStr(justification_));
-      style.set("gap", px(spacing_));
+      style.set("alignItems", getAlignItemsStr(mAlignItems));
+      style.set("justifyContent", getJustifyStr(mJustification));
+      style.set("gap", px(mSpacing));
       break;
     case LayoutType::Vertical:
       style.set("display",
-                isVisible_ ? std::string("flex") : std::string("none"));
+                mIsVisible ? std::string("flex") : std::string("none"));
       style.set("flexDirection", std::string("column"));
-      style.set("alignItems", getAlignItemsStr(alignItems_));
-      style.set("justifyContent", getJustifyStr(justification_));
-      style.set("gap", px(spacing_));
+      style.set("alignItems", getAlignItemsStr(mAlignItems));
+      style.set("justifyContent", getJustifyStr(mJustification));
+      style.set("gap", px(mSpacing));
       break;
     case LayoutType::Grid:
       style.set("display",
-                isVisible_ ? std::string("grid") : std::string("none"));
-      style.set("alignItems", getAlignItemsStr(alignItems_));
-      style.set("justifyItems", getJustifyStr(justification_));
-      style.set("gap", px(spacing_));
+                mIsVisible ? std::string("grid") : std::string("none"));
+      style.set("alignItems", getAlignItemsStr(mAlignItems));
+      style.set("justifyItems", getJustifyStr(mJustification));
+      style.set("gap", px(mSpacing));
       break;
   }
 
   // ensure ordering and apply per-child styles
-  for (IDomElement* elem : children_) {
+  for (IDomElement* elem : mChildren) {
     if (!elem) continue;
     const ElementID& id = elem->Id();
     if (id.empty()) continue;
 
-    val el = document_.call<val>("getElementById", id);
+    val el = mDocument.call<val>("getElementById", id);
     if (el.isNull() || el.isUndefined()) continue;
 
     // apply alignment only; sizing is handled by element itself
-    auto it = params_.find(elem);
-    if (it != params_.end()) {
+    auto it = mParams.find(elem);
+    if (it != mParams.end()) {
       Alignment a = it->second;
       val est = el["style"];
       std::string alignStr;
@@ -352,7 +352,7 @@ void WebLayout::Apply() noexcept {
     }
 
     // If grid layout and the element has grid coordinates, apply them
-    if (type_ == LayoutType::Grid) {
+    if (mType == LayoutType::Grid) {
       int r = elem->GridRow();
       int c = elem->GridCol();
       val est = el["style"];
@@ -364,8 +364,8 @@ void WebLayout::Apply() noexcept {
       }
     }
 
-    // For free layout, apply positioning relative to root_ if set
-    if (type_ == LayoutType::Free) {
+    // For free layout, apply positioning relative to mRoot if set
+    if (mType == LayoutType::Free) {
       int top = elem->FreeTop();
       int left = elem->FreeLeft();
       val est = el["style"];
@@ -386,7 +386,7 @@ void WebLayout::Apply() noexcept {
 /// Clears all child elements from the layout and removes them from the DOM.
 void WebLayout::Clear() noexcept {
   // remove children from DOM by clearing innerHTML
-  root_.set("innerHTML", std::string(""));
-  children_.clear();
-  params_.clear();
+  mRoot.set("innerHTML", std::string(""));
+  mChildren.clear();
+  mParams.clear();
 }

@@ -12,7 +12,7 @@ namespace cse498 {
 /**
  * WebCanvas
  * - As an IDomElement: can be mounted/unmounted/synced by WebLayout (DOM lifecycle).
- * - As a canvas manager: owns ICanvasElement objects and dispatches draw() in renderFrame().
+ * - As a canvas manager: owns ICanvasElement objects and dispatches Draw() in RenderFrame().
  *
  * Additionally, WebCanvas exposes a small set of immediate-mode primitives
  * (line/circle/point/polygon) to support "whiteboard-level" drawing and demos.
@@ -31,15 +31,15 @@ public:
     WebCanvas& operator=(WebCanvas&&) noexcept = default;
 
     // ---- IDomElement ----
-    void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
-    void unmount() override;
-    void syncFromModel() override;
-    const std::string& Id() const override { return m_id; }
+    void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+    void Unmount() override;
+    void SyncFromModel() override;
+    const std::string& Id() const override { return mId; }
 
     // ---- Canvas content management ----
-    void addElement(std::unique_ptr<ICanvasElement> element);
-    void clearElements();
-    void renderFrame();
+    void AddElement(std::unique_ptr<ICanvasElement> element);
+    void ClearElements();
+    void RenderFrame();
 
     // ---- Immediate-mode primitive drawing (whiteboard-level) ----
     // Notes:
@@ -72,10 +72,10 @@ private:
     std::vector<std::unique_ptr<ICanvasElement>> m_elements;
 
     // DOM-side state (minimal early-stage implementation)
-    std::string m_id;
-    WebLayout*  m_parent  = nullptr;       // Non-owning pointer to the parent layout
-    Alignment   m_align   = Alignment::Start;
-    bool        m_mounted = false;
+    std::string mId;
+    WebLayout*  mParent  = nullptr;       // Non-owning pointer to the parent layout
+    Alignment   mAlign   = Alignment::Start;
+    bool        mMounted = false;
 };
 
 } // namespace cse498

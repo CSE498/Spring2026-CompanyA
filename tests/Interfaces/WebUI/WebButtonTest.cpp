@@ -142,7 +142,7 @@ TEST_CASE("syncFromModel does not crash and preserves state", "[WebButton]") {
   btn.SetTextColor("white");
   btn.Disable();
   btn.Hide();
-  btn.syncFromModel();
+  btn.SyncFromModel();
   CHECK_MSG(btn.GetLabel() == "sync", "label should remain");
   CHECK_MSG(btn.GetWidth() == 100, "width should remain");
   CHECK_MSG(btn.GetHeight() == 50, "height should remain");
@@ -288,7 +288,7 @@ TEST_CASE("Self move assignment is safe", "[WebButton]") {
 
 TEST_CASE("unmount is safe to call multiple times", "[WebButton]") {
   WebButton btn("test");
-  REQUIRE_NOTHROW(btn.unmount());
-  REQUIRE_NOTHROW(btn.unmount());
-  REQUIRE_NOTHROW(btn.unmount());
+  REQUIRE_NOTHROW(btn.Unmount());
+  REQUIRE_NOTHROW(btn.Unmount());
+  REQUIRE_NOTHROW(btn.Unmount());
 }

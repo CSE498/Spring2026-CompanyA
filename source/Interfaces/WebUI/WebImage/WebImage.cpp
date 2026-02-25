@@ -6,7 +6,7 @@
 
 using emscripten::val;
 
-int WebImage::next_id_counter_ = 1;
+int WebImage::mNextIdCounter = 1;
 
 // Helper: Get the browser's document object
 static val GetDocument() {
@@ -21,88 +21,88 @@ static std::string ToPx(int value) {
 // ----- Construction / Destruction -----
 
 WebImage::WebImage(const std::string& src, const std::string& alt_text)
-    : src_(src),
-      alt_text_(alt_text),
-      element_(val::null()) {
+    : mSrc(src),
+      mAltText(alt_text),
+      mElement(val::null()) {
   // Generate a unique ID for this element
-  id_ = "webimage-" + std::to_string(next_id_counter_++);
+  mId = "webimage-" + std::to_string(mNextIdCounter++);
 
   val doc = GetDocument();
-  element_ = doc.call<val>("createElement", std::string("img"));
-  element_.set("id", id_);
-  element_.set("src", src_);
-  element_.set("alt", alt_text_);
-  doc["body"].call<void>("appendChild", element_);
+  mElement = doc.call<val>("createElement", std::string("img"));
+  mElement.set("id", mId);
+  mElement.set("src", mSrc);
+  mElement.set("alt", mAltText);
+  doc["body"].call<void>("appendChild", mElement);
 
   AttachListeners();
 }
 
 WebImage::~WebImage() {
-  if (!element_.isNull()) {
-    val parent = element_["parentNode"];
+  if (!mElement.isNull()) {
+    val parent = mElement["parentNode"];
     if (!parent.isNull() && !parent.isUndefined()) {
-      parent.call<void>("removeChild", element_);
+      parent.call<void>("removeChild", mElement);
     }
-    element_ = val::null();
+    mElement = val::null();
   }
 }
 
 WebImage::WebImage(WebImage&& other) noexcept
-    : src_(std::move(other.src_)),
-      alt_text_(std::move(other.alt_text_)),
-      width_(other.width_),
-      height_(other.height_),
-      opacity_(other.opacity_),
-      is_visible_(other.is_visible_),
-      is_loaded_(other.is_loaded_),
-      has_error_(other.has_error_),
-      error_mode_(other.error_mode_),
-      placeholder_color_(std::move(other.placeholder_color_)),
-      on_load_callback_(std::move(other.on_load_callback_)),
-      on_error_callback_(std::move(other.on_error_callback_)),
-      element_(other.element_),
-      id_(std::move(other.id_)) {
-  other.element_ = val::null();
-  other.width_ = 0;
-  other.height_ = 0;
-  other.opacity_ = 1.0;
-  other.is_visible_ = false;
-  other.is_loaded_ = false;
-  other.has_error_ = false;
+    : mSrc(std::move(other.mSrc)),
+      mAltText(std::move(other.mAltText)),
+      mWidth(other.mWidth),
+      mHeight(other.mHeight),
+      mOpacity(other.mOpacity),
+      mIsVisible(other.mIsVisible),
+      mIsLoaded(other.mIsLoaded),
+      mHasError(other.mHasError),
+      mErrorMode(other.mErrorMode),
+      mPlaceholderColor(std::move(other.mPlaceholderColor)),
+      mOnLoadCallback(std::move(other.mOnLoadCallback)),
+      mOnErrorCallback(std::move(other.mOnErrorCallback)),
+      mElement(other.mElement),
+      mId(std::move(other.mId)) {
+  other.mElement = val::null();
+  other.mWidth = 0;
+  other.mHeight = 0;
+  other.mOpacity = 1.0;
+  other.mIsVisible = false;
+  other.mIsLoaded = false;
+  other.mHasError = false;
 }
 
 WebImage& WebImage::operator=(WebImage&& other) noexcept {
   if (this != &other) {
     // Clean up current element
-    if (!element_.isNull()) {
-      val parent = element_["parentNode"];
+    if (!mElement.isNull()) {
+      val parent = mElement["parentNode"];
       if (!parent.isNull() && !parent.isUndefined()) {
-        parent.call<void>("removeChild", element_);
+        parent.call<void>("removeChild", mElement);
       }
     }
 
-    src_ = std::move(other.src_);
-    alt_text_ = std::move(other.alt_text_);
-    width_ = other.width_;
-    height_ = other.height_;
-    opacity_ = other.opacity_;
-    is_visible_ = other.is_visible_;
-    is_loaded_ = other.is_loaded_;
-    has_error_ = other.has_error_;
-    error_mode_ = other.error_mode_;
-    placeholder_color_ = std::move(other.placeholder_color_);
-    on_load_callback_ = std::move(other.on_load_callback_);
-    on_error_callback_ = std::move(other.on_error_callback_);
-    element_ = other.element_;
-    id_ = std::move(other.id_);
+    mSrc = std::move(other.mSrc);
+    mAltText = std::move(other.mAltText);
+    mWidth = other.mWidth;
+    mHeight = other.mHeight;
+    mOpacity = other.mOpacity;
+    mIsVisible = other.mIsVisible;
+    mIsLoaded = other.mIsLoaded;
+    mHasError = other.mHasError;
+    mErrorMode = other.mErrorMode;
+    mPlaceholderColor = std::move(other.mPlaceholderColor);
+    mOnLoadCallback = std::move(other.mOnLoadCallback);
+    mOnErrorCallback = std::move(other.mOnErrorCallback);
+    mElement = other.mElement;
+    mId = std::move(other.mId);
 
-    other.element_ = val::null();
-    other.width_ = 0;
-    other.height_ = 0;
-    other.opacity_ = 1.0;
-    other.is_visible_ = false;
-    other.is_loaded_ = false;
-    other.has_error_ = false;
+    other.mElement = val::null();
+    other.mWidth = 0;
+    other.mHeight = 0;
+    other.mOpacity = 1.0;
+    other.mIsVisible = false;
+    other.mIsLoaded = false;
+    other.mHasError = false;
   }
   return *this;
 }
@@ -110,29 +110,29 @@ WebImage& WebImage::operator=(WebImage&& other) noexcept {
 // ----- Source & Metadata -----
 
 void WebImage::SetSource(const std::string& src) {
-  src_ = src;
-  is_loaded_ = false;
-  has_error_ = false;
-  if (!element_.isNull()) {
+  mSrc = src;
+  mIsLoaded = false;
+  mHasError = false;
+  if (!mElement.isNull()) {
     // Reset to <img> in case we had replaced it with a placeholder <div>
-    element_.set("src", src_);
-    element_["style"].set("backgroundColor", std::string(""));
+    mElement.set("src", mSrc);
+    mElement["style"].set("backgroundColor", std::string(""));
   }
 }
 
 std::string WebImage::GetSource() const {
-  return src_;
+  return mSrc;
 }
 
 void WebImage::SetAltText(const std::string& alt_text) {
-  alt_text_ = alt_text;
-  if (!element_.isNull()) {
-    element_.set("alt", alt_text_);
+  mAltText = alt_text;
+  if (!mElement.isNull()) {
+    mElement.set("alt", mAltText);
   }
 }
 
 std::string WebImage::GetAltText() const {
-  return alt_text_;
+  return mAltText;
 }
 
 // ----- Sizing -----
@@ -140,146 +140,146 @@ std::string WebImage::GetAltText() const {
 void WebImage::SetSize(int width_px, int height_px) {
   assert(width_px >= 0 && "SetSize: width must be non-negative");
   assert(height_px >= 0 && "SetSize: height must be non-negative");
-  width_ = width_px;
-  height_ = height_px;
-  if (!element_.isNull()) {
+  mWidth = width_px;
+  mHeight = height_px;
+  if (!mElement.isNull()) {
     if (width_px > 0) {
-      element_["style"].set("width", ToPx(width_px));
+      mElement["style"].set("width", ToPx(width_px));
     }
     if (height_px > 0) {
-      element_["style"].set("height", ToPx(height_px));
+      mElement["style"].set("height", ToPx(height_px));
     }
     // Stretch to exact dimensions (no aspect ratio preservation)
-    element_["style"].set("objectFit", std::string("fill"));
+    mElement["style"].set("objectFit", std::string("fill"));
   }
 }
 
 void WebImage::Resize(int width_px, int height_px, bool maintain_aspect_ratio) {
   assert(width_px > 0 && "Resize: width must be positive");
   assert(height_px > 0 && "Resize: height must be positive");
-  width_ = width_px;
-  height_ = height_px;
-  if (!element_.isNull()) {
-    element_["style"].set("width", ToPx(width_px));
-    element_["style"].set("height", ToPx(height_px));
+  mWidth = width_px;
+  mHeight = height_px;
+  if (!mElement.isNull()) {
+    mElement["style"].set("width", ToPx(width_px));
+    mElement["style"].set("height", ToPx(height_px));
     // "contain" scales to fit within the box keeping aspect ratio
     // "fill" stretches to fill exact dimensions
-    element_["style"].set("objectFit",
+    mElement["style"].set("objectFit",
         std::string(maintain_aspect_ratio ? "contain" : "fill"));
   }
 }
 
 int WebImage::GetWidth() const {
-  return width_;
+  return mWidth;
 }
 
 int WebImage::GetHeight() const {
-  return height_;
+  return mHeight;
 }
 
 // ----- Opacity / Transparency -----
 
 void WebImage::SetOpacity(double alpha) {
   assert(alpha >= 0.0 && alpha <= 1.0 && "SetOpacity: alpha must be in [0.0, 1.0]");
-  opacity_ = alpha;
-  if (!element_.isNull()) {
-    element_["style"].set("opacity", std::to_string(alpha));
+  mOpacity = alpha;
+  if (!mElement.isNull()) {
+    mElement["style"].set("opacity", std::to_string(alpha));
   }
 }
 
 double WebImage::GetOpacity() const {
-  return opacity_;
+  return mOpacity;
 }
 
 // ----- Visibility -----
 
 void WebImage::Show() {
-  is_visible_ = true;
-  if (!element_.isNull()) {
-    element_["style"].set("display", std::string(""));
+  mIsVisible = true;
+  if (!mElement.isNull()) {
+    mElement["style"].set("display", std::string(""));
   }
 }
 
 void WebImage::Hide() {
-  is_visible_ = false;
-  if (!element_.isNull()) {
-    element_["style"].set("display", std::string("none"));
+  mIsVisible = false;
+  if (!mElement.isNull()) {
+    mElement["style"].set("display", std::string("none"));
   }
 }
 
 bool WebImage::IsVisible() const {
-  return is_visible_;
+  return mIsVisible;
 }
 
 // ----- Loading State & Error Handling -----
 
 void WebImage::MarkLoaded(bool loaded) {
-  is_loaded_ = loaded;
+  mIsLoaded = loaded;
 }
 
 bool WebImage::IsLoaded() const {
-  return is_loaded_;
+  return mIsLoaded;
 }
 
 bool WebImage::HasError() const {
-  return has_error_;
+  return mHasError;
 }
 
 void WebImage::SetOnLoadCallback(std::function<void()> callback) {
-  on_load_callback_ = std::move(callback);
+  mOnLoadCallback = std::move(callback);
 }
 
 void WebImage::SetOnErrorCallback(std::function<void()> callback) {
-  on_error_callback_ = std::move(callback);
+  mOnErrorCallback = std::move(callback);
 }
 
 void WebImage::SetErrorMode(ImageErrorMode mode) {
-  error_mode_ = mode;
+  mErrorMode = mode;
 }
 
 void WebImage::SetPlaceholderColor(const std::string& css_color) {
-  placeholder_color_ = css_color;
+  mPlaceholderColor = css_color;
 }
 
 // ----- IDomElement Interface -----
 
-void WebImage::mountToLayout(WebLayout& parent, Alignment align) {
+void WebImage::MountToLayout(WebLayout& parent, Alignment align) {
   parent.AddElement(this, align);
 }
 
-void WebImage::unmount() {
-  val parent = element_["parentNode"];
+void WebImage::Unmount() {
+  val parent = mElement["parentNode"];
   if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", element_);
+    parent.call<void>("removeChild", mElement);
   }
 }
 
-void WebImage::syncFromModel() {
+void WebImage::SyncFromModel() {
   // Re-apply all properties to DOM element
-  if (element_.isNull()) return;
+  if (mElement.isNull()) return;
 
-  element_.set("src", src_);
-  element_.set("alt", alt_text_);
+  mElement.set("src", mSrc);
+  mElement.set("alt", mAltText);
 
-  if (width_ > 0) {
-    element_["style"].set("width", ToPx(width_));
+  if (mWidth > 0) {
+    mElement["style"].set("width", ToPx(mWidth));
   }
-  if (height_ > 0) {
-    element_["style"].set("height", ToPx(height_));
+  if (mHeight > 0) {
+    mElement["style"].set("height", ToPx(mHeight));
   }
 
-  element_["style"].set("opacity", std::to_string(opacity_));
-  element_["style"].set("display",
-      std::string(is_visible_ ? "" : "none"));
+  mElement["style"].set("opacity", std::to_string(mOpacity));
+  mElement["style"].set("display",
+      std::string(mIsVisible ? "" : "none"));
 }
 
 const std::string& WebImage::Id() const {
-  return id_;
+  return mId;
 }
 
 // ----- ICanvasElement Interface -----
 
-void WebImage::draw(WebCanvas& canvas) {
+void WebImage::Draw(WebCanvas& canvas) {
   // Canvas drawing implementation
   // This is a stub - actual implementation would use canvas 2D context
   // to draw the image at the specified position and size.
@@ -290,33 +290,33 @@ void WebImage::draw(WebCanvas& canvas) {
 // ----- Event Handlers -----
 
 void WebImage::HandleLoad() {
-  is_loaded_ = true;
-  has_error_ = false;
-  if (on_load_callback_) {
-    on_load_callback_();
+  mIsLoaded = true;
+  mHasError = false;
+  if (mOnLoadCallback) {
+    mOnLoadCallback();
   }
 }
 
 void WebImage::HandleError() {
-  has_error_ = true;
-  is_loaded_ = false;
-  std::cerr << "WebImage error: failed to load image '" << src_
-            << "' (id=" << id_ << ")" << std::endl;
+  mHasError = true;
+  mIsLoaded = false;
+  std::cerr << "WebImage error: failed to load image '" << mSrc
+            << "' (id=" << mId << ")" << std::endl;
 
-  if (error_mode_ == ImageErrorMode::BlankRect) {
+  if (mErrorMode == ImageErrorMode::BlankRect) {
     ApplyPlaceholder();
   }
   // NoOp: do nothing, leave the broken image as-is
 
-  if (on_error_callback_) {
-    on_error_callback_();
+  if (mOnErrorCallback) {
+    mOnErrorCallback();
   }
 }
 
 // ----- Private Helpers -----
 
 void WebImage::AttachListeners() {
-  if (element_.isNull()) return;
+  if (mElement.isNull()) return;
 
   WebImage* self = this;
 
@@ -329,28 +329,28 @@ void WebImage::AttachListeners() {
     el.addEventListener("error", function() {
       Module._WebImage_handleError(ptrVal);
     });
-  }, element_.as_handle(), reinterpret_cast<intptr_t>(self));
+  }, mElement.as_handle(), reinterpret_cast<intptr_t>(self));
 }
 
 void WebImage::ApplyPlaceholder() {
-  if (element_.isNull()) return;
+  if (mElement.isNull()) return;
 
   // Hide the broken image icon by removing the src
-  element_.set("src", std::string(""));
+  mElement.set("src", std::string(""));
 
   // Show a colored rectangle instead
-  val style = element_["style"];
-  style.set("backgroundColor", placeholder_color_);
+  val style = mElement["style"];
+  style.set("backgroundColor", mPlaceholderColor);
   style.set("display", std::string("inline-block"));
 
   // Ensure the placeholder has visible dimensions
-  if (width_ > 0) {
-    style.set("width", ToPx(width_));
+  if (mWidth > 0) {
+    style.set("width", ToPx(mWidth));
   } else {
     style.set("width", std::string("100px"));
   }
-  if (height_ > 0) {
-    style.set("height", ToPx(height_));
+  if (mHeight > 0) {
+    style.set("height", ToPx(mHeight));
   } else {
     style.set("height", std::string("100px"));
   }

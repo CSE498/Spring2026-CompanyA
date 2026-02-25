@@ -64,9 +64,9 @@ class WebTextbox : public IDomElement {
   bool IsVisible() const;
 
   /* ----- IDomElement Interface ----- */
-  void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
-  void unmount() override;
-  void syncFromModel() override;
+  void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  void Unmount() override;
+  void SyncFromModel() override;
   const std::string& Id() const override;
 
  private:
@@ -74,30 +74,30 @@ class WebTextbox : public IDomElement {
   void ApplyStyles();
   void ApplyAlignment(Alignment align);
 
-  std::string text_;
-  bool is_visible_ = true;
+  std::string mText;
+  bool mIsVisible = true;
 
   // font/fallback behavior
-  std::string requested_font_family_;
-  std::string fallback_font_family_ = "sans-serif";
+  std::string mRequestedFontFamily;
+  std::string mFallbackFontFamily = "sans-serif";
 
   // basic style state
-  float font_size_px_ = 16.0f;
-  float line_height_px_ = 0.0f; // 0 let browser choose
-  std::string color_ = "#000";
-  bool bold_ = false;
-  bool italic_ = false;
-  std::string text_align_ = "left";
-  float max_width_px_ = 0.0f; // 0 unset
-  bool wrap_ = true;
-  std::string background_color_; // transparent
+  float mFontSizePx = 16.0f;
+  float mLineHeightPx = 0.0f; // 0 let browser choose
+  std::string mColor = "#000";
+  bool mBold = false;
+  bool mItalic = false;
+  std::string mTextAlign = "left";
+  float mMaxWidthPx = 0.0f; // 0 unset
+  bool mWrap = true;
+  std::string mBackgroundColor; // transparent
 
   // DOM and identity
-  emscripten::val element_;
-  std::string id_;
-  Alignment align_ = Alignment::Start;
+  emscripten::val mElement;
+  std::string mId;
+  Alignment mAlign = Alignment::Start;
 
-  static int next_id_counter_;
+  static int mNextIdCounter;
 };
 
 #endif  // WEBTEXTBOX_HPP_

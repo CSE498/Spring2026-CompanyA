@@ -30,34 +30,34 @@ extern "C" {
 // --------------------
 
 WebCanvas::WebCanvas(std::string id)
-  : m_id(std::move(id))
+  : mId(std::move(id))
 {
-    if (m_id.empty()) {
-        m_id = "web-canvas";
+    if (mId.empty()) {
+        mId = "web-canvas";
     }
 }
 
 // ---- IDomElement ----
-void WebCanvas::mountToLayout(WebLayout& parent, Alignment align)
+void WebCanvas::MountToLayout(WebLayout& parent, Alignment align)
 {
-    m_parent  = &parent;
-    m_align   = align;
-    m_mounted = true;
+    mParent  = &parent;
+    mAlign   = align;
+    mMounted = true;
 }
 
-void WebCanvas::unmount()
+void WebCanvas::Unmount()
 {
-    m_parent  = nullptr;
-    m_mounted = false;
+    mParent  = nullptr;
+    mMounted = false;
 }
 
-void WebCanvas::syncFromModel()
+void WebCanvas::SyncFromModel()
 {
     // Safe no-op placeholder for now.
 }
 
 // ---- Canvas content management ----
-void WebCanvas::addElement(std::unique_ptr<ICanvasElement> element)
+void WebCanvas::AddElement(std::unique_ptr<ICanvasElement> element)
 {
     if (!element) {
         return;
@@ -65,12 +65,12 @@ void WebCanvas::addElement(std::unique_ptr<ICanvasElement> element)
     m_elements.emplace_back(std::move(element));
 }
 
-void WebCanvas::clearElements()
+void WebCanvas::ClearElements()
 {
     m_elements.clear();
 }
 
-void WebCanvas::renderFrame()
+void WebCanvas::RenderFrame()
 {
     // Collect raw pointers for stable sorting without moving ownership.
     std::vector<ICanvasElement*> ordered;
@@ -82,15 +82,15 @@ void WebCanvas::renderFrame()
     // Stable sort by zIndex (ascending). Elements with the same zIndex keep insertion order.
     std::stable_sort(ordered.begin(), ordered.end(),
         [](const ICanvasElement* a, const ICanvasElement* b) {
-            return a->zIndex() < b->zIndex();
+            return a->ZIndex() < b->ZIndex();
         });
 
     // Draw visible elements only.
     for (auto* e : ordered) {
-        if (!e->visible()) {
+        if (!e->Visible()) {
             continue;
         }
-        e->draw(*this);
+        e->Draw(*this);
     }
 }
 
@@ -98,7 +98,7 @@ void WebCanvas::renderFrame()
 void WebCanvas::Clear(const std::string& cssColor)
 {
 #ifdef __EMSCRIPTEN__
-    webcanvas__clear(m_id.c_str(), cssColor.c_str());
+    webcanvas__clear(mId.c_str(), cssColor.c_str());
 #else
     (void)cssColor;
 #endif
@@ -108,7 +108,7 @@ void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
                          float lineWidth, const std::string& strokeColor)
 {
 #ifdef __EMSCRIPTEN__
-    webcanvas__draw_line(m_id.c_str(), x1, y1, x2, y2, lineWidth, strokeColor.c_str());
+    webcanvas__draw_line(mId.c_str(), x1, y1, x2, y2, lineWidth, strokeColor.c_str());
 #else
     (void)x1; (void)y1; (void)x2; (void)y2; (void)lineWidth; (void)strokeColor;
 #endif
@@ -119,7 +119,7 @@ void WebCanvas::DrawCircle(float centerX, float centerY, float radius,
                            const std::string& fillColor)
 {
 #ifdef __EMSCRIPTEN__
-    webcanvas__draw_circle(m_id.c_str(), centerX, centerY, radius,
+    webcanvas__draw_circle(mId.c_str(), centerX, centerY, radius,
                            strokeColor.c_str(), lineWidth, fillColor.c_str());
 #else
     (void)centerX; (void)centerY; (void)radius; (void)strokeColor; (void)lineWidth; (void)fillColor;
@@ -148,7 +148,7 @@ void WebCanvas::DrawPolygon(const std::vector<Vec2>& points,
         coords.push_back(p.y);
     }
 
-    webcanvas__draw_polygon(m_id.c_str(),
+    webcanvas__draw_polygon(mId.c_str(),
                             coords.data(),
                             static_cast<int>(points.size()),
                             strokeColor.c_str(),

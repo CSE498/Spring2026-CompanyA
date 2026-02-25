@@ -5,7 +5,7 @@
 
 using emscripten::val;
 
-int WebButton::next_id_counter_ = 1;
+int WebButton::mNextIdCounter = 1;
 
 static val GetDocument() {
   return val::global("document");
@@ -16,201 +16,201 @@ static std::string ToPx(int value) {
 }
 
 WebButton::WebButton(const std::string& label)
-    : label_(label),
-      element_(val::null()) {
-  id_ = "webbutton-" + std::to_string(next_id_counter_++);
+    : mLabel(label),
+      mElement(val::null()) {
+  mId = "webbutton-" + std::to_string(mNextIdCounter++);
 
   val doc = GetDocument();
-  element_ = doc.call<val>("createElement", std::string("button"));
-  element_.set("id", id_);
-  element_.set("textContent", label_);
-  element_["style"].set("boxSizing", std::string("border-box"));
+  mElement = doc.call<val>("createElement", std::string("button"));
+  mElement.set("id", mId);
+  mElement.set("textContent", mLabel);
+  mElement["style"].set("boxSizing", std::string("border-box"));
 
-  doc["body"].call<void>("appendChild", element_);
+  doc["body"].call<void>("appendChild", mElement);
   AttachClickListener();
 }
 
 WebButton::~WebButton() {
-  unmount();
-  element_ = val::null();
+  Unmount();
+  mElement = val::null();
 }
 
 WebButton::WebButton(WebButton&& other) noexcept
-    : label_(std::move(other.label_)),
-      callback_(std::move(other.callback_)),
-      is_enabled_(other.is_enabled_),
-      is_visible_(other.is_visible_),
-      width_(other.width_),
-      height_(other.height_),
-      bg_color_(std::move(other.bg_color_)),
-      text_color_(std::move(other.text_color_)),
-      element_(other.element_),
-      id_(std::move(other.id_)) {
-  other.element_ = val::null();
-  other.is_enabled_ = false;
-  other.is_visible_ = false;
-  other.width_ = 0;
-  other.height_ = 0;
+    : mLabel(std::move(other.mLabel)),
+      mCallback(std::move(other.mCallback)),
+      mIsEnabled(other.mIsEnabled),
+      mIsVisible(other.mIsVisible),
+      mWidth(other.mWidth),
+      mHeight(other.mHeight),
+      mBgColor(std::move(other.mBgColor)),
+      mTextColor(std::move(other.mTextColor)),
+      mElement(other.mElement),
+      mId(std::move(other.mId)) {
+  other.mElement = val::null();
+  other.mIsEnabled = false;
+  other.mIsVisible = false;
+  other.mWidth = 0;
+  other.mHeight = 0;
 }
 
 WebButton& WebButton::operator=(WebButton&& other) noexcept {
   if (this != &other) {
-    unmount();
+    Unmount();
 
-    label_ = std::move(other.label_);
-    callback_ = std::move(other.callback_);
-    is_enabled_ = other.is_enabled_;
-    is_visible_ = other.is_visible_;
-    width_ = other.width_;
-    height_ = other.height_;
-    bg_color_ = std::move(other.bg_color_);
-    text_color_ = std::move(other.text_color_);
-    element_ = other.element_;
-    id_ = std::move(other.id_);
+    mLabel = std::move(other.mLabel);
+    mCallback = std::move(other.mCallback);
+    mIsEnabled = other.mIsEnabled;
+    mIsVisible = other.mIsVisible;
+    mWidth = other.mWidth;
+    mHeight = other.mHeight;
+    mBgColor = std::move(other.mBgColor);
+    mTextColor = std::move(other.mTextColor);
+    mElement = other.mElement;
+    mId = std::move(other.mId);
 
-    other.element_ = val::null();
-    other.is_enabled_ = false;
-    other.is_visible_ = false;
-    other.width_ = 0;
-    other.height_ = 0;
+    other.mElement = val::null();
+    other.mIsEnabled = false;
+    other.mIsVisible = false;
+    other.mWidth = 0;
+    other.mHeight = 0;
   }
   return *this;
 }
 
 void WebButton::SetLabel(const std::string& text) {
-  label_ = text;
-  if (!element_.isNull()) {
-    element_.set("textContent", label_);
+  mLabel = text;
+  if (!mElement.isNull()) {
+    mElement.set("textContent", mLabel);
   }
 }
 
 std::string WebButton::GetLabel() const {
-  return label_;
+  return mLabel;
 }
 
 void WebButton::SetCallback(std::function<void()> callback) {
   assert(callback && "SetCallback: callback must not be null");
-  callback_ = std::move(callback);
+  mCallback = std::move(callback);
 }
 
 void WebButton::Click() {
-  if (is_enabled_ && callback_) {
-    callback_();
+  if (mIsEnabled && mCallback) {
+    mCallback();
   }
 }
 
 void WebButton::SetSize(int width, int height) {
   assert(width >= 0 && "SetSize: width must be non-negative");
   assert(height >= 0 && "SetSize: height must be non-negative");
-  width_ = width;
-  height_ = height;
-  if (!element_.isNull()) {
+  mWidth = width;
+  mHeight = height;
+  if (!mElement.isNull()) {
     if (width > 0) {
-      element_["style"].set("width", ToPx(width));
+      mElement["style"].set("width", ToPx(width));
     }
     if (height > 0) {
-      element_["style"].set("height", ToPx(height));
+      mElement["style"].set("height", ToPx(height));
     }
   }
 }
 
 int WebButton::GetWidth() const {
-  return width_;
+  return mWidth;
 }
 
 int WebButton::GetHeight() const {
-  return height_;
+  return mHeight;
 }
 
 void WebButton::SetBackgroundColor(const std::string& color) {
-  bg_color_ = color;
-  if (!element_.isNull()) {
-    element_["style"].set("backgroundColor", color);
+  mBgColor = color;
+  if (!mElement.isNull()) {
+    mElement["style"].set("backgroundColor", color);
   }
 }
 
 void WebButton::SetTextColor(const std::string& color) {
-  text_color_ = color;
-  if (!element_.isNull()) {
-    element_["style"].set("color", color);
+  mTextColor = color;
+  if (!mElement.isNull()) {
+    mElement["style"].set("color", color);
   }
 }
 
 void WebButton::Enable() {
-  is_enabled_ = true;
-  if (!element_.isNull()) {
-    element_.set("disabled", false);
+  mIsEnabled = true;
+  if (!mElement.isNull()) {
+    mElement.set("disabled", false);
   }
 }
 
 void WebButton::Disable() {
-  is_enabled_ = false;
-  if (!element_.isNull()) {
-    element_.set("disabled", true);
+  mIsEnabled = false;
+  if (!mElement.isNull()) {
+    mElement.set("disabled", true);
   }
 }
 
 bool WebButton::IsEnabled() const {
-  return is_enabled_;
+  return mIsEnabled;
 }
 
 void WebButton::Show() {
-  is_visible_ = true;
-  if (!element_.isNull()) {
-    element_["style"].set("display", std::string(""));
+  mIsVisible = true;
+  if (!mElement.isNull()) {
+    mElement["style"].set("display", std::string(""));
   }
 }
 
 void WebButton::Hide() {
-  is_visible_ = false;
-  if (!element_.isNull()) {
-    element_["style"].set("display", std::string("none"));
+  mIsVisible = false;
+  if (!mElement.isNull()) {
+    mElement["style"].set("display", std::string("none"));
   }
 }
 
 bool WebButton::IsVisible() const {
-  return is_visible_;
+  return mIsVisible;
 }
 
-void WebButton::mountToLayout(WebLayout& parent, Alignment align) {
+void WebButton::MountToLayout(WebLayout& parent, Alignment align) {
   parent.AddElement(this, align);
 }
 
-void WebButton::unmount() {
-  if (element_.isNull()) return;
+void WebButton::Unmount() {
+  if (mElement.isNull()) return;
 
-  val parent = element_["parentNode"];
+  val parent = mElement["parentNode"];
   if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", element_);
+    parent.call<void>("removeChild", mElement);
   }
 }
 
-void WebButton::syncFromModel() {
-  if (element_.isNull()) return;
+void WebButton::SyncFromModel() {
+  if (mElement.isNull()) return;
 
-  element_.set("textContent", label_);
-  element_.set("disabled", !is_enabled_);
+  mElement.set("textContent", mLabel);
+  mElement.set("disabled", !mIsEnabled);
 
-  if (width_ > 0) {
-    element_["style"].set("width", ToPx(width_));
+  if (mWidth > 0) {
+    mElement["style"].set("width", ToPx(mWidth));
   }
-  if (height_ > 0) {
-    element_["style"].set("height", ToPx(height_));
-  }
-
-  if (!bg_color_.empty()) {
-    element_["style"].set("backgroundColor", bg_color_);
-  }
-  if (!text_color_.empty()) {
-    element_["style"].set("color", text_color_);
+  if (mHeight > 0) {
+    mElement["style"].set("height", ToPx(mHeight));
   }
 
-  element_["style"].set("display",
-      std::string(is_visible_ ? "" : "none"));
+  if (!mBgColor.empty()) {
+    mElement["style"].set("backgroundColor", mBgColor);
+  }
+  if (!mTextColor.empty()) {
+    mElement["style"].set("color", mTextColor);
+  }
+
+  mElement["style"].set("display",
+      std::string(mIsVisible ? "" : "none"));
 }
 
 const std::string& WebButton::Id() const {
-  return id_;
+  return mId;
 }
 
 void WebButton::HandleClick() {
@@ -218,7 +218,7 @@ void WebButton::HandleClick() {
 }
 
 void WebButton::AttachClickListener() {
-  if (element_.isNull()) return;
+  if (mElement.isNull()) return;
 
   EM_ASM({
     var el = Emval.toValue($0);
@@ -226,7 +226,7 @@ void WebButton::AttachClickListener() {
     el.addEventListener("click", function() {
       Module._WebButton_handleClick(ptrVal);
     });
-  }, element_.as_handle(), reinterpret_cast<intptr_t>(this));
+  }, mElement.as_handle(), reinterpret_cast<intptr_t>(this));
 }
 
 extern "C" {
