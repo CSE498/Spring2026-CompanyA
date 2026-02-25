@@ -66,6 +66,8 @@ static void demo_frame(void* /*arg*/) {
     }
 }
 
+} // namespace cse498
+
 int main() {
     static WebCanvas canvas("web-canvas");
     g_canvas = &canvas;
@@ -93,5 +95,3 @@ int main() {
 // Non-emscripten build: provide a tiny stub main so the file can still compile if included.
 int main() { return 0; }
 #endif
-
-} // namespace cse498
