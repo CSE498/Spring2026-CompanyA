@@ -69,17 +69,17 @@ public:
  /// Mounts this layout as a child within a parent layout.
  /// @param parent The parent layout to mount into
  /// @param align Alignment setting for this layout within the parent
- void mountToLayout(WebLayout& parent,
+ void MountToLayout(WebLayout& parent,
                     Alignment align = Alignment::None) noexcept override;
 
  /// Unmounts this layout from its parent in the DOM.
- void unmount() noexcept override;
+ void Unmount() noexcept override;
 
  /// Synchronizes the layout state with the DOM. Calls Apply() to refresh.
- void syncFromModel() noexcept override;
+ void SyncFromModel() noexcept override;
 
  /// Returns the unique identifier of this layout's root element.
- const std::string& Id() const noexcept override { return id_; }
+ const std::string& Id() const noexcept override { return mId; }
 
  // ===== Layout Configuration =====
 
@@ -175,33 +175,33 @@ public:
 
 private:
  // ===== DOM References =====
- emscripten::val root_;      ///< Reference to the root DOM element
- emscripten::val document_;  ///< Reference to the document object
+ emscripten::val mRoot;      ///< Reference to the root DOM element
+ emscripten::val mDocument;  ///< Reference to the document object
 
  // ===== Element Tracking =====
- std::string id_;  ///< Unique identifier of the root element
- std::vector<IDomElement*> children_{};  ///< Pointers to child elements
+ std::string mId;  ///< Unique identifier of the root element
+ std::vector<IDomElement*> mChildren{};  ///< Pointers to child elements
  std::unordered_map<IDomElement*, Alignment>
-     params_{};  ///< Alignment per child
+     mParams{};  ///< Alignment per child
 
  // ===== Layout State =====
- LayoutType type_ = LayoutType::Free;                  ///< Current layout type
- Justification justification_ = Justification::Start;  ///< Main axis alignment
- Alignment alignItems_ = Alignment::None;              ///< Cross axis alignment
+ LayoutType mType = LayoutType::Free;                  ///< Current layout type
+ Justification mJustification = Justification::Start;  ///< Main axis alignment
+ Alignment mAlignItems = Alignment::None;              ///< Cross axis alignment
 
  // ===== Styling Properties =====
- std::string backgroundColor_;
- std::string borderColor_;
- int spacing_ = 0;
- int borderWidth_ = 0;
- int borderRadius_ = 0;
- int padding_ = 0;
- int margin_ = 0;
- int width_ = -1;
- int height_ = -1;
- double opacity_ = 1.0;
- bool isVisible_ = true;
- std::string boxShadow_;
+ std::string mBackgroundColor;
+ std::string mBorderColor;
+ int mSpacing = 0;
+ int mBorderWidth = 0;
+ int mBorderRadius = 0;
+ int mPadding = 0;
+ int mMargin = 0;
+ int mWidth = -1;
+ int mHeight = -1;
+ double mOpacity = 1.0;
+ bool mIsVisible = true;
+ std::string mBoxShadow;
 
- static int nextIdCounter_;  ///< Counter for auto-generated element IDs
+ static int mNextIdCounter;  ///< Counter for auto-generated element IDs
 };

@@ -69,15 +69,15 @@ int main() {
   toggleStatusButton->SetSize(100, 70);
   toggleStatusButton->SetBackgroundColor("#00ff88");
   toggleStatusButton->SetTextColor("#1a1a1a");
-  toggleStatusButton->mountToLayout(*root, Alignment::Center);
+  toggleStatusButton->MountToLayout(*root, Alignment::Center);
 
-  mainMenu->mountToLayout(*root, Alignment::Start);
+  mainMenu->MountToLayout(*root, Alignment::Start);
 
   // Menu items (4 game menu options shown as icons)
   for (int i = 1; i <= 4; ++i) {
     string url = "https://placehold.co/260x50?text=Menu+" + to_string(i);
     WebImage *menuItem = MakeImage(url, 260, 50, "Menu Item " + to_string(i));
-    menuItem->mountToLayout(*mainMenu, Alignment::Stretch);
+    menuItem->MountToLayout(*mainMenu, Alignment::Stretch);
   }
 
   // =====================
@@ -95,12 +95,12 @@ int main() {
   statusPanel->SetBorderWidth(2);
   statusPanel->SetBorderRadius(6);
   statusPanel->SetBoxShadow("0 4px 12px rgba(255, 107, 26, 0.3)");
-  statusPanel->mountToLayout(*root, Alignment::Stretch);
+  statusPanel->MountToLayout(*root, Alignment::Stretch);
 
   // Status items (HP, Mana, XP as small icons)
   for (int i = 0; i < 3; ++i) {
     WebImage *stat = MakeImage("https://placehold.co/60x70?text=Stat", 60, 70, "Stat " + to_string(i));
-    stat->mountToLayout(*statusPanel, Alignment::Center);
+    stat->MountToLayout(*statusPanel, Alignment::Center);
   }
 
   // =====================
@@ -119,7 +119,7 @@ int main() {
   inventoryPanel->SetBorderWidth(3);
   inventoryPanel->SetBorderRadius(10);
   inventoryPanel->SetBoxShadow("inset 0 0 10px rgba(74, 144, 226, 0.3), 0 8px 16px rgba(0, 0, 0, 0.5)");
-  inventoryPanel->mountToLayout(*root, Alignment::Stretch);
+  inventoryPanel->MountToLayout(*root, Alignment::Stretch);
 
   // 12 inventory slots in a 4x3 grid
   for (int i = 1; i <= 12; ++i) {
@@ -129,7 +129,7 @@ int main() {
     int r = idx / 4;  // 0-based row
     int c = idx % 4;  // 0-based col
     item->SetGridPosition(r, c);
-    item->mountToLayout(*inventoryPanel, Alignment::Center);
+    item->MountToLayout(*inventoryPanel, Alignment::Center);
   }
 
   // =====================
@@ -148,13 +148,13 @@ int main() {
   equipmentPanel->SetBorderRadius(8);
   equipmentPanel->SetOpacity(0.95);
   equipmentPanel->SetBoxShadow("0 0 15px rgba(192, 85, 240, 0.4)");
-  equipmentPanel->mountToLayout(*root, Alignment::Start);
+  equipmentPanel->MountToLayout(*root, Alignment::Start);
 
   // Equipment slots
   for (int i = 0; i < 5; ++i) {
     string url = "https://placehold.co/220x40?text=Equipped";
     WebImage *equip = MakeImage(url, 220, 40, "Equipment " + to_string(i));
-    equip->mountToLayout(*equipmentPanel, Alignment::Stretch);
+    equip->MountToLayout(*equipmentPanel, Alignment::Stretch);
   }
 
   // Apply all layouts

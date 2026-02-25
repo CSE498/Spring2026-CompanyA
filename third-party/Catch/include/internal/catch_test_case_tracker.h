@@ -111,7 +111,7 @@ namespace TestCaseTracking {
 
         using Children = std::vector<ITrackerPtr>;
         TrackerContext& m_ctx;
-        ITracker* m_parent;
+        ITracker* mParent;
         Children m_children;
         CycleState m_runState = NotStarted;
 

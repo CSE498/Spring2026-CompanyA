@@ -8,7 +8,7 @@
 #include <vector>
 
 #ifdef __EMSCRIPTEN__
-static WebCanvas* g_canvas = nullptr;
+static cse498::WebCanvas* g_canvas = nullptr;
 
 static void demo_frame(void* /*arg*/) {
     const double now_ms = emscripten_get_now();
@@ -38,7 +38,7 @@ static void demo_frame(void* /*arg*/) {
         const float cy = 140.0f;
         const float R  = 55.0f;
 
-        std::vector<WebCanvas::Vec2> tri(3);
+        std::vector<cse498::WebCanvas::Vec2> tri(3);
         for (int i = 0; i < 3; ++i) {
             const float a = t + i * 2.0943951f; // 2*pi/3
             tri[i] = { cx + R * std::cos(a), cy + R * std::sin(a) };
@@ -65,7 +65,7 @@ static void demo_frame(void* /*arg*/) {
 }
 
 int main() {
-    static WebCanvas canvas("web-canvas");
+    static cse498::WebCanvas canvas("web-canvas");
     g_canvas = &canvas;
 
     // Create a <canvas> if not present, and set a fixed size & basic styles.

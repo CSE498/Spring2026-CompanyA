@@ -39,26 +39,26 @@ class WebButton : public IDomElement {
   void Hide();
   bool IsVisible() const;
 
-  void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
-  void unmount() override;
-  void syncFromModel() override;
+  void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  void Unmount() override;
+  void SyncFromModel() override;
   const std::string& Id() const override;
 
   void HandleClick();
 
  private:
-  std::string label_;
-  std::function<void()> callback_;
-  bool is_enabled_ = true;
-  bool is_visible_ = true;
-  int width_ = 0;
-  int height_ = 0;
-  std::string bg_color_;
-  std::string text_color_;
-  emscripten::val element_;
-  std::string id_;
+  std::string mLabel;
+  std::function<void()> mCallback;
+  bool mIsEnabled = true;
+  bool mIsVisible = true;
+  int mWidth = 0;
+  int mHeight = 0;
+  std::string mBgColor;
+  std::string mTextColor;
+  emscripten::val mElement;
+  std::string mId;
 
-  static int next_id_counter_;
+  static int mNextIdCounter;
 
   void AttachClickListener();
 };

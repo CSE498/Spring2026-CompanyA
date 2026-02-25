@@ -10,19 +10,19 @@ class WebCanvas;
 class ICanvasElement {
 public:
     virtual ~ICanvasElement() = default;
-    virtual void draw(WebCanvas& canvas) = 0;
+    virtual void Draw(WebCanvas& canvas) = 0;
 
     // Metadata accessors for the canvas scheduler (z-index ordering, visibility filtering).
-    int zIndex() const { return m_metadata.zIndex; }
-    bool visible() const { return m_metadata.visible; }
+    int ZIndex() const { return m_metadata.mZIndex; }
+    bool Visible() const { return m_metadata.mIsVisible; }
 
-    void setZIndex(int z) { m_metadata.zIndex = z; }
-    void setVisible(bool v) { m_metadata.visible = v; }
+    void SetZIndex(int z) { m_metadata.mZIndex = z; }
+    void SetVisible(bool v) { m_metadata.mIsVisible = v; }
 
 protected:
     struct Metadata {
-        int zIndex = 0;
-        bool visible = true;
+        int mZIndex = 0;
+        bool mIsVisible = true;
     };
 
     Metadata m_metadata;

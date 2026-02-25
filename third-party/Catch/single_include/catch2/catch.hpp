@@ -12659,7 +12659,7 @@ namespace Catch {
                     // No children have started. We need to check if they _can_
                     // start, and thus we should wait for them, or they cannot
                     // start (due to filters), and we shouldn't wait for them
-                    auto* parent = m_parent;
+                    auto* parent = mParent;
                     // This is safe: there is always at least one section
                     // tracker in a test case tracking tree
                     while ( !parent->isSectionTracker() ) {
@@ -14402,7 +14402,7 @@ namespace TestCaseTracking {
     TrackerBase::TrackerBase( NameAndLocation const& nameAndLocation, TrackerContext& ctx, ITracker* parent ):
         ITracker(nameAndLocation),
         m_ctx( ctx ),
-        m_parent( parent )
+        mParent( parent )
     {}
 
     bool TrackerBase::isComplete() const {
@@ -14434,15 +14434,15 @@ namespace TestCaseTracking {
             : nullptr;
     }
     ITracker& TrackerBase::parent() {
-        assert( m_parent ); // Should always be non-null except for root
-        return *m_parent;
+        assert( mParent ); // Should always be non-null except for root
+        return *mParent;
     }
 
     void TrackerBase::openChild() {
         if( m_runState != ExecutingChildren ) {
             m_runState = ExecutingChildren;
-            if( m_parent )
-                m_parent->openChild();
+            if( mParent )
+                mParent->openChild();
         }
     }
 
@@ -14452,8 +14452,8 @@ namespace TestCaseTracking {
     void TrackerBase::open() {
         m_runState = Executing;
         moveToThis();
-        if( m_parent )
-            m_parent->openChild();
+        if( mParent )
+            mParent->openChild();
     }
 
     void TrackerBase::close() {
@@ -14487,8 +14487,8 @@ namespace TestCaseTracking {
     }
     void TrackerBase::fail() {
         m_runState = Failed;
-        if( m_parent )
-            m_parent->markAsNeedingAnotherRun();
+        if( mParent )
+            mParent->markAsNeedingAnotherRun();
         moveToParent();
         m_ctx.completeCycle();
     }
@@ -14497,8 +14497,8 @@ namespace TestCaseTracking {
     }
 
     void TrackerBase::moveToParent() {
-        assert( m_parent );
-        m_ctx.setCurrentTracker( m_parent );
+        assert( mParent );
+        m_ctx.setCurrentTracker( mParent );
     }
     void TrackerBase::moveToThis() {
         m_ctx.setCurrentTracker( this );

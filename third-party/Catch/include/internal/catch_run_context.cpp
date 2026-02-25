@@ -89,7 +89,7 @@ namespace Catch {
                     // No children have started. We need to check if they _can_
                     // start, and thus we should wait for them, or they cannot
                     // start (due to filters), and we shouldn't wait for them
-                    auto* parent = m_parent;
+                    auto* parent = mParent;
                     // This is safe: there is always at least one section
                     // tracker in a test case tracking tree
                     while ( !parent->isSectionTracker() ) {

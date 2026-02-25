@@ -22,32 +22,32 @@
 /// A minimal test double for IDomElement that tracks lifecycle and state
 class MockDomElement : public IDomElement {
 public:
- explicit MockDomElement(const std::string& id = "test-elem") : id_(id) {
+ explicit MockDomElement(const std::string& id = "test-elem") : mId(id) {
    // create DOM element so add and remove element can find it
    emscripten::val document = emscripten::val::global("document");
    emscripten::val el =
        document.call<emscripten::val>("createElement", std::string("div"));
-   el.set("id", id_);
+   el.set("id", mId);
    document["body"].call<void>("appendChild", el);
  }
 
     virtual ~MockDomElement() = default;
 
-    void mountToLayout(WebLayout& /*parent*/,
+    void MountToLayout(WebLayout& /*parent*/,
                        Alignment /*align*/) noexcept override {
         mountCount++;
     }
 
-    void unmount() noexcept override {
+    void Unmount() noexcept override {
         unmountCount++;
     }
 
-    void syncFromModel() noexcept override {
+    void SyncFromModel() noexcept override {
         syncCount++;
     }
 
     const std::string& Id() const noexcept override {
-        return id_;
+        return mId;
     }
 
     // Test instrumentation
@@ -57,12 +57,12 @@ public:
     bool shouldExist = true;  // For simulating invalid elements
 
 private:
-    std::string id_;
+    std::string mId;
 };
 
 /// Test helper to reset ID counter between tests
 static void ResetWebLayoutIdCounter() {
-    // Since nextIdCounter_ is static and private, we can't directly reset it.
+    // Since mNextIdCounter is static and private, we can't directly reset it.
     // Tests should use explicit IDs to avoid interdependencies.
 }
 
@@ -101,7 +101,7 @@ TEST_CASE("WebLayout ID remains stable after operations", "[weblayout][dom]") {
     REQUIRE(layout.Id() == "stable-id-test");
 
     // ID should not change even if we mount/unmount
-    REQUIRE_NOTHROW(layout.unmount());
+    REQUIRE_NOTHROW(layout.Unmount());
     REQUIRE(layout.Id() == "stable-id-test");
 }
 
@@ -109,15 +109,15 @@ TEST_CASE("WebLayout mountToLayout and unmount are safe", "[weblayout][dom]") {
     WebLayout parent("parent");
     WebLayout child("child");
 
-    REQUIRE_NOTHROW(child.mountToLayout(parent, Alignment::Center));
-    REQUIRE_NOTHROW(child.unmount());
-    REQUIRE_NOTHROW(child.unmount());  // Idempotent unmount
+    REQUIRE_NOTHROW(child.MountToLayout(parent, Alignment::Center));
+    REQUIRE_NOTHROW(child.Unmount());
+    REQUIRE_NOTHROW(child.Unmount());  // Idempotent unmount
 }
 
 TEST_CASE("WebLayout syncFromModel calls Apply", "[weblayout][dom]") {
     WebLayout layout("sync-test");
     // syncFromModel calls Apply internally; should not throw
-    REQUIRE_NOTHROW(layout.syncFromModel());
+    REQUIRE_NOTHROW(layout.SyncFromModel());
 }
 
 // ---------------------------
