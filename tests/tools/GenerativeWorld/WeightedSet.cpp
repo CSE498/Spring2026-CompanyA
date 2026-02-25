@@ -3,6 +3,10 @@
 
 #include "../../../source/tools/WeightedSet.hpp"
 
+#include <string>
+#include <random>
+#include <chrono>
+
 void MakeSmallTree(cse498::WeightedSet<std::string>& wSet) {
 	wSet.Insert("A", 2.0);
 	wSet.Insert("B", 3.0);
@@ -37,10 +41,10 @@ void MakeTinyTree(cse498::WeightedSet<int>& wSet) {
 	wSet.Insert(4, 0.000000010);
 }
 
-void MakeHugeTree(cse498::WeightedSet<int>& wSet) {
+void MakeSetSizeTree(cse498::WeightedSet<int>& wSet, int n) {
     std::mt19937_64 rng(12345);
     std::uniform_real_distribution<double> dist(0.1, 10.0);
-	for (int i = 1; i <= 100000; i++) {
+	for (int i = 1; i <= n; i++) {
 		 wSet.Insert(i, dist(rng));   // every item gets equal weight
     }
 }
@@ -373,27 +377,45 @@ TEST_CASE("Test Sample", "[core]"){
 	}
 }
 
-TEST_CASE("Sample meets worst-case time budget", "[core]")
+TEST_CASE("Sample is O(log n)", "[core]")
 {
-    cse498::WeightedSet<int> wSet;
-    MakeHugeTree(wSet);          // 100k items
+    constexpr int N = 1000; //Reapeats
 
-    double total = wSet.GetItemSum(1);
+    // Smaller tree
+    cse498::WeightedSet<int> small;
+    MakeSetSizeTree(small, 100000); // 100k items
 
-    std::mt19937_64 rng(42);
-    std::uniform_real_distribution<double> dist(0.0, total);
+    double total_small = small.GetItemSum(1);
+    std::mt19937_64 rng1(42);
+    std::uniform_real_distribution<double> dist_small(0.0, total_small);
 
-    const int N = 1000;          // number of samples to test
-
-    auto start = std::chrono::high_resolution_clock::now();
-
+    auto start1 = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < N; i++) {
-        wSet.Sample(dist(rng));
+        small.Sample(dist_small(rng1));
     }
+    auto end1 = std::chrono::high_resolution_clock::now();
+    double t_small =
+        std::chrono::duration<double, std::milli>(end1 - start1).count();
 
-    auto end = std::chrono::high_resolution_clock::now();
-    double ms =
-        std::chrono::duration<double, std::milli>(end - start).count();
+    // Double sized tree 
+    cse498::WeightedSet<int> large;
+    MakeSetSizeTree(large, 200000); //200k items
 
-    CHECK(ms < 3.0);
+    double total_large = large.GetItemSum(1);
+    std::mt19937_64 rng2(42);
+    std::uniform_real_distribution<double> dist_large(0.0, total_large);
+
+    auto start2 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < N; i++) {
+        large.Sample(dist_large(rng2));
+    }
+    auto end2 = std::chrono::high_resolution_clock::now();
+    double t_large =
+        std::chrono::duration<double, std::milli>(end2 - start2).count();
+
+    double ratio = t_large / t_small;
+
+    // 1 + (Log 2 / log n) ~ 1.06 (Base 2)
+    // If linear then ratio would be about 2
+	CHECK(ratio < 1.5);  //Account for some noise
 }
