@@ -395,7 +395,7 @@ void test_sync_from_model() {
   img.SetSize(300, 200);
   img.SetOpacity(0.8);
   img.Hide();
-  img.syncFromModel();
+  img.SyncFromModel();
 
   // State should remain the same after sync
   CHECK_MSG(img.GetSource() == "img.png", "source should remain");
@@ -548,7 +548,7 @@ void test_error_callback_with_placeholder() {
 
   bool callback_saw_error = false;
   img.SetOnErrorCallback([&img, &callback_saw_error]() {
-    // At this point, has_error_ should already be true
+    // At this point, mHasError should already be true
     callback_saw_error = img.HasError();
   });
 
@@ -559,15 +559,15 @@ void test_error_callback_with_placeholder() {
 }
 
 // ========================================================
-// Test 34: draw() does not crash (stub)
+// Test 34: Draw() does not crash (stub)
 // ========================================================
 void test_draw_no_crash() {
-  TEST("draw() stub does not crash");
+  TEST("Draw() stub does not crash");
   WebImage img("img.png");
 
-  // draw() is a stub, but we verify it doesn't crash.
-  // We need a WebCanvas reference, but since draw() ignores it
-  // we cast nullptr (unsafe but draw() does (void)canvas).
+  // Draw() is a stub, but we verify it doesn't crash.
+  // We need a WebCanvas reference, but since Draw() ignores it
+  // we cast nullptr (unsafe but Draw() does (void)canvas).
   // Skip this test if it can't compile safely.
   // For a real test, a mock WebCanvas would be needed.
   // Just verify compilation and pass.

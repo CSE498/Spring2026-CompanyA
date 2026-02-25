@@ -6,7 +6,7 @@
 
 using emscripten::val;
 
-int WebTextbox::next_id_counter_ = 1;
+int WebTextbox::mNextIdCounter = 1;
 
 /** 
   * -------------- Helpers --------------
@@ -32,20 +32,20 @@ static val GetConsole()
 
 // Constructor creates element with correct text and styles
 WebTextbox::WebTextbox(const std::string& initial_text)
-    : text_(initial_text),
-      element_(val::null())
+    : mText(initial_text),
+      mElement(val::null())
 {
   // unique id like WebImage
-  id_ = "webtextbox-" + std::to_string(next_id_counter_++);
+  mId = "webtextbox-" + std::to_string(mNextIdCounter++);
 
   val doc_ = GetDocument();
-  element_ = doc_.call<val>("createElement", std::string("div"));
-  element_.set("id", id_);
+  mElement = doc_.call<val>("createElement", std::string("div"));
+  mElement.set("id", mId);
 
   // IMPORTANT: WebLayout owns positioning/mounting. Do not append here.
   // Use inline-block so bounding box + sizing works predictably.
-  element_["style"].set("display", std::string("inline-block"));
-  element_["style"].set("boxSizing", std::string("border-box"));
+  mElement["style"].set("display", std::string("inline-block"));
+  mElement["style"].set("boxSizing", std::string("border-box"));
 
   ApplyText();
   ApplyStyles();
@@ -55,32 +55,32 @@ WebTextbox::WebTextbox(const std::string& initial_text)
 // Destructor unmounts from DOM if needed and releases element reference.
 WebTextbox::~WebTextbox()
 {
-  unmount();
-  element_ = val::null();
+  Unmount();
+  mElement = val::null();
 }
 
 
 // Move constructor and move assignment transfer ownership of the DOM element and state.
 WebTextbox::WebTextbox(WebTextbox&& other) noexcept
-    : text_(std::move(other.text_)),
-      is_visible_(other.is_visible_),
-      requested_font_family_(std::move(other.requested_font_family_)),
-      fallback_font_family_(std::move(other.fallback_font_family_)),
-      font_size_px_(other.font_size_px_),
-      line_height_px_(other.line_height_px_),
-      color_(std::move(other.color_)),
-      bold_(other.bold_),
-      italic_(other.italic_),
-      text_align_(std::move(other.text_align_)),
-      max_width_px_(other.max_width_px_),
-      wrap_(other.wrap_),
-      background_color_(std::move(other.background_color_)),
-      element_(other.element_),
-      id_(std::move(other.id_)),
-      align_(other.align_)
+    : mText(std::move(other.mText)),
+      mIsVisible(other.mIsVisible),
+      mRequestedFontFamily(std::move(other.mRequestedFontFamily)),
+      mFallbackFontFamily(std::move(other.mFallbackFontFamily)),
+      mFontSizePx(other.mFontSizePx),
+      mLineHeightPx(other.mLineHeightPx),
+      mColor(std::move(other.mColor)),
+      mBold(other.mBold),
+      mItalic(other.mItalic),
+      mTextAlign(std::move(other.mTextAlign)),
+      mMaxWidthPx(other.mMaxWidthPx),
+      mWrap(other.mWrap),
+      mBackgroundColor(std::move(other.mBackgroundColor)),
+      mElement(other.mElement),
+      mId(std::move(other.mId)),
+      mAlign(other.mAlign)
 {
-  other.element_ = val::null();
-  other.is_visible_ = false;
+  other.mElement = val::null();
+  other.mIsVisible = false;
 }
 
 
@@ -89,27 +89,27 @@ WebTextbox& WebTextbox::operator=(WebTextbox&& other) noexcept
 {
   if (this != &other)
   {
-    unmount();
+    Unmount();
 
-    text_ = std::move(other.text_);
-    is_visible_ = other.is_visible_;
-    requested_font_family_ = std::move(other.requested_font_family_);
-    fallback_font_family_ = std::move(other.fallback_font_family_);
-    font_size_px_ = other.font_size_px_;
-    line_height_px_ = other.line_height_px_;
-    color_ = std::move(other.color_);
-    bold_ = other.bold_;
-    italic_ = other.italic_;
-    text_align_ = std::move(other.text_align_);
-    max_width_px_ = other.max_width_px_;
-    wrap_ = other.wrap_;
-    background_color_ = std::move(other.background_color_);
-    element_ = other.element_;
-    id_ = std::move(other.id_);
-    align_ = other.align_;
+    mText = std::move(other.mText);
+    mIsVisible = other.mIsVisible;
+    mRequestedFontFamily = std::move(other.mRequestedFontFamily);
+    mFallbackFontFamily = std::move(other.mFallbackFontFamily);
+    mFontSizePx = other.mFontSizePx;
+    mLineHeightPx = other.mLineHeightPx;
+    mColor = std::move(other.mColor);
+    mBold = other.mBold;
+    mItalic = other.mItalic;
+    mTextAlign = std::move(other.mTextAlign);
+    mMaxWidthPx = other.mMaxWidthPx;
+    mWrap = other.mWrap;
+    mBackgroundColor = std::move(other.mBackgroundColor);
+    mElement = other.mElement;
+    mId = std::move(other.mId);
+    mAlign = other.mAlign;
 
-    other.element_ = val::null();
-    other.is_visible_ = false;
+    other.mElement = val::null();
+    other.mIsVisible = false;
   }
   return *this;
 }
@@ -118,32 +118,32 @@ WebTextbox& WebTextbox::operator=(WebTextbox&& other) noexcept
 
 void WebTextbox::SetText(const std::string& text)
 {
-  text_ = text;
+  mText = text;
   ApplyText();
 }
 
 void WebTextbox::AppendText(const std::string& text)
 {
-  text_ += text;
+  mText += text;
   ApplyText();
 }
 
 std::string WebTextbox::GetText() const
 {
-  return text_;
+  return mText;
 }
 
 void WebTextbox::Clear()
 {
-  text_.clear();
+  mText.clear();
   ApplyText();
 }
 
 void WebTextbox::ApplyText()
 {
-  if (!element_.isNull())
+  if (!mElement.isNull())
   {
-    element_.set("textContent", text_);
+    mElement.set("textContent", mText);
   }
 }
 
@@ -151,165 +151,165 @@ void WebTextbox::ApplyText()
 
 void WebTextbox::SetFontFamily(const std::string& family)
 {
-  requested_font_family_ = family;
+  mRequestedFontFamily = family;
   ApplyStyles();
 
   // Warning if computed font doesn't contain requested family
   val win = GetWindow();
-  if (!element_.isNull() && win.hasOwnProperty("getComputedStyle"))
+  if (!mElement.isNull() && win.hasOwnProperty("getComputedStyle"))
   {
-    val computed = win.call<val>("getComputedStyle", element_);
+    val computed = win.call<val>("getComputedStyle", mElement);
     std::string applied = computed["fontFamily"].as<std::string>();
-    if (!requested_font_family_.empty() && applied.find(requested_font_family_) == std::string::npos)
+    if (!mRequestedFontFamily.empty() && applied.find(mRequestedFontFamily) == std::string::npos)
     {
-      GetConsole().call<void>("warn", std::string("WebTextbox: Requested font '") + requested_font_family_ + "' not found; browser used: " + applied);
+      GetConsole().call<void>("warn", std::string("WebTextbox: Requested font '") + mRequestedFontFamily + "' not found; browser used: " + applied);
     }
   }
 }
 
 void WebTextbox::SetFallbackFontFamily(const std::string& fallback_family)
 {
-  fallback_font_family_ = fallback_family;
+  mFallbackFontFamily = fallback_family;
   ApplyStyles();
 }
 
 void WebTextbox::SetFontSize(float size_px)
 {
   assert(size_px > 0.0f);
-  font_size_px_ = size_px;
+  mFontSizePx = size_px;
   ApplyStyles();
 }
 
 void WebTextbox::SetLineHeight(float line_height_px)
 {
   assert(line_height_px > 0.0f);
-  line_height_px_ = line_height_px;
+  mLineHeightPx = line_height_px;
   ApplyStyles();
 }
 
 void WebTextbox::SetColor(const std::string& css_color)
 {
-  color_ = css_color;
+  mColor = css_color;
   ApplyStyles();
 }
 
 void WebTextbox::SetBold(bool enabled)
 {
-  bold_ = enabled;
+  mBold = enabled;
   ApplyStyles();
 }
 
 void WebTextbox::SetItalic(bool enabled)
 {
-  italic_ = enabled;
+  mItalic = enabled;
   ApplyStyles();
 }
 
 void WebTextbox::SetAlignment(const std::string& alignment)
 {
   assert(alignment == "left" || alignment == "center" || alignment == "right");
-  text_align_ = alignment;
+  mTextAlign = alignment;
   ApplyStyles();
 }
 
 void WebTextbox::SetMaxWidth(float width_px)
 {
   assert(width_px > 0.0f);
-  max_width_px_ = width_px;
+  mMaxWidthPx = width_px;
   ApplyStyles();
 }
 
 void WebTextbox::SetWrap(bool enabled)
 {
-  wrap_ = enabled;
+  mWrap = enabled;
   ApplyStyles();
 }
 
 void WebTextbox::SetBackgroundColor(const std::string& css_color)
 {
-  background_color_ = css_color;
+  mBackgroundColor = css_color;
   ApplyStyles();
 }
 
 void WebTextbox::ClearBackgroundColor()
 {
-  background_color_.clear();
+  mBackgroundColor.clear();
   ApplyStyles();
 }
 
 void WebTextbox::ApplyStyles()
 {
-  if (element_.isNull())
+  if (mElement.isNull())
   {
     return;
   } 
 
   // Fonts
   std::string font_chain;
-  if (!requested_font_family_.empty())
+  if (!mRequestedFontFamily.empty())
   {
-    font_chain = requested_font_family_;
-    if (!fallback_font_family_.empty())
+    font_chain = mRequestedFontFamily;
+    if (!mFallbackFontFamily.empty())
     {
-      font_chain += ", " + fallback_font_family_;
+      font_chain += ", " + mFallbackFontFamily;
     }
   }
   else
   {
-    font_chain = fallback_font_family_;
+    font_chain = mFallbackFontFamily;
   }
 
-  element_["style"].set("fontFamily", font_chain);
-  element_["style"].set("fontSize", std::to_string(font_size_px_) + "px");
-  element_["style"].set("color", color_);
-  element_["style"].set("fontWeight", bold_ ? "bold" : "normal");
-  element_["style"].set("fontStyle", italic_ ? "italic" : "normal");
-  element_["style"].set("textAlign", text_align_);
+  mElement["style"].set("fontFamily", font_chain);
+  mElement["style"].set("fontSize", std::to_string(mFontSizePx) + "px");
+  mElement["style"].set("color", mColor);
+  mElement["style"].set("fontWeight", mBold ? "bold" : "normal");
+  mElement["style"].set("fontStyle", mItalic ? "italic" : "normal");
+  mElement["style"].set("textAlign", mTextAlign);
 
   // Line-height: if > 0 use px, else let browser choose
-  if (line_height_px_ > 0.0f)
+  if (mLineHeightPx > 0.0f)
   {
-    element_["style"].set("lineHeight", std::to_string(line_height_px_) + "px");
+    mElement["style"].set("lineHeight", std::to_string(mLineHeightPx) + "px");
   }
   else
   {
-    element_["style"].set("lineHeight", std::string("normal"));
+    mElement["style"].set("lineHeight", std::string("normal"));
   }
 
   // Wrapping
-  element_["style"].set("whiteSpace", wrap_ ? "pre-wrap" : "pre");
+  mElement["style"].set("whiteSpace", mWrap ? "pre-wrap" : "pre");
 
   // Max width
-  if (max_width_px_ > 0.0f)
+  if (mMaxWidthPx > 0.0f)
   {
-    element_["style"].set("maxWidth", std::to_string(max_width_px_) + "px");
+    mElement["style"].set("maxWidth", std::to_string(mMaxWidthPx) + "px");
   }
   else
   {
-    element_["style"].set("maxWidth", std::string(""));
+    mElement["style"].set("maxWidth", std::string(""));
   }    
   // Background color
-  element_["style"].set("backgroundColor", background_color_.empty() ? "transparent" : background_color_);
+  mElement["style"].set("backgroundColor", mBackgroundColor.empty() ? "transparent" : mBackgroundColor);
 
   // Visibility
-  element_["style"].set("display", is_visible_ ? "inline-block" : "none");
+  mElement["style"].set("display", mIsVisible ? "inline-block" : "none");
 
   // Alignment (align-self) for flex/grid layouts in WebLayout
-  ApplyAlignment(align_);
+  ApplyAlignment(mAlign);
 }
 
 void WebTextbox::ApplyAlignment(Alignment align)
 {
-  if (element_.isNull()) return;
+  if (mElement.isNull()) return;
 
   // Works when WebLayout uses flex/grid.
   switch (align)
   {
-    case Alignment::Start:   element_["style"].set("alignSelf", "flex-start"); break;
-    case Alignment::Center:  element_["style"].set("alignSelf", "center");     break;
-    case Alignment::End:     element_["style"].set("alignSelf", "flex-end");   break;
-    case Alignment::Stretch: element_["style"].set("alignSelf", "stretch");    break;
-    default:                 element_["style"].set("alignSelf", "flex-start"); break;
+    case Alignment::Start:   mElement["style"].set("alignSelf", "flex-start"); break;
+    case Alignment::Center:  mElement["style"].set("alignSelf", "center");     break;
+    case Alignment::End:     mElement["style"].set("alignSelf", "flex-end");   break;
+    case Alignment::Stretch: mElement["style"].set("alignSelf", "stretch");    break;
+    default:                 mElement["style"].set("alignSelf", "flex-start"); break;
   }
 }
 
@@ -319,13 +319,13 @@ WebTextbox::RectPx WebTextbox::GetBoundingBoxPx() const
 {
   RectPx r_{};
 
-  if (element_.isNull()) return r_;
+  if (mElement.isNull()) return r_;
 
   // Must be mounted to get a real bounding box
-  val parent_ = element_["parentNode"];
+  val parent_ = mElement["parentNode"];
   if (parent_.isNull() || parent_.isUndefined()) return r_;
 
-  val rect_ = element_.call<val>("getBoundingClientRect");
+  val rect_ = mElement.call<val>("getBoundingClientRect");
   r_.x = rect_["left"].as<double>();
   r_.y = rect_["top"].as<double>();
   r_.w = rect_["width"].as<double>();
@@ -346,26 +346,26 @@ double WebTextbox::GetHeightPx() const
 
 void WebTextbox::Show()
 {
-  is_visible_ = true;
+  mIsVisible = true;
   ApplyStyles();
 }
 
 void WebTextbox::Hide()
 {
-  is_visible_ = false;
+  mIsVisible = false;
   ApplyStyles();
 }
 
 bool WebTextbox::IsVisible() const
 {
-  return is_visible_;
+  return mIsVisible;
 }
 
 /* -------------- IDomElement -------------- */
 
-void WebTextbox::mountToLayout(WebLayout& parent, Alignment align)
+void WebTextbox::MountToLayout(WebLayout& parent, Alignment align)
 {
-  align_ = align;
+  mAlign = align;
 
   // Find parent's DOM element by id and append ourselves.
   // This avoids depending on WebLayout internals and matches WebImage Id() pattern.
@@ -380,27 +380,27 @@ void WebTextbox::mountToLayout(WebLayout& parent, Alignment align)
   }
 
   // If already mounted somewhere else, unmount first.
-  unmount();
+  Unmount();
 
-  parentEl_.call<void>("appendChild", element_);
-  syncFromModel();
+  parentEl_.call<void>("appendChild", mElement);
+  SyncFromModel();
 }
 
-void WebTextbox::unmount()
+void WebTextbox::Unmount()
 {
-  if (element_.isNull())
+  if (mElement.isNull())
   {
      return;
   }
 
-  val parent_ = element_["parentNode"];
+  val parent_ = mElement["parentNode"];
   if (!parent_.isNull() && !parent_.isUndefined())
   {
-    parent_.call<void>("removeChild", element_);
+    parent_.call<void>("removeChild", mElement);
   }
 }
 
-void WebTextbox::syncFromModel()
+void WebTextbox::SyncFromModel()
 {
   ApplyText();
   ApplyStyles();
@@ -408,5 +408,5 @@ void WebTextbox::syncFromModel()
 
 const std::string& WebTextbox::Id() const
 {
-  return id_;
+  return mId;
 }
