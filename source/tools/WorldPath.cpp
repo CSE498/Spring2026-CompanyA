@@ -208,7 +208,7 @@ WorldPath::FurthestPointPair() const
     return bestPair;
 }
 
-    
+
 WorldPath& WorldPath::Extend(const WorldPath& other)
 {
     for (const auto& pt : other.mPoints)
