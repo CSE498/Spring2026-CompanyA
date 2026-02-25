@@ -7,6 +7,8 @@
 #include <cmath>
 #include <vector>
 
+namespace cse498 {
+
 #ifdef __EMSCRIPTEN__
 static WebCanvas* g_canvas = nullptr;
 
@@ -91,3 +93,5 @@ int main() {
 // Non-emscripten build: provide a tiny stub main so the file can still compile if included.
 int main() { return 0; }
 #endif
+
+} // namespace cse498
