@@ -1,5 +1,6 @@
+#define CATCH_CONFIG_MAIN
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../group_specific_content/Group-14/Group14InitialClasses/EventQueue.hpp"
+#include "../../source/tools/InteractiveWorld/EventQueue.hpp"
 
 using namespace cse498;
 
@@ -25,7 +26,7 @@ TEST_CASE("ScheduleEvent adds events") {
     CHECK(q.Empty() == false);
 }
 
-TEST_CASE("PeekNextEvent returns smallest time") {
+TEST_CASE("PeekNextEvent returns smallest time (and next is correct too)") {
     EventQueue q;
 
     q.ScheduleEvent(10, [](){});
@@ -33,9 +34,12 @@ TEST_CASE("PeekNextEvent returns smallest time") {
 
     CHECK(q.PeekNextEvent().time == 5);
 
-    // After peek event, it should still exist
+    // After peek, it should still exist
     CHECK(q.Empty() == false);
+
+    // Pop the 1st (time=5), now the next should be time=10
     CHECK(q.PopNextEvent().time == 5);
+    CHECK(q.PeekNextEvent().time == 10);
 }
 
 TEST_CASE("PopNextEvent removes in order") {
@@ -58,9 +62,9 @@ TEST_CASE("CancelEvent skips cancelled event and returns next event (id2)") {
     auto id2 = q.ScheduleEvent(6, [](){});
 
     CHECK(q.CancelEvent(id1) == true);
-    CHECK(q.CancelEvent(id1) == false); // cancelled event
+    CHECK(q.CancelEvent(id1) == false); // already cancelled
 
-    //cancelling id1, the next event should be id2 (time=6)
+    // cancelling id1 => next should be id2 (time=6)
     CHECK(q.PeekNextEvent().time == 6);
     CHECK(q.PeekNextEvent().id == id2);
 
@@ -69,4 +73,16 @@ TEST_CASE("CancelEvent skips cancelled event and returns next event (id2)") {
     CHECK(e.id == id2);
 
     CHECK(q.Empty() == true);
+}
+
+TEST_CASE("CancelEvent returns false for non-existent id (edge case)") {
+    EventQueue q;
+
+    // cancel when queue is empty
+    CHECK(q.CancelEvent(12345) == false);
+
+    // schedule one event, but cancel a different id
+    auto id1 = q.ScheduleEvent(10, [](){});
+    (void)id1;
+    CHECK(q.CancelEvent(99999) == false);
 }
