@@ -109,14 +109,14 @@ class WebImage : public IDomElement, public ICanvasElement {
 
   // ----- IDomElement Interface -----
 
-  void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
-  void unmount() override;
-  void syncFromModel() override;
+  void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  void Unmount() override;
+  void SyncFromModel() override;
   const std::string& Id() const override;
 
   // ----- ICanvasElement Interface -----
 
-  void draw(WebCanvas& canvas) override;
+  void Draw(WebCanvas& canvas) override;
 
   /// Handle load event (called when image finishes loading).
   void HandleLoad();
@@ -124,22 +124,22 @@ class WebImage : public IDomElement, public ICanvasElement {
   void HandleError();
 
  private:
-  std::string src_;
-  std::string alt_text_;
-  int width_ = 0;
-  int height_ = 0;
-  double opacity_ = 1.0;
-  bool is_visible_ = true;
-  bool is_loaded_ = false;
-  bool has_error_ = false;
-  ImageErrorMode error_mode_ = ImageErrorMode::BlankRect;
-  std::string placeholder_color_ = "#CCCCCC";
-  std::function<void()> on_load_callback_;
-  std::function<void()> on_error_callback_;
-  emscripten::val element_;
-  std::string id_;
+  std::string mSrc;
+  std::string mAltText;
+  int mWidth = 0;
+  int mHeight = 0;
+  double mOpacity = 1.0;
+  bool mIsVisible = true;
+  bool mIsLoaded = false;
+  bool mHasError = false;
+  ImageErrorMode mErrorMode = ImageErrorMode::BlankRect;
+  std::string mPlaceholderColor = "#CCCCCC";
+  std::function<void()> mOnLoadCallback;
+  std::function<void()> mOnErrorCallback;
+  emscripten::val mElement;
+  std::string mId;
 
-  static int next_id_counter_;
+  static int mNextIdCounter;
 
   /// Attach the onload/onerror event listeners to the DOM element.
   void AttachListeners();

@@ -20,17 +20,17 @@ int main() {
   btn1->SetCallback([]() {
     std::cout << "Button was clicked!" << std::endl;
   });
-  btn1->mountToLayout(*layout);
+  btn1->MountToLayout(*layout);
 
   btn2 = new WebButton("Disabled Button");
   btn2->SetSize(150, 40);
   btn2->Disable();
-  btn2->mountToLayout(*layout);
+  btn2->MountToLayout(*layout);
 
   btn3 = new WebButton("Hidden Button");
   btn3->SetSize(150, 40);
   btn3->Hide();
-  btn3->mountToLayout(*layout);
+  btn3->MountToLayout(*layout);
 
   layout->Apply();
 

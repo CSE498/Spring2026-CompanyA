@@ -26,17 +26,17 @@ class WebLayout {};
 
 struct SpyElement : public ICanvasElement {
     SpyElement(int id, std::vector<int>& order)
-        : id_(id), order_(order) {}
+        : mId(id), order_(order) {}
 
-    void draw(WebCanvas& /*canvas*/) override {
+    void Draw(WebCanvas& /*canvas*/) override {
         ++drawCount;
-        order_.push_back(id_);
+        order_.push_back(mId);
     }
 
     int drawCount = 0;
 
 private:
-    int id_;
+    int mId;
     std::vector<int>& order_;
 };
 
@@ -47,7 +47,7 @@ struct LifetimeElement : public ICanvasElement {
     LifetimeElement() { ++alive; }
     ~LifetimeElement() override { --alive; ++destroyed; }
 
-    void draw(WebCanvas& /*canvas*/) override {}
+    void Draw(WebCanvas& /*canvas*/) override {}
 
     static void reset() { alive = 0; destroyed = 0; }
 };
@@ -57,7 +57,7 @@ struct OrderElement : public ICanvasElement {
 
     explicit OrderElement(std::string tag) : tag_(std::move(tag)) {}
 
-    void draw(WebCanvas& /*canvas*/) override {
+    void Draw(WebCanvas& /*canvas*/) override {
         order.push_back(tag_);
     }
 
@@ -78,17 +78,17 @@ TEST_CASE("WebCanvas is move-only (RAII-friendly)", "[web][canvas][raii]") {
     STATIC_REQUIRE(std::is_move_assignable_v<WebCanvas>);
 
     WebCanvas a("move-a");
-    a.addElement(std::make_unique<LifetimeElement>());
+    a.AddElement(std::make_unique<LifetimeElement>());
 
     // Move-construct should not throw.
     REQUIRE_NOTHROW(WebCanvas{std::move(a)});
 
     // Moved-from object should remain safe to use (even if it becomes "empty").
     // We don't assert specific values, only that APIs remain valid.
-    REQUIRE_NOTHROW(a.clearElements());
-    REQUIRE_NOTHROW(a.renderFrame());
-    REQUIRE_NOTHROW(a.unmount());
-    REQUIRE_NOTHROW(a.syncFromModel());
+    REQUIRE_NOTHROW(a.ClearElements());
+    REQUIRE_NOTHROW(a.RenderFrame());
+    REQUIRE_NOTHROW(a.Unmount());
+    REQUIRE_NOTHROW(a.SyncFromModel());
     REQUIRE_NOTHROW(a.Id());
 }
 
@@ -103,30 +103,30 @@ TEST_CASE("WebCanvas Id() reflects constructor argument, and mount/unmount do no
     const std::string* p2 = &canvas.Id();
     REQUIRE(p1 == p2);
 
-    REQUIRE_NOTHROW(canvas.mountToLayout(layout, Alignment::Start));
+    REQUIRE_NOTHROW(canvas.MountToLayout(layout, Alignment::Start));
     REQUIRE(canvas.Id() == std::string("canvas-test-1"));
 
-    REQUIRE_NOTHROW(canvas.unmount());
+    REQUIRE_NOTHROW(canvas.Unmount());
     REQUIRE(canvas.Id() == std::string("canvas-test-1"));
 }
 
-TEST_CASE("WebCanvas addElement(nullptr) is safe and does not affect ownership counts", "[web][canvas][raii]") {
+TEST_CASE("WebCanvas AddElement(nullptr) is safe and does not affect ownership counts", "[web][canvas][raii]") {
     LifetimeElement::reset();
     REQUIRE(LifetimeElement::alive == 0);
 
     WebCanvas canvas("null-add");
 
     std::unique_ptr<ICanvasElement> nullPtr;
-    REQUIRE_NOTHROW(canvas.addElement(std::move(nullPtr)));
+    REQUIRE_NOTHROW(canvas.AddElement(std::move(nullPtr)));
     REQUIRE(LifetimeElement::alive == 0);
     REQUIRE(LifetimeElement::destroyed == 0);
 
-    canvas.addElement(std::make_unique<LifetimeElement>());
+    canvas.AddElement(std::make_unique<LifetimeElement>());
     REQUIRE(LifetimeElement::alive == 1);
 
     // Adding another null still does nothing.
     std::unique_ptr<ICanvasElement> nullPtr2;
-    REQUIRE_NOTHROW(canvas.addElement(std::move(nullPtr2)));
+    REQUIRE_NOTHROW(canvas.AddElement(std::move(nullPtr2)));
     REQUIRE(LifetimeElement::alive == 1);
 }
 
@@ -138,24 +138,24 @@ TEST_CASE("WebCanvas owns added elements and releases them on clear/destroy (str
     {
         WebCanvas canvas;
 
-        canvas.addElement(std::make_unique<LifetimeElement>());
-        canvas.addElement(std::make_unique<LifetimeElement>());
+        canvas.AddElement(std::make_unique<LifetimeElement>());
+        canvas.AddElement(std::make_unique<LifetimeElement>());
 
         REQUIRE(LifetimeElement::alive == 2);
         REQUIRE(LifetimeElement::destroyed == 0);
 
-        // clearElements should destroy owned elements.
-        REQUIRE_NOTHROW(canvas.clearElements());
+        // ClearElements should destroy owned elements.
+        REQUIRE_NOTHROW(canvas.ClearElements());
         REQUIRE(LifetimeElement::alive == 0);
         REQUIRE(LifetimeElement::destroyed == 2);
 
-        // clearElements should be idempotent.
-        REQUIRE_NOTHROW(canvas.clearElements());
+        // ClearElements should be idempotent.
+        REQUIRE_NOTHROW(canvas.ClearElements());
         REQUIRE(LifetimeElement::alive == 0);
         REQUIRE(LifetimeElement::destroyed == 2);
 
         // After clear, adding new elements works normally.
-        canvas.addElement(std::make_unique<LifetimeElement>());
+        canvas.AddElement(std::make_unique<LifetimeElement>());
         REQUIRE(LifetimeElement::alive == 1);
     }
 
@@ -164,7 +164,7 @@ TEST_CASE("WebCanvas owns added elements and releases them on clear/destroy (str
     REQUIRE(LifetimeElement::destroyed == 3);
 }
 
-TEST_CASE("WebCanvas renderFrame draws visible elements, skips invisible, and does not clear elements", "[web][canvas]") {
+TEST_CASE("WebCanvas RenderFrame draws visible elements, skips invisible, and does not clear elements", "[web][canvas]") {
     WebCanvas canvas;
 
     std::vector<int> order;
@@ -174,33 +174,33 @@ TEST_CASE("WebCanvas renderFrame draws visible elements, skips invisible, and do
     SpyElement* raw1 = e1.get();
     SpyElement* raw2 = e2.get();
 
-    e2->setVisible(false);
+    e2->SetVisible(false);
 
-    canvas.addElement(std::move(e1));
-    canvas.addElement(std::move(e2));
+    canvas.AddElement(std::move(e1));
+    canvas.AddElement(std::move(e2));
 
-    REQUIRE_NOTHROW(canvas.renderFrame());
+    REQUIRE_NOTHROW(canvas.RenderFrame());
     CHECK(raw1->drawCount == 1);
     CHECK(raw2->drawCount == 0);
     CHECK(order == std::vector<int>({1}));
 
     // Rendering again should draw again (elements are still owned).
     order.clear();
-    REQUIRE_NOTHROW(canvas.renderFrame());
+    REQUIRE_NOTHROW(canvas.RenderFrame());
     CHECK(raw1->drawCount == 2);
     CHECK(raw2->drawCount == 0);
     CHECK(order == std::vector<int>({1}));
 
     // Flip visibility after insertion should take effect on next frame.
-    raw2->setVisible(true);
+    raw2->SetVisible(true);
     order.clear();
-    REQUIRE_NOTHROW(canvas.renderFrame());
+    REQUIRE_NOTHROW(canvas.RenderFrame());
     CHECK(raw1->drawCount == 3);
     CHECK(raw2->drawCount == 1);
     CHECK(order == std::vector<int>({1, 2}));
 }
 
-TEST_CASE("WebCanvas renderFrame sorts by zIndex (stable), including equal zIndex insertion order", "[web][canvas][zindex]") {
+TEST_CASE("WebCanvas RenderFrame sorts by ZIndex (stable), including equal ZIndex insertion order", "[web][canvas][zindex]") {
     WebCanvas canvas;
 
     std::vector<int> order;
@@ -209,24 +209,24 @@ TEST_CASE("WebCanvas renderFrame sorts by zIndex (stable), including equal zInde
     auto e3 = std::make_unique<SpyElement>(3, order);
     auto e4 = std::make_unique<SpyElement>(4, order);
 
-    // zIndex values (lower draws first).
-    e1->setZIndex(10);
-    e2->setZIndex(0);
-    e3->setZIndex(10);  // same as e1 -> should keep insertion order relative to e1
-    e4->setZIndex(10);  // same as e1 -> after e3
+    // ZIndex values (lower draws first).
+    e1->SetZIndex(10);
+    e2->SetZIndex(0);
+    e3->SetZIndex(10);  // same as e1 -> should keep insertion order relative to e1
+    e4->SetZIndex(10);  // same as e1 -> after e3
 
-    canvas.addElement(std::move(e1)); // id=1, z=10
-    canvas.addElement(std::move(e2)); // id=2, z=0
-    canvas.addElement(std::move(e3)); // id=3, z=10
-    canvas.addElement(std::move(e4)); // id=4, z=10
+    canvas.AddElement(std::move(e1)); // id=1, z=10
+    canvas.AddElement(std::move(e2)); // id=2, z=0
+    canvas.AddElement(std::move(e3)); // id=3, z=10
+    canvas.AddElement(std::move(e4)); // id=4, z=10
 
-    REQUIRE_NOTHROW(canvas.renderFrame());
+    REQUIRE_NOTHROW(canvas.RenderFrame());
 
     // Desired order: z=0 first, then z=10 elements in insertion order (1 then 3 then 4).
     CHECK(order == std::vector<int>({2, 1, 3, 4}));
 }
 
-TEST_CASE("WebCanvas zIndex changes after insertion affect subsequent render order", "[web][canvas][zindex]") {
+TEST_CASE("WebCanvas ZIndex changes after insertion affect subsequent render order", "[web][canvas][zindex]") {
     WebCanvas canvas;
 
     OrderElement::reset();
@@ -239,28 +239,28 @@ TEST_CASE("WebCanvas zIndex changes after insertion affect subsequent render ord
     OrderElement* rc = c.get();
 
     // initial z: all 0 -> insertion order
-    canvas.addElement(std::move(a));
-    canvas.addElement(std::move(b));
-    canvas.addElement(std::move(c));
+    canvas.AddElement(std::move(a));
+    canvas.AddElement(std::move(b));
+    canvas.AddElement(std::move(c));
 
-    canvas.renderFrame();
+    canvas.RenderFrame();
     REQUIRE(OrderElement::order == std::vector<std::string>({"A", "B", "C"}));
 
-    // Now change zIndex after insertion:
+    // Now change ZIndex after insertion:
     // Make C draw first (z=-10), B draw last (z=10)
-    rc->setZIndex(-10);
-    rb->setZIndex(10);
-    ra->setZIndex(0);
+    rc->SetZIndex(-10);
+    rb->SetZIndex(10);
+    ra->SetZIndex(0);
 
     OrderElement::reset();
-    canvas.renderFrame();
+    canvas.RenderFrame();
     REQUIRE(OrderElement::order == std::vector<std::string>({"C", "A", "B"}));
 }
 
-TEST_CASE("WebCanvas renderFrame on empty canvas is safe", "[web][canvas]") {
+TEST_CASE("WebCanvas RenderFrame on empty canvas is safe", "[web][canvas]") {
     WebCanvas canvas("empty");
-    REQUIRE_NOTHROW(canvas.renderFrame());
-    REQUIRE_NOTHROW(canvas.clearElements());
+    REQUIRE_NOTHROW(canvas.RenderFrame());
+    REQUIRE_NOTHROW(canvas.ClearElements());
 }
 
 TEST_CASE("WebCanvas immediate-mode primitives are safe to call (expanded)", "[web][canvas][primitives]") {

@@ -54,7 +54,7 @@ int main()
   hud->SetBold(true);
   hud->SetColor("#222222");
 
-  hud->mountToLayout(*root, Alignment::Start);
+  hud->MountToLayout(*root, Alignment::Start);
 
   // ----------------------------------------------------
   // Battle Log
@@ -70,7 +70,7 @@ int main()
   battle_log->AppendText("You hit the Bat for 6 damage.\n");
   battle_log->AppendText("The Bat has fled the battle.\n");
 
-  battle_log->mountToLayout(*root, Alignment::Start);
+  battle_log->MountToLayout(*root, Alignment::Start);
 
   // ----------------------------------------------------
   // Debug Text
@@ -82,7 +82,7 @@ int main()
   debug->SetBackgroundColor("#EEEEFF");
   debug->Hide();
 
-  debug->mountToLayout(*root, Alignment::Start);
+  debug->MountToLayout(*root, Alignment::Start);
 
   // ----------------------------------------------------
   // Print bounding box demo
