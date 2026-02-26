@@ -2,7 +2,8 @@
 /// Unit tests for WebLayout class using Catch2 framework
 /// Tests cover layout configuration, child element management, styling,
 /// positioning, and DOM lifecycle behaviors.
-/// to run these tests: em++ WebLayoutTest.cpp WebLayout.cpp -I.. -I../internal --bind -std=c++23 -s WASM=1 -s ASSERTIONS=1 -o test.html
+
+#ifdef __EMSCRIPTEN__
 
 #include <type_traits>
 #include <memory>
@@ -10,10 +11,13 @@
 #include <string>
 
 // Define CATCH_CONFIG_MAIN in this file only (first test file)
-#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../../source/Interfaces/WebUI/WebLayout/WebLayout.hpp"
 #include "../../../source/Interfaces/WebUI/internal/IDomElement.hpp"
+
+using cse498::IDomElement, cse498::WebLayout, cse498::Alignment,
+    cse498::Justification, cse498::LayoutType;
 
 // ---------------------------
 // Test Helpers & Stubs
@@ -33,9 +37,10 @@ public:
 
     virtual ~MockDomElement() = default;
 
-    void MountToLayout(WebLayout& /*parent*/,
-                       Alignment /*align*/) noexcept override {
-        mountCount++;
+    void MountToLayout(WebLayout& parent,
+                       Alignment align = Alignment::None) noexcept override {
+      parent.AddElement(this, align);
+      mountCount++;
     }
 
     void Unmount() noexcept override {
@@ -188,6 +193,7 @@ TEST_CASE("WebLayout AddElement with invalid element ID returns false", "[weblay
     WebLayout layout("add-invalid-test");
     MockDomElement elem("");  // Empty ID
     REQUIRE(layout.AddElement(&elem) == false);
+    REQUIRE(elem.mountCount == 0);
 }
 
 TEST_CASE("WebLayout can add and remove single element", "[weblayout][children]") {
@@ -196,11 +202,14 @@ TEST_CASE("WebLayout can add and remove single element", "[weblayout][children]"
 
     // Add element (note: in real scenario would need DOM to exist)
     // The test checks internal state through Apply behavior
-    REQUIRE_NOTHROW(layout.AddElement(&elem, Alignment::Center));
+    REQUIRE_NOTHROW(elem.MountToLayout(layout, Alignment::Center));
     REQUIRE_NOTHROW(layout.Apply());
 
     REQUIRE(layout.RemoveElement(&elem) == true);
     REQUIRE_NOTHROW(layout.Apply());
+    REQUIRE(elem.mountCount == 1);
+    REQUIRE(elem.unmountCount == 1);
+    REQUIRE(elem.syncCount == 1);
 }
 
 TEST_CASE("WebLayout RemoveElement returns false for non-existent element", "[weblayout][children]") {
@@ -208,6 +217,7 @@ TEST_CASE("WebLayout RemoveElement returns false for non-existent element", "[we
     MockDomElement elem("elem-1");
 
     REQUIRE(layout.RemoveElement(&elem) == false);
+    REQUIRE(elem.unmountCount == 0);
 }
 
 TEST_CASE("WebLayout RemoveElement with null pointer returns false", "[weblayout][children]") {
@@ -227,10 +237,12 @@ TEST_CASE("WebLayout SetAlignment on added element works", "[weblayout][children
     WebLayout layout("set-align-added-test");
     MockDomElement elem("elem-1");
 
-    REQUIRE_NOTHROW(layout.AddElement(&elem, Alignment::Start));
+    REQUIRE_NOTHROW(elem.MountToLayout(layout, Alignment::Start));
     REQUIRE_NOTHROW(layout.SetAlignment(&elem, Alignment::Center));
     REQUIRE_NOTHROW(layout.SetAlignment(&elem, Alignment::End));
     REQUIRE_NOTHROW(layout.Apply());
+    REQUIRE(elem.mountCount == 1);
+    REQUIRE(elem.syncCount == 1);
 }
 
 TEST_CASE("WebLayout can add multiple elements", "[weblayout][children]") {
@@ -239,9 +251,9 @@ TEST_CASE("WebLayout can add multiple elements", "[weblayout][children]") {
     MockDomElement elem2("elem-2");
     MockDomElement elem3("elem-3");
 
-    REQUIRE(layout.AddElement(&elem1, Alignment::Start) == true);
-    REQUIRE(layout.AddElement(&elem2, Alignment::Center) == true);
-    REQUIRE(layout.AddElement(&elem3, Alignment::End) == true);
+    REQUIRE_NOTHROW(elem1.MountToLayout(layout, Alignment::Start));
+    REQUIRE_NOTHROW(elem2.MountToLayout(layout, Alignment::Center));
+    REQUIRE_NOTHROW(elem3.MountToLayout(layout, Alignment::End));
 
     REQUIRE_NOTHROW(layout.Apply());
 
@@ -252,6 +264,16 @@ TEST_CASE("WebLayout can add multiple elements", "[weblayout][children]") {
     // Second should still be removable
     REQUIRE(layout.RemoveElement(&elem2) == true);
     REQUIRE(layout.RemoveElement(&elem3) == true);
+
+    REQUIRE(elem1.mountCount == 1);
+    REQUIRE(elem2.mountCount == 1);
+    REQUIRE(elem3.mountCount == 1);
+    REQUIRE(elem1.unmountCount == 1);
+    REQUIRE(elem2.unmountCount == 1);
+    REQUIRE(elem3.unmountCount == 1);
+    REQUIRE(elem1.syncCount == 1);
+    REQUIRE(elem2.syncCount == 2);
+    REQUIRE(elem3.syncCount == 2);
 }
 
 TEST_CASE("WebLayout Clear removes all elements", "[weblayout][children]") {
@@ -259,14 +281,18 @@ TEST_CASE("WebLayout Clear removes all elements", "[weblayout][children]") {
     MockDomElement elem1("elem-1");
     MockDomElement elem2("elem-2");
 
-    layout.AddElement(&elem1);
-    layout.AddElement(&elem2);
+    elem1.MountToLayout(layout);
+    elem2.MountToLayout(layout);
 
     REQUIRE_NOTHROW(layout.Clear());
 
     // After clear, elements should not be removable (not in layout)
     REQUIRE(layout.RemoveElement(&elem1) == false);
     REQUIRE(layout.RemoveElement(&elem2) == false);
+    REQUIRE(elem1.mountCount == 1);
+    REQUIRE(elem2.mountCount == 1);
+    REQUIRE(elem1.unmountCount == 1);
+    REQUIRE(elem2.unmountCount == 1);
 }
 
 // ---------------------------
@@ -419,6 +445,18 @@ TEST_CASE("WebLayout ToggleVisibility multiple times", "[weblayout][visibility]"
     REQUIRE_NOTHROW(layout.Apply());
 }
 
+TEST_CASE("WebLayout ToggleVisibility prevents style application",
+          "[weblayout][styling][visibility]") {
+  WebLayout layout("visibility-multiple-test");
+  MockDomElement elem("elem");
+
+  elem.MountToLayout(layout);
+  layout.ToggleVisibility();
+
+  REQUIRE_NOTHROW(layout.Apply());
+  REQUIRE(elem.syncCount == 0);
+}
+
 // ---------------------------
 // Tests: Combined Styling
 // ---------------------------
@@ -483,7 +521,7 @@ TEST_CASE("WebLayout applies grid positions to children", "[weblayout][positioni
     MockDomElement elem("grid-child");
     elem.SetGridPosition(1, 2);
 
-    REQUIRE_NOTHROW(layout.AddElement(&elem));
+    REQUIRE_NOTHROW(elem.MountToLayout(layout));
     REQUIRE_NOTHROW(layout.Apply());
 
     // Grid position should be preserved
@@ -541,7 +579,7 @@ TEST_CASE("WebLayout applies free positions to children", "[weblayout][positioni
     MockDomElement elem("free-child");
     elem.SetFreePosition(50, 75);
 
-    REQUIRE_NOTHROW(layout.AddElement(&elem));
+    REQUIRE_NOTHROW(elem.MountToLayout(layout));
     REQUIRE_NOTHROW(layout.Apply());
 
     // Free position should be preserved
@@ -609,9 +647,11 @@ TEST_CASE("WebLayout remove same element multiple times", "[weblayout][edge-case
     WebLayout layout("add-remove-repeat-test");
     MockDomElement elem("repeat-elem");
 
-    REQUIRE(layout.AddElement(&elem) == true);
+    REQUIRE_NOTHROW(elem.MountToLayout(layout));
     REQUIRE(layout.RemoveElement(&elem) == true);
     REQUIRE(layout.RemoveElement(&elem) == false);  // Already removed
+    REQUIRE(elem.mountCount == 1);
+    REQUIRE(elem.unmountCount == 1);
 }
 
 TEST_CASE("WebLayout SetAlignment on untrack element is safe", "[weblayout][edge-case]") {
@@ -619,15 +659,17 @@ TEST_CASE("WebLayout SetAlignment on untrack element is safe", "[weblayout][edge
     MockDomElement elem1("elem-1");
     MockDomElement elem2("elem-2");
 
-    REQUIRE_NOTHROW(layout.AddElement(&elem1));
+    REQUIRE_NOTHROW(elem1.MountToLayout(layout));
     REQUIRE_NOTHROW(layout.SetAlignment(&elem2, Alignment::Center));  // Not tracked
+    REQUIRE(elem1.mountCount == 1);
+    REQUIRE(elem2.mountCount == 0);
 }
 
 TEST_CASE("WebLayout consecutive Clear calls are safe", "[weblayout][edge-case]") {
     WebLayout layout("clear-clear-test");
     MockDomElement elem("elem");
 
-    layout.AddElement(&elem);
+    REQUIRE_NOTHROW(elem.MountToLayout(layout));
     REQUIRE_NOTHROW(layout.Clear());
     REQUIRE_NOTHROW(layout.Clear());  // Should be safe
 }
@@ -635,11 +677,13 @@ TEST_CASE("WebLayout consecutive Clear calls are safe", "[weblayout][edge-case]"
 TEST_CASE("WebLayout nested layouts", "[weblayout][edge-case]") {
     WebLayout parent("parent");
     WebLayout child("child");
-    WebLayout grandchild("grandchild");
+    MockDomElement grandchild("grandchild");
 
-    REQUIRE_NOTHROW(parent.AddElement(&child));
-    REQUIRE_NOTHROW(child.AddElement(&grandchild));
+    REQUIRE_NOTHROW(child.MountToLayout(parent));
+    REQUIRE_NOTHROW(grandchild.MountToLayout(child));
     REQUIRE_NOTHROW(parent.Apply());
+    REQUIRE(grandchild.mountCount == 1);
+    REQUIRE(grandchild.syncCount == 1);
 }
 
 TEST_CASE("WebLayout very large spacing values", "[weblayout][edge-case]") {
@@ -677,9 +721,9 @@ TEST_CASE("WebLayout preserves child order through operations", "[weblayout][sta
     MockDomElement elem2("elem-2");
     MockDomElement elem3("elem-3");
 
-    layout.AddElement(&elem1);
-    layout.AddElement(&elem2);
-    layout.AddElement(&elem3);
+    REQUIRE_NOTHROW(elem1.MountToLayout(layout));
+    REQUIRE_NOTHROW(elem2.MountToLayout(layout));
+    REQUIRE_NOTHROW(elem3.MountToLayout(layout));
 
     layout.Apply();
     layout.Apply();  // Order should be preserved
@@ -687,6 +731,14 @@ TEST_CASE("WebLayout preserves child order through operations", "[weblayout][sta
     // Now remove middle element
     layout.RemoveElement(&elem2);
     REQUIRE_NOTHROW(layout.Apply());
+
+    REQUIRE(elem1.mountCount == 1);
+    REQUIRE(elem2.mountCount == 1);
+    REQUIRE(elem3.mountCount == 1);
+    REQUIRE(elem1.syncCount == 3);
+    REQUIRE(elem2.syncCount == 2);
+    REQUIRE(elem3.syncCount == 3);
+    REQUIRE(elem2.unmountCount == 1);
 }
 
 TEST_CASE("WebLayout maintains all layout configurations through operations", "[weblayout][state]") {
@@ -698,9 +750,11 @@ TEST_CASE("WebLayout maintains all layout configurations through operations", "[
     layout.SetSpacing(15);
 
     MockDomElement elem("elem");
-    layout.AddElement(&elem);
+    REQUIRE_NOTHROW(elem.MountToLayout(layout));
 
     REQUIRE_NOTHROW(layout.Apply());
     REQUIRE_NOTHROW(layout.Apply());
     // Configuration should be preserved
 }
+
+#endif
