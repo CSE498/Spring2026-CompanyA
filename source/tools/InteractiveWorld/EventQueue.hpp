@@ -46,7 +46,6 @@ namespace cse498 {
     std::unordered_set<EventID> m_cancelled_ids;
 
     // IDs that are currently scheduled and not yet popped/removed
-    // (Used to check whether CancelEvent is cancelling a real/active event.)
     std::unordered_set<EventID> m_active_ids;
 
     // Next id/order counters
