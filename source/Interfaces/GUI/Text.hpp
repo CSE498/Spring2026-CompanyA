@@ -188,7 +188,7 @@ public:
      */
     void Draw(int x, int y);
 
-     /**
+    /**
     * Get both width and height in a single call
     * @return Struct containing width and height in pixels
     */
@@ -205,13 +205,6 @@ public:
      * @return Height in pixels, or 0 if content is empty
      */
     int GetHeight() const;
-
-    /**
-     * OPTIONALLY ADD based on comments
-     * Get the dimensions of the rendered text in pixels
-     * @return Struct width, height in pixels, or 0 if content is empty
-     */
-
 
     /**
      * Set the SDL renderer to use for drawing
