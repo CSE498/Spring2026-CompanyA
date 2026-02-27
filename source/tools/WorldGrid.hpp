@@ -8,14 +8,13 @@
 #pragma once
 
 #include <cassert>
-#include <fstream>
-#include <iostream>
 #include <unordered_map>
 #include <vector>
 
 #include "../core/Location.hpp"
 #include "../tools/io_utils.hpp"
-#include "../tools/io_utils.hpp"
+
+constexpr size_t UNKNOWN_CELL_TYPE_ID = 0;
 
 namespace cse498 {
 
@@ -25,7 +24,7 @@ namespace cse498 {
     bool locked = false;       ///< Boolean checker if tile is locked (chest/door)
     bool traversable = false;  ///< Determines if Cell is traversable
     
-    //... and more added depnding on utility needs
+    //... and more added depending on utility needs
 
     CellTypeModifiers() = default;
     CellTypeModifiers(bool breakable, bool locked, bool traversable) : isBreakable(breakable), locked(locked), traversable(traversable) {}
@@ -39,7 +38,7 @@ namespace cse498 {
     std::string name;  ///< Unique name for this type of cell (e.g., "wall", "tree", "moon")
     std::string desc;  ///< Full description of what this type of cell is
     char symbol;       ///< Symbol for text representations (files or interface)
-    CellTypeModifiers mods; ///< struct object to determine modifiers of the cell
+    CellTypeModifiers tile_modifiers; ///< struct object to determine modifiers of the cell
     
 
     // DEVELOPER NOTE: More info may be needed here to describe cell types...
@@ -64,14 +63,10 @@ namespace cse498 {
     // -- Helper functions --
 
     /// Convert an X and a Y value to the index in the vector.
-    [[nodiscard]] size_t ToIndex(size_t x, size_t y) const {
-      return x + y * width;
-    }
+    [[nodiscard]] size_t ToIndex(size_t x, size_t y) const { return x + y * width; }
 
     /// Convert a WorldPosition to the index in the vector.
-    [[nodiscard]] size_t ToIndex(WorldPosition pos) const {
-      return pos.CellX() + pos.CellY() * width;
-    }
+    [[nodiscard]] size_t ToIndex(WorldPosition pos) const { return pos.CellX() + pos.CellY() * width;}
 
 
     // -- Serialize and Deserialize functions --
@@ -103,7 +98,7 @@ namespace cse498 {
       // positions in a cell grid (e.g., for a non-rectangular world).
       AddCellType("Unknown", "This is an invalid cell type and should not be reachable.");
     }
-    WorldGrid() : width(0), height(0), cells() {
+    WorldGrid() : width(UNKNOWN_CELL_TYPE_ID), height(UNKNOWN_CELL_TYPE_ID), cells() {
       AddCellType("Unknown", "This is an invalid cell type and should not be reachable.");
     }
     WorldGrid(const WorldGrid &) = default;
@@ -129,18 +124,24 @@ namespace cse498 {
 
     /// @return The grid state at the provided x and y coordinates
     [[nodiscard]] size_t operator[](std::pair<size_t, size_t> coordinates) const {
-       assert(IsValid(coordinates.first, coordinates.second));
-       return cells[ToIndex(coordinates.first, coordinates.second)];
+      assert(IsValid(coordinates.first, coordinates.second));
+      return cells[ToIndex(coordinates.first, coordinates.second)];
     }
 
      /// @return A reference to the grid state at the provided x and y coordinates
      [[nodiscard]] size_t & operator[](std::pair<size_t, size_t> coordinates) {
-       assert(IsValid(coordinates.first, coordinates.second));
-       return cells[ToIndex(coordinates.first, coordinates.second)];
+      assert(IsValid(coordinates.first, coordinates.second));
+      return cells[ToIndex(coordinates.first, coordinates.second)];
      }
 
-    [[nodiscard]] size_t operator[](WorldPosition pos) const { return cells[ToIndex(pos)]; }
-    [[nodiscard]] size_t & operator[](WorldPosition pos) { return cells[ToIndex(pos)]; }
+    [[nodiscard]] size_t operator[](WorldPosition pos) const { 
+      assert(IsValid(pos));
+      return cells[ToIndex(pos)]; 
+    }
+    [[nodiscard]] size_t & operator[](WorldPosition pos) { 
+      assert(IsValid(pos));
+      return cells[ToIndex(pos)]; 
+    }
 
     // ===========================
     //   Cell type management...
@@ -226,7 +227,7 @@ namespace cse498 {
     }
 
     // Build a map that will convert loaded char symbol into their cell type ID.
-    auto BuildSymbolMap() {
+    [[nodiscard]] auto BuildSymbolMap() const {
       std::unordered_map<char, size_t> symbol_map;
       for (size_t i=0; i < cell_types.size(); ++i) {
         symbol_map[cell_types[i].symbol] = i;
