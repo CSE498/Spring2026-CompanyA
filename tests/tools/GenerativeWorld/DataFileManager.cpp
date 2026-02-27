@@ -18,14 +18,14 @@ TEST_CASE("Testing DataFileManager Constructor", "[core]") {
 }
 
 /*
-* Test case for the StoreData function of the DataFileManager class,
+* Test case for the FormatData function of the DataFileManager class,
 * verifying that it correctly formats the data string for storage. 
 */
-TEST_CASE("Testing DataFileManager StoreData", "[core]") {
+TEST_CASE("Testing DataFileManager FormatData", "[core]") {
     std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
-    CHECK(manager.StoreData(3, "Tile", "Temporary Data") == "3\tTile\tTemporary Data");
+    CHECK(manager.FormatData(3, "Tile", "Temporary Data") == "3\tTile\tTemporary Data");
 }
 
 
@@ -54,39 +54,39 @@ TEST_CASE("Testing DataFileManager Update", "[core]") {
 }
 
 /*
-* Test case (error handling) for the StoreData function of the DataFileManager class,
+* Test case (error handling) for the FormatData function of the DataFileManager class,
 * verifying that it throws a runtime error when an invalid type is provided.
 */
-TEST_CASE("Testing DataFileManager StoreData with invalid type", "[core]") {
+TEST_CASE("Testing DataFileManager FormatData with invalid type", "[core]") {
     std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
-    CHECK_THROWS_AS(manager.StoreData(3, "InvalidType", "Temporary Data"), std::runtime_error);
+    CHECK_THROWS_AS(manager.FormatData(3, "InvalidType", "Temporary Data"), std::runtime_error);
 }
 
 /*
-* Test case (error handling) for the StoreData function of the DataFileManager class,
+* Test case (error handling) for the FormatData function of the DataFileManager class,
 * ensuring that it throws a runtime error when an unconvertible data type is provided.
 */
-TEST_CASE("Testing DataFileManager StoreData with unconvertible data type", "[core]") {
+TEST_CASE("Testing DataFileManager FormatData with unconvertible data type", "[core]") {
     std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
     struct UnconvertibleType {};
     UnconvertibleType data;
 
-    CHECK_THROWS_AS(manager.StoreData(3, "Tile", data), std::runtime_error);
+    CHECK_THROWS_AS(manager.FormatData(3, "Tile", data), std::runtime_error);
 }
 
 /*
-* Test case (error handling) for the StoreData function of the DataFileManager class,
+* Test case (error handling) for the FormatData function of the DataFileManager class,
 * verifying that it throws a runtime error when an empty type string is provided.
 */
-TEST_CASE("Testing DataFileManager StoreData when type is empty", "[core]") {
+TEST_CASE("Testing DataFileManager FormatData when type is empty", "[core]") {
     std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
-    CHECK_THROWS_AS(manager.StoreData(3, "", "Temporary Data"), std::runtime_error);
+    CHECK_THROWS_AS(manager.FormatData(3, "", "Temporary Data"), std::runtime_error);
 }
 
 
