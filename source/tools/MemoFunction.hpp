@@ -34,7 +34,7 @@ namespace cse498 {
   // limit it will remove the oldest
   std::deque<Key> mQueue;
 
-  // Size limit for cache (0 being no limit)
+  // Optional size limit for cache
   std::optional<size_t> mLimit = std::nullopt;
 
   // Removes oldest items until size limit is no longer exceeded
