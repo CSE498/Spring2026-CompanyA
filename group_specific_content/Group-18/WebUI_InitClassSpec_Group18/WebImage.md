@@ -5,7 +5,7 @@
 
 # Group 18's Write-up for Initial C++ Class (WebUI)
 
-*Last updated: Feb 12, 2026*
+*Last updated: Feb 27, 2026*
 
 ## 3.1 `WebImage` Class Specification
 
@@ -14,6 +14,8 @@
 ### 3.1.1 Class Description
 
 A C++ class that represents an image used in the Web UI. It manages the image's source (URL or asset key), logical size, alternative text, opacity, and basic display properties such as visibility and error-handling behavior.
+
+All code resides in `namespace cse498`, consistent with the project-wide convention used by `IDomElement`, `ICanvasElement`, and other WebUI classes.
 
 `WebImage` is designed as a reusable content container: it stores *what* image to show and *how* it should look (dimensions, alt text, transparency), but **not** *where* it is rendered. Positioning is handled by the layout system:
 
@@ -46,14 +48,15 @@ The goal is to provide a simple C++ interface for using images in the game witho
 explicit WebImage(const std::string& src,
                   const std::string& alt_text = "");
 
-/// Destructor removes the DOM element from the page.
+/// Destructor removes the DOM element from the page and deregisters
+/// from the internal event registry.
 ~WebImage();
 
 // Copy operations are deleted (each instance owns a unique DOM element)
 WebImage(const WebImage&) = delete;
 WebImage& operator=(const WebImage&) = delete;
 
-// Move operations transfer DOM ownership
+// Move operations transfer DOM ownership and update the event registry
 WebImage(WebImage&& other) noexcept;
 WebImage& operator=(WebImage&& other) noexcept;
 ```
@@ -64,11 +67,11 @@ WebImage& operator=(WebImage&& other) noexcept;
 /// Set the image source (URL or asset path).
 /// Resets the loaded/error state.
 void SetSource(const std::string& src);
-std::string GetSource() const;
+[[nodiscard]] std::string GetSource() const;
 
 /// Set/get the alternative text for accessibility.
 void SetAltText(const std::string& alt_text);
-std::string GetAltText() const;
+[[nodiscard]] std::string GetAltText() const;
 ```
 
 #### Sizing
@@ -84,8 +87,8 @@ void SetSize(int width_px, int height_px);
 /// When false, stretches to exact dimensions (CSS object-fit: fill).
 void Resize(int width_px, int height_px, bool maintain_aspect_ratio = false);
 
-int GetWidth() const;
-int GetHeight() const;
+[[nodiscard]] int GetWidth() const;
+[[nodiscard]] int GetHeight() const;
 ```
 
 > **Design note (per instructor feedback):** The old `SetMaintainAspectRatio(bool)` was
@@ -97,7 +100,7 @@ int GetHeight() const;
 ```cpp
 /// Set the opacity (0.0 = fully transparent, 1.0 = fully opaque).
 void SetOpacity(double alpha);
-double GetOpacity() const;
+[[nodiscard]] double GetOpacity() const;
 ```
 
 #### Visibility
@@ -105,15 +108,14 @@ double GetOpacity() const;
 ```cpp
 void Show();
 void Hide();
-bool IsVisible() const;
+[[nodiscard]] bool IsVisible() const;
 ```
 
 #### Loading State & Error Handling
 
 ```cpp
-void MarkLoaded(bool loaded);
-bool IsLoaded() const;
-bool HasError() const;
+[[nodiscard]] bool IsLoaded() const;
+[[nodiscard]] bool HasError() const;
 
 /// Callback invoked when the image finishes loading.
 void SetOnLoadCallback(std::function<void()> callback);
@@ -130,6 +132,10 @@ void SetErrorMode(ImageErrorMode mode);
 void SetPlaceholderColor(const std::string& css_color);
 ```
 
+> **Note:** `MarkLoaded(bool)` is now a **private** method. External callers should
+> not manually mark an image as loaded; loading state is managed internally by
+> `HandleLoad()` (on successful load) and reset by `SetSource()`.
+
 > **Design note (per instructor feedback):** When an image file is not found
 > or fails to load, the default behavior (`BlankRect`) replaces the broken
 > icon with a colored rectangle at the specified dimensions. Callers can
@@ -139,16 +145,21 @@ void SetPlaceholderColor(const std::string& css_color);
 #### IDomElement Interface
 
 ```cpp
-void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
-void unmount() override;
-void syncFromModel() override;
-const std::string& Id() const override;
+void MountToLayout(WebLayout& parent, Alignment align) override;
+void Unmount() override;
+void SyncFromModel() override;
+[[nodiscard]] const std::string& Id() const override;
 ```
+
+> **Note:** The `MountToLayout` override does **not** repeat the base-class default
+> argument (`Alignment::None`). Default arguments on virtual/override methods are
+> prohibited by the project's Clang-Tidy rules to avoid subtle bugs where a
+> different default in the derived class does not apply through a base-class pointer.
 
 #### ICanvasElement Interface
 
 ```cpp
-void draw(WebCanvas& canvas) override;  // stub for future canvas rendering
+void Draw(WebCanvas& canvas) override;  // stub for future canvas rendering
 ```
 
 ---
@@ -158,6 +169,8 @@ void draw(WebCanvas& canvas) override;  // stub for future canvas rendering
 ```cpp
 #include "WebImage.hpp"
 #include <iostream>
+
+using namespace cse498;
 
 int main() {
   // Create an image
@@ -211,9 +224,9 @@ int main() {
 
 2. **Cross-Origin Resources**: Loading images from different domains may be subject to CORS restrictions. The implementation does not handle CORS headers automatically.
 
-3. **Memory Management**: Each `WebImage` instance owns a DOM element. Proper cleanup is handled by the destructor, but care must be taken when using move semantics.
+3. **Memory Management**: Each `WebImage` instance owns a DOM element. Proper cleanup is handled by the destructor (via the private `CleanupElement()` helper), but care must be taken when using move semantics. Move operations update the internal event registry so that JS callbacks continue to reach the correct C++ object.
 
-4. **Canvas Rendering**: The `draw()` method is currently a stub. Full canvas rendering would require additional implementation to draw the image onto a 2D canvas context.
+4. **Canvas Rendering**: The `Draw()` method is currently a stub. Full canvas rendering would require additional implementation to draw the image onto a 2D canvas context.
 
 ---
 
@@ -221,8 +234,8 @@ int main() {
 
 | Class | Interaction |
 |-------|-------------|
-| `WebLayout` | WebImage implements `IDomElement` and can be mounted to a layout via `mountToLayout()`. **Positioning is fully managed by WebLayout** (Flex/Grid/Free). WebImage does NOT control its own position. |
-| `WebCanvas` | WebImage implements `ICanvasElement` and can be drawn on a canvas via `draw()`. (Currently stub implementation) |
+| `WebLayout` | WebImage implements `IDomElement` and can be mounted to a layout via `MountToLayout()`. **Positioning is fully managed by WebLayout** (Flex/Grid/Free). WebImage does NOT control its own position. |
+| `WebCanvas` | WebImage implements `ICanvasElement` and can be drawn on a canvas via `Draw()`. (Currently stub implementation) |
 | `WebButton` / `WebTextbox` | Similar DOM manipulation patterns; shares the Emscripten `val` approach for JavaScript interop. |
 
 ---
@@ -231,12 +244,13 @@ int main() {
 
 ```
 WebUI/WebImage/
-├── WebImage.hpp      # Header with class declaration
+├── WebImage.hpp      # Header with class declaration (namespace cse498)
 ├── WebImage.cpp      # Implementation using Emscripten
-├── test_WebImage.cpp # Unit tests
-├── test_WebImage.html # Generated test page after build
-├── main.cpp          # Demo/test program
-└── index.html        # Test HTML page
+├── main.cpp          # Demo program
+└── index.html        # Demo HTML page
+
+tests/Interfaces/WebUI/
+└── WebImageTest.cpp  # Catch2 unit tests (35 test cases, 110 assertions)
 ```
 
 ### 3.1.9 Build Instructions
@@ -261,38 +275,55 @@ python3 -m http.server 8080
 # Open http://localhost:8080/index.html
 ```
 
-### 3.1.10 Unit Test Run Instructions (`test_WebImage.cpp`)
+### 3.1.10 Unit Test Run Instructions
 
-From `WebUI/WebImage/`, compile tests with dependencies:
+Tests are located at `tests/Interfaces/WebUI/WebImageTest.cpp` and use the Catch2 framework.
 
-```bash
-em++ test_WebImage.cpp WebImage.cpp ../WebLayout/WebLayout.cpp \
-  -I../internal \
-  -o test_WebImage.html \
-  -s WASM=1 \
-  --bind
-```
-
-Start a local server in the same directory:
+From the repository root, run all tests via the top-level Makefile:
 
 ```bash
-python3 -m http.server 8000
-# Open http://localhost:8000/test_WebImage.html
+make test
 ```
 
-Open browser DevTools Console to read test results. Success is indicated by:
+Or compile and run just the WebImage tests with Emscripten + Node.js:
+
+```bash
+em++ -std=c++23 -O2 -lembind -sALLOW_MEMORY_GROWTH \
+  -sEXPORTED_FUNCTIONS='["_main","_WebImage_handleLoad","_WebImage_handleError"]' \
+  tests/Interfaces/WebUI/WebImageTest.cpp \
+  source/Interfaces/WebUI/WebImage/WebImage.cpp \
+  source/Interfaces/WebUI/WebLayout/WebLayout.cpp \
+  -I source -I third-party/Catch/single_include \
+  --pre-js dom_shim.js \
+  -o /tmp/WebImageTest.js && node /tmp/WebImageTest.js
+```
+
+Success is indicated by:
 
 ```text
-Results: 35 passed, 0 failed, 35 total
-All tests passed!
+===============================================================================
+All tests passed (110 assertions in 35 test cases)
 ```
 
 ---
 
-### 3.1.11 Changelog
+### 3.1.11 LLM Assistance Disclosure
+
+The following parts of the WebImage module were produced or refined with the assistance of a large language model (LLM):
+
+- **Unit tests (`WebImageTest.cpp`)**: The 35 Catch2 test cases were generated with LLM assistance. Each test was reviewed and validated to ensure correctness, full coverage of public member functions, and proper edge-case handling.
+- **Code comments and documentation**: One-line `///` comments preceding every function implementation in `WebImage.cpp` were written with LLM assistance to address peer-review feedback requesting brief descriptions for each function.
+- **Peer-review refactoring**: The LLM assisted in implementing changes requested during code review, including wrapping all code in `namespace cse498`, replacing unsafe `reinterpret_cast` with an integer-based event registry, extracting repeated DOM-removal logic into `RemoveFromDom()` / `CleanupElement()` helpers, adding `[[nodiscard]]` attributes, moving `MarkLoaded` to `private`, and replacing magic numbers with named constants.
+
+All LLM-generated code was reviewed, tested, and integrated by the author.
+
+---
+
+### 3.1.12 Changelog
 
 | Date | Changes |
 |------|---------|
 | Jan 30, 2026 | Initial specification |
 | Feb 4, 2026 | First implementation with full API |
 | Feb 12, 2026 | **v2**: Removed position control (handled by WebLayout); replaced `SetMaintainAspectRatio` with `Resize()`; added opacity support; added image error handling (`BlankRect` / `NoOp`); fixed include paths for new directory structure |
+| Feb 27, 2026 | **v3 (peer-review)**: Wrapped all code in `namespace cse498`; removed default argument from `MountToLayout` override; added `[[nodiscard]]` to getters; moved `MarkLoaded` to private; extracted `RemoveFromDom()` / `CleanupElement()` helpers to eliminate repeated unmount code; replaced `reinterpret_cast<intptr_t>` with integer-keyed event registry; converted file-static helpers (`GetDocument`, `ToPx`) to private static methods; replaced hardcoded `"100px"` with `static constexpr int kDefaultPlaceholderPx`; added one-line `///` comments to all functions; updated tests to use `REQUIRE` for critical assertions and added category comments; added LLM assistance disclosure |

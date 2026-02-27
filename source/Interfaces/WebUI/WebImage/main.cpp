@@ -2,6 +2,8 @@
 #include <iostream>
 #include <emscripten.h>
 
+using namespace cse498;
+
 // Global pointers so images survive after main() ends
 WebImage* img1 = nullptr;
 WebImage* img2 = nullptr;

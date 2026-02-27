@@ -4,6 +4,8 @@
 #include "../../../source/Interfaces/WebUI/WebImage/WebImage.hpp"
 #include <string>
 
+using namespace cse498;
+
 // ---------- Helpers ----------
 
 #define TEST(name) \
@@ -15,6 +17,9 @@
 #define CHECK_MSG(cond, msg) \
   do { INFO(msg); CHECK(cond); } while(0)
 
+#define REQUIRE_MSG(cond, msg) \
+  do { INFO(msg); REQUIRE(cond); } while(0)
+
 // ========================================================
 // Test 1: Constructor — source and alt text set correctly
 // ========================================================
@@ -22,11 +27,10 @@ void test_constructor() {
   TEST("Constructor sets source and alt text");
   WebImage img("https://example.com/cat.png", "A cat");
 
-  CHECK_MSG(img.GetSource() == "https://example.com/cat.png",
+  REQUIRE_MSG(img.GetSource() == "https://example.com/cat.png",
         "source mismatch");
-  CHECK_MSG(img.GetAltText() == "A cat",
+  REQUIRE_MSG(img.GetAltText() == "A cat",
         "alt text mismatch");
-  // Defaults
   CHECK_MSG(img.GetWidth() == 0,  "default width should be 0");
   CHECK_MSG(img.GetHeight() == 0, "default height should be 0");
   CHECK_MSG(img.GetOpacity() == 1.0, "default opacity should be 1.0");
@@ -44,7 +48,7 @@ void test_constructor_default_alt() {
   TEST("Constructor default alt text is empty");
   WebImage img("img.png");
 
-  CHECK_MSG(img.GetAltText().empty(), "default alt text should be empty");
+  REQUIRE_MSG(img.GetAltText().empty(), "default alt text should be empty");
   PASS();
 }
 
@@ -56,8 +60,7 @@ void test_set_get_source() {
   WebImage img("old.png");
 
   img.SetSource("new.png");
-  CHECK_MSG(img.GetSource() == "new.png", "source not updated");
-  // SetSource should reset loading state
+  REQUIRE_MSG(img.GetSource() == "new.png", "source not updated");
   CHECK_MSG(img.IsLoaded() == false, "is_loaded should be false after SetSource");
   CHECK_MSG(img.HasError() == false, "has_error should be false after SetSource");
   PASS();
@@ -70,12 +73,10 @@ void test_set_source_resets_state() {
   TEST("SetSource resets loaded and error state");
   WebImage img("test.png");
 
-  // Simulate loading first
   img.HandleLoad();
-  CHECK_MSG(img.IsLoaded() == true, "should be loaded after HandleLoad");
+  REQUIRE_MSG(img.IsLoaded() == true, "should be loaded after HandleLoad");
   CHECK_MSG(img.HasError() == false, "should have no error after HandleLoad");
 
-  // Now change source — should reset
   img.SetSource("other.png");
   CHECK_MSG(img.IsLoaded() == false, "is_loaded should reset after SetSource");
   CHECK_MSG(img.HasError() == false, "has_error should reset after SetSource");
@@ -90,7 +91,7 @@ void test_set_get_alt_text() {
   WebImage img("img.png", "old alt");
 
   img.SetAltText("new alt");
-  CHECK_MSG(img.GetAltText() == "new alt", "alt text not updated");
+  REQUIRE_MSG(img.GetAltText() == "new alt", "alt text not updated");
   PASS();
 }
 
@@ -102,8 +103,8 @@ void test_set_size() {
   WebImage img("img.png");
 
   img.SetSize(320, 240);
-  CHECK_MSG(img.GetWidth() == 320, "width mismatch");
-  CHECK_MSG(img.GetHeight() == 240, "height mismatch");
+  REQUIRE_MSG(img.GetWidth() == 320, "width mismatch");
+  REQUIRE_MSG(img.GetHeight() == 240, "height mismatch");
   PASS();
 }
 
@@ -128,8 +129,8 @@ void test_resize_no_aspect_ratio() {
   WebImage img("img.png");
 
   img.Resize(400, 300, false);
-  CHECK_MSG(img.GetWidth() == 400, "width mismatch");
-  CHECK_MSG(img.GetHeight() == 300, "height mismatch");
+  REQUIRE_MSG(img.GetWidth() == 400, "width mismatch");
+  REQUIRE_MSG(img.GetHeight() == 300, "height mismatch");
   PASS();
 }
 
@@ -141,8 +142,8 @@ void test_resize_maintain_aspect_ratio() {
   WebImage img("img.png");
 
   img.Resize(800, 600, true);
-  CHECK_MSG(img.GetWidth() == 800, "width mismatch");
-  CHECK_MSG(img.GetHeight() == 600, "height mismatch");
+  REQUIRE_MSG(img.GetWidth() == 800, "width mismatch");
+  REQUIRE_MSG(img.GetHeight() == 600, "height mismatch");
   PASS();
 }
 
@@ -166,7 +167,7 @@ void test_set_get_opacity() {
   TEST("SetOpacity / GetOpacity");
   WebImage img("img.png");
 
-  CHECK_MSG(img.GetOpacity() == 1.0, "default opacity should be 1.0");
+  REQUIRE_MSG(img.GetOpacity() == 1.0, "default opacity should be 1.0");
   img.SetOpacity(0.5);
   CHECK_MSG(img.GetOpacity() == 0.5, "opacity not updated to 0.5");
   img.SetOpacity(0.0);
@@ -183,7 +184,7 @@ void test_show_hide_visibility() {
   TEST("Show / Hide / IsVisible");
   WebImage img("img.png");
 
-  CHECK_MSG(img.IsVisible() == true, "default should be visible");
+  REQUIRE_MSG(img.IsVisible() == true, "default should be visible");
   img.Hide();
   CHECK_MSG(img.IsVisible() == false, "should be hidden after Hide()");
   img.Show();
@@ -208,17 +209,17 @@ void test_visibility_toggle_multiple() {
 }
 
 // ========================================================
-// Test 14: MarkLoaded / IsLoaded
+// Test 14: Loading state via HandleLoad and SetSource
 // ========================================================
-void test_mark_loaded() {
-  TEST("MarkLoaded / IsLoaded");
+void test_loaded_state() {
+  TEST("Loading state via HandleLoad and SetSource");
   WebImage img("img.png");
 
-  CHECK_MSG(img.IsLoaded() == false, "default should not be loaded");
-  img.MarkLoaded(true);
-  CHECK_MSG(img.IsLoaded() == true, "should be loaded after MarkLoaded(true)");
-  img.MarkLoaded(false);
-  CHECK_MSG(img.IsLoaded() == false, "should not be loaded after MarkLoaded(false)");
+  REQUIRE_MSG(img.IsLoaded() == false, "default should not be loaded");
+  img.HandleLoad();
+  CHECK_MSG(img.IsLoaded() == true, "should be loaded after HandleLoad");
+  img.SetSource("other.png");
+  CHECK_MSG(img.IsLoaded() == false, "should not be loaded after SetSource");
   PASS();
 }
 
@@ -229,7 +230,7 @@ void test_has_error_default() {
   TEST("HasError default is false");
   WebImage img("img.png");
 
-  CHECK_MSG(img.HasError() == false, "default should have no error");
+  REQUIRE_MSG(img.HasError() == false, "default should have no error");
   PASS();
 }
 
@@ -241,7 +242,7 @@ void test_handle_load() {
   WebImage img("img.png");
 
   img.HandleLoad();
-  CHECK_MSG(img.IsLoaded() == true, "should be loaded after HandleLoad");
+  REQUIRE_MSG(img.IsLoaded() == true, "should be loaded after HandleLoad");
   CHECK_MSG(img.HasError() == false, "should have no error after HandleLoad");
   PASS();
 }
@@ -256,7 +257,7 @@ void test_handle_load_callback() {
   bool called = false;
   img.SetOnLoadCallback([&called]() { called = true; });
   img.HandleLoad();
-  CHECK_MSG(called == true, "on_load_callback should have been called");
+  REQUIRE_MSG(called == true, "on_load_callback should have been called");
   PASS();
 }
 
@@ -268,7 +269,7 @@ void test_handle_error() {
   WebImage img("img.png");
 
   img.HandleError();
-  CHECK_MSG(img.HasError() == true, "should have error after HandleError");
+  REQUIRE_MSG(img.HasError() == true, "should have error after HandleError");
   CHECK_MSG(img.IsLoaded() == false, "should not be loaded after HandleError");
   PASS();
 }
@@ -283,7 +284,7 @@ void test_handle_error_callback() {
   bool called = false;
   img.SetOnErrorCallback([&called]() { called = true; });
   img.HandleError();
-  CHECK_MSG(called == true, "on_error_callback should have been called");
+  REQUIRE_MSG(called == true, "on_error_callback should have been called");
   PASS();
 }
 
@@ -302,7 +303,7 @@ void test_handle_error_blank_rect() {
   img.SetOnErrorCallback([&error_called]() { error_called = true; });
 
   img.HandleError();
-  CHECK_MSG(img.HasError() == true, "should have error");
+  REQUIRE_MSG(img.HasError() == true, "should have error");
   CHECK_MSG(error_called == true, "error callback should be called");
   PASS();
 }
@@ -319,7 +320,7 @@ void test_handle_error_noop() {
   img.SetOnErrorCallback([&error_called]() { error_called = true; });
 
   img.HandleError();
-  CHECK_MSG(img.HasError() == true, "should have error");
+  REQUIRE_MSG(img.HasError() == true, "should have error");
   CHECK_MSG(error_called == true, "error callback should be called even in NoOp");
   PASS();
 }
@@ -331,13 +332,11 @@ void test_set_error_mode() {
   TEST("SetErrorMode changes mode");
   WebImage img("img.png");
 
-  // Default is BlankRect — change to NoOp
   img.SetErrorMode(ImageErrorMode::NoOp);
   img.HandleError();
   CHECK_MSG(img.HasError() == true, "should have error");
 
-  // Change back to BlankRect
-  img.SetSource("img2.png");  // reset error state
+  img.SetSource("img2.png");
   img.SetErrorMode(ImageErrorMode::BlankRect);
   img.HandleError();
   CHECK_MSG(img.HasError() == true, "should have error with BlankRect");
@@ -354,7 +353,6 @@ void test_set_placeholder_color() {
   img.SetPlaceholderColor("#00FF00");
   img.SetPlaceholderColor("rgb(255, 0, 0)");
   img.SetPlaceholderColor("transparent");
-  // If we get here, no crash
   PASS();
 }
 
@@ -367,9 +365,9 @@ void test_id_unique() {
   WebImage img2("b.png");
   WebImage img3("c.png");
 
-  CHECK_MSG(img1.Id() != img2.Id(), "img1 and img2 should have different ids");
-  CHECK_MSG(img2.Id() != img3.Id(), "img2 and img3 should have different ids");
-  CHECK_MSG(img1.Id() != img3.Id(), "img1 and img3 should have different ids");
+  REQUIRE_MSG(img1.Id() != img2.Id(), "img1 and img2 should have different ids");
+  REQUIRE_MSG(img2.Id() != img3.Id(), "img2 and img3 should have different ids");
+  REQUIRE_MSG(img1.Id() != img3.Id(), "img1 and img3 should have different ids");
   PASS();
 }
 
@@ -381,7 +379,7 @@ void test_id_prefix() {
   WebImage img("x.png");
 
   std::string id = img.Id();
-  CHECK_MSG(id.substr(0, 9) == "webimage-", "id should start with 'webimage-'");
+  REQUIRE_MSG(id.substr(0, 9) == "webimage-", "id should start with 'webimage-'");
   PASS();
 }
 
@@ -397,8 +395,7 @@ void test_sync_from_model() {
   img.Hide();
   img.SyncFromModel();
 
-  // State should remain the same after sync
-  CHECK_MSG(img.GetSource() == "img.png", "source should remain");
+  REQUIRE_MSG(img.GetSource() == "img.png", "source should remain");
   CHECK_MSG(img.GetAltText() == "alt", "alt text should remain");
   CHECK_MSG(img.GetWidth() == 300, "width should remain");
   CHECK_MSG(img.GetHeight() == 200, "height should remain");
@@ -416,12 +413,12 @@ void test_move_constructor() {
   original.SetSize(100, 50);
   original.SetOpacity(0.7);
   original.Hide();
-  original.MarkLoaded(true);
+  original.HandleLoad();
   std::string original_id = original.Id();
 
   WebImage moved(std::move(original));
 
-  CHECK_MSG(moved.GetSource() == "move.png", "source should transfer");
+  REQUIRE_MSG(moved.GetSource() == "move.png", "source should transfer");
   CHECK_MSG(moved.GetAltText() == "moving", "alt text should transfer");
   CHECK_MSG(moved.GetWidth() == 100, "width should transfer");
   CHECK_MSG(moved.GetHeight() == 50, "height should transfer");
@@ -430,7 +427,6 @@ void test_move_constructor() {
   CHECK_MSG(moved.IsLoaded() == true, "loaded state should transfer");
   CHECK_MSG(moved.Id() == original_id, "id should transfer");
 
-  // Original should be in moved-from state
   CHECK_MSG(original.GetWidth() == 0, "original width should be 0");
   CHECK_MSG(original.GetHeight() == 0, "original height should be 0");
   CHECK_MSG(original.GetOpacity() == 1.0, "original opacity should reset to 1.0");
@@ -453,14 +449,13 @@ void test_move_assignment() {
   WebImage dest("dest.png");
   dest = std::move(src);
 
-  CHECK_MSG(dest.GetSource() == "src.png", "source should transfer");
+  REQUIRE_MSG(dest.GetSource() == "src.png", "source should transfer");
   CHECK_MSG(dest.GetAltText() == "source img", "alt text should transfer");
   CHECK_MSG(dest.GetWidth() == 64, "width should transfer");
   CHECK_MSG(dest.GetHeight() == 64, "height should transfer");
   CHECK_MSG(dest.GetOpacity() == 0.3, "opacity should transfer");
   CHECK_MSG(dest.Id() == src_id, "id should transfer");
 
-  // Source should be in moved-from state
   CHECK_MSG(src.GetWidth() == 0, "src width should be 0");
   CHECK_MSG(src.GetHeight() == 0, "src height should be 0");
   CHECK_MSG(src.IsLoaded() == false, "src loaded should be false");
@@ -475,7 +470,7 @@ void test_load_after_error() {
   WebImage img("img.png");
 
   img.HandleError();
-  CHECK_MSG(img.HasError() == true, "should have error");
+  REQUIRE_MSG(img.HasError() == true, "should have error");
   CHECK_MSG(img.IsLoaded() == false, "should not be loaded");
 
   img.HandleLoad();
@@ -496,7 +491,7 @@ void test_callback_replacement() {
 
   img.SetOnLoadCallback([&first_call_count]() { ++first_call_count; });
   img.HandleLoad();
-  CHECK_MSG(first_call_count == 1, "first callback should be called once");
+  REQUIRE_MSG(first_call_count == 1, "first callback should be called once");
 
   img.SetOnLoadCallback([&second_call_count]() { ++second_call_count; });
   img.HandleLoad();
@@ -512,10 +507,9 @@ void test_no_callback_no_crash() {
   TEST("HandleLoad/HandleError without callbacks does not crash");
   WebImage img("img.png");
 
-  // No callbacks set — should not crash
   img.HandleLoad();
   img.HandleError();
-  CHECK_MSG(img.HasError() == true, "should have error");
+  REQUIRE_MSG(img.HasError() == true, "should have error");
   PASS();
 }
 
@@ -527,8 +521,8 @@ void test_set_size_then_resize() {
   WebImage img("img.png");
 
   img.SetSize(100, 100);
-  CHECK_MSG(img.GetWidth() == 100, "width should be 100");
-  CHECK_MSG(img.GetHeight() == 100, "height should be 100");
+  REQUIRE_MSG(img.GetWidth() == 100, "width should be 100");
+  REQUIRE_MSG(img.GetHeight() == 100, "height should be 100");
 
   img.Resize(200, 150, true);
   CHECK_MSG(img.GetWidth() == 200, "width should be 200 after Resize");
@@ -548,12 +542,11 @@ void test_error_callback_with_placeholder() {
 
   bool callback_saw_error = false;
   img.SetOnErrorCallback([&img, &callback_saw_error]() {
-    // At this point, mHasError should already be true
     callback_saw_error = img.HasError();
   });
 
   img.HandleError();
-  CHECK_MSG(callback_saw_error == true,
+  REQUIRE_MSG(callback_saw_error == true,
         "callback should see has_error=true");
   PASS();
 }
@@ -565,12 +558,7 @@ void test_draw_no_crash() {
   TEST("Draw() stub does not crash");
   WebImage img("img.png");
 
-  // Draw() is a stub, but we verify it doesn't crash.
-  // We need a WebCanvas reference, but since Draw() ignores it
-  // we cast nullptr (unsafe but Draw() does (void)canvas).
-  // Skip this test if it can't compile safely.
-  // For a real test, a mock WebCanvas would be needed.
-  // Just verify compilation and pass.
+  // Draw() is a stub — a real test would need a mock WebCanvas.
   PASS();
 }
 
@@ -582,7 +570,7 @@ void test_multiple_source_changes() {
   WebImage img("first.png");
 
   img.SetSource("second.png");
-  CHECK_MSG(img.GetSource() == "second.png", "source should be second.png");
+  REQUIRE_MSG(img.GetSource() == "second.png", "source should be second.png");
 
   img.SetSource("third.png");
   CHECK_MSG(img.GetSource() == "third.png", "source should be third.png");
@@ -592,34 +580,59 @@ void test_multiple_source_changes() {
   PASS();
 }
 
+// ==================== TEST_CASE Registration ====================
+
+// -- Construction --
 TEST_CASE("Constructor sets source and alt text", "[WebImage]") { test_constructor(); }
 TEST_CASE("Constructor default alt text is empty", "[WebImage]") { test_constructor_default_alt(); }
+
+// -- Source & metadata setters/getters --
 TEST_CASE("SetSource and GetSource", "[WebImage]") { test_set_get_source(); }
 TEST_CASE("SetSource resets loaded and error state", "[WebImage]") { test_set_source_resets_state(); }
 TEST_CASE("SetAltText and GetAltText", "[WebImage]") { test_set_get_alt_text(); }
+
+// -- Sizing (SetSize and Resize with various dimensions) --
 TEST_CASE("SetSize sets width and height", "[WebImage]") { test_set_size(); }
 TEST_CASE("SetSize handles zero dimensions", "[WebImage]") { test_set_size_zero(); }
 TEST_CASE("Resize without aspect ratio", "[WebImage]") { test_resize_no_aspect_ratio(); }
 TEST_CASE("Resize with aspect ratio", "[WebImage]") { test_resize_maintain_aspect_ratio(); }
 TEST_CASE("Resize default parameter", "[WebImage]") { test_resize_default_param(); }
+
+// -- Opacity --
 TEST_CASE("SetOpacity and GetOpacity", "[WebImage]") { test_set_get_opacity(); }
+
+// -- Visibility (Show/Hide toggle) --
 TEST_CASE("Show Hide visibility", "[WebImage]") { test_show_hide_visibility(); }
 TEST_CASE("Visibility toggle multiple times", "[WebImage]") { test_visibility_toggle_multiple(); }
-TEST_CASE("MarkLoaded and IsLoaded", "[WebImage]") { test_mark_loaded(); }
+
+// -- Loading state (tracked via HandleLoad / SetSource; MarkLoaded is private) --
+TEST_CASE("Loading state via HandleLoad and SetSource", "[WebImage]") { test_loaded_state(); }
 TEST_CASE("HasError default false", "[WebImage]") { test_has_error_default(); }
+
+// -- Load/error event handlers and callbacks --
 TEST_CASE("HandleLoad sets state", "[WebImage]") { test_handle_load(); }
 TEST_CASE("HandleLoad invokes callback", "[WebImage]") { test_handle_load_callback(); }
 TEST_CASE("HandleError sets state", "[WebImage]") { test_handle_error(); }
 TEST_CASE("HandleError invokes callback", "[WebImage]") { test_handle_error_callback(); }
 TEST_CASE("HandleError with BlankRect mode", "[WebImage]") { test_handle_error_blank_rect(); }
 TEST_CASE("HandleError with NoOp mode", "[WebImage]") { test_handle_error_noop(); }
+
+// -- Error mode and placeholder configuration --
 TEST_CASE("SetErrorMode works", "[WebImage]") { test_set_error_mode(); }
 TEST_CASE("SetPlaceholderColor does not crash", "[WebImage]") { test_set_placeholder_color(); }
+
+// -- Unique element IDs --
 TEST_CASE("Id is unique per instance", "[WebImage]") { test_id_unique(); }
 TEST_CASE("Id has expected prefix", "[WebImage]") { test_id_prefix(); }
+
+// -- DOM synchronization --
 TEST_CASE("syncFromModel reapplies state", "[WebImage]") { test_sync_from_model(); }
+
+// -- Move semantics (constructor and assignment) --
 TEST_CASE("Move constructor transfers state", "[WebImage]") { test_move_constructor(); }
 TEST_CASE("Move assignment transfers state", "[WebImage]") { test_move_assignment(); }
+
+// -- Edge cases and regression scenarios --
 TEST_CASE("HandleLoad after error clears error", "[WebImage]") { test_load_after_error(); }
 TEST_CASE("Callback replacement works", "[WebImage]") { test_callback_replacement(); }
 TEST_CASE("No callback no crash", "[WebImage]") { test_no_callback_no_crash(); }

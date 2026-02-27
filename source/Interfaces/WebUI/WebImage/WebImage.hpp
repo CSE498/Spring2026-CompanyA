@@ -8,6 +8,8 @@
 #include "../internal/IDomElement.hpp"
 #include "../internal/ICanvasElement.hpp"
 
+namespace cse498 {
+
 /// Behavior when an image source fails to load.
 enum class ImageErrorMode {
   BlankRect,  ///< Show a blank colored rectangle as placeholder
@@ -26,11 +28,9 @@ class WebImage : public IDomElement, public ICanvasElement {
                     const std::string& alt_text = "");
   ~WebImage();
 
-  // Each instance owns a unique DOM element
   WebImage(const WebImage&) = delete;
   WebImage& operator=(const WebImage&) = delete;
 
-  // Transfers DOM ownership
   WebImage(WebImage&& other) noexcept;
   WebImage& operator=(WebImage&& other) noexcept;
 
@@ -39,12 +39,12 @@ class WebImage : public IDomElement, public ICanvasElement {
   /// Set the image source (URL or asset path).
   void SetSource(const std::string& src);
   /// Get the current image source.
-  std::string GetSource() const;
+  [[nodiscard]] std::string GetSource() const;
 
   /// Set the alternative text for accessibility.
   void SetAltText(const std::string& alt_text);
   /// Get the alternative text.
-  std::string GetAltText() const;
+  [[nodiscard]] std::string GetAltText() const;
 
   // ----- Sizing -----
 
@@ -63,16 +63,16 @@ class WebImage : public IDomElement, public ICanvasElement {
   void Resize(int width_px, int height_px, bool maintain_aspect_ratio = false);
 
   /// Get the display width.
-  int GetWidth() const;
+  [[nodiscard]] int GetWidth() const;
   /// Get the display height.
-  int GetHeight() const;
+  [[nodiscard]] int GetHeight() const;
 
   // ----- Opacity / Transparency -----
 
   /// Set the opacity of the image (0.0 = fully transparent, 1.0 = fully opaque).
   void SetOpacity(double alpha);
   /// Get the current opacity.
-  double GetOpacity() const;
+  [[nodiscard]] double GetOpacity() const;
 
   // ----- Visibility -----
 
@@ -81,16 +81,14 @@ class WebImage : public IDomElement, public ICanvasElement {
   /// Hide the image.
   void Hide();
   /// Check if the image is visible.
-  bool IsVisible() const;
+  [[nodiscard]] bool IsVisible() const;
 
   // ----- Loading State & Error Handling -----
 
-  /// Mark the image as loaded or not (for tracking async loading).
-  void MarkLoaded(bool loaded);
   /// Check if the image has been loaded.
-  bool IsLoaded() const;
+  [[nodiscard]] bool IsLoaded() const;
   /// Check if the image source failed to load.
-  bool HasError() const;
+  [[nodiscard]] bool HasError() const;
 
   /// Set a callback to be invoked when the image finishes loading.
   void SetOnLoadCallback(std::function<void()> callback);
@@ -109,10 +107,10 @@ class WebImage : public IDomElement, public ICanvasElement {
 
   // ----- IDomElement Interface -----
 
-  void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  void MountToLayout(WebLayout& parent, Alignment align) override;
   void Unmount() override;
   void SyncFromModel() override;
-  const std::string& Id() const override;
+  [[nodiscard]] const std::string& Id() const override;
 
   // ----- ICanvasElement Interface -----
 
@@ -138,13 +136,26 @@ class WebImage : public IDomElement, public ICanvasElement {
   std::function<void()> mOnErrorCallback;
   emscripten::val mElement;
   std::string mId;
+  int mRegistryId = -1;
 
   static int mNextIdCounter;
 
+  /// Mark the image as loaded or not (for tracking async loading).
+  void MarkLoaded(bool loaded);
+  /// Remove the element from its parent DOM node.
+  void RemoveFromDom();
+  /// Remove from DOM, deregister from event registry, and null the element.
+  void CleanupElement();
   /// Attach the onload/onerror event listeners to the DOM element.
   void AttachListeners();
   /// Apply the blank-rect placeholder fallback.
   void ApplyPlaceholder();
+  /// Get the browser's document object.
+  static emscripten::val GetDocument();
+  /// Convert an integer to a CSS pixel string (e.g. "100px").
+  static std::string ToPx(int value);
 };
+
+}  // namespace cse498
 
 #endif  // WEBIMAGE_HPP_
