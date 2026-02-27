@@ -127,3 +127,4 @@ TEST_CASE("Valid file in draw_image", "[ImageManager]")
     // confirm it returns true
     CHECK(manager.draw_image("test_img", 10, 10) == true);
 }
+

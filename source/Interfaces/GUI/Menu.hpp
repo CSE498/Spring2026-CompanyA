@@ -10,6 +10,9 @@
 #include <vector>
 #include <functional>
 #include <stdexcept>
+#include <optional>
+
+#include "Text.hpp"
 
 namespace cse498 {
 
@@ -22,7 +25,7 @@ private:
    };
 
    std::vector<MenuOption> options;
-   int selected_index; // holds -1 if nothing is chosen
+   std::optional<size_t> selected_index; // holds -1 if nothing is chosen
 
 public:
 
@@ -43,7 +46,7 @@ public:
 
   // get index of selected option
   // returns index of selected option, or -1 if nothing is chosen
-  int get_selected_index() const;
+  std::optional<size_t> get_selected_index() const;
 
   // move selection to the next option
   void select_next();
@@ -66,17 +69,23 @@ public:
 
   // check if menu has options
   // true if menu empty
-  bool is_empty() const;
+  bool is_empty() const noexcept;
 
   // clear all options from the menu
   void clear();
 
+  enum class InputCode
+  {
+      up = 1,
+      down = 2,
+      enter = 3
+  };
   // handles keyboard/mouse selection
   // input_code: int representing user input (1 = up, 2 = down, 3 = enter)
-  void handle_input(int input_code);
+  void handle_input(InputCode input_code);
 
   // draw function for menu button
-  // void draw(int x, int y, int width, int height);
+  void draw(SDL_Renderer* renderer, int x, int y, int width, int height);
 
     ~Menu() = default;
 };

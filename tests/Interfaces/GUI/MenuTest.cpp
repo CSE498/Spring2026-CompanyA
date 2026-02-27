@@ -9,7 +9,6 @@
  *
  */
 
-
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../../source/Interfaces/GUI/Menu.hpp"
 
@@ -18,9 +17,9 @@ using namespace cse498;
 TEST_CASE("Menu Constructor", "[Menu]"){
   Menu menu;
 
+  CHECK(!menu.get_selected_index().has_value());
   CHECK(menu.is_empty() == true);
   CHECK(menu.get_option_count() == 0);
-  CHECK(menu.get_selected_index() == -1);
 }
 
 TEST_CASE("Add option", "[Menu]"){
@@ -31,8 +30,9 @@ TEST_CASE("Add option", "[Menu]"){
     callback_called = true;
   });
 
+  CHECK(menu.get_selected_index().has_value());
+  CHECK(menu.get_selected_index().value() == 0);
   CHECK(menu.get_option_count() == 1);
-  CHECK(menu.get_selected_index() == 0);
   CHECK(menu.get_option_label(0) == "Start Game");
 }
 
@@ -54,18 +54,36 @@ TEST_CASE("Navigation - select next", "[Menu]") {
   menu.add_option("Second", [](){});
   menu.add_option("Third", [](){});
 
-  CHECK(menu.get_selected_index() == 0);
+  CHECK(menu.get_selected_index().value() == 0);
 
   menu.select_next();
-  CHECK(menu.get_selected_index() == 1);
+  CHECK(menu.get_selected_index().value() == 1);
 
   menu.select_next();
-  CHECK(menu.get_selected_index() == 2);
+  CHECK(menu.get_selected_index().value() == 2);
 
   // Testing wrap around
-
   menu.select_next();
-  CHECK(menu.get_selected_index() == 0);
+  CHECK(menu.get_selected_index().value() == 0);
+}
+
+TEST_CASE("Navigation - select previous", "[Menu]") {
+  Menu menu;
+  menu.add_option("First", [](){});
+  menu.add_option("Second", [](){});
+  menu.add_option("Third", [](){});
+
+  CHECK(menu.get_selected_index().value() == 0);
+
+  // Wrap to last
+  menu.select_previous();
+  CHECK(menu.get_selected_index().value() == 2);
+
+  menu.select_previous();
+  CHECK(menu.get_selected_index().value() == 1);
+
+  menu.select_previous();
+  CHECK(menu.get_selected_index().value() == 0);
 }
 
 TEST_CASE("Select specific option by index", "[Menu]")
@@ -76,13 +94,13 @@ TEST_CASE("Select specific option by index", "[Menu]")
   menu.add_option("Third", [](){});
 
   menu.select_option(1);
-  CHECK(menu.get_selected_index() == 1);
+  CHECK(menu.get_selected_index().value() == 1);
 
   menu.select_option(2);
-  CHECK(menu.get_selected_index() == 2);
+  CHECK(menu.get_selected_index().value() == 2);
 
   menu.select_option(0);
-  CHECK(menu.get_selected_index() == 0);
+  CHECK(menu.get_selected_index().value() == 0);
 }
 
 // callbacks executed correctly when menu options are activated
@@ -139,13 +157,13 @@ TEST_CASE("Remove option updates selection", "[Menu]")
 
   // Select the last option
   menu.select_option(2);
-  CHECK(menu.get_selected_index() == 2);
+  CHECK(menu.get_selected_index().value() == 2);
 
   // Remove the last option
   menu.remove_option("Third");
 
   // Selection should now be at index 1 (last valid index)
-  CHECK(menu.get_selected_index() == 1);
+  CHECK(menu.get_selected_index().value() == 1);
 }
 
 TEST_CASE("Handle input - navigation", "[Menu]")
@@ -155,12 +173,12 @@ TEST_CASE("Handle input - navigation", "[Menu]")
   menu.add_option("Second", [](){});
 
   // Simulate down arrow (code 2)
-  menu.handle_input(2);
-  CHECK(menu.get_selected_index() == 1);
+  menu.handle_input(cse498::Menu::InputCode::down);
+  CHECK(menu.get_selected_index().value() == 1);
 
   // Simulate up arrow (code 1)
-  menu.handle_input(1);
-  CHECK(menu.get_selected_index() == 0);
+  menu.handle_input(cse498::Menu::InputCode::up);
+  CHECK(menu.get_selected_index().value() == 0);
 }
 
 TEST_CASE("Handle input - activation", "[Menu]")
@@ -172,23 +190,8 @@ TEST_CASE("Handle input - activation", "[Menu]")
   menu.add_option("Second", [](){});
 
   // Simulate enter (code 3)
-  menu.handle_input(3);
+  menu.handle_input(cse498::Menu::InputCode::enter);
   CHECK(activated == true);
-}
-
-TEST_CASE("Handle input - unknown code", "[Menu]")
-{
-  Menu menu;
-  menu.add_option("First", [](){});
-  menu.add_option("Second", [](){});
-
-  int initial_index = menu.get_selected_index();
-
-  // Simulate unknown input code
-  menu.handle_input(999);
-
-  // Selection should not change
-  CHECK(menu.get_selected_index() == initial_index);
 }
 
 TEST_CASE("Clear menu", "[Menu]")
@@ -204,7 +207,7 @@ TEST_CASE("Clear menu", "[Menu]")
 
     CHECK(menu.is_empty() == true);
     CHECK(menu.get_option_count() == 0);
-    CHECK(menu.get_selected_index() == -1);
+    CHECK(!menu.get_selected_index().has_value());
 }
 
 TEST_CASE("Get option label", "[Menu]")
@@ -227,7 +230,7 @@ TEST_CASE("Empty menu behavior", "[Menu]")
     menu.select_next();
     menu.select_previous();
 
-    CHECK(menu.get_selected_index() == -1);
+    CHECK(!menu.get_selected_index().has_value());
     CHECK(menu.is_empty() == true);
 }
 
@@ -236,15 +239,15 @@ TEST_CASE("Single option wraparound", "[Menu]")
     Menu menu;
     menu.add_option("Only Option", [](){});
 
-    CHECK(menu.get_selected_index() == 0);
+    CHECK(menu.get_selected_index().value() == 0);
 
     // Next should stay at 0
     menu.select_next();
-    CHECK(menu.get_selected_index() == 0);
+    CHECK(menu.get_selected_index().value() == 0);
 
     // Previous should stay at 0
     menu.select_previous();
-    CHECK(menu.get_selected_index() == 0);
+    CHECK(menu.get_selected_index().value() == 0);
 }
 
 // Prevent adding menu options with no text
@@ -302,4 +305,91 @@ TEST_CASE("Error handling - activate with no selection", "[Menu]")
         menu.activate_selected(),
         std::runtime_error
     );
+}
+
+TEST_CASE("Draw - empty menu does nothing", "[Menu][Draw]")
+{
+    Menu menu;
+
+    // Should not crash with empty menu
+    CHECK_NOTHROW(menu.draw(nullptr, 0, 0, 400, 300));
+
+    // Menu should still be empty after draw
+    CHECK(menu.is_empty() == true);
+    CHECK(menu.get_option_count() == 0);
+}
+
+TEST_CASE("Draw - null renderer handled gracefully", "[Menu][Draw]")
+{
+    Menu menu;
+    menu.add_option("Test Option", [](){});
+
+    // Should not crash with null renderer
+    CHECK_NOTHROW(menu.draw(nullptr, 0, 0, 400, 300));
+
+    // Menu state should be unchanged
+    CHECK(menu.get_option_count() == 1);
+    CHECK(menu.get_selected_index().has_value());
+    CHECK(menu.get_option_label(0) == "Test Option");
+}
+
+TEST_CASE("Draw - with valid SDL renderer", "[Menu][Draw]")
+{
+    // Initialize SDL
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window* window = SDL_CreateWindow("Test", 0, 0, 1, 1, SDL_WINDOW_HIDDEN);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+
+    Menu menu;
+    menu.add_option("Option 1", [](){});
+    menu.add_option("Option 2", [](){});
+    menu.add_option("Option 3", [](){});
+
+    // Should not crash with valid renderer
+    CHECK_NOTHROW(menu.draw(renderer, 100, 100, 400, 300));
+
+    // Menu state should remain valid
+    CHECK(menu.get_option_count() == 3);
+    CHECK(menu.get_selected_index().value() == 0);
+
+    // Cleanup
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
+TEST_CASE("Draw - after navigation and modifications", "[Menu][Draw]")
+{
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window* window = SDL_CreateWindow("Test", 0, 0, 1, 1, SDL_WINDOW_HIDDEN);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+
+    Menu menu;
+    menu.add_option("First", [](){});
+    menu.add_option("Second", [](){});
+    menu.add_option("Third", [](){});
+
+    // Draw initial state
+    CHECK_NOTHROW(menu.draw(renderer, 0, 0, 400, 300));
+    CHECK(menu.get_selected_index().value() == 0);
+
+    // Navigate and draw again
+    menu.select_next();
+    CHECK_NOTHROW(menu.draw(renderer, 0, 0, 400, 300));
+    CHECK(menu.get_selected_index().value() == 1);
+
+    // Remove option and draw
+    menu.remove_option("Second");
+    CHECK_NOTHROW(menu.draw(renderer, 0, 0, 400, 300));
+    CHECK(menu.get_option_count() == 2);
+
+    // Clear and draw
+    menu.clear();
+    CHECK_NOTHROW(menu.draw(renderer, 0, 0, 400, 300));
+    CHECK(menu.is_empty() == true);
+
+    // Cleanup
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }
