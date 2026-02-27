@@ -30,9 +30,12 @@
 
 namespace cse498 {
 
+  // The DataFileManager class is responsible for managing the storage of world data into a file. 
   class DataFileManager
   {
   private:
+    // The filename where the data will be stored. 
+    // This is initialized in the constructor and can be retrieved using the GetFilename() method.
     std::string m_filename;
 
     //MazeWorld *m_world; // This will be a unique_ptr stored in the world file once that file is complete
@@ -114,14 +117,14 @@ namespace cse498 {
     }
 
     // Function to update the data file with the current state of the world, including tile and agent information. 
-    void Update()
+    bool Update()
     {
       std::ofstream file;
       file.open(m_filename, std::ofstream::app);
       if (!file.is_open())
       {
         std::cerr << "Unable to open file " << m_filename << std::endl;
-        return;
+        return false;
       }
 
       WorldGrid &grid = m_world->GetGrid();
@@ -132,7 +135,10 @@ namespace cse498 {
       std::string agents = StoreData(1, "Agent", m_world->GetKnownAgents(agent));
 
       file << tiles << "\n" << agents << "\n";
+
       file.close();
+
+      return true;
     }
 
   protected:
