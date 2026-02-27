@@ -30,11 +30,11 @@ TEST_CASE("Test ErrorManager Color Setters", "[ErrorManager]")
 {
     cse498::ErrorManager em;
 
-    CHECK_NOTHROW(em.SetFatalErrorColor(cse498::ErrorColor::BOLD));
-    CHECK_NOTHROW(em.SetTerminalErrorColor(cse498::ErrorColor::RED));
-    CHECK_NOTHROW(em.SetTerminalWarningColor(cse498::ErrorColor::YELLOW));
-    CHECK_NOTHROW(em.SetLogErrorColor(cse498::ErrorColor::CYAN));
-    CHECK_NOTHROW(em.SetLogWarningColor(cse498::ErrorColor::MAGENTA));
+    CHECK_NOTHROW(em.SetFatalErrorColor(cse498::ErrorManager::ErrorColor::BOLD));
+    CHECK_NOTHROW(em.SetTerminalErrorColor(cse498::ErrorManager::ErrorColor::RED));
+    CHECK_NOTHROW(em.SetTerminalWarningColor(cse498::ErrorManager::ErrorColor::YELLOW));
+    CHECK_NOTHROW(em.SetLogErrorColor(cse498::ErrorManager::ErrorColor::CYAN));
+    CHECK_NOTHROW(em.SetLogWarningColor(cse498::ErrorManager::ErrorColor::MAGENTA));
 
     // Custom ANSI code
     CHECK_NOTHROW(em.SetFatalErrorColor("\033[38;5;208m"));
@@ -151,22 +151,13 @@ TEST_CASE("Test ErrorManager LogWarning Does Not Stop Execution", "[ErrorManager
     CHECK(reachedAfterLogWarning == true);
 }
 
-/// Should be able to clear the error log without issue - nothing currently saves to the log but if in time we do want
-/// to track events would be helpful
-TEST_CASE("Test ErrorManager ClearErrors", "[ErrorManager]")
-{
-    cse498::ErrorManager em;
-
-    CHECK_NOTHROW(em.ClearErrors());
-}
-
 
 TEST_CASE("Test ErrorManager Custom Color Output", "[ErrorManager]")
 {
     cse498::ErrorManager em;
     StderrCapture capture;
 
-    em.SetLogErrorColor(cse498::ErrorColor::GREEN);
+    em.SetLogErrorColor(cse498::ErrorManager::ErrorColor::GREEN);
     em.LogError("custom color error");
 
     std::string output = capture.Get();
