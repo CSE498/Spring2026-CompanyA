@@ -49,28 +49,21 @@ namespace cse498 {
             }
         };
 
-        // Creates an object of type T with the given arguments and returns
-        // a unique_ptr that will return the memory to the pool when destroyed
+        /**
+         * Constructs an object of type T inside the memory pool and returns
+         * it wrapped in a std::unique_ptr with a custom deleter.
+         *
+         * This function provides RAII-style lifetime management. The returned
+         * unique_ptr automatically calls MemoryFactory::destroy() when it goes
+         * out of scope, returning the memory slot back to the pool.
+         *
+         * Internally, this function delegates construction to create() and
+         * then wraps the resulting raw pointer in a smart pointer.
+         */
         template <class... Args>
         std::unique_ptr<T, PoolDeleter> make(Args&&... args) {
             T* obj = create(std::forward<Args>(args)...);
             return std::unique_ptr<T, PoolDeleter>(obj, PoolDeleter{this});
-        }
-
-        
-        template <class... Args>
-        T* create(Args&&... args) {
-            // If the free list is empty, allocate a new block of memory
-            if (!freeList) allocateNewBlock();
-
-            // Take the first node from the free list
-            Node* slot = freeList;
-
-            // Move the free list head to the next node
-            freeList = freeList->next;
-
-            // Construct a T object in the allocated slot using placement new
-            return ::new (static_cast<void*>(slot)) T(std::forward<Args>(args)...);
         }
 
         // Destroys the object and returns the slot to the free list
@@ -105,6 +98,33 @@ namespace cse498 {
 
         // Pointer to the head of the free list
         Node* freeList;
+
+        /**
+         * Constructs an object of type T inside pooled memory and returns
+         * a raw pointer to it.
+         *
+         * This function removes a slot from the internal free list and uses
+         * placement new to construct the object in-place. If no free slots are
+         * available, a new block of memory is allocated.
+         *
+         * The caller is responsible for manually calling destroy() to return
+         * the object to the pool. Failure to do so will result in the slot
+         * not being reclaimed.
+         **/
+        template <class... Args>
+        T* create(Args&&... args) {
+            // If the free list is empty, allocate a new block of memory
+            if (!freeList) allocateNewBlock();
+
+            // Take the first node from the free list
+            Node* slot = freeList;
+
+            // Move the free list head to the next node
+            freeList = freeList->next;
+
+            // Construct a T object in the allocated slot using placement new
+            return ::new (static_cast<void*>(slot)) T(std::forward<Args>(args)...);
+        }
 
         void allocateNewBlock() {
 

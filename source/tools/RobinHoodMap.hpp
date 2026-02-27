@@ -1,9 +1,10 @@
 /**
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief A high-performance hash map using open addressing with robin hood hashing.
+ * Robin Hood hashing resolves collisions by stealing from "rich" entries (close to their ideal slot)
+ * and giving to "poor" ones (far from theirs), keeping probe distances short and lookup times even.
  * @note Status: PROPOSAL
  * @citation: Used Claude Code Opus 4.6 to help me understand the algorithm and implement it.
- * @note: Took around 10 total hours to implement this. (Including test cases and documentation)
  **/
 
 #pragma once
@@ -71,11 +72,11 @@ namespace cse498 {
     //  Constants and member data
 
     static constexpr size_type DEFAULT_CAPACITY = 16;
-    static constexpr double DEFAULT_MAX_LOAD_FACTOR = 0.60; // honestly not sure what the best load factor is, 
-                                                            // but based on my research, 0.60 is a good balance
-                                                            // between memory usage and performance.
-                                                            // this will be changed as an input parameter for anyone using the map.
-                                                            // so feel free to change it, but keep in mind that the default is 0.60.
+    static constexpr double DEFAULT_MAX_LOAD_FACTOR = 0.60; 
+                                                          
+                                                           
+                                                            
+                                                            
 
     std::vector<Bucket> buckets_;  
     size_type size_ = 0;
@@ -339,7 +340,7 @@ namespace cse498 {
     void Reserve(size_type count) {
       size_type needed = static_cast<size_type>(
         static_cast<double>(count) / max_load_factor_
-      ) + 1;
+      ) + 1; // +1 to round up, ensuring we never undershoot the required capacity
       if (needed > capacity_) {
         Rehash(needed);
       }
@@ -364,6 +365,8 @@ namespace cse498 {
     }
 
     /// @brief Check whether the map contains a given key.
+    /// Unlike Find(), which returns a pointer to the value, this only
+    /// reports presence and avoids exposing internal storage.
     [[nodiscard]] bool Contains(const Key & key) const {
       return FindIndex(key) != capacity_;
     }
@@ -436,11 +439,11 @@ namespace cse498 {
 
     //  Iteration  (lowercase names required for range-based for loops)
 
-    iterator begin() {
+    [[nodiscard]] iterator begin() {
       return Iterator(buckets_.data(), 0, capacity_);
     }
 
-    iterator end() {
+    [[nodiscard]] iterator end() {
       return Iterator(buckets_.data(), capacity_, capacity_);
     }
 
