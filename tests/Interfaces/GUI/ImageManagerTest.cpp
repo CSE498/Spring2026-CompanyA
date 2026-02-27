@@ -12,7 +12,7 @@
 
 #include "../../../source/Interfaces/GUI/ImageManager.hpp"
 
-using namespace cse498;
+namespace cse498 {
 
 /**
 * Class for initalizing and shutting down the SDL
@@ -128,3 +128,40 @@ TEST_CASE("Valid file in draw_image", "[ImageManager]")
     CHECK(manager.draw_image("test_img", 10, 10) == true);
 }
 
+TEST_CASE("Loading empty strings", "[ImageManager]")
+{
+    // set up SDL
+    SDLMock mock;
+    ImageManager manager(mock.renderer);
+
+    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
+
+    // check for invalid_argument on empty name
+    REQUIRE_THROWS_AS(
+        manager.load_image("", testImage),
+        std::invalid_argument
+    );
+
+    // check for invalid_argument on empty path
+    REQUIRE_THROWS_AS(
+        manager.load_image("test_img", ""),
+        std::invalid_argument
+    );
+}
+
+TEST_CASE("Extreme coordinates in draw_image", "[ImageManager]")
+{
+    // set up SDL
+    SDLMock mock;
+    ImageManager manager(mock.renderer);
+
+    // load image
+    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
+    manager.load_image("test_img", testImage);
+
+    // Smoke tests for extreme coordinates to ensure SDL doesn't crash
+    CHECK(manager.draw_image("test_img", -9999, -9999) == true);
+    CHECK(manager.draw_image("test_img", 99999, 99999) == true);
+}
+
+}
