@@ -1,5 +1,7 @@
 // NOTE: CATCH_CONFIG_MAIN is defined in tests/core/WorldPosition.cpp;
 //       do NOT define it again here.
+
+// Generated some test cases with the use of an LLM to help ensure better test coverage *used opus 4.6 as well!
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../source/tools/RobinHoodMap.hpp"
@@ -9,9 +11,7 @@
 #include <set>
 #include <algorithm>
 
-// ====================================================================
 //  1. Construction
-// ====================================================================
 
 TEST_CASE("Default construction", "[tools][RobinHoodMap]")
 {
@@ -50,9 +50,7 @@ TEST_CASE("Initializer list construction", "[tools][RobinHoodMap]")
   CHECK(*map.Find("gamma") == 3);
 }
 
-// ====================================================================
 //  2. Basic Insert and Find
-// ====================================================================
 
 TEST_CASE("Insert single element and find it", "[tools][RobinHoodMap]")
 {
@@ -92,9 +90,7 @@ TEST_CASE("Insert multiple elements", "[tools][RobinHoodMap]")
   CHECK(*map.Find("e") == 5);
 }
 
-// ====================================================================
 //  3. Insert update (same key, new value)
-// ====================================================================
 
 TEST_CASE("Insert returns false and updates on duplicate key", "[tools][RobinHoodMap]")
 {
@@ -115,9 +111,7 @@ TEST_CASE("Repeated updates to the same key", "[tools][RobinHoodMap]")
   CHECK(*map.Find("key") == 99);
 }
 
-// ====================================================================
 //  4. Contains
-// ====================================================================
 
 TEST_CASE("Contains returns correct results", "[tools][RobinHoodMap]")
 {
@@ -136,9 +130,7 @@ TEST_CASE("Contains returns correct results", "[tools][RobinHoodMap]")
   CHECK_FALSE(map.Contains(-1));
 }
 
-// ====================================================================
 //  5. Erase
-// ====================================================================
 
 TEST_CASE("Erase existing key", "[tools][RobinHoodMap]")
 {
@@ -197,9 +189,7 @@ TEST_CASE("Erase then re-insert the same key", "[tools][RobinHoodMap]")
   CHECK(*map.Find("x") == 2);
 }
 
-// ====================================================================
 //  6. operator[]
-// ====================================================================
 
 TEST_CASE("operator[] reads existing value", "[tools][RobinHoodMap]")
 {
@@ -211,7 +201,7 @@ TEST_CASE("operator[] reads existing value", "[tools][RobinHoodMap]")
 TEST_CASE("operator[] auto-inserts default value", "[tools][RobinHoodMap]")
 {
   cse498::RobinHoodMap<std::string, int> map;
-  int & val = map["new_key"];  // should default-insert 0
+  int & val = map["new_key"];
   CHECK(val == 0);
   CHECK(map.Size() == 1);
   CHECK(map.Contains("new_key"));
@@ -235,9 +225,7 @@ TEST_CASE("operator[] assignment", "[tools][RobinHoodMap]")
   CHECK(map.Size() == 3);
 }
 
-// ====================================================================
 //  7. Size and Empty
-// ====================================================================
 
 TEST_CASE("Size tracks insertions and erasures", "[tools][RobinHoodMap]")
 {
@@ -262,9 +250,7 @@ TEST_CASE("Size tracks insertions and erasures", "[tools][RobinHoodMap]")
   CHECK(map.Empty());
 }
 
-// ====================================================================
 //  8. Clear
-// ====================================================================
 
 TEST_CASE("Clear removes all elements", "[tools][RobinHoodMap]")
 {
@@ -298,9 +284,7 @@ TEST_CASE("Clear then reuse the map", "[tools][RobinHoodMap]")
   CHECK_FALSE(map.Contains(2));
 }
 
-// ====================================================================
 //  9. Iteration (range-for)
-// ====================================================================
 
 TEST_CASE("Range-for visits all elements", "[tools][RobinHoodMap]")
 {
@@ -345,9 +329,7 @@ TEST_CASE("Iterator pre-increment and post-increment", "[tools][RobinHoodMap]")
   CHECK(old != it);
 }
 
-// ====================================================================
 //  10. Const correctness
-// ====================================================================
 
 TEST_CASE("Const Find returns const pointer", "[tools][RobinHoodMap]")
 {
@@ -401,9 +383,7 @@ TEST_CASE("Range-for on const map", "[tools][RobinHoodMap]")
   CHECK(sum == 110);
 }
 
-// ====================================================================
 //  11. Reserve
-// ====================================================================
 
 TEST_CASE("Reserve increases bucket count", "[tools][RobinHoodMap]")
 {
@@ -436,9 +416,7 @@ TEST_CASE("Insertions after Reserve stay within load factor", "[tools][RobinHood
   CHECK(map.Size() == 100);
 }
 
-// ====================================================================
 //  12. Load factor
-// ====================================================================
 
 TEST_CASE("Load factor increases with insertions", "[tools][RobinHoodMap]")
 {
@@ -457,9 +435,7 @@ TEST_CASE("SetMaxLoadFactor changes the threshold", "[tools][RobinHoodMap]")
   CHECK(map.GetMaxLoadFactor() == 0.5);
 }
 
-// ====================================================================
 //  13. Many elements (stress test)
-// ====================================================================
 
 TEST_CASE("Insert and find 10000 elements", "[tools][RobinHoodMap]")
 {
@@ -509,9 +485,7 @@ TEST_CASE("Insert, erase half, verify remainder (1000 elements)", "[tools][Robin
   }
 }
 
-// ====================================================================
 //  14. String keys (common real-world usage)
-// ====================================================================
 
 TEST_CASE("String keys with various operations", "[tools][RobinHoodMap]")
 {
@@ -545,9 +519,7 @@ TEST_CASE("Many string key insertions", "[tools][RobinHoodMap]")
   }
 }
 
-// ====================================================================
 //  15. Collision handling (force many collisions)
-// ====================================================================
 
 TEST_CASE("Elements with colliding hashes are all retrievable", "[tools][RobinHoodMap]")
 {
@@ -580,9 +552,7 @@ TEST_CASE("Heavy collision with tiny initial capacity", "[tools][RobinHoodMap]")
   }
 }
 
-// ====================================================================
 //  16. Erase under heavy load
-// ====================================================================
 
 TEST_CASE("Erase under heavy load preserves remaining elements", "[tools][RobinHoodMap]")
 {
@@ -623,9 +593,7 @@ TEST_CASE("Interleaved insert and erase", "[tools][RobinHoodMap]")
   for (int i = 50; i < 150; ++i)  CHECK(map.Contains(i));
 }
 
-// ====================================================================
 //  17. Move semantics
-// ====================================================================
 
 TEST_CASE("Move construction", "[tools][RobinHoodMap]")
 {
@@ -663,9 +631,7 @@ TEST_CASE("Insert with move value semantics", "[tools][RobinHoodMap]")
   CHECK(*map.Find(1) == "moved_value");
 }
 
-// ====================================================================
 //  18. Copy semantics
-// ====================================================================
 
 TEST_CASE("Copy construction", "[tools][RobinHoodMap]")
 {
@@ -705,9 +671,7 @@ TEST_CASE("Copy assignment", "[tools][RobinHoodMap]")
   CHECK(*a.Find(1) == 10);
 }
 
-// ====================================================================
 //  19. Custom hash and comparator
-// ====================================================================
 
 TEST_CASE("Custom hash function", "[tools][RobinHoodMap]")
 {
@@ -780,9 +744,7 @@ TEST_CASE("Custom equality comparator (case-insensitive strings)", "[tools][Robi
   CHECK(*map.Find("hello") == 2);
 }
 
-// ====================================================================
 //  20. Edge cases
-// ====================================================================
 
 TEST_CASE("Single element insert, find, erase cycle", "[tools][RobinHoodMap]")
 {
@@ -865,9 +827,8 @@ TEST_CASE("Large values (vector of ints)", "[tools][RobinHoodMap]")
   CHECK((*found)[999] == 7);
 }
 
-// ====================================================================
 //  21. Rehash correctness
-// ====================================================================
+
 
 TEST_CASE("Automatic rehash preserves all elements", "[tools][RobinHoodMap]")
 {
