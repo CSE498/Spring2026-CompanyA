@@ -6,16 +6,13 @@
  * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
  * Samples are stored in the format of (Value, timestamp/seconds since start)
  * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
+ * Used AI to help refactor the Min, Max, and Mean functions to use algorithms 
  **/
 
 #include "DataLog.hpp"
-#include <vector>
-#include <cstddef>
-#include <optional>
-#include <string>
-#include <utility>
+
 #include <algorithm>
-#include <chrono>
+#include <numeric>
 
 namespace cse498{
 
@@ -69,14 +66,11 @@ std::optional<double> DataLog::Min() const{
         return std::nullopt;
     }
 
-    double min = data_values[0].first;
-
-    for(const auto& val : data_values){
-        if(val.first < min){
-            min = val.first;
-        }
-    }
-    return min;
+    auto min = std::min_element(data_values.begin(), data_values.end(), [](const auto& left, const auto& right) {
+        return left.first < right.first;
+    });
+    
+    return min->first;
 }
 
 /*
@@ -87,19 +81,15 @@ std::optional<double> DataLog::Max() const{
         return std::nullopt;
     }
 
-    double max = data_values[0].first;
+    auto max = std::max_element(data_values.begin(), data_values.end(), [](const auto& left, const auto& right) {
+        return left.first < right.first;
+    });
 
-    for(const auto& val : data_values){
-        if(val.first > max){
-            max = val.first;
-        }
-    }
-
-    return max;
+    return max->first;
 }
 
 /*
-Function returns the average of the values in the data log
+Function returns the average of the values in the data log 
 */
 std::optional<double> DataLog::Mean() const{
 
@@ -107,10 +97,9 @@ std::optional<double> DataLog::Mean() const{
         return std::nullopt;
     }
 
-    double sum = 0.0;
-    for(const auto& val : data_values){
-        sum += val.first;
-    }
+    auto sum = std::accumulate(data_values.begin(), data_values.end(), 0.0, [](double total, const auto& val) {
+        return total + val.first;
+    });
 
     double num_size = static_cast<double>(data_values.size());
 
@@ -142,6 +131,7 @@ std::optional<double> DataLog::Median() const{
         return stored_data[midpoint];
     }
     
+    //when even find the average of the two middle values
     double median = (stored_data[midpoint] + stored_data[midpoint - 1]) / 2.0;
     return median;
     

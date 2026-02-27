@@ -61,6 +61,8 @@ TEST_CASE("Multiple Entry Test", "[tools]"){
     log.Add(11.1);
 
     CHECK(log.Count() == 4);
+
+    //Even samples median calculation
     CHECK(log.Median().value() == Approx(11.85));
     CHECK(log.Mean().value() == Approx(11.95));
     CHECK(log.Min().value() == Approx(10.0));
@@ -86,6 +88,8 @@ TEST_CASE("Negative Value Entry Test", "[tools]"){
     log.Add(0);
 
     CHECK(log.Count() == 5);
+
+    //Odd samples median calculation
     CHECK(log.Median().value() == Approx(-11.1));
     CHECK(log.Mean().value() == Approx(-5.56));
     CHECK(log.Min().value() == Approx(-14.1));
