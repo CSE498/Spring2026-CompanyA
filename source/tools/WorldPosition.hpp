@@ -11,7 +11,7 @@
 #include <compare>    // For operator<=>
 #include <cstddef>    // For size_t
 #include <algorithm> //for std::max and std::min
-#include "gsl/gsl" //For gsl::narrow_cast
+#include "../../third-party/gsl/gsl" //For gsl::narrow_cast
 
 namespace cse498 {
 
