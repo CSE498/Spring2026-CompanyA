@@ -2,11 +2,11 @@
  * * @file OutputManager.hpp
  * * @author Tyler Murray
  * * @brief Logging system for game engine
- * * @version 1.0
+ * * @version 1.3
  * 
  * OutputManager is a category based logging system used across each module. It will
  * support logging levels, timestamps, and pluggable output sings. It will also log things
- * to a csv file.
+ * to a csv file. 
  */
 
 #pragma once
@@ -17,71 +17,79 @@
 #include <mutex>
 #include <functional>
 #include <vector>
-#include <functional>
 #include <fstream>
+#include <stdexcept>
 
 
-/*@enum LogLevel
- * @brief Different levels of logging severity
- * @details
- * DEBUG: Detailed information, typically of interest only when diagnosing problems.
- * Verbose: More detailed than Info, but less than Debug.
- * Info: Confirmation that things are working as expected.
- * Warn: An indication that something unexpected happened, or indicative of some problem in the near future.
- * Error: Due to a more serious problem, the software has not been able to perform some function.
- * Silent: No logging output.
- */
-
-enum class LogLevel : uint8_t 
-{
-    DEBUG = 0,
-    Verbose = 1,
-    Info = 2,
-    Warn = 3,
-    Error = 4,
-    Silent = 5
-};
-
-/*
-*@enum LogCategory
-*@brief Different categories for loggigng so teams can filter or search output easily
-*@details
-* System: Logs related to system operations and events
-* WorldGen: Logs related to world generation
-* World: Logs related to world state and changes
-* Combat: Logs related to combat mechanics and events
-* AI: Logs related to AI behavior and events
-* Items: Logs related to item usage and events
-* Trade: Logs related to trading and events
-* Puzzle: Logs related to puzzle solving and events
-* Replay: Logs related to replay and events
-* Performance: Logs related to performance and events
-* UI: Logs related to UI and events
-* Network: Logs related to network and events
-*/
-enum class LogCategory : uint8_t
-{
-    System,
-    WorldGen,
-    World,
-    Combat,
-    AI,
-    Items,
-    Trade,
-    Puzzle,
-    Replay,
-    Performance,
-    UI,
-    Network
-};
-
-using LogSink = std::function<void(std::string_view)>;
-
-/*@class OutputManager
- * @brief Logging system for game engine
-*/
 namespace cse498
 {
+
+
+    /*@enum LogLevel
+    * @brief Different levels of logging severity
+    * @details
+    * DEBUG: Detailed information, typically of interest only when diagnosing problems.
+    * Verbose: More detailed than Info, but less than Debug.
+    * Info: Confirmation that things are working as expected.
+    * Warn: An indication that something unexpected happened, or indicative of some problem in the near future.
+    * Error: Due to a more serious problem, the software has not been able to perform some function.
+    * Silent: No logging output.
+    */
+
+    enum class LogLevel : uint8_t 
+    {
+        Debug = 0,
+        Verbose = 1,
+        Info = 2,
+        Warn = 3,
+        Error = 4,
+        Silent = 5
+    };
+
+    /*
+    *@enum LogCategory
+    *@brief Different categories for logging so teams can filter or search output easily
+    *@details
+    * System: Logs related to system operations and events
+    * WorldGen: Logs related to world generation
+    * World: Logs related to world state and changes
+    * Combat: Logs related to combat mechanics and events
+    * AI: Logs related to AI behavior and events
+    * Items: Logs related to item usage and events
+    * Trade: Logs related to trading and events
+    * Puzzle: Logs related to puzzle solving and events
+    * Replay: Logs related to replay and events
+    * Performance: Logs related to performance and events
+    * UI: Logs related to UI and events
+    * Network: Logs related to network and events
+    */
+    enum class LogCategory : uint8_t
+    {
+        System,
+        WorldGen,
+        World,
+        Combat,
+        AI,
+        Items,
+        Trade,
+        Puzzle,
+        Replay,
+        Performance,
+        UI,
+        Network
+    };
+
+    /*@brief Type alias for log sink callback functions
+    * @details
+    * A LogSink is a callback function that takes a formatted log line as input.
+    * Sinks can be added to the OutputManager to receive log output, allowing for flexible logging destinations (e.g., console, file, network).
+    */
+    using LogSink = std::function<void(std::string_view)>;
+
+
+    /*@class OutputManager
+    * @brief Logging system for game engine
+    */
     class OutputManager 
     {
     public:
@@ -119,13 +127,13 @@ namespace cse498
         * @param level The log level to convert
         * @return A string view representing the log level
         */
-        static std::string_view LevelName(LogLevel level);
+        std::string_view LevelName(LogLevel level) const;
 
         /*@brief returns uppercase string view of log category for output
         * @param category The log category to convert
         * @return A string view representing the log category
         */
-        static std::string_view CategoryName(LogCategory category);
+        std::string_view CategoryName(LogCategory category) const;
 
         /*@brief Adds a sink that receives each formatted log line
         * @param sink The sink callback to add
@@ -161,5 +169,11 @@ namespace cse498
         std::string m_csvPath;             /// CSV output file path
         std::ofstream m_csv;               /// CSV stream
         bool m_csvHeaderWritten{false};    /// Header written flag
+        bool m_csvAppend{true};
+
+        void OpenCsvLocked();
+        void CloseCsvLocked();
     };
+
+    // end of namespace cse498
 }

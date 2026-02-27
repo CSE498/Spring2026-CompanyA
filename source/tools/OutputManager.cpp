@@ -19,16 +19,16 @@ cse498::OutputManager::OutputManager()
 */
 void cse498::OutputManager::SetMinLogLevel(LogLevel level) 
 {
-    std::scoped_lock lock(m_mutex); // Lock mutex
+    std::scoped_lock lock(m_mutex);
     m_min = level;
 }
 
 /*@brief Gets the minimum log level for output
  * @return The minimum log level
 */
-LogLevel cse498::OutputManager::GetMinLogLevel() const 
+cse498::LogLevel cse498::OutputManager::GetMinLogLevel() const 
 {
-    std::scoped_lock lock(m_mutex); //Lock mutex
+    std::scoped_lock lock(m_mutex);
     return m_min;
 }
 
@@ -37,7 +37,7 @@ LogLevel cse498::OutputManager::GetMinLogLevel() const
 */
 void cse498::OutputManager::EnableTimestamps(bool enabled) 
 {
-    std::scoped_lock lock(m_mutex); //Lock mutex
+    std::scoped_lock lock(m_mutex);
     m_timestamps = enabled;
 }
 
@@ -46,7 +46,7 @@ void cse498::OutputManager::EnableTimestamps(bool enabled)
 */
 bool cse498::OutputManager::ShouldLog(LogLevel level) const 
 {
-    std::scoped_lock lock(m_mutex); //Lock mutex
+    std::scoped_lock lock(m_mutex);
 
     if (m_min == LogLevel::Silent)
     {
@@ -112,13 +112,13 @@ void cse498::OutputManager::Log(LogLevel level, LogCategory category, std::strin
 }
 /*@brief returns uppercase string view of log level for output
  * @param category The log category to convert
- * @return A string view representing the log category
+ * @return A string view representing the log category //test modify
 */
-std::string_view cse498::OutputManager::LevelName(LogLevel level) 
+std::string_view cse498::OutputManager::LevelName(LogLevel level) const 
 {
-    switch (level) 
+    switch (level)
     {
-        case LogLevel::DEBUG:   return "DEBUG";
+        case LogLevel::Debug:   return "DEBUG";
         case LogLevel::Verbose: return "VERBOSE";
         case LogLevel::Info:    return "INFO";
         case LogLevel::Warn:    return "WARN";
@@ -132,7 +132,7 @@ std::string_view cse498::OutputManager::LevelName(LogLevel level)
  * @param category The log category to convert
  * @return A string view representing the log category
 */
-std::string_view cse498::OutputManager::CategoryName(LogCategory category) 
+std::string_view cse498::OutputManager::CategoryName(LogCategory category) const
 {
     switch (category) 
     {
@@ -157,7 +157,7 @@ std::string_view cse498::OutputManager::CategoryName(LogCategory category)
 */
 void cse498::OutputManager::AddSink(LogSink sink)
 {
-    std::scoped_lock lock(m_mutex); //Lock mutex
+    std::scoped_lock lock(m_mutex); 
     m_sinks.emplace_back(std::move(sink));
 }
 
@@ -167,41 +167,106 @@ void cse498::OutputManager::AddSink(LogSink sink)
 */
 void cse498::OutputManager::ClearSinks()
 {
-    std::scoped_lock lock(m_mutex); //Lock mutex
+    std::scoped_lock lock(m_mutex); 
     m_sinks.clear();
 }
+
+/*@brief Opens the CSV file for logging, writing the header if necessary
+ * @details This should only be called while holding m_mutex.
+*/
+void cse498::OutputManager::OpenCsvLocked()
+{
+    if (m_csvPath.empty())
+    {
+        throw std::invalid_argument("CSV path is empty");
+    }
+
+    if (m_csv.is_open())
+    {
+        return; // already open
+    }
+
+    std::ios_base::openmode mode = std::ios::out;
+    mode |= m_csvAppend ? std::ios::app : std::ios::trunc;
+
+    m_csv.open(m_csvPath, mode);
+
+    if (!m_csv.is_open())
+    {
+        throw std::runtime_error("Failed to open CSV file: " + m_csvPath);
+    }
+
+    // Write header if overwriting OR file is empty
+    if (!m_csvAppend || m_csv.tellp() == 0)
+    {
+        m_csv << "Timestamp(ms),Level,Category,Message\n";
+        m_csvHeaderWritten = true;
+    }
+}
+
+/*@brief Closes the CSV file if it's open
+ * @details
+ * This should only be called while holding m_mutex.
+*/
+void cse498::OutputManager::CloseCsvLocked()
+{
+    if (m_csv.is_open())
+    {
+        m_csv.close();
+    }
+}
+
 
 /* @brief Enables or disables CSV logging
  * @param enabled True to enable CSV logging, false to disable
 */
 void cse498::OutputManager::EnableCsv(bool enabled)
 {
-    std::scoped_lock lock(m_mutex); //Lock mutex
+    std::scoped_lock lock(m_mutex);
+
+    if (enabled == m_csvEnabled)
+    {
+        return;
+    }
+
     m_csvEnabled = enabled;
+
+    if (!m_csvEnabled)
+    {
+        CloseCsvLocked();
+        return;
+    }
+
+    // enabling
+    if (!m_csvPath.empty())
+    {
+        OpenCsvLocked();
+    }
 }
 
 /*@brief Sets the CSV output file path
  * @param path File path to write CSV rows to
  * @param append True to append, false to overwrite
 */
-
-void cse498::OutputManager::SetCsvPath(const std::string& path, bool append) 
+void cse498::OutputManager::SetCsvPath(const std::string& path, bool append)
 {
     std::scoped_lock lock(m_mutex);
-    m_csvPath = path;
 
-    if (m_csv.is_open()) {
-        m_csv.close();
+    if (path.empty())
+    {
+        throw std::invalid_argument("CSV path cannot be empty");
     }
 
-    // Set the file mode: append or truncate (overwrite)
-    std::ios_base::openmode mode = std::ios::out;
-    mode |= append ? std::ios::app : std::ios::trunc;
+    // store config
+    m_csvPath = path;
+    m_csvAppend = append;
 
-    m_csv.open(m_csvPath, mode);
+    // if there was an open CSV, close it because we're switching targets
+    CloseCsvLocked();
 
-    if (m_csv.is_open() && (!append || m_csv.tellp() == 0)) {
-        m_csv << "Timestamp(ms),Level,Category,Message\n";
-        m_csvHeaderWritten = true;
+    // if CSV logging is currently enabled, open immediately so errors surface now
+    if (m_csvEnabled)
+    {
+        OpenCsvLocked();
     }
 }
