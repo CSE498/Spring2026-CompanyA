@@ -1,4 +1,4 @@
-//#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../../source/tools/WorldPosition.hpp"
@@ -33,14 +33,14 @@ TEST_CASE("Test Getdir and Setdir", "[core]")
     SECTION("Default direction is NORTH") 
     {
         cse498::WorldPosition pos(5.0, 10.0);
-        CHECK(pos.GetDir() == cse498::WorldPosition::Orientation::NORTH);
+        CHECK(pos.Dir() == cse498::WorldPosition::Orientation::NORTH);
     }
     
     SECTION("Set direction to SOUTH") 
     {
         cse498::WorldPosition pos(5.0, 10.0);
         pos.SetDir(cse498::WorldPosition::Orientation::SOUTH);
-        CHECK(pos.GetDir() == cse498::WorldPosition::Orientation::SOUTH);
+        CHECK(pos.Dir() == cse498::WorldPosition::Orientation::SOUTH);
     }
     
     SECTION("Change direction multiple times") 
@@ -48,7 +48,7 @@ TEST_CASE("Test Getdir and Setdir", "[core]")
         cse498::WorldPosition pos(5.0, 10.0);
         pos.SetDir(cse498::WorldPosition::Orientation::EAST);
         pos.SetDir(cse498::WorldPosition::Orientation::WEST);
-        CHECK(pos.GetDir() == cse498::WorldPosition::Orientation::WEST);
+        CHECK(pos.Dir() == cse498::WorldPosition::Orientation::WEST);
     }
 }
 
@@ -57,25 +57,25 @@ TEST_CASE("Test isColliding", "[core]") {
     SECTION("Same position") {
         cse498::WorldPosition pos1(5.0, 10.0);
         cse498::WorldPosition pos2(5.0, 10.0);
-        CHECK(pos1.isColliding(pos2) == true);
+        CHECK(pos1.IsColliding(pos2) == true);
     }
     
     SECTION("Same cell however different decimals") {
         cse498::WorldPosition pos1(5.1, 10.2);
         cse498::WorldPosition pos2(5.9, 10.8);
-        CHECK(pos1.isColliding(pos2) == true);
+        CHECK(pos1.IsColliding(pos2) == true);
     }
     
     SECTION("Different cells") {
         cse498::WorldPosition pos1(5.0, 10.0);
         cse498::WorldPosition pos2(6.0, 10.0);
-        CHECK(pos1.isColliding(pos2) == false);
+        CHECK(pos1.IsColliding(pos2) == false);
     }
     
     SECTION("Adjacent cells") {
         cse498::WorldPosition pos1(5.0, 10.0);
         cse498::WorldPosition pos2(5.0, 11.0);
-        CHECK(pos1.isColliding(pos2) == false);
+        CHECK(pos1.IsColliding(pos2) == false);
     }
 }
 
