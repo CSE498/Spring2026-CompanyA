@@ -11,15 +11,14 @@
 #define TEXT_HPP
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
 #include <string>
-#include <cassert>
 
 namespace cse498 {
 
 /// Color structure for text rendering
+/// not inside Text as other classes may use Color
 struct Color {
     unsigned char r = 255;  ///Red component (0-255)
     unsigned char g = 255;  ///Green component (0-255)
@@ -30,6 +29,7 @@ struct Color {
     Color(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255)
         : r(red), g(green), b(blue), a(alpha) {}
 };
+
 
 /**
  * @class Text
@@ -52,8 +52,10 @@ protected:
     SDL_Renderer* mRenderer;        ///SDL renderer for drawing
     TTF_Font* mFont;                ///Loaded SDL font object
 
+
     static const std::string DEFAULT_FONT;  ///Default font path
     static const int DEFAULT_SIZE = 16;     ///Default font size
+    static const Color DEFAULT_COLOR;      ///Default font color (White)
 
     /// Reload the font with current settings (size, style)
     /// @throws std::runtime_error if font loading fails
@@ -82,6 +84,12 @@ public:
     // Allow moving
     Text(Text&& other) noexcept;
     Text& operator=(Text&& other) noexcept;
+
+     /// Dimensions structure for text measurements
+     struct Dimensions {
+      int width;   ///< Width in pixels
+      int height;  ///< Height in pixels
+     };
 
     /**
      * Set the text content to display
@@ -132,7 +140,7 @@ public:
     /**
      * Set the font size in points
      * @param point_size Font size (must be positive)
-     * @note Asserts if point_size <= 0
+     * @note Asserts if point_size <= 0; Passing a non-positive value is a programmer error.
      */
     void SetSize(int point_size);
 
@@ -180,6 +188,12 @@ public:
      */
     void Draw(int x, int y);
 
+     /**
+    * Get both width and height in a single call
+    * @return Struct containing width and height in pixels
+    */
+     Dimensions GetDimensions() const;
+
     /**
      * Get the width of the rendered text in pixels
      * @return Width in pixels, or 0 if content is empty
@@ -191,6 +205,13 @@ public:
      * @return Height in pixels, or 0 if content is empty
      */
     int GetHeight() const;
+
+    /**
+     * OPTIONALLY ADD based on comments
+     * Get the dimensions of the rendered text in pixels
+     * @return Struct width, height in pixels, or 0 if content is empty
+     */
+
 
     /**
      * Set the SDL renderer to use for drawing

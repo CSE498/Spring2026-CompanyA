@@ -14,7 +14,7 @@ using namespace cse498;
 
 //defualt font path
 const std::string Text::DEFAULT_FONT = "../source/Interfaces/GUI/fonts/OpenSans-Regular.ttf";
-
+const Color Text::DEFAULT_COLOR{255, 255, 255, 255};
 
 /**
  * Constructor
@@ -23,7 +23,7 @@ const std::string Text::DEFAULT_FONT = "../source/Interfaces/GUI/fonts/OpenSans-
 Text::Text(SDL_Renderer* renderer)
     : mContent("")
     , mFontPath(DEFAULT_FONT)
-    , mColor(255, 255, 255, 255)  // White
+    , mColor(DEFAULT_COLOR)  // White
     , mFontSize(DEFAULT_SIZE)
     , mBold(false)
     , mItalic(false)
@@ -53,6 +53,7 @@ Text::Text(SDL_Renderer* renderer)
 Text::~Text() {
     if (mFont) {
         TTF_CloseFont(mFont);
+        mFont = nullptr;
     }
 }
 
@@ -145,7 +146,7 @@ void Text::SetItalic(bool i) {
 void Text::ResetStyle() {
     mFontPath = DEFAULT_FONT;
     mFontSize = DEFAULT_SIZE;
-    mColor = Color(255, 255, 255, 255);  // White
+    mColor = DEFAULT_COLOR;   // White
     mBold = false;
     mItalic = false;
 
@@ -195,6 +196,16 @@ void Text::Draw(int x, int y) {
     // Clean up
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
+}
+
+Text::Dimensions Text::GetDimensions() const {
+    if (mContent.empty() || !mFont) {
+        return {0, 0};
+    }
+
+    int width = 0, height = 0;
+    TTF_SizeUTF8(mFont, mContent.c_str(), &width, &height);
+    return {width, height};
 }
 
 int Text::GetWidth() const {
