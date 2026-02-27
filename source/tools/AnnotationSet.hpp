@@ -1,4 +1,4 @@
-// AnnotationSet.h
+// AnnotationSet.hpp
 #pragma once
 
 #include <cassert>
@@ -27,7 +27,7 @@ namespace cse498 {
     public:
         using ObjectId = std::uint64_t;
 
-        explicit AnnotationSet(ObjectId owner, TagManager* manager = nullptr) : mOwner(owner), mManager(manager) {}
+        explicit AnnotationSet(ObjectId owner, TagManager* manager = nullptr) : mManager(manager), mOwner(owner) {}
 
         void AttachManager(TagManager* manager) noexcept { mManager = manager; }
 
