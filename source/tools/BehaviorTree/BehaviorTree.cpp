@@ -1,10 +1,11 @@
 #include "BehaviorTree.hpp"
-#include <algorithm>
-#include <utility>
 
 namespace Pathfinding {
 namespace BehaviorTrees {
 
+// ============================================================
+// BLACKBOARD IMPLEMENTATION
+// ============================================================
 
 bool Blackboard::Has(const std::string& key) const {
     return data.find(key) != data.end();
@@ -27,9 +28,16 @@ std::vector<std::string> Blackboard::GetKeys() const {
     return keys;
 }
 
+// ============================================================
+// EXECUTION CONTEXT
+// ============================================================
+
 ExecutionContext::ExecutionContext(Blackboard& bb)
     : blackboard(bb) {}
 
+// ============================================================
+// NODE BASE IMPLEMENTATION
+// ============================================================
 
 Node::Status Node::Tick(ExecutionContext& context) {
     OnEnter(context);
@@ -38,15 +46,18 @@ Node::Status Node::Tick(ExecutionContext& context) {
     return status;
 }
 
-void Node::OnEnter(ExecutionContext& context) {
-    // Default: do nothing
+void Node::OnEnter(ExecutionContext&) {
+    // Default: no-op
 }
 
-void Node::OnExit(ExecutionContext& context, Status status) {
-    // Default: do nothing
+void Node::OnExit(ExecutionContext&, Status) {
+    // Default: no-op
 }
 
-// Composite implementation
+// ============================================================
+// COMPOSITE
+// ============================================================
+
 void Composite::AddChild(std::unique_ptr<Node> child) {
     children.push_back(std::move(child));
 }
@@ -62,9 +73,12 @@ const std::vector<std::unique_ptr<Node>>& Composite::GetChildren() const {
     return children;
 }
 
-// Decorator implementation
-void Decorator::SetChild(std::unique_ptr<Node> child) {
-    this->child = std::move(child);
+// ============================================================
+// DECORATOR
+// ============================================================
+
+void Decorator::SetChild(std::unique_ptr<Node> childNode) {
+    child = std::move(childNode);
 }
 
 void Decorator::Reset() {
@@ -77,7 +91,10 @@ const std::unique_ptr<Node>& Decorator::GetChild() const {
     return child;
 }
 
-// Strategy Method Implementation
+// ============================================================
+// ACTION
+// ============================================================
+
 Action::Action(const std::string& name, ActionFunc action)
     : name(name), action(action) {}
 
@@ -86,17 +103,17 @@ std::string Action::GetName() const {
 }
 
 void Action::Reset() {
-    // Actions typically don't have state to reset
+    // Typically stateless
 }
 
 Node::Status Action::OnUpdate(ExecutionContext& context) {
     return action(context);
 }
 
+// ============================================================
+// SELECTOR
+// ============================================================
 
-// =============================================================================
-// SELECTOR IMPLEMENTATION
-// =============================================================================
 Selector::Selector(const std::string& name) : name(name) {}
 
 std::string Selector::GetName() const {
@@ -106,25 +123,26 @@ std::string Selector::GetName() const {
 Node::Status Selector::OnUpdate(ExecutionContext& context) {
     while (currentChild < children.size()) {
         Status status = children[currentChild]->Tick(context);
-        
-        switch (status) {
-            case Status::Success:
-                currentChild = 0;
-                return Status::Success;
-            case Status::Running:
-                return Status::Running;
-            case Status::Failure:
-                currentChild++;
-                continue;
+
+        if (status == Status::Success) {
+            currentChild = 0;
+            return Status::Success;
         }
+
+        if (status == Status::Running)
+            return Status::Running;
+
+        currentChild++;
     }
+
     currentChild = 0;
     return Status::Failure;
 }
 
-// =============================================================================
-// SEQUENCE IMPLEMENTATION
-// =============================================================================
+// ============================================================
+// SEQUENCE
+// ============================================================
+
 Sequence::Sequence(const std::string& name) : name(name) {}
 
 std::string Sequence::GetName() const {
@@ -134,28 +152,26 @@ std::string Sequence::GetName() const {
 Node::Status Sequence::OnUpdate(ExecutionContext& context) {
     while (currentChild < children.size()) {
         Status status = children[currentChild]->Tick(context);
-        
-        switch (status) {
-            case Status::Failure:
-                currentChild = 0;
-                return Status::Failure;
-            case Status::Running:
-                return Status::Running;
-            case Status::Success:
-                currentChild++;
-                if (currentChild >= children.size()) {
-                    currentChild = 0;
-                    return Status::Success;
-                }
-                continue;
+
+        if (status == Status::Failure) {
+            currentChild = 0;
+            return Status::Failure;
         }
+
+        if (status == Status::Running)
+            return Status::Running;
+
+        currentChild++;
     }
+
+    currentChild = 0;
     return Status::Success;
 }
 
-// =============================================================================
-// INVERT IMPLEMENTATION
-// =============================================================================
+// ============================================================
+// INVERT
+// ============================================================
+
 Invert::Invert(const std::string& name) : name(name) {}
 
 std::string Invert::GetName() const {
@@ -163,26 +179,24 @@ std::string Invert::GetName() const {
 }
 
 Node::Status Invert::OnUpdate(ExecutionContext& context) {
-    if (!child) {
+    if (!child)
         return Status::Failure;
-    }
-    
+
     Status status = child->Tick(context);
-    
-    switch (status) {
-        case Status::Success:
-            return Status::Failure;
-        case Status::Failure:
-            return Status::Success;
-        case Status::Running:
-            return Status::Running;
-    }
-    return Status::Failure;
+
+    if (status == Status::Success)
+        return Status::Failure;
+
+    if (status == Status::Failure)
+        return Status::Success;
+
+    return Status::Running;
 }
 
-// =============================================================================
-// CONTINUALLY REPEAT IMPLEMENTATION
-// =============================================================================
+// ============================================================
+// CONTINUALLY REPEAT
+// ============================================================
+
 ContinuallyRepeat::ContinuallyRepeat(const std::string& name) : name(name) {}
 
 std::string ContinuallyRepeat::GetName() const {
@@ -190,24 +204,22 @@ std::string ContinuallyRepeat::GetName() const {
 }
 
 Node::Status ContinuallyRepeat::OnUpdate(ExecutionContext& context) {
-    if (!child) {
+    if (!child)
         return Status::Running;
-    }
-    
+
     Status status = child->Tick(context);
-    
-    // If child completed (Success or Failure), reset it so it can run again
+
     if (status == Status::Success || status == Status::Failure) {
         child->Reset();
     }
-    
-    // Always return Running to keep repeating
+
     return Status::Running;
 }
 
-// =============================================================================
-// TREE BUILDER IMPLEMENTATION
-// =============================================================================
+// ============================================================
+// TREE BUILDER
+// ============================================================
+
 std::unique_ptr<Sequence> TreeBuilder::Seq(const std::string& name) {
     return std::make_unique<Sequence>(name);
 }
