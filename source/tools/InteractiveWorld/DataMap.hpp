@@ -1,71 +1,75 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
- * @brief Maps strings to arbitrary data types. Caller is not required to perform casts. Types in the DataMap are
- * explicit at the call site. Any type mismatches are handled up front by DataMap.
+ * @brief Maps strings to arbitrary data types. Caller is not required to
+ *perform casts. Types in the DataMap are explicit at the call site. Any type
+ *mismatches are handled up front by DataMap.
  **/
 
 #pragma once
 
-#include <unordered_map> /// For basic map implementation
+#include <any>     /// For storing any type into unordered_map
+#include <cassert> /// For assertions
 #include <string>
-#include <any>           /// For storing any type into unordered_map
-#include <typeindex>     /// For runtime type storage
+#include <typeindex> /// For runtime type storage
 #include <typeinfo>
-#include <cassert>       /// For assertions
+#include <unordered_map> /// For basic map implementation
 
 namespace cse498 {
-	/// @class DataMap
-	/// @brief Map strings to an arbitrary data type.
-	class DataMap {
-	private:
-	    /// @struct Entry
-	    /// @brief Contains data for an entry in the DataMap
-	    struct Entry {
-		std::type_index type;   /// Entry type
-		std::any value;         /// Entry value
-	    };
+/// @class DataMap
+/// @brief Map strings to an arbitrary data type.
+class DataMap {
+private:
+  /// @struct Entry
+  /// @brief Contains data for an entry in the DataMap
+  struct Entry {
+    std::type_index type; /// Entry type
+    std::any value;       /// Entry value
+  };
 
-	    std::unordered_map<std::string, Entry> m_map{};       /// Main map
-	public:
-	    /// Set a key value pair
-	    template<typename T>
-	    void Set(const std::string& key, const T& value) {
-		    // Find key, value pair if it exists
-		    auto it = m_map.find(key);
-		    // No pair found, Add new association to map
-		    if (it == m_map.end()) { m_map.emplace(key, Entry{ typeid(T), std::any(value) }); }
-			    // Pair found
-		    else {
-			    // Make sure value being updated has the same type
-			    assert((typeid(T) == it->second.type && "Attempting to change value of mismatched types!"));
-			    // Update the value of the pair
-			    it->second.value = value;
-		    }
-	    }
-	    /// Get a value from a key
-	    template<typename T>
-	    T& Get(const std::string& key) {
-		    // Look for pair
-		    auto it = m_map.find(key);
-		    // Ensure pair exists
-		    assert((it != m_map.end() && "Key Value pair does not exist!"));
-		    // Return the value of the found pair
-		    assert((typeid(T) == it->second.type && "Type mismatch on Get!"));
-		    return *std::any_cast<T>(&it->second.value);
-	    }
-	    /// Check to see if key is in the map
-	    bool Has(const std::string& key) const { return m_map.find(key) != m_map.end(); }
-	    /// Remove key from map.
-	    void Remove(const std::string& key) {
-		    // Make sure key exists
-		    assert((Has(key) && "Unable to remove key in map that does not exist"));
-		    m_map.erase(key);
-	    }
-	    /// Clear out map of all data
-	    void Clear() { m_map.clear(); }
-	    /// Checks if the map is empty
-	    bool Empty() { return m_map.empty(); }
-	    /// Returns the number of elements in the map
-	    size_t Size() { return m_map.size(); }
-	};
-}
+  std::unordered_map<std::string, Entry> m_map{}; /// Main map
+public:
+  /// Set a key value pair
+  template <typename T> void Set(const std::string &key, const T &value) {
+    // Find key, value pair if it exists
+    auto it = m_map.find(key);
+    // No pair found, Add new association to map
+    if (it == m_map.end()) {
+      m_map.emplace(key, Entry{typeid(T), std::any(value)});
+    }
+    // Pair found
+    else {
+      // Make sure value being updated has the same type
+      assert((typeid(T) == it->second.type &&
+              "Attempting to change value of mismatched types!"));
+      // Update the value of the pair
+      it->second.value = value;
+    }
+  }
+  /// Get a value from a key
+  template <typename T> T &Get(const std::string &key) {
+    // Look for pair
+    auto it = m_map.find(key);
+    // Ensure pair exists
+    assert((it != m_map.end() && "Key Value pair does not exist!"));
+    // Return the value of the found pair
+    assert((typeid(T) == it->second.type && "Type mismatch on Get!"));
+    return *std::any_cast<T>(&it->second.value);
+  }
+  /// Check to see if key is in the map
+  bool Has(const std::string &key) const {
+    return m_map.find(key) != m_map.end();
+  }
+  /// Remove key from map.
+  void Remove(const std::string &key) {
+    // Make sure key exists
+    assert((Has(key) && "Unable to remove key in map that does not exist"));
+    m_map.erase(key);
+  }
+  /// Clear out map of all data
+  void Clear() { m_map.clear(); }
+  /// Checks if the map is empty
+  bool const Empty() { return m_map.empty(); }
+  /// Returns the number of elements in the map
+  size_t const Size() { return m_map.size(); }
+};
+} // namespace cse498
