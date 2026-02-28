@@ -57,7 +57,7 @@ namespace cse498 {
   {
    Key key(inputs...);
 
-   if (mCache.find(key) != mCache.end()){ return mCache[key]; }
+   if (mCache.contains(key)){ return mCache[key]; }
 
    R output = mWrappedFunction(inputs...);
    mCache[key] = output;
@@ -76,6 +76,6 @@ namespace cse498 {
 
   void RemoveLimit() { mLimit = std::nullopt; }
 
-  bool IsCached(Key key) const { return mCache.find(key) != mCache.end(); }
+  bool IsCached(Key key) const { return mCache.contains(key); }
  };
 }
