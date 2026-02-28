@@ -6,7 +6,9 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <exception>
 #include <functional>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -23,48 +25,60 @@ namespace cse498 {
 
     // Add a function and return its ID.
     FunctionID AddFunction(FunctionType fn) {
-      const FunctionID id = next_id++;
-      functions.push_back(Entry{id, std::move(fn)});
+      const FunctionID id = mNextID++;
+      mFunctions.push_back(Entry{id, std::move(fn)});
       return id;
     }
 
     // Remove a function by ID. Returns false if the ID is not found.
     bool RemoveFunction(FunctionID id) {
-      const std::size_t old_size = functions.size();
-      functions.erase(
-          std::remove_if(functions.begin(), functions.end(),
+      const std::size_t old_size = mFunctions.size();
+      mFunctions.erase(
+          std::remove_if(mFunctions.begin(), mFunctions.end(),
                          [id](const Entry& e) { return e.id == id; }),
-          functions.end());
-      return functions.size() != old_size;
+          mFunctions.end());
+      return mFunctions.size() != old_size;
     }
 
-    // Remove all functions and reset the ID.
-    void Clear() { 
-      functions.clear(); 
-      next_id = 0; 
+    // Remove all functions
+    void Clear() {
+      mFunctions.clear();
     }
 
     // How many functions are stored.
-    std::size_t Size() const { return functions.size(); }
+    std::size_t Size() const { return mFunctions.size(); }
 
     // Call every stored function using the same arguments, one at a time.
     // If one throws, catch it and continue calling the rest.
-    void CallAll(Args... args) const {
+    void CallAll(
+        Args... args,
+        const std::function<void(FunctionID, std::string_view)>& on_error = nullptr) const {
       std::size_t failures = 0;
 
-      for (const Entry& entry : functions) {
+      for (const Entry& entry : mFunctions) {
         try {
           entry.fn(args...);
+        } catch (const std::exception& e) {
+          ++failures;
+          if (on_error) {
+            on_error(entry.id, e.what());
+          }
         } catch (...) {
           ++failures;
+          if (on_error) {
+            on_error(entry.id, "Function threw non-std exception");
+          }
         }
       }
 
-      last_call_failures = failures;
+      mLastCallFailures = failures;
     }
 
     // Number of functions that threw during the most recent CallAll.
-    std::size_t LastCallFailureCount() const { return last_call_failures; }
+    std::size_t LastCallFailureCount() const { return mLastCallFailures; }
+
+    // Number of functions that succeeded during the most recent CallAll.
+    std::size_t LastCallSuccessCount() const { return Size() - mLastCallFailures; }
 
   private:
     struct Entry {
@@ -72,11 +86,10 @@ namespace cse498 {
       FunctionType fn;
     };
 
-    std::vector<Entry> functions;  // stored functions in insertion order
-    FunctionID next_id = 0;
+    std::vector<Entry> mFunctions;  // stored functions in insertion order
+    FunctionID mNextID = 0;
 
-    // Mutable so CallAll can stay const while tracking last-call status.
-    mutable std::size_t last_call_failures = 0;
+    mutable std::size_t mLastCallFailures = 0;
   };
 
 }  // namespace cse498
