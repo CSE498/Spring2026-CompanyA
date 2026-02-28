@@ -5,6 +5,8 @@
 
 #include "Timer.hpp"
 
+double NANOSECONDS_IN_SECOND = 1000000000.0;
+
 /**
  * Constructor for a Timer.
  */
@@ -78,11 +80,11 @@ double cse498::Timer::getTime(std::string timerName)
             auto startTime = mTimers.at(timerName).startTime;
             auto currentTime = std::chrono::steady_clock::now();
             auto elapsed = mTimers.at(timerName).accumulatedDuration + (currentTime - startTime);
-            return elapsed.count() / 1000000000.0; // Convert from nanoseconds to seconds.
+            return elapsed.count() / NANOSECONDS_IN_SECOND; // Convert from nanoseconds to seconds.
         }
         else
         {
-            return mTimers.at(timerName).accumulatedDuration.count() / 1000000000.0; // Convert from nanoseconds to seconds.
+            return mTimers.at(timerName).accumulatedDuration.count() / NANOSECONDS_IN_SECOND; // Convert from nanoseconds to seconds.
         }
     }
     else
@@ -90,4 +92,9 @@ double cse498::Timer::getTime(std::string timerName)
         // If the timer doesn't exist, return a duration of 0.
         return 0.0;
     }
+}
+
+bool cse498::Timer::isRunning(const std::string &timerName) const
+{
+    return mTimers.find(timerName) != mTimers.end() ? mTimers.at(timerName).isRunning : false;
 }

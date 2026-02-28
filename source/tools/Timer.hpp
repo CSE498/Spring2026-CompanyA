@@ -15,6 +15,8 @@
 namespace cse498
 {
 
+    // A struct to hold timer information. Includes the starting time point, a boolean for
+    // whether the timer is running, and the total accumulated duration for the timer.
     struct TimerInfo
     {
         std::chrono::time_point<std::chrono::steady_clock> startTime;
@@ -35,7 +37,7 @@ namespace cse498
         /**
          * Returns whether the timer with the provided name is currently running. If the timer doesn't exist, returns false.
          */
-        bool isRunning(std::string timerName) { return mTimers.find(timerName) != mTimers.end() ? mTimers.at(timerName).isRunning : false; }
+        bool isRunning(const std::string &timerName) const;
 
     private:
         std::unordered_map<std::string, TimerInfo> mTimers = {};
