@@ -352,8 +352,8 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
         {2.19408, 4.85944}, {2.00374, 3.87772}, {2.31247, 2.92657}
     };
 
-    CHECK(WorldPathApprox(WorldPath(circ1_path_to), circ1.value().path_to_circle));
-    CHECK(WorldPathApprox(WorldPath(circle1_path), circ1.value().circle_path));
+    CHECK(WorldPathApprox(WorldPath(circ1_path_to), circ1.value().mPathToCircle));
+    CHECK(WorldPathApprox(WorldPath(circle1_path), circ1.value().mCirclePath));
 
     auto circ2 = PathGenerator::FindCircularPath({1, 1}, {2, 2}, 2, circle_request);
     std::vector<WorldPosition> circ2_path_to = {{1, 1}, {2, 1}, {3.88898, 1.34293}};
@@ -362,8 +362,8 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
         {1.76873, 3.98658}, {2.76873, 2.98658}
     };
 
-    CHECK(WorldPathApprox(WorldPath(circ2_path_to), circ2.value().path_to_circle));
-    CHECK(WorldPathApprox(WorldPath(circ2_path), circ2.value().circle_path));
+    CHECK(WorldPathApprox(WorldPath(circ2_path_to), circ2.value().mPathToCircle));
+    CHECK(WorldPathApprox(WorldPath(circ2_path), circ2.value().mCirclePath));
 
     // Now Expanding Module -- same same
     // auto circ1_exp = PathGenerator::FindCircularPath({1,1},
@@ -379,8 +379,8 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
         {3.88898, 1.34293}, {3.97096, 2.33956}, {3.5602, 3.25131}, {2.75939, 3.85022}, {1.76873, 3.98658},
         {1.76873, 2.98658}, {1.76873, 1.98658}, {2.76873, 1.98658}, {3.76873, 1.98658}
     };
-    CHECK(WorldPathApprox(WorldPath(circ2_exp_path), circ2_exp.value().circle_path));
-    CHECK(WorldPathApprox(WorldPath(circ2_exp_path_to), circ2_exp.value().path_to_circle));
+    CHECK(WorldPathApprox(WorldPath(circ2_exp_path), circ2_exp.value().mCirclePath));
+    CHECK(WorldPathApprox(WorldPath(circ2_exp_path_to), circ2_exp.value().mPathToCircle));
 
     cse498::CircleWorld2 circle_world2;
     PathRequest circle_request2({}, cse498::AgentAbility(), circle_world2.GetGrid());
@@ -398,8 +398,8 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
         {6.14074, 5.79726}, {5.53627, 5.00063}, {5.14827, 4.07897}, {5.00101, 3.08988}
     };
     vector<WorldPosition> circle_path1_to = {{1, 1}, {2, 1}, {3, 1}, {4, 1}, {5.11943, 2.02986}};
-    CHECK(WorldPathApprox(WorldPath(circle_path1), path1.value().circle_path));
-    CHECK(WorldPathApprox(WorldPath(circle_path1_to), path1.value().path_to_circle));
+    CHECK(WorldPathApprox(WorldPath(circle_path1), path1.value().mCirclePath));
+    CHECK(WorldPathApprox(WorldPath(circle_path1_to), path1.value().mPathToCircle));
 
     auto path2 = PathGenerator::FindCircularPath({15, 3}, {10, 4}, 7, circle_request2);
     std::vector<WorldPosition> path2_circle = {
@@ -414,8 +414,8 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
         {15.4954, 1.41355}, {16.6166, 1.71523}
     };
     std::vector<WorldPosition> path2_circle_to = {{15, 3}, {16.8641, 2.62719}};
-    CHECK(WorldPathApprox(WorldPath(path2_circle), path2.value().circle_path));
-    CHECK(WorldPathApprox(WorldPath(path2_circle_to), path2.value().path_to_circle));
+    CHECK(WorldPathApprox(WorldPath(path2_circle), path2.value().mCirclePath));
+    CHECK(WorldPathApprox(WorldPath(path2_circle_to), path2.value().mPathToCircle));
 
     auto path2_exp = PathGenerator::FindCircularPath({15, 3},
                                                      {10, 4},
@@ -428,7 +428,9 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
 
 TEST_CASE("Circular Path Generation -- Edge Cases", "[CirclePath]")
 {
-
+    // Fill this in later possibly. Give me a break this was a lot to write and AI sucks at this type of testing
+    // I have to manually verify every test in desmos and think long and hard about everything returned. It isn't easy
+    // I also don't know if these functions are directly useful yet so before I spend tons more time... please ignore this empty test case
 }
 
 TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
@@ -508,8 +510,8 @@ TEST_CASE("Rectangular Loop Generation -- Simple Cases", "[RectangularLoop]")
         {2.5, 1}, {3.5, 1}, {4.5, 1}, {5.5, 1}, {5.5, 2}, {5.5, 3}, {5.5, 4}, {5.5, 5}, {4.5, 5}, {3.5, 5}, {2.5, 5},
         {2.5, 4}, {2.5, 3}, {2.5, 2}
     };
-    CHECK(WorldPathApprox(WorldPath(rectangle1_path), rectangle1.value().circle_path));
-    CHECK(WorldPathApprox(WorldPath(rectangle1_path_to), rectangle1.value().path_to_circle));
+    CHECK(WorldPathApprox(WorldPath(rectangle1_path), rectangle1.value().mCirclePath));
+    CHECK(WorldPathApprox(WorldPath(rectangle1_path_to), rectangle1.value().mPathToCircle));
 
     // Opposite diretion works as well
     auto rectangle2 = PathGenerator::FindRectangularLoopPath({1, 1},
@@ -522,12 +524,13 @@ TEST_CASE("Rectangular Loop Generation -- Simple Cases", "[RectangularLoop]")
         {2.5, 1}, {2.5, 2}, {2.5, 3}, {2.5, 4}, {2.5, 5}, {3.5, 5}, {4.5, 5}, {5.5, 5}, {5.5, 4}, {5.5, 3}, {5.5, 2},
         {5.5, 1}, {4.5, 1}, {3.5, 1}
     };
-    CHECK(WorldPathApprox(WorldPath(rectangle2_path), rectangle2.value().circle_path));
-    CHECK(WorldPathApprox(WorldPath(rectangle2_path_to), rectangle2.value().path_to_circle));
+    CHECK(WorldPathApprox(WorldPath(rectangle2_path), rectangle2.value().mCirclePath));
+    CHECK(WorldPathApprox(WorldPath(rectangle2_path_to), rectangle2.value().mPathToCircle));
 }
 
 TEST_CASE("Rectangular Loop Generation -- Edge Cases", "[RectangularLoop]")
 {
+    // Ignore this one too. This took too long as is.
 }
 
 TEST_CASE("Path Generation - Doubles testing", "[group2]")
@@ -579,8 +582,8 @@ TEST_CASE("Path Generation - Doubles testing", "[group2]")
         {1.45142, 1.74359}, {2.45142, 1.74359}, {3.45142, 1.74359}, {4.45142, 1.74359}, {5.45142, 1.74359},
         {6.45142, 1.74359}
     };
-    CHECK(WorldPathApprox(WorldPath(circle1_exp_path_to), circle1_exp.value().path_to_circle));
-    CHECK(WorldPathApprox(WorldPath(circle1_exp_path), circle1_exp.value().circle_path));
+    CHECK(WorldPathApprox(WorldPath(circle1_exp_path_to), circle1_exp.value().mPathToCircle));
+    CHECK(WorldPathApprox(WorldPath(circle1_exp_path), circle1_exp.value().mCirclePath));
 
     // TODO check circle generation against walls
 }

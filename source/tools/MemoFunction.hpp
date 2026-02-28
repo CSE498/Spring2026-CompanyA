@@ -47,7 +47,7 @@ namespace cse498 {
   {
    Key key(inputs...);
 
-   if (mCache.find(key) != mCache.end())
+   if (mCache.contains(key))
    {
     //std::cout << "from cache" << std::endl;
     return mCache[key];
@@ -71,8 +71,8 @@ namespace cse498 {
 
   void CacheClear() { mCache.clear(); mQueue.clear(); }
 
-  void SetLimit(int limit) { mLimit = limit; }
+  void SetLimit(const int limit) { mLimit = limit; }
 
-  bool IsCached(Key key) const { return mCache.find(key) != mCache.end(); }
+  bool IsCached(Key key) const { return mCache.contains(key); }
  };
 }

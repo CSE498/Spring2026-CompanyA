@@ -123,11 +123,11 @@ private:
      */
     struct MultiGoalHeuristic
     {
-        std::unordered_set<WorldPosition> goals;
+        std::unordered_set<WorldPosition> mGoals;
         double operator()(const WorldPosition &p1) const
         {
             double best = std::numeric_limits<double>::infinity();
-            for (const auto &each : goals)
+            for (const auto &each : mGoals)
             {
                 best = std::min(best, EuclideanDistance(p1, each));
             }
@@ -136,7 +136,7 @@ private:
         bool equals(const WorldPosition &p1) const
         {
             assert(p1.IsValid()); // I think this is always true? Let Logan Rimarcik know if this fails
-            return goals.contains(round(p1));
+            return mGoals.contains(round(p1));
         }
     };
 
@@ -360,8 +360,10 @@ public:
  */
 struct CirclePath
 {
-    WorldPath path_to_circle;
-    WorldPath circle_path;
+    WorldPath mPathToCircle;
+    WorldPath mCirclePath;
+    CirclePath(WorldPath  pathToCircle, WorldPath  circlePath) :
+    mPathToCircle(std::move(pathToCircle)), mCirclePath(std::move(circlePath)) {}
 };
 
 /*
