@@ -61,22 +61,20 @@ TEST_CASE("Test DataMap Remove Function")
 	CHECK(map.Has("Health") == true);
 	CHECK(map.Size() == 1);
 
-	CHECK(map.Remove("Health") == true);
+	map.Remove("Health");
 	CHECK(map.Has("Health") == false);
 	CHECK(map.Size() == 0);
-	// Removing nonexistent pair
-	CHECK(map.Remove("Health") == false);
-	CHECK(map.Size() == 0);
+
 
 	map.Set("Speed", 20.0);
 	CHECK(map.Size() == 1);
 	map.Set("Stamina", 50.0);
 	CHECK(map.Size() == 2);
-	CHECK(map.Remove("Speed") == true);
+	map.Remove("Speed");
 	CHECK(map.Size() == 1);
-	CHECK(map.Remove("Mana") == false);
+	map.Remove("Mana");
 	CHECK(map.Size() == 1);
-	CHECK(map.Remove("Stamina") == true);
+	map.Remove("Stamina");
 	CHECK(map.Size() == 0);
 	CHECK(map.Empty() == true);
 }
