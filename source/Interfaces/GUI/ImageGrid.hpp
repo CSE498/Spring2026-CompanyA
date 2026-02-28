@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <cassert>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 namespace cse498 {
 
@@ -28,8 +28,8 @@ namespace cse498 {
     size_t mWidth = 0;
     size_t mHeight = 0;
 
-    int mTileWidth = 0;
-    int mTileHeight = 0;
+    size_t mTileWidth = 0;
+    size_t mTileHeight = 0;
 
     std::vector<std::string> mCells;  ///< One image name per cell
 
@@ -39,20 +39,17 @@ namespace cse498 {
     }
 
   public:
-    /// Construct an empty grid
-    ImageGrid() = default;
-
     /// Construct grid with dimensions and tile size
     ImageGrid(size_t width, size_t height,
-              int tile_width, int tile_height);
+              size_t tile_width, size_t tile_height);
 
     // -- Accessors --
 
     [[nodiscard]] size_t GetWidth() const { return mWidth; }
     [[nodiscard]] size_t GetHeight() const { return mHeight; }
 
-    [[nodiscard]] int GetTileWidth() const { return mTileWidth; }
-    [[nodiscard]] int GetTileHeight() const { return mTileHeight; }
+    [[nodiscard]] size_t GetTileWidth() const { return mTileWidth; }
+    [[nodiscard]] size_t GetTileHeight() const { return mTileHeight; }
 
     [[nodiscard]] bool IsValid(size_t x, size_t y) const {
       return x < mWidth && y < mHeight;
