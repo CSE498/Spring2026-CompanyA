@@ -1,29 +1,51 @@
-#ifndef WEBTEXTBOX_HPP_
-#define WEBTEXTBOX_HPP_
+/**
+ * WebTextbox.hpp
+ * Declaration of the WebTextbox class for styled text elements in the WebUI.
+ *
+ * This class represents a DOM-backed text element used in the CSE 498 WebUI
+ * subsystem. WebTextbox provides a high-level interface for manipulating and
+ * rendering styled text within a browser environment compiled through
+ * Emscripten/WebAssembly.
+ *
+ * Additional Note:
+ *      Portions of formatting, documentation, and cleanup were assisted by
+ *      AI tooling to improve consistency and readability.
+ *
+ * All project classes must reside in the cse498 namespace.
+ *
+ * author Lance Motowski
+ * date   Spring 2026
+ */
 
-#include <functional>
+#pragma once
+
 #include <string>
+#include <optional>
 #include <emscripten/val.h>
 
-#include "IDomElement.hpp"   // same base used by WebImage
-#include "WebLayout.hpp"     // for mountToLayout signature
+#include "../WebLayout/WebLayout.hpp"
 
-/// Manages an HTML text element (<div>) from C++ via Emscripten.
-/// Rendered as a DOM element via WebLayout.
-class WebTextbox : public IDomElement {
- public:
+#include "../internal/IDomElement.hpp"
 
-  // RectPx is just a lightweight struct to hold the pixel-based bounding rectangle of a DOM element.
-  struct RectPx {
-    double x = 0.0;
-    double y = 0.0;
-    double w = 0.0;
-    double h = 0.0;
+namespace cse498 {
+
+
+class WebTextbox : public IDomElement
+{
+public:
+  struct RectPx
+  {
+    double x{0.0};
+    double y{0.0};
+    double w{0.0};
+    double h{0.0};
   };
 
-  /* ----- Constuctor / Destructor / Move semantics ----- */
-  explicit WebTextbox(const std::string& initial_text = "");
-  ~WebTextbox();
+  enum class TextAlign { Left, Center, Right };
+
+  // -------- Constructors / Move semantics --------
+  WebTextbox();
+  explicit WebTextbox(const std::string& initial_text);
 
   WebTextbox(const WebTextbox&) = delete;
   WebTextbox& operator=(const WebTextbox&) = delete;
@@ -31,73 +53,81 @@ class WebTextbox : public IDomElement {
   WebTextbox(WebTextbox&& other) noexcept;
   WebTextbox& operator=(WebTextbox&& other) noexcept;
 
-  /* ----- Text ----- */
+  ~WebTextbox() override;
+
+  // -------- Text API --------
   void SetText(const std::string& text);
   void AppendText(const std::string& text);
   std::string GetText() const;
   void Clear();
 
-  /* ----- Formatting ----- */
+  // -------- Formatting / Style API --------
   void SetFontFamily(const std::string& family);
-  void SetFallbackFontFamily(const std::string& fallback_family); 
+  void SetFallbackFontFamily(const std::string& fallback_family);
   void SetFontSize(float size_px);
-  void SetLineHeight(float line_height_px);                       
+  void SetLineHeight(float line_height_px);
   void SetColor(const std::string& css_color);
   void SetBold(bool enabled);
   void SetItalic(bool enabled);
-  void SetAlignment(const std::string& alignment);
+  void SetAlignment(TextAlign alignment); // left/center/right
   void SetMaxWidth(float width_px);
-  void SetWrap(bool enabled);                   
+  void SetWrap(bool enabled);
+  void SetBackgroundColor(const std::string& css_color);
+  void ClearBackgroundColor();
 
-  /* ----- Debug and layout visualization ----- */
-  void SetBackgroundColor(const std::string& css_color); 
-  void ClearBackgroundColor();                           
+  // -------- Bounding box --------
+  RectPx GetBoundingBoxPx() const;
+  double GetWidthPx() const;
+  double GetHeightPx() const;
 
-  /* ----- Bounding box ----- */
-  RectPx GetBoundingBoxPx() const; 
-  double GetWidthPx() const;       
-  double GetHeightPx() const;     
-
-  /* ----- Visibility ----- */
+  // -------- Visibility --------
   void Show();
   void Hide();
   bool IsVisible() const;
 
-  /* ----- IDomElement Interface ----- */
-  void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  // -------- IDomElement overrides --------
+  void MountToLayout(WebLayout& parent, Alignment align = Alignment::None) override;
+
   void Unmount() override;
   void SyncFromModel() override;
   const std::string& Id() const override;
 
- private:
+private:
+  
+  // -------- Internal helper methods --------
   void ApplyText();
   void ApplyStyles();
   void ApplyAlignment(Alignment align);
 
-  std::string mText;
-  bool mIsVisible = true;
+  std::string mText;                      // Current text content
 
-  // font/fallback behavior
-  std::string mRequestedFontFamily;
-  std::string mFallbackFontFamily = "sans-serif";
+  bool mIsVisible{true};                  // Visibility state
 
-  // basic style state
-  float mFontSizePx = 16.0f;
-  float mLineHeightPx = 0.0f; // 0 let browser choose
-  std::string mColor = "#000";
-  bool mBold = false;
-  bool mItalic = false;
-  std::string mTextAlign = "left";
-  float mMaxWidthPx = 0.0f; // 0 unset
-  bool mWrap = true;
-  std::string mBackgroundColor; // transparent
+  std::string mRequestedFontFamily;       // User-requested font family (may be empty)
+  std::string mFallbackFontFamily;        // Fallback font family (may be empty)
 
-  // DOM and identity
-  emscripten::val mElement;
-  std::string mId;
-  Alignment mAlign = Alignment::Start;
+  float mFontSizePx{16.0f};               // Default font size in pixels
+  float mLineHeightPx{0.0f};              // Line height in pixels (0 = normal)
+
+  std::string mColor{"#000000"};        // Default text color (black)
+  bool mBold{false};                      // Bold style flag
+  bool mItalic{false};                    // Italic style flag
+  std::string mTextAlign{"left"};
+
+  float mMaxWidthPx{0.0f};                // 0 means no max width
+  bool mWrap{true};                       // Whether text should wrap when max width is set
+
+  
+  // Optional background color; if not set, background is transparent
+  std::optional<std::string> mBackgroundColor = std::nullopt;
+
+  // DOM element representing this textbox; null until mounted
+  emscripten::val mElement{emscripten::val::null()};
+
+  std::string mId;                        // Unique ID for this textboxs root DOM element
+  Alignment mAlign{Alignment::None};      // Alignment within parent layout
 
   static int mNextIdCounter;
 };
 
-#endif  // WEBTEXTBOX_HPP_
+} // namespace cse498
