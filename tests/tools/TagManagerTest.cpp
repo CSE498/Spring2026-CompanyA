@@ -3,6 +3,7 @@
 #include "../../source/tools/TagManager.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 #include <string_view>
 #include <unordered_set>
 #include <vector>
@@ -21,8 +22,20 @@ static std::vector<std::string_view> SV(std::initializer_list<std::string_view> 
     return std::vector<std::string_view>(tags.begin(), tags.end());
 }
 
-
 // Tests
+TEST_CASE("TagManager: Empty tags throw invalid_argument", "[TagManager]")
+{
+    TagManager tm;
+    TagManager::ObjectId a = 1;
+
+    REQUIRE_THROWS_AS(tm.OnTagAdded(a, ""), std::invalid_argument);
+    REQUIRE_THROWS_AS(tm.OnTagRemoved(a, ""), std::invalid_argument);
+    REQUIRE_THROWS_AS(tm.HasTag(a, ""), std::invalid_argument);
+
+    REQUIRE_THROWS_AS(tm.Query(SV({ "" })), std::invalid_argument);
+    REQUIRE_THROWS_AS(tm.Query(SV({ "ok" }), SV({ "" })), std::invalid_argument);
+}
+
 TEST_CASE("TagManager: OnTagAdded makes HasTag true and Query returns owner", "[TagManager]")
 {
     TagManager tm;
@@ -75,6 +88,19 @@ TEST_CASE("TagManager: Removing a non-existent tag does not crash and keeps stat
 
     auto res = tm.Query(SV({ "red" }));
     REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a});
+}
+
+TEST_CASE("TagManager: Excluding a tag that doesn't exist changes nothing", "[TagManager]")
+{
+    TagManager tm;
+    TagManager::ObjectId a = 1;
+    TagManager::ObjectId b = 2;
+
+    tm.OnTagAdded(a, "red");
+    tm.OnTagAdded(b, "red");
+
+    auto res = tm.Query(SV({ "red" }), SV({ "ghost" }));
+    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a, b});
 }
 
 TEST_CASE("TagManager: Query with multiple include tags returns intersection", "[TagManager]")
