@@ -12,6 +12,9 @@
 #include <algorithm>
 #include <string>
 
+using namespace cse498;
+
+
 TEST_CASE("AddFunction and Trigger for void()", "[ActionMap]")
 {
     ActionMap map;
