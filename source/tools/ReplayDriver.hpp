@@ -1,24 +1,28 @@
-#ifndef REPLAYDRIVER_H
-#define REPLAYDRIVER_H
+#ifndef REPLAYDRIVER_HPP
+#define REPLAYDRIVER_HPP
 
 #include "ActionLog.hpp"
 
 #include <string>
 #include <vector>  
 #include <fstream>
+#include <memory>
 
+namespace cse498 {
 
 class ReplayDriver {
 private:
-    const ActionLog* m_actionLog = nullptr;
-    bool verifyAction(const Action& action);
-    std::vector<Action> lastReplayedActions; // Store the last set of actions that were replayed for potential verification or analysis
+    std::shared_ptr<const ActionLog> m_actionLog;
+    bool VerifyAction(const Action& action);
+    std::vector<Action> m_lastReplayedActions; // Store the last set of actions that were replayed for potential verification or analysis
 public:
     ReplayDriver() = default;
-    explicit ReplayDriver(const ActionLog& log) : m_actionLog(&log) {}
+    explicit ReplayDriver(std::shared_ptr<const ActionLog> log) : m_actionLog(std::move(log)) {}
 
-    void setActionLog(const ActionLog& log) { m_actionLog = &log; }
-    bool IsActionLogSet();
+    void setActionLog(std::shared_ptr<const ActionLog> log) {
+        m_actionLog = std::move(log);
+    }
+    bool IsActionLogSet() const;
 
     void Replay();
     void ReplayByStep(int step);
@@ -29,4 +33,5 @@ public:
     bool SaveReplayToFile(const std::string& filename);
 };
 
+}
 #endif
