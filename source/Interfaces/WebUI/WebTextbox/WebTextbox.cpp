@@ -663,6 +663,7 @@ void WebTextbox::MountToLayout(WebLayout& parent, Alignment align)
   Unmount();
 
   parentEl_.call<void>("appendChild", mElement);
+  parent.AddElement(this, align);
   SyncFromModel();
 }
 

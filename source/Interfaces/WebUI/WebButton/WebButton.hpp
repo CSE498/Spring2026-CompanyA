@@ -7,6 +7,8 @@
 
 #include "../internal/IDomElement.hpp"
 
+namespace cse498 {
+
 class WebButton : public IDomElement {
  public:
   /// Creates a button with the given label, appended to document body
@@ -46,7 +48,8 @@ class WebButton : public IDomElement {
   void Hide();
   bool IsVisible() const;
 
-  void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  void MountToLayout(WebLayout& parent,
+                     Alignment align = Alignment::Start) override;
   void Unmount() override;
   void SyncFromModel() override;
   const std::string& Id() const override;
@@ -69,5 +72,7 @@ class WebButton : public IDomElement {
 
   void AttachClickListener();
 };
+
+}  // namespace cse498
 
 #endif

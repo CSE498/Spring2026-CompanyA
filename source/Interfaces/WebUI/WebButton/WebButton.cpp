@@ -5,6 +5,8 @@
 
 using emscripten::val;
 
+namespace cse498 {
+
 int WebButton::mNextIdCounter = 1;
 
 static val GetDocument() {
@@ -229,4 +231,6 @@ extern "C" {
       btn->HandleClick();
     }
   }
+}
+
 }

@@ -1,0 +1,28 @@
+{
+  "name": "spring2026-companya",
+  "version": "1.0.0",
+  "description": "Course repository for Spring 2026 session of CSE 498, Section 2 (Company A)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests/Interfaces/WebUI/webui_testrunner.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CSE498/Spring2026-CompanyA.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CSE498/Spring2026-CompanyA/issues"
+  },
+  "homepage": "https://github.com/CSE498/Spring2026-CompanyA#readme",
+  "dependencies": {
+    "happy-dom": "^20.8.3"
+  }
+}

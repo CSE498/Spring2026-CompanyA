@@ -28,7 +28,7 @@
 #ifdef __EMSCRIPTEN__
 
 // Generate Catch2 main
-#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../../source/Interfaces/WebUI/WebTextbox/WebTextbox.hpp"
@@ -97,7 +97,7 @@ static std::string UniqueRootId(const std::string& prefix)
 // ========================================================
 // Test 1: Constructor — defaults set correctly
 // ========================================================
-TEST_CASE("Constructor sets defaults correctly", "[webtextbox]")
+TEST_CASE("WebTextbox Constructor sets defaults correctly", "[webtextbox]")
 {
     WebTextbox tb("hello");
 
@@ -109,7 +109,7 @@ TEST_CASE("Constructor sets defaults correctly", "[webtextbox]")
 // ========================================================
 // Test 2: Constructor — default text empty
 // ========================================================
-TEST_CASE("Constructor default text is empty", "[webtextbox]")
+TEST_CASE("WebTextbox Constructor default text is empty", "[webtextbox]")
 {
     WebTextbox tb;
 
@@ -119,7 +119,7 @@ TEST_CASE("Constructor default text is empty", "[webtextbox]")
 // ========================================================
 // Test 3: SetText / GetText
 // ========================================================
-TEST_CASE("SetText / GetText", "[webtextbox]")
+TEST_CASE("WebTextbox SetText / GetText", "[webtextbox]")
 {
     WebTextbox tb("old");
 
@@ -130,7 +130,7 @@ TEST_CASE("SetText / GetText", "[webtextbox]")
 // ========================================================
 // Test 4: AppendText
 // ========================================================
-TEST_CASE("AppendText appends correctly", "[webtextbox]")
+TEST_CASE("WebTextbox AppendText appends correctly", "[webtextbox]")
 {
     WebTextbox tb("Hello");
 
@@ -141,7 +141,7 @@ TEST_CASE("AppendText appends correctly", "[webtextbox]")
 // ========================================================
 // Test 5: Clear
 // ========================================================
-TEST_CASE("Clear empties text", "[webtextbox]")
+TEST_CASE("WebTextbox Clear empties text", "[webtextbox]")
 {
     WebTextbox tb("something");
 
@@ -152,7 +152,7 @@ TEST_CASE("Clear empties text", "[webtextbox]")
 // ========================================================
 // Test 6: Show / Hide / IsVisible
 // ========================================================
-TEST_CASE("Show / Hide / IsVisible", "[webtextbox][visibility]")
+TEST_CASE("WebTextbox Show / Hide / IsVisible", "[webtextbox][visibility]")
 {
     WebTextbox tb("x");
 
@@ -166,7 +166,7 @@ TEST_CASE("Show / Hide / IsVisible", "[webtextbox][visibility]")
 // ========================================================
 // Test 7: Multiple Show/Hide toggles
 // ========================================================
-TEST_CASE("Multiple Show/Hide toggles", "[webtextbox][visibility]")
+TEST_CASE("WebTextbox Multiple Show/Hide toggles", "[webtextbox][visibility]")
 {
     WebTextbox tb("x");
 
@@ -182,7 +182,7 @@ TEST_CASE("Multiple Show/Hide toggles", "[webtextbox][visibility]")
 // ========================================================
 // Test 8: SyncFromModel (no crash, state preserved)
 // ========================================================
-TEST_CASE("SyncFromModel preserves state", "[webtextbox]")
+TEST_CASE("WebTextbox SyncFromModel preserves state", "[webtextbox]")
 {
     WebTextbox tb("hi");
 
@@ -205,7 +205,7 @@ TEST_CASE("SyncFromModel preserves state", "[webtextbox]")
 // ========================================================
 // Test 9: Bounding box returns 0 when not mounted
 // ========================================================
-TEST_CASE("Bounding box is zero when not mounted", "[webtextbox][bbox]")
+TEST_CASE("WebTextbox Bounding box is zero when not mounted", "[webtextbox][bbox]")
 {
     WebTextbox tb("measure me");
 
@@ -217,7 +217,7 @@ TEST_CASE("Bounding box is zero when not mounted", "[webtextbox][bbox]")
 // ========================================================
 // Test 10: Id() uniqueness
 // ========================================================
-TEST_CASE("Id() is unique per instance", "[webtextbox][id]")
+TEST_CASE("WebTextbox Id() is unique per instance", "[webtextbox][id]")
 {
     WebTextbox a("a");
     WebTextbox b("b");
@@ -231,7 +231,7 @@ TEST_CASE("Id() is unique per instance", "[webtextbox][id]")
 // ========================================================
 // Test 11: Id() prefix
 // ========================================================
-TEST_CASE("Id() starts with expected prefix", "[webtextbox][id]")
+TEST_CASE("WebTextbox Id() starts with expected prefix", "[webtextbox][id]")
 {
     WebTextbox tb("x");
 
@@ -243,7 +243,7 @@ TEST_CASE("Id() starts with expected prefix", "[webtextbox][id]")
 // ========================================================
 // Test 12: Move constructor transfers state
 // ========================================================
-TEST_CASE("Move constructor transfers state", "[webtextbox][move]")
+TEST_CASE("WebTextbox Move constructor transfers state", "[webtextbox][move]")
 {
     WebTextbox original("move me");
     original.SetFontFamily("Arial");
@@ -265,7 +265,7 @@ TEST_CASE("Move constructor transfers state", "[webtextbox][move]")
 // ========================================================
 // Test 13: Move assignment transfers state
 // ========================================================
-TEST_CASE("Move assignment transfers state", "[webtextbox][move]")
+TEST_CASE("WebTextbox Move assignment transfers state", "[webtextbox][move]")
 {
     WebTextbox src("source");
     src.SetBold(true);
@@ -283,7 +283,7 @@ TEST_CASE("Move assignment transfers state", "[webtextbox][move]")
 // ========================================================
 // Test 14: Alignment accepts valid values
 // ========================================================
-TEST_CASE("SetAlignment accepts left/center/right", "[webtextbox]")
+TEST_CASE("WebTextbox SetAlignment accepts left/center/right", "[webtextbox]")
 {
     WebTextbox tb("x");
 
@@ -295,7 +295,7 @@ TEST_CASE("SetAlignment accepts left/center/right", "[webtextbox]")
 // ========================================================
 // Test 15: Background color set/clear
 // ========================================================
-TEST_CASE("SetBackgroundColor / ClearBackgroundColor do not crash",
+TEST_CASE("WebTextbox SetBackgroundColor / ClearBackgroundColor do not crash",
           "[webtextbox][style]")
 {
     WebTextbox tb("x");
@@ -308,7 +308,7 @@ TEST_CASE("SetBackgroundColor / ClearBackgroundColor do not crash",
 // ========================================================
 // Test 16: Font fallback
 // ========================================================
-TEST_CASE("SetFallbackFontFamily does not crash", "[webtextbox][style]")
+TEST_CASE("WebTextbox SetFallbackFontFamily does not crash", "[webtextbox][style]")
 {
     WebTextbox tb("x");
 
@@ -319,7 +319,7 @@ TEST_CASE("SetFallbackFontFamily does not crash", "[webtextbox][style]")
 // ========================================================
 // Test 17: MaxWidth / Wrap interaction
 // ========================================================
-TEST_CASE("SetMaxWidth / SetWrap do not crash", "[webtextbox][style]")
+TEST_CASE("WebTextbox SetMaxWidth / SetWrap do not crash", "[webtextbox][style]")
 {
     WebTextbox tb("long long long long long");
 
@@ -331,7 +331,7 @@ TEST_CASE("SetMaxWidth / SetWrap do not crash", "[webtextbox][style]")
 // ========================================================
 // Test 18: MountToLayout creates DOM element
 // ========================================================
-TEST_CASE("MountToLayout makes element appear in DOM",
+TEST_CASE("WebTextbox MountToLayout makes element appear in DOM",
           "[webtextbox][dom]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -351,7 +351,7 @@ TEST_CASE("MountToLayout makes element appear in DOM",
 // ========================================================
 // Test 19: Unmount removes DOM element
 // ========================================================
-TEST_CASE("Unmount removes element from DOM", "[webtextbox][dom]")
+TEST_CASE("WebTextbox Unmount removes element from DOM", "[webtextbox][dom]")
 {
     WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
@@ -370,7 +370,7 @@ TEST_CASE("Unmount removes element from DOM", "[webtextbox][dom]")
 // ========================================================
 // Test 20: SetText updates DOM textContent when mounted
 // ========================================================
-TEST_CASE("SetText updates DOM textContent", "[webtextbox][dom]")
+TEST_CASE("WebTextbox SetText updates DOM textContent", "[webtextbox][dom]")
 {
     WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
@@ -389,7 +389,7 @@ TEST_CASE("SetText updates DOM textContent", "[webtextbox][dom]")
 // ========================================================
 // Test 21: AppendText updates DOM textContent when mounted
 // ========================================================
-TEST_CASE("AppendText updates DOM textContent", "[webtextbox][dom]")
+TEST_CASE("WebTextbox AppendText updates DOM textContent", "[webtextbox][dom]")
 {
     WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
@@ -408,7 +408,7 @@ TEST_CASE("AppendText updates DOM textContent", "[webtextbox][dom]")
 // ========================================================
 // Test 22: Show/Hide affects computed display when mounted
 // ========================================================
-TEST_CASE("Show/Hide affects computed display", "[webtextbox][style]")
+TEST_CASE("WebTextbox Show/Hide affects computed display", "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
@@ -431,7 +431,7 @@ TEST_CASE("Show/Hide affects computed display", "[webtextbox][style]")
 // ========================================================
 // Test 23: SetFontSize affects computed font-size
 // ========================================================
-TEST_CASE("SetFontSize changes computed font-size",
+TEST_CASE("WebTextbox SetFontSize changes computed font-size",
           "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -452,7 +452,7 @@ TEST_CASE("SetFontSize changes computed font-size",
 // ========================================================
 // Test 24: Bold/Italic affect computed styles
 // ========================================================
-TEST_CASE("SetBold/SetItalic change computed font-weight/style",
+TEST_CASE("WebTextbox SetBold/SetItalic change computed font-weight/style",
           "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -478,7 +478,7 @@ TEST_CASE("SetBold/SetItalic change computed font-weight/style",
 // ========================================================
 // Test 25: SetColor affects computed color
 // ========================================================
-TEST_CASE("SetColor changes computed color", "[webtextbox][style]")
+TEST_CASE("WebTextbox SetColor changes computed color", "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
@@ -499,7 +499,7 @@ TEST_CASE("SetColor changes computed color", "[webtextbox][style]")
 // ========================================================
 // Test 26: SetAlignment affects computed text-align
 // ========================================================
-TEST_CASE("SetAlignment changes computed text-align",
+TEST_CASE("WebTextbox SetAlignment changes computed text-align",
           "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -519,7 +519,7 @@ TEST_CASE("SetAlignment changes computed text-align",
 // ========================================================
 // Test 27: SetMaxWidth affects computed max-width
 // ========================================================
-TEST_CASE("SetMaxWidth changes computed max-width",
+TEST_CASE("WebTextbox SetMaxWidth changes computed max-width",
           "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -541,7 +541,7 @@ TEST_CASE("SetMaxWidth changes computed max-width",
 // ========================================================
 // Test 28: Wrap toggles white-space computed property
 // ========================================================
-TEST_CASE("SetWrap toggles computed white-space",
+TEST_CASE("WebTextbox SetWrap toggles computed white-space",
           "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -567,7 +567,7 @@ TEST_CASE("SetWrap toggles computed white-space",
 // ========================================================
 // Test 29: Background color applies via computed background-color
 // ========================================================
-TEST_CASE("Background color applies via computed background-color",
+TEST_CASE("WebTextbox Background color applies via computed background-color",
           "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -588,7 +588,7 @@ TEST_CASE("Background color applies via computed background-color",
 // ========================================================
 // Test 30: Bounding box becomes non-zero when mounted
 // ========================================================
-TEST_CASE("Bounding box is non-zero after mount",
+TEST_CASE("WebTextbox Bounding box is non-zero after mount",
           "[webtextbox][bbox]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -607,7 +607,7 @@ TEST_CASE("Bounding box is non-zero after mount",
 // ========================================================
 // Test 31: Multi-line text increases height vs single line
 // ========================================================
-TEST_CASE("Multi-line text increases height", "[webtextbox][bbox]")
+TEST_CASE("WebTextbox Multi-line text increases height", "[webtextbox][bbox]")
 {
     WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
@@ -629,7 +629,7 @@ TEST_CASE("Multi-line text increases height", "[webtextbox][bbox]")
 // ========================================================
 // Test 32: Layout alignment sets align-self on the child
 // ========================================================
-TEST_CASE("Alignment sets align-self style", "[webtextbox][layout]")
+TEST_CASE("WebTextbox Alignment sets align-self style", "[webtextbox][layout]")
 {
     WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
@@ -649,7 +649,7 @@ TEST_CASE("Alignment sets align-self style", "[webtextbox][layout]")
 // ========================================================
 // Test 33: SyncFromModel repairs DOM if style is manually changed
 // ========================================================
-TEST_CASE("SyncFromModel repairs manual DOM style mutation",
+TEST_CASE("WebTextbox SyncFromModel repairs manual DOM style mutation",
           "[webtextbox][dom]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -678,7 +678,7 @@ TEST_CASE("SyncFromModel repairs manual DOM style mutation",
 // ========================================================
 // Test 34: Move + mount keeps element accessible by same id
 // ========================================================
-TEST_CASE("Move then mount keeps element accessible",
+TEST_CASE("WebTextbox Move then mount keeps element accessible",
           "[webtextbox][move][dom]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -702,7 +702,7 @@ TEST_CASE("Move then mount keeps element accessible",
 // ========================================================
 // Test 35: Two textboxes mount and preserve ordering in layout
 // ========================================================
-TEST_CASE("Layout preserves order of mounted textboxes",
+TEST_CASE("WebTextbox Layout preserves order of mounted textboxes",
           "[webtextbox][layout]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -728,7 +728,7 @@ TEST_CASE("Layout preserves order of mounted textboxes",
 // ========================================================
 // Test 36: Textbox can live inside a real HTML button
 // ========================================================
-TEST_CASE("Textbox can be embedded inside an HTML button",
+TEST_CASE("WebTextbox Textbox can be embedded inside an HTML button",
           "[webtextbox][dom]")
 {
     val doc = GetDocument();
@@ -773,7 +773,7 @@ TEST_CASE("Textbox can be embedded inside an HTML button",
 // ========================================================
 // Test 37: Clearing background returns transparent-ish
 // ========================================================
-TEST_CASE("ClearBackgroundColor results in transparent background",
+TEST_CASE("WebTextbox ClearBackgroundColor results in transparent background",
           "[webtextbox][style]")
 {
     WebLayout root(UniqueRootId("layout"));
@@ -802,54 +802,56 @@ TEST_CASE("ClearBackgroundColor results in transparent background",
 // Test 38: WebTextbox handles empty strings safely
 // ========================================================
 
-TEST_CASE("WebTextbox handles empty strings safely", "[webtextbox][edge]") {
-    WebLayout root(UniqueRootId("layout-empty"));
-    root.SetLayoutType(LayoutType::Vertical);
-    root.Apply();
+TEST_CASE("WebTextbox WebTextbox handles empty strings safely", "[webtextbox][edge]")
+{
+  WebLayout root(UniqueRootId("layout-empty"));
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
 
-    WebTextbox tb("initial");
-    tb.MountToLayout(root, Alignment::Start);
-    root.Apply();
+  WebTextbox tb("initial");
+  tb.MountToLayout(root, Alignment::Start);
+  root.Apply();
 
-    // Set empty text
-    tb.SetText("");
-    val el = ById(tb.Id());
-    CHECK(el["textContent"].as<std::string>().empty(),
-          "textContent should be empty after SetText(\"\")");
+  // Set empty text
+  tb.SetText("");
+  val el = ById(tb.Id());
+  CHECK(el["textContent"].as<std::string>().empty(),
+        "textContent should be empty after SetText(\"\")");
 
-    // Append empty text
-    tb.AppendText("");
-    CHECK(el["textContent"].as<std::string>().empty(),
-          "AppendText(\"\") should not change empty text");
+  // Append empty text
+  tb.AppendText("");
+  CHECK(el["textContent"].as<std::string>().empty(),
+        "AppendText(\"\") should not change empty text");
 }
 
 // ========================================================
 // Test 39: WebTextbox handles very long text without crashing
 // ========================================================
 
-TEST_CASE("WebTextbox handles very long text", "[webtextbox][edge]") {
-    WebLayout root(UniqueRootId("layout-long"));
-    root.SetLayoutType(LayoutType::Vertical);
-    root.Apply();
+TEST_CASE("WebTextbox WebTextbox handles very long text", "[webtextbox][edge]")
+{
+  WebLayout root(UniqueRootId("layout-long"));
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
 
-    // Create a very long string
-    std::string longText(10000, 'X');
+  // Create a very long string
+  std::string longText(10000, 'X');
 
-    WebTextbox tb("short");
-    tb.MountToLayout(root, Alignment::Start);
-    root.Apply();
+  WebTextbox tb("short");
+  tb.MountToLayout(root, Alignment::Start);
+  root.Apply();
 
-    double h1 = tb.GetHeightPx();
+  double h1 = tb.GetHeightPx();
 
-    tb.SetText(longText);
-    root.Apply();
+  tb.SetText(longText);
+  root.Apply();
 
-    val el = ById(tb.Id());
-    CHECK(el["textContent"].as<std::string>().size() == longText.size(),
-          "DOM textContent should match long text size");
+  val el = ById(tb.Id());
+  CHECK(el["textContent"].as<std::string>().size() == longText.size(),
+        "DOM textContent should match long text size");
 
-    double h2 = tb.GetHeightPx();
-    CHECK(h2 >= h1, "height should not shrink after very long text");
+  double h2 = tb.GetHeightPx();
+  CHECK(h2 >= h1, "height should not shrink after very long text");
 }
 
 #endif // __EMSCRIPTEN__

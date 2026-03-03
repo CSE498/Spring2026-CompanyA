@@ -1,4 +1,4 @@
-#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../../source/Interfaces/WebUI/WebImage/WebImage.hpp"
@@ -583,60 +583,60 @@ void test_multiple_source_changes() {
 // ==================== TEST_CASE Registration ====================
 
 // -- Construction --
-TEST_CASE("Constructor sets source and alt text", "[WebImage]") { test_constructor(); }
-TEST_CASE("Constructor default alt text is empty", "[WebImage]") { test_constructor_default_alt(); }
+TEST_CASE("WebImage Constructor sets source and alt text", "[WebImage]") { test_constructor(); }
+TEST_CASE("WebImage Constructor default alt text is empty", "[WebImage]") { test_constructor_default_alt(); }
 
 // -- Source & metadata setters/getters --
-TEST_CASE("SetSource and GetSource", "[WebImage]") { test_set_get_source(); }
-TEST_CASE("SetSource resets loaded and error state", "[WebImage]") { test_set_source_resets_state(); }
-TEST_CASE("SetAltText and GetAltText", "[WebImage]") { test_set_get_alt_text(); }
+TEST_CASE("WebImage SetSource and GetSource", "[WebImage]") { test_set_get_source(); }
+TEST_CASE("WebImage SetSource resets loaded and error state", "[WebImage]") { test_set_source_resets_state(); }
+TEST_CASE("WebImage SetAltText and GetAltText", "[WebImage]") { test_set_get_alt_text(); }
 
 // -- Sizing (SetSize and Resize with various dimensions) --
-TEST_CASE("SetSize sets width and height", "[WebImage]") { test_set_size(); }
-TEST_CASE("SetSize handles zero dimensions", "[WebImage]") { test_set_size_zero(); }
-TEST_CASE("Resize without aspect ratio", "[WebImage]") { test_resize_no_aspect_ratio(); }
-TEST_CASE("Resize with aspect ratio", "[WebImage]") { test_resize_maintain_aspect_ratio(); }
-TEST_CASE("Resize default parameter", "[WebImage]") { test_resize_default_param(); }
+TEST_CASE("WebImage SetSize sets width and height", "[WebImage]") { test_set_size(); }
+TEST_CASE("WebImage SetSize handles zero dimensions", "[WebImage]") { test_set_size_zero(); }
+TEST_CASE("WebImage Resize without aspect ratio", "[WebImage]") { test_resize_no_aspect_ratio(); }
+TEST_CASE("WebImage Resize with aspect ratio", "[WebImage]") { test_resize_maintain_aspect_ratio(); }
+TEST_CASE("WebImage Resize default parameter", "[WebImage]") { test_resize_default_param(); }
 
 // -- Opacity --
-TEST_CASE("SetOpacity and GetOpacity", "[WebImage]") { test_set_get_opacity(); }
+TEST_CASE("WebImage SetOpacity and GetOpacity", "[WebImage]") { test_set_get_opacity(); }
 
 // -- Visibility (Show/Hide toggle) --
-TEST_CASE("Show Hide visibility", "[WebImage]") { test_show_hide_visibility(); }
-TEST_CASE("Visibility toggle multiple times", "[WebImage]") { test_visibility_toggle_multiple(); }
+TEST_CASE("WebImage Show Hide visibility", "[WebImage]") { test_show_hide_visibility(); }
+TEST_CASE("WebImage Visibility toggle multiple times", "[WebImage]") { test_visibility_toggle_multiple(); }
 
 // -- Loading state (tracked via HandleLoad / SetSource; MarkLoaded is private) --
-TEST_CASE("Loading state via HandleLoad and SetSource", "[WebImage]") { test_loaded_state(); }
-TEST_CASE("HasError default false", "[WebImage]") { test_has_error_default(); }
+TEST_CASE("WebImage Loading state via HandleLoad and SetSource", "[WebImage]") { test_loaded_state(); }
+TEST_CASE("WebImage HasError default false", "[WebImage]") { test_has_error_default(); }
 
 // -- Load/error event handlers and callbacks --
-TEST_CASE("HandleLoad sets state", "[WebImage]") { test_handle_load(); }
-TEST_CASE("HandleLoad invokes callback", "[WebImage]") { test_handle_load_callback(); }
-TEST_CASE("HandleError sets state", "[WebImage]") { test_handle_error(); }
-TEST_CASE("HandleError invokes callback", "[WebImage]") { test_handle_error_callback(); }
-TEST_CASE("HandleError with BlankRect mode", "[WebImage]") { test_handle_error_blank_rect(); }
-TEST_CASE("HandleError with NoOp mode", "[WebImage]") { test_handle_error_noop(); }
+TEST_CASE("WebImage HandleLoad sets state", "[WebImage]") { test_handle_load(); }
+TEST_CASE("WebImage HandleLoad invokes callback", "[WebImage]") { test_handle_load_callback(); }
+TEST_CASE("WebImage HandleError sets state", "[WebImage]") { test_handle_error(); }
+TEST_CASE("WebImage HandleError invokes callback", "[WebImage]") { test_handle_error_callback(); }
+TEST_CASE("WebImage HandleError with BlankRect mode", "[WebImage]") { test_handle_error_blank_rect(); }
+TEST_CASE("WebImage HandleError with NoOp mode", "[WebImage]") { test_handle_error_noop(); }
 
 // -- Error mode and placeholder configuration --
-TEST_CASE("SetErrorMode works", "[WebImage]") { test_set_error_mode(); }
-TEST_CASE("SetPlaceholderColor does not crash", "[WebImage]") { test_set_placeholder_color(); }
+TEST_CASE("WebImage SetErrorMode works", "[WebImage]") { test_set_error_mode(); }
+TEST_CASE("WebImage SetPlaceholderColor does not crash", "[WebImage]") { test_set_placeholder_color(); }
 
 // -- Unique element IDs --
-TEST_CASE("Id is unique per instance", "[WebImage]") { test_id_unique(); }
-TEST_CASE("Id has expected prefix", "[WebImage]") { test_id_prefix(); }
+TEST_CASE("WebImage Id is unique per instance", "[WebImage]") { test_id_unique(); }
+TEST_CASE("WebImage Id has expected prefix", "[WebImage]") { test_id_prefix(); }
 
 // -- DOM synchronization --
-TEST_CASE("syncFromModel reapplies state", "[WebImage]") { test_sync_from_model(); }
+TEST_CASE("WebImage syncFromModel reapplies state", "[WebImage]") { test_sync_from_model(); }
 
 // -- Move semantics (constructor and assignment) --
-TEST_CASE("Move constructor transfers state", "[WebImage]") { test_move_constructor(); }
-TEST_CASE("Move assignment transfers state", "[WebImage]") { test_move_assignment(); }
+TEST_CASE("WebImage Move constructor transfers state", "[WebImage]") { test_move_constructor(); }
+TEST_CASE("WebImage Move assignment transfers state", "[WebImage]") { test_move_assignment(); }
 
 // -- Edge cases and regression scenarios --
-TEST_CASE("HandleLoad after error clears error", "[WebImage]") { test_load_after_error(); }
-TEST_CASE("Callback replacement works", "[WebImage]") { test_callback_replacement(); }
-TEST_CASE("No callback no crash", "[WebImage]") { test_no_callback_no_crash(); }
-TEST_CASE("Resize after SetSize overwrites dimensions", "[WebImage]") { test_set_size_then_resize(); }
-TEST_CASE("Error callback with placeholder", "[WebImage]") { test_error_callback_with_placeholder(); }
-TEST_CASE("draw stub no crash", "[WebImage]") { test_draw_no_crash(); }
-TEST_CASE("Multiple SetSource calls", "[WebImage]") { test_multiple_source_changes(); }
+TEST_CASE("WebImage HandleLoad after error clears error", "[WebImage]") { test_load_after_error(); }
+TEST_CASE("WebImage Callback replacement works", "[WebImage]") { test_callback_replacement(); }
+TEST_CASE("WebImage No callback no crash", "[WebImage]") { test_no_callback_no_crash(); }
+TEST_CASE("WebImage Resize after SetSize overwrites dimensions", "[WebImage]") { test_set_size_then_resize(); }
+TEST_CASE("WebImage Error callback with placeholder", "[WebImage]") { test_error_callback_with_placeholder(); }
+TEST_CASE("WebImage draw stub no crash", "[WebImage]") { test_draw_no_crash(); }
+TEST_CASE("WebImage Multiple SetSource calls", "[WebImage]") { test_multiple_source_changes(); }

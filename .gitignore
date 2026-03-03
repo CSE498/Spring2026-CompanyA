@@ -36,6 +36,7 @@
 *.exe
 *.out
 *.app
+build/
 
 # debug information files
 *.dwo
@@ -44,3 +45,13 @@
 
 # JetBrains IDE
 .idea
+
+# emscripten generated files
+*.js
+*.wasm
+node_modules
+package-lock.json
+!webui_testrunner.js
+
+# vscode settings
+.vscode
