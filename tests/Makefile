@@ -15,13 +15,16 @@ TEST_DIR  := ../tests
 BUILD_DIR := ../tests/build/
 BIN       := $(BUILD_DIR)/run_tests
 
+# create the relative path to the SDL library
+SDL_DIR := ../third-party/SDL2
+
 CATCH_INC := ../third-party/Catch/single_include
 
 CXXFLAGS ?= -O2 -g
 WARNFLAGS ?= -Wall -Wextra -Wpedantic
-CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
+CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(SDL_DIR)/include	# added SDL
 LDFLAGS  ?=
-LDLIBS   ?=
+LDLIBS   += -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image -lSDL2_ttf	# added SDL
 
 # Pick up .cpp from tests/
 TEST_FILES := $(shell find $(TEST_DIR) -type f -name '*.cpp')
@@ -37,7 +40,7 @@ OBJ_FILES := \
 
 DEP_FILES := $(OBJ_FILES:.o=.d)
 
-.PHONY: all build test clean list
+.PHONY: all build test clean list install
 
 all: test
 
