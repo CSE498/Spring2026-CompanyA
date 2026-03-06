@@ -1,5 +1,5 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../group_specific_content/Group-14/Group14InitialClasses/FunctionSet.hpp"
+#include "../../source/tools/InteractiveWorld/FunctionSet.hpp"
 
 #include <stdexcept>
 #include <vector>

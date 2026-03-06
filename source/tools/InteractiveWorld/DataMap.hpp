@@ -68,8 +68,8 @@ public:
   /// Clear out map of all data
   void Clear() { m_map.clear(); }
   /// Checks if the map is empty
-  bool const Empty() { return m_map.empty(); }
+  bool Empty() { return m_map.empty(); }
   /// Returns the number of elements in the map
-  size_t const Size() { return m_map.size(); }
+  size_t Size() { return m_map.size(); }
 };
 } // namespace cse498
