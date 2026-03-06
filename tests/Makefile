@@ -18,7 +18,7 @@ BIN       := $(BUILD_DIR)/run_tests
 CATCH_INC := ../third-party/Catch/single_include
 
 CXXFLAGS ?= -O2 -g
-WARNFLAGS ?= -Wall -Wextra -Wpedantic
+WARNFLAGS ?= -Wall -Wextra -Wpedantic -Werror
 CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
 LDFLAGS  ?=
 LDLIBS   ?=
