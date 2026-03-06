@@ -155,14 +155,13 @@ TEST_CASE("FeatureVector scale with zero vector", "[scale][empty]")
     REQUIRE(v.at(1) == 0.0);
 }
 
-// TEST_CASE("FeatureVector rotate function", "[rotate]")
-// {
-//     FeatureVector<double> v({3.0, 4.0});
-//     v.rotate(0, 1, M_PI / 2);
-
-//     REQUIRE_THAT(v.at(0), Catch::Matchers::WithinAbs(4.0, 1e-9));
-//     REQUIRE_THAT(v.at(1), Catch::Matchers::WithinAbs(-3.0, 1e-9));
-// }
+TEST_CASE("FeatureVector rotate function", "[rotate]")
+{
+    FeatureVector<double> v({3.0, 4.0});
+    v.rotate(0, 1, M_PI / 2);
+    REQUIRE_THAT(v.at(0), Catch::Matchers::WithinAbs(-4.0, 1e-9));
+    REQUIRE_THAT(v.at(1), Catch::Matchers::WithinAbs(3.0, 1e-9));
+}
 
 // TEST_CASE("FeatureVector add function", "[add]")
 // {
