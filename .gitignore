@@ -39,13 +39,8 @@
 
 # debug information files
 *.dwo
-# JetBrains IDE
-.idea/
-./tests/build
 
-# CMake
-cmake-build-debug/
-.gitignore
 **/.DS_Store
-.tests/build
-./CMakeLists.txt
+
+# JetBrains IDE
+.idea
