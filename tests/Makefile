@@ -15,20 +15,13 @@ TEST_DIR  := ../tests
 BUILD_DIR := ../tests/build/
 BIN       := $(BUILD_DIR)/run_tests
 
-CATCH_INC := third-party/Catch/single_include
+CATCH_INC := ../third-party/Catch/single_include
 
 CXXFLAGS ?= -O2 -g
-WARNFLAGS ?= -Wall -Wextra -Wpedantic
+WARNFLAGS ?= -Wall -Wextra -Wpedantic -Werror
 CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
 LDFLAGS  ?=
 LDLIBS   ?=
-
-# When using Homebrew Clang, its C++23 headers reference symbols in its own
-# libc++.  Tell the linker where to find it (Intel and Apple Silicon paths).
-HOMEBREW_LLVM_LIBCXX := $(firstword $(wildcard /usr/local/opt/llvm/lib/c++ /opt/homebrew/opt/llvm/lib/c++))
-ifneq ($(HOMEBREW_LLVM_LIBCXX),)
-  LDFLAGS += -L$(HOMEBREW_LLVM_LIBCXX) -Wl,-rpath,$(HOMEBREW_LLVM_LIBCXX)
-endif
 
 # Pick up .cpp from tests/
 TEST_FILES := $(shell find $(TEST_DIR) -type f -name '*.cpp')

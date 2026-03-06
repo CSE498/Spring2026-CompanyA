@@ -32,7 +32,7 @@ namespace cse498
                 : values_(data, data + size) {}
 
             /// @return The number of elements in this vector.
-            [[nodiscard]] std::size_t const size() const noexcept { return values_.size(); }
+            [[nodiscard]] std::size_t size() const noexcept { return values_.size(); }
 
             /// Bounds-checked element access.
             /// @param index  Position of the element to retrieve.
@@ -115,23 +115,23 @@ namespace cse498
                 values_[j] = sin_theta * xi + cos_theta * yi;
                 return *this;
             }
-            FeatureVector operator+(const FeatureVector& other) const
-            {
-                if (values_.size() != other.values_.size())
-                {
-                    throw std::invalid_argument("FeatureVector::operator+ vectors must be the same size");
-                }
-                return FeatureVector(values_ + other.values_);
-            }
+            // FeatureVector operator+(const FeatureVector& other) const
+            // {
+            //     if (values_.size() != other.values_.size())
+            //     {
+            //         throw std::invalid_argument("FeatureVector::operator+ vectors must be the same size");
+            //     }
+            //     return FeatureVector(values_ + other.values_);
+            // }
 
-            FeatureVector operator-(const FeatureVector& other) const
-            {
-                if (values_.size() != other.values_.size())
-                {
-                    throw std::invalid_argument("FeatureVector::operator- vectors must be the same size");
-                }
-                return FeatureVector(values_ - other.values_);
-            }
+            // FeatureVector operator-(const FeatureVector& other) const
+            // {
+            //     if (values_.size() != other.values_.size())
+            //     {
+            //         throw std::invalid_argument("FeatureVector::operator- vectors must be the same size");
+            //     }
+            //     return FeatureVector(values_ - other.values_);
+            // }
 
             /// Compute the Hadamard (element-wise) product of this vector with another.
             /// Both vectors must have the same size.

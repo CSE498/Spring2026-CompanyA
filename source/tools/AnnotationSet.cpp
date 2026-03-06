@@ -4,7 +4,7 @@
 // #include "TagManager.hpp"
 
 // Notify TagManager that a tag was added to this object
-void cse498::AnnotationSet::NotifyAdded(std::string_view tag) noexcept {
+void cse498::AnnotationSet::NotifyAdded([[maybe_unused]] std::string_view tag) noexcept {
     // if (mManager) {
 
     //      mManager->OnTagAdded(mOwner, tag);
@@ -12,7 +12,7 @@ void cse498::AnnotationSet::NotifyAdded(std::string_view tag) noexcept {
 }
 
 // Notify TagManager that a tag was removed from this object
-void cse498::AnnotationSet::NotifyRemoved(std::string_view tag) noexcept {
+void cse498::AnnotationSet::NotifyRemoved([[maybe_unused]] std::string_view tag) noexcept {
     // if (mManager) {
 
     //     mManager->OnTagRemoved(mOwner, tag);
