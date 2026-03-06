@@ -32,7 +32,7 @@ namespace cse498
                 : values_(data, data + size) {}
 
             /// @return The number of elements in this vector.
-            [[nodiscard]] std::size_t const size() const noexcept { return values_.size(); }
+            [[nodiscard]] std::size_t size() const noexcept { return values_.size(); }
 
             /// Bounds-checked element access.
             /// @param index  Position of the element to retrieve.
@@ -121,7 +121,14 @@ namespace cse498
                 {
                     throw std::invalid_argument("FeatureVector::operator+ vectors must be the same size");
                 }
-                return FeatureVector(values_ + other.values_);
+
+                std::vector<T> result(values_.size());
+                for (std::size_t i = 0; i < values_.size(); ++i)
+                {
+                    result[i] = values_[i] + other.values_[i];
+                }
+
+                return FeatureVector(std::move(result));
             }
 
             FeatureVector operator-(const FeatureVector& other) const
@@ -130,7 +137,14 @@ namespace cse498
                 {
                     throw std::invalid_argument("FeatureVector::operator- vectors must be the same size");
                 }
-                return FeatureVector(values_ - other.values_);
+
+                std::vector<T> result(values_.size());
+                for (std::size_t i = 0; i < values_.size(); ++i)
+                {
+                    result[i] = values_[i] - other.values_[i];
+                }
+
+                return FeatureVector(std::move(result));
             }
 
             /// Compute the Hadamard (element-wise) product of this vector with another.
