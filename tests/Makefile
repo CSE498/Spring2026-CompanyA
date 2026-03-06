@@ -20,7 +20,7 @@ CATCH_INC := $(THIRD_PARTY_DIR)/Catch/single_include
 THIRD_PARTY_C_FILES := $(THIRD_PARTY_DIR)/Tinyexpr/tinyexpr.c
 
 CXXFLAGS ?= -O2 -g
-WARNFLAGS ?= -Wall -Wextra -Wpedantic
+WARNFLAGS ?= -Wall -Wextra -Wpedantic -Werror
 CC ?= cc
 CFLAGS ?= -O2 -g
 CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
