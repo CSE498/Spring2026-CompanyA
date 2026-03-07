@@ -236,6 +236,34 @@ namespace cse498 {
       Load(str_grid);
     }
 
+    /**
+     * Asks this class if the tile in main_grid is of type "floor"
+     * TODO: This needs to be changed when this whole class changes. This function should be simpler
+     * TODO: This was done based on current structure which is not ideal for this at all.
+     * @param pos - world position
+     * @return true if cell is of type "floor"
+     */
+    [[nodiscard]] bool IsWalkable(const WorldPosition& pos) const
+    {
+        if (!IsValid(pos))
+            return false;
+
+        for (size_t i = 0; i < cell_types.size(); i++)
+        {
+            CellType type = cell_types[i];
+            // NOTE: while it would be more efficient to save this, it feels REALLY AWKWARD since this is saved
+            // in the MazeWorld instantiation class, so I'd be double saving data. I really want this to be redone
+            // and restructured so tiles know if they are walls or floors and not the world / grid. I hope this
+            // motivates a world maker to redo all this.
+            if (type.name == "floor")
+            {
+//                floor_type = i;
+                return cells[ToIndex(pos)] == i;
+            }
+        }
+        return false;
+    }
+
   };
 
 } // End of namespace cse498

@@ -12,13 +12,17 @@
 
 SRC_DIR   := ../source
 TEST_DIR  := ../tests
+THIRD_PARTY_DIR := ../third-party
 BUILD_DIR := ../tests/build/
 BIN       := $(BUILD_DIR)/run_tests
 
-CATCH_INC := ../third-party/Catch/single_include
+CATCH_INC := $(THIRD_PARTY_DIR)/Catch/single_include
+THIRD_PARTY_C_FILES := $(THIRD_PARTY_DIR)/Tinyexpr/tinyexpr.c
 
 CXXFLAGS ?= -O2 -g
-WARNFLAGS ?= -Wall -Wextra -Wpedantic
+WARNFLAGS ?= -Wall -Wextra -Wpedantic -Werror
+CC ?= cc
+CFLAGS ?= -O2 -g
 CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
 LDFLAGS  ?=
 LDLIBS   ?=
@@ -33,7 +37,8 @@ SRC_FILES  := $(filter $(shell find $(SRC_DIR) -type f -name '*.cpp'),$(SRC_FILE
 
 OBJ_FILES := \
   $(patsubst $(TEST_DIR)/%,$(BUILD_DIR)/tests/%.o,$(TEST_FILES)) \
-  $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/source/%.o,$(SRC_FILES))
+  $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/source/%.o,$(SRC_FILES)) \
+  $(patsubst $(THIRD_PARTY_DIR)/%,$(BUILD_DIR)/third-party/%.o,$(THIRD_PARTY_C_FILES))
 
 DEP_FILES := $(OBJ_FILES:.o=.d)
 
@@ -59,6 +64,11 @@ $(BUILD_DIR)/source/%.o: $(SRC_DIR)/% | $(BUILD_DIR)
 $(BUILD_DIR)/tests/%.o: $(TEST_DIR)/% | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CXX) -std=c++23 $(CPPFLAGS) $(CXXFLAGS) $(WARNFLAGS) -MMD -MP -c $< -o $@
+
+# Compile third-party C sources -> build/tests/third-party/...
+$(BUILD_DIR)/third-party/%.o: $(THIRD_PARTY_DIR)/% | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -std=c11 $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
