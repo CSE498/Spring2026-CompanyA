@@ -18,17 +18,23 @@
 #include <string>
 #include <optional>
 #include <concepts>
+#include <cassert>
+#include "RoomHolder.hpp"
+
 
 
 namespace cse498 {
     /// @brief Holds basic information of the grids
-    struct Node {
+    struct BSPNode {
         
-        int left_child = -1;
-        int right_child = -1;
-        int x, y, width, height;
-        std::string name;
-        std::vector<std::string> vector_room{};
+        int left_child = -1; //Left node of the tree
+        int right_child = -1; //right node of the tree
+        int x, y, width, height; // (x,y) - (origin point of the grid (top-left corner))
+                                 // (width, height) - dimension of the grid cut (lxw)
+        std::string name; //Name of the node for debugging purposes
+        std::string split;
+        std::vector<std::string> vector_room{}; //Stores a certain dungeon room
+        
 
 
     };
@@ -37,21 +43,22 @@ namespace cse498 {
     ///   
     class BSP {
     protected:
-        std::vector<Node> BSP_Tree; //The entire tree
-        std::vector<Node> leaf_nodes; //the split region tile rooms
+        RoomHolder mRoomHolder;
+        std::vector<BSPNode> BSP_Tree; //The entire tree
+        std::vector<BSPNode> leaf_nodes; //the split region tile rooms
 
-        int WIDTH = 400; //width of the grid (MAY NEED TO MAKE CONST)
-        int HEIGHT = 400; //hegiht of the grid (MAY NEED TO MAKE CONST)
-        int THRESHOLD_VALUE = 80; // min height/wdith value before cut-off
-        int ITERATIONS = 5; //number of cuts into the grid
+        int mWidth = 150; //width of the grid (MAY NEED TO MAKE CONST)
+        int mHeight = 100; //hegiht of the grid (MAY NEED TO MAKE CONST)
+        int mThresholdValue = 30; // min height/wdith value before cut-off
+        int mIterations = 5; //number of splits into the grid
 
 
     public: 
 
 
-        /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree, leaf_nodes and the grid are already populated 
-        BSP() { 
-            insert_split(ITERATIONS);
+        /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
+        BSP() : mRoomHolder() { 
+            insert_split(mIterations);
             PostOrderDFS();
         }
 
@@ -60,69 +67,23 @@ namespace cse498 {
         ///////////////////////////////////
 
         /// @brief 
-        /// @param iter 
+        /// @param iter number of iterations desired in the grid 
         /// @return 
         int insert_split(int iter) {
-            Node root_node = Node{-1, -1, 0 , 0, WIDTH, HEIGHT, std::string("Container")}; // creation of root node
+            BSPNode root_node = BSPNode{-1, -1, 0 , 0, mWidth, mHeight, std::string("Container")}; // creation of root node
 
             return insert_split(root_node, iter);
         }
 
-        /// @brief Rasterizing here
-        void GenerateTileMap() {
+        void RoomAssignment() { 
 
         }
 
-        /// @brief Simple parser that'll output the contents of the BSP Vector 
-        /// @return terminal output, no return value
-        const void TreeParser() {
-            for (auto const& i : BSP_Tree) {
-                std::cout << "------------" << std::endl;
-                std::cout << "Name " << i.name << std::endl;
-                std::cout << "x " << i.x << std::endl;
-                std::cout << "y " << i.y << std::endl;
-                std::cout << "width " << i.width << std::endl;
-                std::cout << "height " << i.height << std::endl;
-                std::cout << "left_child, [Index]: " << i.left_child << std::endl;
-                std::cout << "right_child, [Index]: " << i.right_child << std::endl;
-            }
-        }
-
-        // /// @brief Loading the leaf_nodes up with a random room
-        // void DungeonGenerator() { 
-        //     auto BSP_Tree = insert_split(ITERATIONS); //Create random splits partition
-        //     PostOrderDFS(); //leaf nodes generated 
-        //     if (leaf_nodes.size() == 0) {
-        //         throw std::runtime_error("DungeonGenerator(): Leaf Nodes not populated correctly!");
-        //     }
-
-        //     int counter = 0; //TEMP VALUE 
-
-        //     for (auto &i : leaf_nodes) { 
-        //         if (counter / 3 == 0) {
-        //             counter = 0;
-        //         }   
-        //         room_gen.SetRoom(counter);
-
-                
-        //         if (room_gen.GetRoomWidth() <= i.width && room_gen.GetRoomHeight() <= i.height) {
-        //             //Going to use this as a checker once I implement file based loading for rooms
-        //             //Need to increment the counter if this logic occurs.
-                    
-        //         }
-
-        //         i.vector_room = *room_gen.GetRoom();
-
-        //         ++counter;
-        //     }
-
-        // }   
-
-        /// @brief Grabs all the paritioned regions of the map using Post-Order DFS, for map generation purposes
+        /// @brief Grabs all the leaf nodes of the BSP_Tree using Post-Order DFS, for map generation
         /// @param node root_node 
-        /// @return Vector of leaf nodes for tile generation
-        const void PostOrderDFS(Node node) {
+        void PostOrderDFS(BSPNode &node) {
             if (node.left_child == -1 && node.right_child == -1) {
+                node.vector_room = *mRoomHolder.GetRoom();
                 leaf_nodes.push_back(node);
                 return;
             }
@@ -132,20 +93,77 @@ namespace cse498 {
             
         }
 
-        const void PostOrderDFS() {
-            if (BSP_Tree.size() == 0) {
-                throw std::runtime_error("Tree has not been properly initialized! Have you called insert_split yet?");
-            }
+        /// @brief Grabs all the leaf nodes of the BSP_Tree using Post-Order DFS for map generation
+        void PostOrderDFS() {
+
+            assert(BSP_Tree.size() != 0 && "PostOrderDFS not initialized!");
             PostOrderDFS(BSP_Tree[0]);
         }
 
         /// @brief Called when player agent will enter new level, layout and tile grid will be remade 
-        /// @return 
-        const void Update() {
+
+        void Update() {
             BSP_Tree.clear();
             leaf_nodes.clear();
 
         }
+
+        ////////////////////////////////////
+        //    BSP Tree Debug Info
+        ///////////////////////////////////
+        
+        /// @brief Generates Grid map of the solely the splits from the BSP Tree without the rooms in them 
+        void GenerateTileMap() {
+            std::vector<std::string> grid(mHeight, std::string(mWidth, ' ')); //Copy of grid
+            
+            for (const auto& i : leaf_nodes) {
+                auto copy_x = i.x;
+                auto copy_y = i.y;
+
+                for (int y = 0; y < i.height; y++) {
+                    int grid_y = y + copy_y;
+
+                    for (int x = 0; x < i.width; x++) { 
+                        int grid_x = x + copy_x;
+                        if (y == i.y || y == i.height - 1 || x == i.x || grid_x == (i.width + copy_x - 1)){
+                            grid[grid_y][grid_x] = '.';
+                        }
+                            
+
+                    }
+                }
+
+            }
+            
+            for (auto i : grid) {
+                std::cout << i << '\n';
+            }
+        }
+
+
+
+        /// @brief Simple parser that'll output the contents of the BSP Vector. 
+        /// @attention Names of the same number are of the same depth level (name2 and name2 are the same level)
+        /// @return terminal output, no return value
+        void TreeParser() const {
+            for (auto const& i : BSP_Tree) {
+                std::cout << "------------" << std::endl;
+                std::cout << "Name " << i.name << std::endl;
+                std::cout << "x " << i.x << std::endl;
+                std::cout << "y " << i.y << std::endl;
+                std::cout << "width " << i.width << std::endl;
+                std::cout << "height " << i.height << std::endl;
+                std::cout << "split " << i.split << std::endl;
+                std::cout << "left_child, [Index]: " << i.left_child << std::endl;
+                std::cout << "right_child, [Index]: " << i.right_child << std::endl;
+
+                for (auto const& j : i.vector_room) {
+                    std::cout << j << '\n';
+                }
+            }
+        }
+
+
         
         ////////////////////////////////////
         //    Getters and Setters
@@ -154,55 +172,60 @@ namespace cse498 {
         /// @brief grabs height of the grid map
         /// @return HEIGHT value
         [[nodiscard]] size_t GetHeight() {
-            return HEIGHT;
+            return mHeight;
         }
 
         /// @brief grabs width of the rid map
         /// @return WIDTH value
         [[nodiscard]] size_t GetWidth() {
-            return WIDTH;
+            return mWidth;
         }   
 
         /// @brief updates the HEIGHT value for the grid map
         /// @param height 
         void SetHeight(size_t height) {
-            HEIGHT = height;
+            mHeight = height;
         }
 
         /// @brief updates the WIDTH value for the grid map
         /// @param width 
         void SetWidth(size_t width) {
-            WIDTH = width;
+            mWidth = width;
         }
         
         /// @brief 
         /// @param iter 
         void SetIterations (size_t iter) {
-            ITERATIONS = iter;
+            mIterations = iter;
         }
 
-        void SetRoom (std::vector<std::string>) {
+        //Don't know if we'll actually need this, leaving this here for now just in-case
+        // void SetRoom (std::vector<std::string>) {
             
+        // }
+
+        /// @brief Grabs the number of iterations done in splitting the BSP_Tree
+        /// @return number of iterations we want to split the rooms with
+        [[nodiscard]] size_t GetIterations() const { 
+            return mIterations;
         }
 
-        /// @brief 
-        /// @return 
-        size_t GetIterations() { 
-            return ITERATIONS;
-        }
-
-        std::vector<Node> GetLeafNodes() {
+        //Returns the BSP_Tree's leaf nodes
+        [[nodiscard]] std::vector<BSPNode> GetLeafNodes() const {
             return leaf_nodes;
         }
 
-        std::vector<Node> GetBSPTree() {
+        //Returns the entirety of the created BSP_Tree
+        [[nodiscard]] std::vector<BSPNode> GetBSPTree() const {
             return BSP_Tree;
         }
 
+
     private:
+
         /// @brief Continuously populates the BSP tree until iter base case reaches 0
         /// @param iter number of iterations to split
-        int insert_split(Node node, int iter) {
+        [[nodiscard]] int insert_split(BSPNode node, int iter) {
             int node_index = BSP_Tree.size();
             BSP_Tree.push_back(node);
 
@@ -234,22 +257,20 @@ namespace cse498 {
         /// @brief Given an inputted struct root Node, splits the width/height randomly into  
         /// @param node 
         /// @return returns a tuple pair of Nodes, other returning nullopt if threshold width/height not met
-        [[nodiscard]] std::optional<std::tuple<Node, Node>> random_split(Node &node, int& iter) {
-            bool split_width = false;
-            bool split_height = false;
+        [[nodiscard]] std::optional<std::tuple<BSPNode, BSPNode>> random_split(BSPNode &node, int& iter) {
 
             //If the width or the height of the partition do not meet the minimum threshold, stop the split
-            if (node.width < THRESHOLD_VALUE * 2 || node.height < THRESHOLD_VALUE * 2) {
+            if (node.width < mThresholdValue * 2 || node.height < mThresholdValue * 2) {
                 return std::nullopt;
             }
 
             std::random_device rd;
             std::mt19937 mt(rd());
-            std::uniform_int_distribution<int> width_distributor(THRESHOLD_VALUE, node.width - THRESHOLD_VALUE);
-            std::uniform_int_distribution<int> height_distributor(THRESHOLD_VALUE, node.height - THRESHOLD_VALUE);
+            std::uniform_int_distribution<int> width_distributor(mThresholdValue, node.width - mThresholdValue);
+            std::uniform_int_distribution<int> height_distributor(mThresholdValue, node.height - mThresholdValue);
             std::uniform_int_distribution<int> directional_splitter(0,10);
 
-            Node left_split, right_split;
+            BSPNode left_split, right_split;
 
             //storing random values to ensure stable numbers throughout all calls
             // std::cout << "NODE WIDTH/HEIGHT: " << node.width << " " << node.height << std::endl; 
@@ -270,14 +291,16 @@ namespace cse498 {
 
             ///Vertical split
 
-            if (directional_splitter(mt) >= 0 && directional_splitter(mt) <= 5) {    
+            auto testing = directional_splitter(mt);
+
+            if (testing <= 5) {    
                 ///Left split
                 left_split = {
                     -1, -1,                 // left right child 
                     node.x, node.y,         // x-y coordinate
                     stored_width,           // width
                     node.height,            // height
-                    std::to_string(iter)    //tree-depth (descending from iter)
+                    std::to_string(iter)    //tree-depth (descending from iter) name
                 };
                 
                 ///Right split
@@ -286,7 +309,7 @@ namespace cse498 {
                     node.x + left_split.width, node.y,  // x-y coordinate
                     node.width - left_split.width,      // width
                     node.height,                        // height
-                    std::to_string(iter)                //tree-depth (descending from iter)
+                    std::to_string(iter)                //tree-depth (descending from iter) name
                 };
                 
 
@@ -300,7 +323,7 @@ namespace cse498 {
                     node.x, node.y,         // x-y coordinate
                     node.width,             // width
                     stored_height,          // height
-                    std::to_string(iter)    //tree-depth (descending from iter)
+                    std::to_string(iter)    //tree-depth (descending from iter) name
                 };
                 
                 ///bottom split
@@ -309,7 +332,7 @@ namespace cse498 {
                     node.x, node.y + left_split.height, // x-y coordinate
                     node.width,                         // width
                     node.height - left_split.height,    // height
-                    std::to_string(iter)                //tree-depth (descending from iter)
+                    std::to_string(iter)                //tree-depth (descending from iter) name
                 };
 
             }
