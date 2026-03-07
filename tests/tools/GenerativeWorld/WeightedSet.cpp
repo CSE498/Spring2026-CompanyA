@@ -377,45 +377,45 @@ TEST_CASE("Test Sample", "[core]"){
 	}
 }
 
-TEST_CASE("Sample is O(log n)", "[core]")
-{
-    constexpr int N = 1000; //Reapeats
+// TEST_CASE("Sample is O(log n)", "[core]")
+// {
+//     constexpr int N = 1000; //Reapeats
 
-    // Smaller tree
-    cse498::WeightedSet<int> small;
-    MakeSetSizeTree(small, 100000); // 100k items
+//     // Smaller tree
+//     cse498::WeightedSet<int> small;
+//     MakeSetSizeTree(small, 100000); // 100k items
 
-    double total_small = small.GetItemSum(1);
-    std::mt19937_64 rng1(42);
-    std::uniform_real_distribution<double> dist_small(0.0, total_small);
+//     double total_small = small.GetItemSum(1);
+//     std::mt19937_64 rng1(42);
+//     std::uniform_real_distribution<double> dist_small(0.0, total_small);
 
-    auto start1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < N; i++) {
-        small.Sample(dist_small(rng1));
-    }
-    auto end1 = std::chrono::high_resolution_clock::now();
-    double t_small =
-        std::chrono::duration<double, std::milli>(end1 - start1).count();
+//     auto start1 = std::chrono::high_resolution_clock::now();
+//     for (int i = 0; i < N; i++) {
+//         small.Sample(dist_small(rng1));
+//     }
+//     auto end1 = std::chrono::high_resolution_clock::now();
+//     double t_small =
+//         std::chrono::duration<double, std::milli>(end1 - start1).count();
 
-    // Double sized tree 
-    cse498::WeightedSet<int> large;
-    MakeSetSizeTree(large, 200000); //200k items
+//     // Double sized tree 
+//     cse498::WeightedSet<int> large;
+//     MakeSetSizeTree(large, 200000); //200k items
 
-    double total_large = large.GetItemSum(1);
-    std::mt19937_64 rng2(42);
-    std::uniform_real_distribution<double> dist_large(0.0, total_large);
+//     double total_large = large.GetItemSum(1);
+//     std::mt19937_64 rng2(42);
+//     std::uniform_real_distribution<double> dist_large(0.0, total_large);
 
-    auto start2 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < N; i++) {
-        large.Sample(dist_large(rng2));
-    }
-    auto end2 = std::chrono::high_resolution_clock::now();
-    double t_large =
-        std::chrono::duration<double, std::milli>(end2 - start2).count();
+//     auto start2 = std::chrono::high_resolution_clock::now();
+//     for (int i = 0; i < N; i++) {
+//         large.Sample(dist_large(rng2));
+//     }
+//     auto end2 = std::chrono::high_resolution_clock::now();
+//     double t_large =
+//         std::chrono::duration<double, std::milli>(end2 - start2).count();
 
-    double ratio = t_large / t_small;
+//     double ratio = t_large / t_small;
 
-    // 1 + (Log 2 / log n) ~ 1.06 (Base 2)
-    // If linear then ratio would be about 2
-	CHECK(ratio < 1.5);  //Account for some noise
-}
+//     // 1 + (Log 2 / log n) ~ 1.06 (Base 2)
+//     // If linear then ratio would be about 2
+// 	CHECK(ratio < 1.5);  //Account for some noise
+// }

@@ -139,7 +139,7 @@ namespace cse498 {
       file.open(m_filename, std::ofstream::app);
       if (!file.is_open())
       {
-        std::cerr << "Unable to open file " << m_filename << std::endl;
+        // std::cerr << "Unable to open file " << m_filename << std::endl;
         return false;
       }
 
