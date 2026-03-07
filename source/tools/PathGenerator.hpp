@@ -55,8 +55,8 @@ enum class PathFlag
 };
 enum class CircleDirectionFlag
 {
-    CW,
-    CCW
+    CW, // clockwise
+    CCW // counterclockwise
 };
 
 
@@ -70,6 +70,7 @@ class PathGenerator
 {
 private:
     static constexpr int MAX_SEARCH_DISTANCE = 300;
+    // for double comparison
     static constexpr double EP = 1e-6;
     // Consider this hard coded. Logic depends on it. though I do want to change this just need more structure
     static constexpr double STEP_SIZE = 1.0;

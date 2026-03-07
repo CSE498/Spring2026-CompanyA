@@ -61,7 +61,7 @@ namespace cse498 {
     auto operator<=>(const WorldPosition &) const = default;
     /// Positions on the map are the same if this is true in essence
     auto operator==(const WorldPosition & other) const {
-        return quantize(x) == quantize(other.x) && quantize(y) == quantize(other.y);
+        return Quantize(x) == Quantize(other.x) && Quantize(y) == Quantize(other.y);
     }
 
     WorldPosition & Set(double in_x, double in_y) {
@@ -81,24 +81,24 @@ namespace cse498 {
     [[nodiscard]] WorldPosition Down()  const { return {x, y+1.0}; }
     [[nodiscard]] WorldPosition Left()  const { return {x-1.0, y}; }
     [[nodiscard]] WorldPosition Right() const { return {x+1.0, y}; }
-    static std::int64_t quantize(double val ) { return static_cast<std::int64_t>(std::llround(val / eps)); }
+    static std::int64_t Quantize(double val ) { return static_cast<std::int64_t>(std::llround(val / eps)); }
     /**
      * uses CellX() and CellY() for positioning since this is used for determining locations of world positions
      * in the map based on GIVEN code. TODO: Change CellX() CellY() to round() since this will feel more natural
-     * TODO: for this application of traversing the world.
+     * TODO:                                 for this application of traversing the world.
      * @return in-place modification --
      */
-    WorldPosition& round()
+    WorldPosition& Round()
     {
-      x = CellX();
-      y = CellY();
+      x = static_cast<double>(CellX());
+      y = static_cast<double>(CellY());
       return *this;
     }
-    WorldPosition StepPolar(double length, double angle) const
+    [[nodiscard]] WorldPosition StepPolar(double length, double angle) const
     {
       double result_x = x + length * std::cos(angle);
       double result_y = y + length * std::sin(angle);
-      return WorldPosition(result_x, result_y);
+      return {result_x, result_y};
     }
 
   };
@@ -110,7 +110,7 @@ namespace cse498 {
    */
   inline WorldPosition round(const WorldPosition& pos)
 {
-  return WorldPosition(pos).round();
+  return WorldPosition(pos).Round();
 }
 
 
@@ -122,8 +122,8 @@ template <>
 struct std::hash<cse498::WorldPosition> {
     std::size_t operator()(const cse498::WorldPosition& pos) const noexcept
     {
-        auto qx = cse498::WorldPosition::quantize(pos.X());
-        auto qy = cse498::WorldPosition::quantize(pos.Y());
+        auto qx = cse498::WorldPosition::Quantize(pos.X());
+        auto qy = cse498::WorldPosition::Quantize(pos.Y());
         //Taken from boost hash_combine https://www.boost.org/doc/libs/latest/libs/container_hash/doc/html/hash.html
         // This is not the latest version but a good enough solution
         size_t result = std::hash<std::int64_t>{}(qx);
