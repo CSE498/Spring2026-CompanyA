@@ -8,21 +8,19 @@
  **/
 
 
- #pragma once 
+#pragma once 
 
 
- #include "RoomHolder.hpp"
- #include "BSP-Dungeon.hpp"
-
+#include "BSP-Dungeon.hpp"
 
 
 struct Point {
-    int x, y;
+    int x, y; // x-y points of a room
 };
 
 struct LinkedRooms {
-    int x1, y1;
-    int x2, y2;
+    int x1, y1; //first room's coordinates
+    int x2, y2; //second room's coordinates
 };
 
 namespace cse498 {
@@ -30,89 +28,158 @@ namespace cse498 {
 
     class WorldGen {
     protected:
-        BSP BSP_Tree;
-        RoomHolder room_holder; 
-        std::vector<std::string> grid;
-        std::vector<LinkedRooms> connected_rooms;
+        BSP mBSP; // BSP_Tree that contains information on the grid and it's dimensions
+        RoomHolder mRoomHolder; //
+        std::vector<std::string> mGrid; //Grid we're rasterizing information from mBSP_Tree too
+        std::vector<LinkedRooms> mConnectedRooms; //The x-y coord pairs of two rooms used for connecting the room pair
 
-        int offset_x; //x offset of room placement
-        int offset_y; //y offset of room placement
+        int mOffsetX; //x offset of room placement
+        int mOffsetY; //y offset of room placement
             
     public: 
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
         WorldGen() 
-            : BSP_Tree(),
-              room_holder(), 
-              grid(BSP_Tree.GetHeight(), std::string(BSP_Tree.GetWidth(), '#')) 
+            : mBSP(), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
+              mRoomHolder(), 
+              mGrid(mBSP.GetHeight(), std::string(mBSP.GetWidth(), '#')) 
 
             {}
         
 
-        /// @brief Assigns Nodes from BSP Tree to a random pre-made room
+        /// @brief Assigns Nodes from BSP Tree to a randomly selected room from a pool of rooms
         void AssignRooms() { 
-            if (BSP_Tree.GetLeafNodes().size() == 0) {
-                throw std::runtime_error("DungeonGenerator(): Leaf Nodes not populated correctly!");
-            }
+            // if (mBSP_Tree.GetLeafNodes().size() == 0) {
+            //     throw std::runtime_error("DungeonGenerator(): Leaf Nodes not populated correctly!");
+            // }
 
-            int counter = 0;
+            assert(mBSP.GetLeafNodes().size() != 0 && "BSP_Tree must be initialized!");
 
-            for (auto& i : BSP_Tree.GetLeafNodes()) {
-                if (counter / 3 == 0) {
+            int counter = 0; //Assigning rooms here
+
+            //mBSP.GetLeafNodes()
+            for (unsigned int i = 0; i < mBSP.GetLeafNodes().size(); ++i) {
+                auto& focused_node = mBSP.GetLeafNodes()[i];
+
+                if (counter % 3 == 0) { //conditional for now 
                     counter = 0;
                 }
+                std::cout << counter << std::endl;
 
-                room_holder.SetRoom(counter);
+                mRoomHolder.SetRoom(counter);
 
-                if(room_holder.GetRoomWidth() <= i.width && room_holder.GetRoomHeight() <= i.height) {
+                if(mRoomHolder.GetRoomWidth() <= focused_node.width && mRoomHolder.GetRoomHeight() <= focused_node.height) {
                     //later
                 }
+                
+                focused_node.vector_room = *mRoomHolder.GetRoom();
+                
 
-                i.vector_room = *room_holder.GetRoom();
+                // for (auto &j : i.vector_room) {
+                //     std::cout << j << std::endl; 
+                // }
 
                 ++counter;
             }
 
         }   
 
-        /// @brief 
-        void MakeRoom() { 
+        /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room relationship is created
+        void CreateDungeon() { 
+            for (const auto& node : mBSP.GetLeafNodes()) {
+                RasterizeGrid(node); //Populates grid with initial, unconnected rooms 
+                PostOrderRoomConnect(node); //populates connection between rooms for linking
+            }
             
         }
 
-        void RasterizeGrid(Node node) { 
-            for(int y = 0; y < node.height) {
+        /// @brief takes the leaf nodes of the BSP_Tree and 
+        /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
+        void RasterizeGrid(const BSPNode& node) { 
+            int room_height = node.vector_room.size();
+            std::cout << room_height << std::endl;
+             
+
+            assert(room_height != 0); //Ensures room is properly assigned and not empty
+
+            int room_width = node.vector_room[0].length();
+
+            int base_y = node.y; //Copy of y coord
+            int base_x = node.x; //Copy of x coord
+
+            for(int y = 0; y < room_height; ++y) {
+                int grid_y = base_y + y; // Grid's current location (y-axis)
+                assert(grid_y >= 0 && grid_y < (int)mGrid.size());
+
+                for (int x = 0; x < room_width; ++x) { 
+                    int grid_x = base_x + x;
+                    
+                    assert(grid_x >= 0 && grid_x < (int)mGrid[0].size());
+                    char c = node.vector_room[y][x];
+
+                    //if (c == '#') continue; //Skips the outer outline of the room 
+
+                    mGrid[grid_y][grid_x] = c;
+                }
 
             }
         }
 
         /// @brief DFS to go through the populated BSP tree in order to connect rooms together
-        /// @param node 
-        /// @return 
-        Point PostOrderConnect(Node node) { //Need to change Node node to idx int later 
+        /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
+        /// @return (x,y) pair coordinate struct of room's location in the grid
+        Point PostOrderRoomConnect(BSPNode node) { //Need to change Node node to idx int later 
             if (node.left_child == -1 && node.right_child == -1) {
                 auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
 
-                return (Point{node.x + pair.first, node.y + pair.second});
+                return (Point{node.x + pair.x, node.y + pair.y});
             }
 
-            Point left = PostOrderConnect(BSP_Tree.GetBSPTree()[node.left_child]);
-            Point right = PostOrderConnect(BSP_Tree.GetBSPTree()[node.right_child]);
+            Point left = PostOrderRoomConnect(mBSP.GetBSPTree()[node.left_child]);
+            Point right = PostOrderRoomConnect(mBSP.GetBSPTree()[node.right_child]);
             
 
-            connected_rooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
+            mConnectedRooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
 
             return left; //need to send a node upwards, allowing connectivity between nodes for linking 
         }
 
-        /// @brief later
+        /// @brief Calculate center of room placed in grid
         /// @param room we're inputting the BSP_Tree Node's room value
         /// @return pair of coordinates 
-        std::pair<int,int> CalcRoomCenter(std::vector<std::string>& room) {
+        [[nodiscard]] Point CalcRoomCenter(std::vector<std::string>& room) {
             auto width = room[0].length();
             auto height = room.size();
 
-            return std::pair<int,int>(width / 2 , height / 2);
+            return Point(width / 2 , height / 2);
+        }
+
+        void CalcRoomsDistance() {
+
+        }
+
+        /// @brief 
+        /// @return 
+        [[nodiscard]] std::vector<std::string> GetDungeon() const { 
+            return mGrid;
+        }
+
+        /// @brief 
+        /// @return 
+        [[nodiscard]] BSP GetBSP() const {
+            return mBSP;
+        }
+
+        /// @brief 
+        /// @return 
+        [[nodiscard]] RoomHolder GetRoomholder() const { 
+            return mRoomHolder;
+        }
+
+        /// @brief 
+        /// @return 
+        [[nodiscard]] std::vector<LinkedRooms> GetConnectedRooms() const { 
+            return mConnectedRooms;
         }
 
 

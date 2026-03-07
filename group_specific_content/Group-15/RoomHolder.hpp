@@ -73,7 +73,6 @@ namespace cse498 {
 
     public:
 
-        RoomHolder() = default;
         RoomHolder() { 
             current_room = &listed_rooms[0];
         }
