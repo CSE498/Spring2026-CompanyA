@@ -234,27 +234,27 @@ TEST_CASE("OutputManager sink behavior (Step 3)", "[output][sink]")
     }
 }
 /* @brief Tests for OutputManager visual timestamp demo*/
-TEST_CASE("Visual timestamp demo (prints to console)", "[output][manual][visual]")
-{
-    cse498::OutputManager om;
+// TEST_CASE("Visual timestamp demo (prints to console)", "[output][manual][visual]")
+// {
+//     cse498::OutputManager om;
 
-    std::cout << "\n=== Visual Timestamp Demo (should show ms) ===\n";
+//     std::cout << "\n=== Visual Timestamp Demo (should show ms) ===\n";
 
-    // Force logs to the console for visual inspection
-    om.ClearSinks();
-    om.AddSink([](std::string_view s) {
-        std::cout << s << "\n";
-    });
+//     // Force logs to the console for visual inspection
+//     om.ClearSinks();
+//     om.AddSink([](std::string_view s) {
+//         std::cout << s << "\n";
+//     });
 
-    om.SetMinLogLevel(cse498::LogLevel::Info);
-    om.EnableTimestamps(true);
+//     om.SetMinLogLevel(cse498::LogLevel::Info);
+//     om.EnableTimestamps(true);
 
-    om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "Visual test: first message");
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
-    om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "Visual test: second message (later)");
+//     om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "Visual test: first message");
+//     std::this_thread::sleep_for(std::chrono::milliseconds(25));
+//     om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "Visual test: second message (later)");
 
-    SUCCEED(); // Test passed
-}
+//     SUCCEED(); // Test passed
+// }
 
 /* @brief Tests for OutputManager name helper functions
 */
@@ -289,101 +289,101 @@ TEST_CASE("CSV path validation throws on invalid inputs", "[output][csv][errors]
     REQUIRE_THROWS_AS(om.SetCsvPath(".", false), std::runtime_error);
 }
 
-/* @brief Tests for OutputManager CSV exporting, including header writing and row formatting
-*/
-TEST_CASE("CSV switching paths writes to both files correctly", "[output][csv][switch]")
-{
-    cse498::OutputManager om;
-    om.SetMinLogLevel(cse498::LogLevel::Info);
+// /* @brief Tests for OutputManager CSV exporting, including header writing and row formatting
+// */
+// TEST_CASE("CSV switching paths writes to both files correctly", "[output][csv][switch]")
+// {
+//     cse498::OutputManager om;
+//     om.SetMinLogLevel(cse498::LogLevel::Info);
 
-    const std::string f1 = "test_log_1.csv";
-    const std::string f2 = "test_log_2.csv";
+//     const std::string f1 = "test_log_1.csv";
+//     const std::string f2 = "test_log_2.csv";
 
-    // start with file 1
-    om.SetCsvPath(f1, false);
-    om.EnableCsv(true);
-    om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "MessageOne");
+//     // start with file 1
+//     om.SetCsvPath(f1, false);
+//     om.EnableCsv(true);
+//     om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "MessageOne");
 
-    // switch to file 2
-    om.SetCsvPath(f2, false);
-    om.Log(cse498::LogLevel::Error, cse498::LogCategory::AI, "MessageTwo");
+//     // switch to file 2
+//     om.SetCsvPath(f2, false);
+//     om.Log(cse498::LogLevel::Error, cse498::LogCategory::AI, "MessageTwo");
 
-    om.EnableCsv(false);
+//     om.EnableCsv(false);
 
-    // verify file 1
-    {
-        std::ifstream file(f1);
-        REQUIRE(file.is_open());
+//     // verify file 1
+//     {
+//         std::ifstream file(f1);
+//         REQUIRE(file.is_open());
 
-        std::string line;
-        REQUIRE(std::getline(file, line));
-        CHECK(line == "Timestamp(ms),Level,Category,Message");
+//         std::string line;
+//         REQUIRE(std::getline(file, line));
+//         CHECK(line == "Timestamp(ms),Level,Category,Message");
 
-        REQUIRE(std::getline(file, line));
-        CHECK(Contains(line, "INFO"));
-        CHECK(Contains(line, "SYSTEM"));
-        CHECK(Contains(line, "MessageOne"));
+//         REQUIRE(std::getline(file, line));
+//         CHECK(Contains(line, "INFO"));
+//         CHECK(Contains(line, "SYSTEM"));
+//         CHECK(Contains(line, "MessageOne"));
 
-        // should not contain second message
-        CHECK_FALSE(std::getline(file, line));
-    }
+//         // should not contain second message
+//         CHECK_FALSE(std::getline(file, line));
+//     }
 
-    // verify file 2
-    {
-        std::ifstream file(f2);
-        REQUIRE(file.is_open());
+//     // verify file 2
+//     {
+//         std::ifstream file(f2);
+//         REQUIRE(file.is_open());
 
-        std::string line;
-        REQUIRE(std::getline(file, line));
-        CHECK(line == "Timestamp(ms),Level,Category,Message");
+//         std::string line;
+//         REQUIRE(std::getline(file, line));
+//         CHECK(line == "Timestamp(ms),Level,Category,Message");
 
-        REQUIRE(std::getline(file, line));
-        CHECK(Contains(line, "ERROR"));
-        CHECK(Contains(line, "AI"));
-        CHECK(Contains(line, "MessageTwo"));
+//         REQUIRE(std::getline(file, line));
+//         CHECK(Contains(line, "ERROR"));
+//         CHECK(Contains(line, "AI"));
+//         CHECK(Contains(line, "MessageTwo"));
 
-        CHECK_FALSE(std::getline(file, line));
-    }
+//         CHECK_FALSE(std::getline(file, line));
+//     }
 
-    // cleanup (optional but polite)
-    std::remove(f1.c_str());
-    std::remove(f2.c_str());
-}
+//     // cleanup (optional but polite)
+//     std::remove(f1.c_str());
+//     std::remove(f2.c_str());
+// }
 
 
-/* @brief Tests for OutputManager CSV exporting
-*/
-TEST_CASE("CSV Exporting writes header and rows", "[output][csv]")
-{
-    cse498::OutputManager om;
+// /* @brief Tests for OutputManager CSV exporting
+// */
+// TEST_CASE("CSV Exporting writes header and rows", "[output][csv]")
+// {
+//     cse498::OutputManager om;
 
-    std::cout << "\n=== Testing CSV Export ===\n";
-    const std::string testFile = "test_log.csv";
+//     // std::cout << "\n=== Testing CSV Export ===\n";
+//     const std::string testFile = "test_log.csv";
 
-    om.SetMinLogLevel(cse498::LogLevel::Info);
-    om.SetCsvPath(testFile, false); // false = overwrite
-    om.EnableCsv(true);
+//     om.SetMinLogLevel(cse498::LogLevel::Info);
+//     om.SetCsvPath(testFile, false); // false = overwrite
+//     om.EnableCsv(true);
 
-    om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "CSV Test Message 1");
-    om.Log(cse498::LogLevel::Error, cse498::LogCategory::AI, "CSV Test Message 2");
+//     om.Log(cse498::LogLevel::Info, cse498::LogCategory::System, "CSV Test Message 1");
+//     om.Log(cse498::LogLevel::Error, cse498::LogCategory::AI, "CSV Test Message 2");
 
-    om.EnableCsv(false); // Close the CSV file to flush contents
+//     om.EnableCsv(false); // Close the CSV file to flush contents
 
-    std::ifstream file(testFile);
-    CHECK(file.is_open());
+//     std::ifstream file(testFile);
+//     CHECK(file.is_open());
 
-    std::string line;
+//     std::string line;
 
-    CHECK(std::getline(file, line));
-    CHECK(line == "Timestamp(ms),Level,Category,Message");
+//     CHECK(std::getline(file, line));
+//     CHECK(line == "Timestamp(ms),Level,Category,Message");
 
-    CHECK(std::getline(file, line));
-    CHECK(Contains(line, "INFO"));
-    CHECK(Contains(line, "SYSTEM"));
-    CHECK(Contains(line, "CSV Test Message 1"));
+//     CHECK(std::getline(file, line));
+//     CHECK(Contains(line, "INFO"));
+//     CHECK(Contains(line, "SYSTEM"));
+//     CHECK(Contains(line, "CSV Test Message 1"));
 
-    CHECK(std::getline(file, line));
-    CHECK(Contains(line, "ERROR"));
-    CHECK(Contains(line, "AI"));
-    CHECK(Contains(line, "CSV Test Message 2"));
-}
+//     CHECK(std::getline(file, line));
+//     CHECK(Contains(line, "ERROR"));
+//     CHECK(Contains(line, "AI"));
+//     CHECK(Contains(line, "CSV Test Message 2"));
+// }

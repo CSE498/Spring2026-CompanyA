@@ -12,7 +12,7 @@ bool cse498::ReplayDriver::VerifyAction(const Action& action) {
 // Check if the ActionLog is set before replaying
 bool cse498::ReplayDriver::IsActionLogSet() const { 
     if (!m_actionLog){
-        printf("No ActionLog set for ReplayDriver.\n");
+        // printf("No ActionLog set for ReplayDriver.\n");
         return false;
     }
     return true;

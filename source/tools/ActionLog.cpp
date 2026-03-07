@@ -1,6 +1,3 @@
-Actionlog · CPP
-Copy
-
 /**
  * @file ActionLog.cpp
  * @brief Implementation of ActionLog, AgentActionLog, and UserActionLog.
