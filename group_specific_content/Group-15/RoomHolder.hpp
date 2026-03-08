@@ -13,63 +13,16 @@
  #include <stdexcept>
  #include <cmath>
  #include <fstream>
+ #include <iostream>
+ #include <cassert>
  #include "../tools/Random.hpp"
-
- const auto maze_test = (std::vector<std::string>      {"#######################",
-                                                        "# #            ##     #",
-                                                        "# #  #  ######    ### #",
-                                                        "# #  #  #     #  #  # #",
-                                                        "# #  #  #  #  #  #  # #",
-                                                        "#    #     #     #    #",
-                                                        "##################  # #",
-                                                        "#                    ##",
-                                                        "#                    ##",
-                                                        "#  ####################",
-                                                        "#######################"} );
-
-const auto empty_test =(std::vector<std::string>       {"#######################",
-                                                        "#                     #",
-                                                        "#                     #",
-                                                        "# #                   #",
-                                                        "#                     #",
-                                                        "#                     #",
-                                                        "#                     #",
-                                                        "#                    ##",
-                                                        "#                    ##",
-                                                        "#                     #",
-                                                        "#######################"} );
-
-const auto test_two = (std::vector<std::string>       {"#######################",
-                                                        "#                     #",
-                                                        "#           ####      #",
-                                                        "# #                   #",
-                                                        "#                     #",
-                                                        "#       ####          #",
-                                                        "#                     #",
-                                                        "#  ##                ##",
-                                                        "#            ####    ##",
-                                                        "#                     #",
-                                                        "#######################"} );
-
-const auto default_room = (std::vector<std::string>    {"#######################",
-                                                        "#                     #",
-                                                        "# ###       ####      #",
-                                                        "# #                   #",
-                                                        "#     #####           #",
-                                                        "#       ####          #",
-                                                        "#                     #",
-                                                        "#  ##                ##",
-                                                        "#            ####    ##",
-                                                        "#   ####              #",
-                                                        "#######################"} );
 
 
 namespace cse498 {
-
+    class BSPTree;
     class RoomHolder { 
 
     protected:
-        std::vector<std::vector<std::string>> listed_rooms{default_room, test_two, empty_test}; //temp
         std::vector<std::string> current_room;
         std::string mFilePath = "../source/core/rooms/Dungeon_";
 
