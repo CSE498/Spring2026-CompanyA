@@ -7,13 +7,15 @@
 #include "ImageGrid.hpp"
 #include "ImageManager.hpp"
 
+#include <cassert>
+
 using namespace cse498;
 
 /**
  * construct a grid with dimensions and tile size.
  */
 ImageGrid::ImageGrid(size_t width, size_t height,
-                     int tile_width, int tile_height)
+                     size_t tile_width, size_t tile_height)
   : mWidth(width),
     mHeight(height),
     mTileWidth(tile_width),

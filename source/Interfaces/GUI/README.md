@@ -12,5 +12,5 @@ all their subdirectories. Only run this if updating the SDL version or if someth
 Steps to run the tests:
 
 1) Open IDE terminal
-2) Navigate to the /tests directory
-3) Run the command 'make'
+2) Run: export LD_LIBRARY_PATH=$(pwd)/third-party/SDL2/lib:$LD_LIBRARY_PATH
+3) Run the command 'make test'

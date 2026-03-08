@@ -198,7 +198,7 @@ void Menu::handle_input(InputCode input_code) {
   }
 }
 
-void Menu::draw(SDL_Renderer* renderer, int x, int y, int width, int height) {
+void Menu::draw(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  width, int height) {
   // Return silently if menu is empty - nothing to draw
   if (is_empty()) {
     return;
