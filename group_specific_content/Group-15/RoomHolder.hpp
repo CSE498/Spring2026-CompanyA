@@ -13,6 +13,7 @@
  #include <stdexcept>
  #include <cmath>
  #include <fstream>
+ #include "../tools/Random.hpp"
 
  const auto maze_test = (std::vector<std::string>      {"#######################",
                                                         "# #            ##     #",
@@ -70,11 +71,15 @@ namespace cse498 {
     protected:
         std::vector<std::vector<std::string>> listed_rooms{default_room, test_two, empty_test}; //temp
         std::vector<std::string> *current_room = nullptr;
+        std::string mFilePath = "rooms/Dungeon_";
+
+        cse498::Random mRng;
 
     public:
 
-        RoomHolder() { 
+        RoomHolder() : mRng() { 
             current_room = &listed_rooms[0];
+
         }
 
         /// @brief 
@@ -92,9 +97,7 @@ namespace cse498 {
         /// @brief 
         /// @return 
         [[nodiscard]] int GetRoomWidth() {
-            if (current_room == nullptr) {
-                throw std::runtime_error("Get Room Width: current_room not properly initialized!");
-            }
+            assert (current_room != nullptr);
             return (*current_room)[0].length();
 
         }
@@ -102,18 +105,15 @@ namespace cse498 {
         /// @brief 
         /// @return 
         [[nodiscard]] int GetRoomHeight() {
-            if (current_room == nullptr) {
-                throw std::runtime_error("Get Room height: current_room not properly initialized!");
-            }
+
+            assert (current_room != nullptr);
             return (*current_room).size();
         }
 
         /// @brief 
         /// @return 
         [[nodiscard]] std::pair<int,int> GetRoomCenter() {
-            if (current_room == nullptr) {
-                throw std::runtime_error("Get Room center: current_room not properly initialized!");
-            }
+            assert (current_room != nullptr);
             auto width_midpoint = std::ceil(GetRoomWidth() / 2);
             auto height_midpoint = std::ceil(GetRoomHeight() / 2);
             
@@ -121,22 +121,48 @@ namespace cse498 {
             return std::make_pair(width_midpoint, height_midpoint);
         }
 
+        [[nodiscard]] std::string GenerateFilePath() { 
+            auto dungeon_select = mRng.GetInt(1,3);
+            auto room_select = mRng.GetInt(1,3);
+            std::string file_path = "";
 
+            switch(dungeon_select) {
+                case 1:
+                    file_path += "one_pool/room_" + std::to_string(room_select) + ".txt";
+                    
+                    break;
+                case 2:
+                    file_path += "two_pool/room_" + std::to_string(room_select) + ".txt";
+                    break;
+                case 3:
+                    file_path += "three_pool/room_" + std::to_string(room_select) + ".txt";
+                    break;
 
-        /// @brief Just in case we're loading in from a txt.file TEMP TEMP TEMP
-        /// @return 
-        std::vector<std::string> LoadRoom(std::string& stream) {
-            std::ifstream file(stream);
-
-            if (!file.is_open()) {
-                throw std::runtime_error("Failed to open file: " + stream);
+                default:
+                    std::cout << "Error has occurred, deafulting to Dungeon One Pool!" << std::endl;
+                    file_path += "one_pool/room_" + std::to_string(room_select) + ".txt";
             }
+
+            assert(file_path != "");
+            return file_path;
+
+
+        }
+
+
+
+        /// @brief Loads a random pre-made room based off of the level dungeon we're currently in
+        /// @return 
+        std::vector<std::string> LoadRoom() {
+            std::string selected_pool = GenerateFilePath();
+            std::ifstream file(mFilePath + selected_pool); // this will open one of the 
+
+            assert(file.is_open());
 
             std::vector<std::string> lines;
             std::string line;
 
             while (std::getline(file, line)) {
-                // Remove Windows CR if present
                 if (!line.empty() && line.back() == '\r') {
                     line.pop_back();
                 }

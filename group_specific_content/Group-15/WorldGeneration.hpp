@@ -47,42 +47,7 @@ namespace cse498 {
             {}
         
 
-        /// @brief Assigns Nodes from BSP Tree to a randomly selected room from a pool of rooms
-        void AssignRooms() { 
-            // if (mBSP_Tree.GetLeafNodes().size() == 0) {
-            //     throw std::runtime_error("DungeonGenerator(): Leaf Nodes not populated correctly!");
-            // }
 
-            assert(mBSP.GetLeafNodes().size() != 0 && "BSP_Tree must be initialized!");
-
-            int counter = 0; //Assigning rooms here
-
-            //mBSP.GetLeafNodes()
-            for (unsigned int i = 0; i < mBSP.GetLeafNodes().size(); ++i) {
-                auto& focused_node = mBSP.GetLeafNodes()[i];
-
-                if (counter % 3 == 0) { //conditional for now 
-                    counter = 0;
-                }
-                std::cout << counter << std::endl;
-
-                mRoomHolder.SetRoom(counter);
-
-                if(mRoomHolder.GetRoomWidth() <= focused_node.width && mRoomHolder.GetRoomHeight() <= focused_node.height) {
-                    //later
-                }
-                
-                focused_node.vector_room = *mRoomHolder.GetRoom();
-                
-
-                // for (auto &j : i.vector_room) {
-                //     std::cout << j << std::endl; 
-                // }
-
-                ++counter;
-            }
-
-        }   
 
         /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room relationship is created
         void CreateDungeon() { 
