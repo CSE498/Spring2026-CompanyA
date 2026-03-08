@@ -69,11 +69,11 @@ static std::string GetComputedStyleStr(val element, const std::string& prop)
     return style.call<val>("getPropertyValue", prop).as<std::string>();
 }
 
-static double GetBoundingClientRectNumber(val element, const std::string& key)
-{
-    val rect = element.call<val>("getBoundingClientRect");
-    return rect[key].as<double>();
-}
+// static double GetBoundingClientRectNumber(val element, const std::string& key)
+// {
+//     val rect = element.call<val>("getBoundingClientRect");
+//     return rect[key].as<double>();
+// }
 
 // Make a unique root id for layouts in tests so tests dont interfere with each other in the DOM
 static std::string UniqueRootId(const std::string& prefix)

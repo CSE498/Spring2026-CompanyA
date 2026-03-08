@@ -4,6 +4,7 @@
 #include <emscripten.h>
 
 using emscripten::val;
+using namespace cse498;
 
 int WebButton::mNextIdCounter = 1;
 

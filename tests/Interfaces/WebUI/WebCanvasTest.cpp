@@ -14,11 +14,12 @@
 
 using cse498::WebCanvas;
 using cse498::ICanvasElement;
-//using cse498::Alignment;
+using cse498::Alignment;
+// using namespace cse498;
 
 // A minimal WebLayout stub for unit tests.
 // This avoids pulling in the real WebLayout implementation (which may depend on emscripten).
-class WebLayout {};
+class cse498::WebLayout {};
 
 // ---------------------------
 // Test helpers
@@ -94,7 +95,7 @@ TEST_CASE("WebCanvas is move-only (RAII-friendly)", "[web][canvas][raii]") {
 
 TEST_CASE("WebCanvas Id() reflects constructor argument, and mount/unmount do not change Id()", "[web][canvas][dom]") {
     WebCanvas canvas("canvas-test-1");
-    WebLayout layout;
+    cse498::WebLayout layout;
 
     REQUIRE(canvas.Id() == std::string("canvas-test-1"));
 

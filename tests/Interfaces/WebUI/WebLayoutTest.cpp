@@ -66,10 +66,10 @@ private:
 };
 
 /// Test helper to reset ID counter between tests
-static void ResetWebLayoutIdCounter() {
-    // Since mNextIdCounter is static and private, we can't directly reset it.
-    // Tests should use explicit IDs to avoid interdependencies.
-}
+// static void ResetWebLayoutIdCounter() {
+//     // Since mNextIdCounter is static and private, we can't directly reset it.
+//     // Tests should use explicit IDs to avoid interdependencies.
+// }
 
 // ---------------------------
 // Tests: Constructor & Destructor

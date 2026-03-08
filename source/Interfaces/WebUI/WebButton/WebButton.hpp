@@ -7,6 +7,8 @@
 
 #include "../internal/IDomElement.hpp"
 
+namespace cse498 {
+
 class WebButton : public IDomElement {
  public:
   /// Creates a button with the given label, appended to document body
@@ -69,5 +71,6 @@ class WebButton : public IDomElement {
 
   void AttachClickListener();
 };
+}
 
 #endif
