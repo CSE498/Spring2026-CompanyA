@@ -70,35 +70,34 @@ namespace cse498 {
 
     protected:
         std::vector<std::vector<std::string>> listed_rooms{default_room, test_two, empty_test}; //temp
-        std::vector<std::string> *current_room = nullptr;
-        std::string mFilePath = "rooms/Dungeon_";
+        std::vector<std::string> current_room;
+        std::string mFilePath = "../source/core/rooms/Dungeon_";
 
         cse498::Random mRng;
 
     public:
 
         RoomHolder() : mRng() { 
-            current_room = &listed_rooms[0];
 
-        }
-
-        /// @brief 
-        /// @param room 
-        void SetRoom(int i) {
-            current_room = &listed_rooms[i];
         }
 
         /// @brief 
         /// @return 
-        [[nodiscard]] std::vector<std::string>* GetRoom() {
+        [[nodiscard]] std::vector<std::string> GetCurrentRoom() {
             return current_room;
+        }
+
+        void SetCurrentRoom() { 
+            auto determined_room = LoadRoom();
+            current_room = determined_room;
+            
         }
 
         /// @brief 
         /// @return 
         [[nodiscard]] int GetRoomWidth() {
-            assert (current_room != nullptr);
-            return (*current_room)[0].length();
+
+            return (current_room)[0].length();
 
         }
 
@@ -106,14 +105,13 @@ namespace cse498 {
         /// @return 
         [[nodiscard]] int GetRoomHeight() {
 
-            assert (current_room != nullptr);
-            return (*current_room).size();
+            return (current_room).size();
         }
 
         /// @brief 
         /// @return 
         [[nodiscard]] std::pair<int,int> GetRoomCenter() {
-            assert (current_room != nullptr);
+
             auto width_midpoint = std::ceil(GetRoomWidth() / 2);
             auto height_midpoint = std::ceil(GetRoomHeight() / 2);
             
@@ -156,6 +154,7 @@ namespace cse498 {
         std::vector<std::string> LoadRoom() {
             std::string selected_pool = GenerateFilePath();
             std::ifstream file(mFilePath + selected_pool); // this will open one of the 
+            std::cout << mFilePath + selected_pool << std::endl;
 
             assert(file.is_open());
 

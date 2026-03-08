@@ -51,8 +51,8 @@ namespace cse498 {
         std::vector<BSPNode> leaf_nodes; //the split region tile rooms
 
         int mWidth = 150; //width of the grid (MAY NEED TO MAKE CONST)
-        int mHeight = 100; //hegiht of the grid (MAY NEED TO MAKE CONST)
-        int mThresholdValue = 25; // min height/wdith value before cut-off
+        int mHeight = 150; //hegiht of the grid (MAY NEED TO MAKE CONST)
+        int mThresholdValue = 30; // min height/wdith value before cut-off
         int mIterations = 5; //number of splits into the grid
 
 
@@ -83,7 +83,8 @@ namespace cse498 {
         /// @param node root_node 
         void PostOrderDFS(BSPNode &node) {
             if (node.left_child == -1 && node.right_child == -1) {
-                node.vector_room = *mRoomHolder.GetRoom();
+                mRoomHolder.SetCurrentRoom();
+                node.vector_room = mRoomHolder.GetCurrentRoom();
 
                 leaf_nodes.push_back(node);
                 return;
