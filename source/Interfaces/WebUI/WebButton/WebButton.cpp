@@ -4,6 +4,7 @@
 #include <emscripten.h>
 
 using emscripten::val;
+using namespace cse498;
 
 int WebButton::mNextIdCounter = 1;
 
@@ -105,12 +106,8 @@ void WebButton::SetSize(int width, int height) {
   mWidth = width;
   mHeight = height;
   if (!mElement.isNull()) {
-    if (width > 0) {
-      mElement["style"].set("width", ToPx(width));
-    }
-    if (height > 0) {
-      mElement["style"].set("height", ToPx(height));
-    }
+    mElement["style"].set("width", width > 0 ? ToPx(width) : std::string("auto"));
+    mElement["style"].set("height", height > 0 ? ToPx(height) : std::string("auto"));
   }
 }
 
@@ -191,12 +188,8 @@ void WebButton::SyncFromModel() {
   mElement.set("textContent", mLabel);
   mElement.set("disabled", !mIsEnabled);
 
-  if (mWidth > 0) {
-    mElement["style"].set("width", ToPx(mWidth));
-  }
-  if (mHeight > 0) {
-    mElement["style"].set("height", ToPx(mHeight));
-  }
+  mElement["style"].set("width", mWidth > 0 ? ToPx(mWidth) : std::string("auto"));
+  mElement["style"].set("height", mHeight > 0 ? ToPx(mHeight) : std::string("auto"));
 
   if (!mBgColor.empty()) {
     mElement["style"].set("backgroundColor", mBgColor);

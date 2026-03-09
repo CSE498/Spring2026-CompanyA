@@ -1,20 +1,19 @@
 #include "WebButton.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #include <iostream>
-#include <emscripten.h>
+#include <memory>
 
-WebLayout* layout = nullptr;
-WebButton* btn1 = nullptr;
-WebButton* btn2 = nullptr;
-WebButton* btn3 = nullptr;
+static constexpr int DEFAULT_SPACING = 10;
+static constexpr int BUTTON_WIDTH = 150;
+static constexpr int BUTTON_HEIGHT = 40;
 
 int main() {
-  layout = new WebLayout("button-demo");
+  auto layout = std::make_unique<WebLayout>("button-demo");
   layout->SetLayoutType(LayoutType::Vertical);
-  layout->SetSpacing(10);
+  layout->SetSpacing(DEFAULT_SPACING);
 
-  btn1 = new WebButton("Click Me");
-  btn1->SetSize(150, 40);
+  auto btn1 = std::make_unique<WebButton>("Click Me");
+  btn1->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
   btn1->SetBackgroundColor("#4CAF50");
   btn1->SetTextColor("white");
   btn1->SetCallback([]() {
@@ -22,13 +21,13 @@ int main() {
   });
   btn1->MountToLayout(*layout);
 
-  btn2 = new WebButton("Disabled Button");
-  btn2->SetSize(150, 40);
+  auto btn2 = std::make_unique<WebButton>("Disabled Button");
+  btn2->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
   btn2->Disable();
   btn2->MountToLayout(*layout);
 
-  btn3 = new WebButton("Hidden Button");
-  btn3->SetSize(150, 40);
+  auto btn3 = std::make_unique<WebButton>("Hidden Button");
+  btn3->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
   btn3->Hide();
   btn3->MountToLayout(*layout);
 
