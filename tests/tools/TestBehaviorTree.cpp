@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 
-using namespace Pathfinding::BehaviorTrees;
+using namespace cse498::BehaviorTrees;
 
 // =============================================================================
 // BLACKBOARD TESTS
@@ -103,9 +103,9 @@ TEST_CASE("Blackboard: Supports bool type", "[Blackboard]")
 {
     Blackboard bb;
     bb.Set<bool>("alive", true);
-    REQUIRE(bb.Get<bool>("alive") == true);
+    REQUIRE(bb.Get<bool>("alive"));
     bb.Set<bool>("alive", false);
-    REQUIRE(bb.Get<bool>("alive") == false);
+    REQUIRE(!bb.Get<bool>("alive"));
 }
 
 TEST_CASE("Blackboard: Type mismatch returns default", "[Blackboard]")
@@ -699,8 +699,8 @@ TEST_CASE("Integration: Selector with Sequences as children", "[Integration]")
     root->AddChild(std::move(meleeSeq));
 
     REQUIRE(root->Tick(ctx) == Node::Status::Success);
-    REQUIRE(bb.Get<bool>("shot", false) == false);
-    REQUIRE(bb.Get<bool>("meleed", false) == true);
+    REQUIRE(!bb.Get<bool>("shot", false));
+    REQUIRE(bb.Get<bool>("meleed", false));
 }
 
 TEST_CASE("Integration: Invert used as condition guard in Sequence", "[Integration]")
@@ -724,13 +724,13 @@ TEST_CASE("Integration: Invert used as condition guard in Sequence", "[Integrati
     }));
 
     REQUIRE(seq->Tick(ctx) == Node::Status::Success);
-    REQUIRE(bb.Get<bool>("acted", false) == true);
+    REQUIRE(bb.Get<bool>("acted", false));
 
     bb.Set<bool>("isDead", true);
     bb.Set<bool>("acted", false);
 
     REQUIRE(seq->Tick(ctx) == Node::Status::Failure);
-    REQUIRE(bb.Get<bool>("acted", false) == false);
+    REQUIRE(!bb.Get<bool>("acted", false));
 }
 
 TEST_CASE("Integration: ContinuallyRepeat wrapping a Sequence", "[Integration]")
@@ -781,5 +781,5 @@ TEST_CASE("Integration: Deep nested tree executes correctly", "[Integration]")
     root->AddChild(std::move(outerSeq));
 
     REQUIRE(root->Tick(ctx) == Node::Status::Success);
-    REQUIRE(bb.Get<bool>("done", false) == true);
+    REQUIRE(bb.Get<bool>("done", false));
 }
