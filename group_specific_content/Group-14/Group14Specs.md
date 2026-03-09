@@ -10,7 +10,14 @@ Person taking lead - Ho Wang Ho
 
 #### Class Description
 
-The EventQueue class manages time-based or priority-based events in the game world. It mostly controls in-game events to be scheduled for future execution, enabling cooldowns, delayed effects. The EventQueue itself does not interpret event contents; it is responsible only for ordering, timing, and retrieval of events. This design could let the class remain generic in different event types.
+The EventQueue class stores scheduled events and provides fast access to the next event to execute based on time (or priority). It supports cooldowns, delayed effects, and future event schedules by allowing systems to schedule work in the future.
+
+An event is a small record containing:
+a scheduled TimePoint (or priority value),
+a unique EventID,
+a Payload that describes what should happen when the event triggers.
+
+Payload definition (initial plan): Payload will be a generic type (either templated EventQueue<PayloadT> or a fixed type like std::function<void()> or std::variant<...>). 
 
 #### Similar Classes
 
@@ -149,7 +156,7 @@ Person taking lead - Caleb Shin
 
 #### Class Description
 
-Schedules a set of processes based on a “priority” measure and returns the ID of which one should go next. The priority of a process should be proportional to how often it is scheduled. This class can be built to be probabilistic or evenly integrated.
+Implements a probabilistic scheduler that utilizes weighted probability to determine the next process to schedule. The selection distribution is weighted such that a process's scheduling frequency correlates directly to its priority value.
 
 #### Similar Classes
 
@@ -248,4 +255,5 @@ A tool that takes in an expression in the form of a string and returns a functio
     
 -   Use case definition (user or internally facing)
     
+
 -   Integration with outside groups given the specificity required

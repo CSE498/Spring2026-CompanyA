@@ -1,7 +1,8 @@
 #define CATCH_CONFIG_MAIN
-#include "catch2/catch.hpp"
-
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/core/WorldPosition.hpp"
+
+
 
 
 TEST_CASE("Test WorldPosition Constructors", "[core]")
