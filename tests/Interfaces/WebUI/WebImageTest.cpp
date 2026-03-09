@@ -1,3 +1,5 @@
+#ifdef __EMSCRIPTEN__
+
 #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
@@ -640,3 +642,5 @@ TEST_CASE("Resize after SetSize overwrites dimensions", "[WebImage]") { test_set
 TEST_CASE("Error callback with placeholder", "[WebImage]") { test_error_callback_with_placeholder(); }
 TEST_CASE("draw stub no crash", "[WebImage]") { test_draw_no_crash(); }
 TEST_CASE("Multiple SetSource calls", "[WebImage]") { test_multiple_source_changes(); }
+
+#endif // __EMSCRIPTEN__

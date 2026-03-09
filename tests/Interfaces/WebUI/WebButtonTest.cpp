@@ -1,3 +1,5 @@
+#ifdef __EMSCRIPTEN__
+
 //#define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
@@ -294,3 +296,5 @@ TEST_CASE("unmount is safe to call multiple times", "[WebButton]") {
   REQUIRE_NOTHROW(btn.Unmount());
   REQUIRE_NOTHROW(btn.Unmount());
 }
+
+#endif // __EMSCRIPTEN__
