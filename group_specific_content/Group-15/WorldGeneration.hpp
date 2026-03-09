@@ -119,8 +119,23 @@ namespace cse498 {
             return Point(width / 2 , height / 2);
         }
 
-        void CalcRoomsDistance() {
+        /// @brief Calculates the distance (x-y) between two rooms) 
+        /// @return 
+        [[nodiscard]] Point ConnectTunnel(LinkedRooms RoomCoordinates) {
+            auto [x1_value, x2_value, y1_value, y2_value] = RoomCoordinates;
 
+            std::cout << "Look here" << std::endl;
+            std::cout << x1_value << " " << x2_value << " " << y1_value << " " << y2_value << std::endl;
+
+            return Point(0,0);
+        }
+
+        /// @brief 
+        void TunnelConnectDungeon() {
+            for(auto &i : mConnectedRooms) { 
+                std::cout << "Here" << std::endl;
+                auto tunnel_coordinate = ConnectTunnel(i);
+            }
         }
 
         /// @brief 
