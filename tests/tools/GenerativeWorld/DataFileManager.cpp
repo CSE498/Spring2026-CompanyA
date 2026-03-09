@@ -51,6 +51,7 @@ TEST_CASE("Testing DataFileManager Update", "[core]") {
     REQUIRE_FALSE(line.empty());
 
     file.close();
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -123,6 +124,7 @@ TEST_CASE("Testing DataFileManager Update writing to file", "[core]") {
     CHECK_FALSE(line.empty());
 
     file.close();
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -149,4 +151,5 @@ TEST_CASE("Testing DataFileManager Update with multiple updates", "[core]") {
     CHECK(line_count >= 4); // At least 4 lines expected after two updates, since each update writes two lines
 
     file.close();
+    std::remove("DataFileManagerTest.csv");
 }
