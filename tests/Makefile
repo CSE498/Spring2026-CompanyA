@@ -133,6 +133,7 @@ web_test:
 	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
 		$(WEB_TEST)/WebCanvasTest.cpp \
 		$(WEB_SRC)/WebCanvas/WebCanvas.cpp \
+		--js-library ../source/Interfaces/WebUI/WebCanvas/WebCanvas.js \
 		-o $(WEB_TEST_OUT)/WebCanvasTest.html
 	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
 		$(WEB_TEST)/WebLayoutTest.cpp \
