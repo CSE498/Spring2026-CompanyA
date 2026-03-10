@@ -36,6 +36,9 @@ namespace cse498 {
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
         
 
+        BSPNode() = default;
+        BSPNode(int l, int r, int x, int y, int width, int height, std::string name) 
+           : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {}
 
     };
     
@@ -48,7 +51,7 @@ namespace cse498 {
         std::vector<BSPNode> leaf_nodes; //the split region tile rooms
 
         int mWidth = 150; //width of the grid (MAY NEED TO MAKE CONST)
-        int mHeight = 100; //hegiht of the grid (MAY NEED TO MAKE CONST)
+        int mHeight = 150; //hegiht of the grid (MAY NEED TO MAKE CONST)
         int mThresholdValue = 30; // min height/wdith value before cut-off
         int mIterations = 5; //number of splits into the grid
 
@@ -75,15 +78,14 @@ namespace cse498 {
             return insert_split(root_node, iter);
         }
 
-        void RoomAssignment() { 
-
-        }
 
         /// @brief Grabs all the leaf nodes of the BSP_Tree using Post-Order DFS, for map generation
         /// @param node root_node 
         void PostOrderDFS(BSPNode &node) {
             if (node.left_child == -1 && node.right_child == -1) {
-                node.vector_room = *mRoomHolder.GetRoom();
+                mRoomHolder.SetCurrentRoom();
+                node.vector_room = mRoomHolder.GetCurrentRoom();
+
                 leaf_nodes.push_back(node);
                 return;
             }
@@ -125,7 +127,7 @@ namespace cse498 {
 
                     for (int x = 0; x < i.width; x++) { 
                         int grid_x = x + copy_x;
-                        if (y == i.y || y == i.height - 1 || x == i.x || grid_x == (i.width + copy_x - 1)){
+                        if (y == 0 || y == i.height - 1 || x == 0 || x == i.width - 1){
                             grid[grid_y][grid_x] = '.';
                         }
                             
@@ -233,6 +235,7 @@ namespace cse498 {
 
                 auto split = random_split(node, iter); //Splits the grid into nodes
 
+
                 //Prevent UE
                 if(!split) {
                     return node_index;
@@ -248,6 +251,7 @@ namespace cse498 {
                 BSP_Tree[node_index].right_child = right_node;
 
             }
+
             
             return node_index;
         
@@ -259,10 +263,13 @@ namespace cse498 {
         /// @return returns a tuple pair of Nodes, other returning nullopt if threshold width/height not met
         [[nodiscard]] std::optional<std::tuple<BSPNode, BSPNode>> random_split(BSPNode &node, int& iter) {
 
+            bool split_width = true;
+            bool split_height = true;
             //If the width or the height of the partition do not meet the minimum threshold, stop the split
             if (node.width < mThresholdValue * 2 || node.height < mThresholdValue * 2) {
                 return std::nullopt;
             }
+
 
             std::random_device rd;
             std::mt19937 mt(rd());

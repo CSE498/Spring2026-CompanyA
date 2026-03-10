@@ -15,6 +15,7 @@ TEST_CASE("Testing DataFileManager Constructor", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
     CHECK(manager.GetFilename() == "DataFileManagerTest.csv");
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -26,6 +27,7 @@ TEST_CASE("Testing DataFileManager FormatData", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
     CHECK(manager.FormatData(3, "Tile", "Temporary Data") == "3\tTile\tTemporary Data");
+    std::remove("DataFileManagerTest.csv");
 }
 
 
@@ -51,6 +53,7 @@ TEST_CASE("Testing DataFileManager Update", "[core]") {
     REQUIRE_FALSE(line.empty());
 
     file.close();
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -62,6 +65,7 @@ TEST_CASE("Testing DataFileManager FormatData with invalid type", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
     CHECK_THROWS_AS(manager.FormatData(3, "InvalidType", "Temporary Data"), std::runtime_error);
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -76,6 +80,7 @@ TEST_CASE("Testing DataFileManager FormatData with unconvertible data type", "[c
     UnconvertibleType data;
 
     CHECK_THROWS_AS(manager.FormatData(3, "Tile", data), std::runtime_error);
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -87,6 +92,7 @@ TEST_CASE("Testing DataFileManager FormatData when type is empty", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
 
     CHECK_THROWS_AS(manager.FormatData(3, "", "Temporary Data"), std::runtime_error);
+    std::remove("DataFileManagerTest.csv");
 }
 
 
@@ -99,6 +105,7 @@ TEST_CASE("Testing DataFileManager Update with invalid file", "[core]") {
     cse498::DataFileManager manager("/invalid_path/DataFileManagerTest.csv", world.get());
 
     CHECK_FALSE(manager.Update());
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -123,6 +130,7 @@ TEST_CASE("Testing DataFileManager Update writing to file", "[core]") {
     CHECK_FALSE(line.empty());
 
     file.close();
+    std::remove("DataFileManagerTest.csv");
 }
 
 /*
@@ -149,4 +157,5 @@ TEST_CASE("Testing DataFileManager Update with multiple updates", "[core]") {
     CHECK(line_count >= 4); // At least 4 lines expected after two updates, since each update writes two lines
 
     file.close();
+    std::remove("DataFileManagerTest.csv");
 }
