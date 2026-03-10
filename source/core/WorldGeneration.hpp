@@ -47,9 +47,8 @@ namespace cse498 {
             {}
         
 
-
-
-        /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room relationship is created
+        /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room 
+        ///relationship is created through PostOrderRoomConnect()
         void CreateDungeon() { 
             for (const auto& node : mBSP.GetLeafNodes()) {
                 RasterizeGrid(node); //Populates grid with initial, unconnected rooms 
@@ -58,7 +57,7 @@ namespace cse498 {
             TunnelConnectDungeon();
         }
 
-        /// @brief takes the leaf nodes of the BSP_Tree and 
+        /// @brief takes the leaf node's (x,y) coordinates and room information from the BSP_Tree and translates it onto mGrid
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode& node) { 
             int room_height = node.vector_room.size();
@@ -120,7 +119,6 @@ namespace cse498 {
         }
 
         /// @brief Calculates the distance (x-y) between two rooms) 
-        /// @return 
         void ConnectTunnel(LinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
 
