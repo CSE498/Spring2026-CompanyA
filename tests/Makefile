@@ -27,7 +27,7 @@ WARNFLAGS ?= -Wall -Wextra -Wpedantic -Werror
 CC ?= cc
 CFLAGS ?= -O2 -g
 CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(SDL_DIR)/include
-LDFLAGS  ?=
+LDFLAGS  += -Wl,-rpath,'$$ORIGIN/../../third-party/SDL2/lib'
 LDLIBS   += -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image -lSDL2_ttf	# added SDL
 
 # Pick up .cpp from tests/ (exclude WebUI — those require Emscripten/em++)
@@ -86,7 +86,7 @@ list:
 	@echo "Objects:"; echo "$(OBJ_FILES)" | tr ' ' '\n'
 
 clean:
-	rm -rf build
+	rm -rf $(BUILD_DIR)
 
 # Auto-deps
 -include $(DEP_FILES)
