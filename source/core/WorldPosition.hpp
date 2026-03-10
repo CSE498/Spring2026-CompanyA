@@ -12,6 +12,7 @@
 #include <cstddef>    // For size_t
 #include <cstdint>
 #include <functional>
+#include <cmath>
 
 namespace cse498 {
 

@@ -468,12 +468,12 @@ TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
                                                                 cse498::CircleDirectionFlag::CCW);
     // Clockwise direction which is reverse of above
     auto man_different_coord_rev = PathGenerator::FindManhattanPath({15, 5}, {3, 1}, request3);
-    CHECK(man_different_coord.value() == man_different_coord_rev.value().reverse());
+    CHECK(man_different_coord.value() == man_different_coord_rev.value().Reverse());
 
     //{19,4} - {1.8} this is (v) <-- and --> then ^
     auto man_p1 = PathGenerator::FindManhattanPath({19, 4}, {1, 8}, request3);
     auto man_p1_rev = PathGenerator::FindManhattanPath({1, 8}, {19, 4}, request3, cse498::CircleDirectionFlag::CCW);
-    CHECK(man_p1.value() == man_p1_rev.value().reverse());
+    CHECK(man_p1.value() == man_p1_rev.value().Reverse());
 }
 
 TEST_CASE("Manhattan Path Generation -- Edge Cases", "[ManhattanPath]")
