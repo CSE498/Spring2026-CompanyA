@@ -11,8 +11,7 @@
 * ensuring that it initializes with the correct filename and world pointer.
 */
 TEST_CASE("Testing DataFileManager Constructor", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     CHECK(manager.GetFilename() == "DataFileManagerTest.csv");
     std::remove("DataFileManagerTest.csv");
@@ -23,8 +22,7 @@ TEST_CASE("Testing DataFileManager Constructor", "[core]") {
 * verifying that it correctly formats the data string for storage. 
 */
 TEST_CASE("Testing DataFileManager FormatData", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     CHECK(manager.FormatData(3, "Tile", "Temporary Data") == "3\tTile\tTemporary Data");
     std::remove("DataFileManagerTest.csv");
@@ -36,8 +34,7 @@ TEST_CASE("Testing DataFileManager FormatData", "[core]") {
 * ensuring that it successfully writes the current state of the world to the specified file. 
 */
 TEST_CASE("Testing DataFileManager Update", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     manager.Update();
 
@@ -61,8 +58,7 @@ TEST_CASE("Testing DataFileManager Update", "[core]") {
 * verifying that it throws a runtime error when an invalid type is provided.
 */
 TEST_CASE("Testing DataFileManager FormatData with invalid type", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     CHECK_THROWS_AS(manager.FormatData(3, "InvalidType", "Temporary Data"), std::runtime_error);
     std::remove("DataFileManagerTest.csv");
@@ -73,8 +69,7 @@ TEST_CASE("Testing DataFileManager FormatData with invalid type", "[core]") {
 * ensuring that it throws a runtime error when an unconvertible data type is provided.
 */
 TEST_CASE("Testing DataFileManager FormatData with unconvertible data type", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     struct UnconvertibleType {};
     UnconvertibleType data;
@@ -88,8 +83,7 @@ TEST_CASE("Testing DataFileManager FormatData with unconvertible data type", "[c
 * verifying that it throws a runtime error when an empty type string is provided.
 */
 TEST_CASE("Testing DataFileManager FormatData when type is empty", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     CHECK_THROWS_AS(manager.FormatData(3, "", "Temporary Data"), std::runtime_error);
     std::remove("DataFileManagerTest.csv");
@@ -101,8 +95,7 @@ TEST_CASE("Testing DataFileManager FormatData when type is empty", "[core]") {
 * ensuring that it returns false when it fails to open the specified file for writing.
 */
 TEST_CASE("Testing DataFileManager Update with invalid file", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("/invalid_path/DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("/invalid_path/DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     CHECK_FALSE(manager.Update());
     std::remove("DataFileManagerTest.csv");
@@ -113,8 +106,7 @@ TEST_CASE("Testing DataFileManager Update with invalid file", "[core]") {
 * verifying that it successfully appends data (two lines) to the file updates.
 */
 TEST_CASE("Testing DataFileManager Update writing to file", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     CHECK(manager.Update());
 
@@ -138,8 +130,7 @@ TEST_CASE("Testing DataFileManager Update writing to file", "[core]") {
 * verifying that it successfully appends data to the file on multiple updates.
 */
 TEST_CASE("Testing DataFileManager Update with multiple updates", "[core]") {
-    std::unique_ptr world = std::make_unique<cse498::MazeWorld>();
-    cse498::DataFileManager manager("DataFileManagerTest.csv", world.get());
+    cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
     CHECK(manager.Update());
     CHECK(manager.Update()); // Update again to check appending

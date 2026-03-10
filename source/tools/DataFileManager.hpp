@@ -47,8 +47,8 @@ namespace cse498 {
     // This is initialized in the constructor and can be retrieved using the GetFilename() method.
     std::string m_filename;
 
-    //WorldBase &m_world; made it as a reference to guarantee that it is not null. 
-    WorldBase &m_world; // This will be a unique_ptr stored in the world file once that file is complete
+    // A unique pointer to the world object, which is owned by the DataFileManager.
+    std::unique_ptr<WorldBase> m_world;
 
     template <typename T>
 
@@ -97,14 +97,14 @@ namespace cse498 {
     
 
   public:
-    // Constructor to initialize the DataFileManager with a filename and a reference to the world. 
-    DataFileManager(const std::string & filename, WorldBase *world) : 
-    m_filename(filename), m_world(*world) 
+    // Constructor to initialize the DataFileManager with a filename and ownership of the world. 
+    DataFileManager(const std::string & filename, std::unique_ptr<WorldBase> world) : 
+    m_filename(filename), m_world(std::move(world)) 
     { 
         if (filename.empty()) {
             throw std::runtime_error("cse498::DataFileManager::Constructor: Filename cannot be empty");
         }
-        if (world == nullptr) {
+        if (!m_world) {
             throw std::runtime_error("cse498::DataFileManager::Constructor: World pointer cannot be null");
         }
     }
@@ -143,12 +143,12 @@ namespace cse498 {
         return false;
       }
 
-      WorldGrid &grid = m_world.GetGrid();
+      WorldGrid &grid = m_world->GetGrid();
       auto cells = grid.BuildSymbolMap();
 
       std::string tiles = FormatData(TILE_ID, TILE_TYPE, cells);
-      PacingAgent agent(AGENT_ID, "Pacer", m_world);
-      std::string agents = FormatData(AGENT_ID, AGENT_TYPE, m_world.GetKnownAgents(agent));
+      PacingAgent agent(AGENT_ID, "Pacer", *m_world);
+      std::string agents = FormatData(AGENT_ID, AGENT_TYPE, m_world->GetKnownAgents(agent));
 
       file << tiles << "\n" << agents << "\n";
 
