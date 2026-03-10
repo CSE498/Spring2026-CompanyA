@@ -45,11 +45,9 @@ public:
     T Get(const std::string& key, const T& defaultValue = T{}) const {
         auto it = data.find(key);
         if (it != data.end()) {
-            try {
-                return std::any_cast<T>(it->second);
-            } catch (...) {
-                return defaultValue;
-            }
+            const T* p = std::any_cast<T>(&it->second);
+            if (p)
+                return *p;
         }
         return defaultValue;
     }
