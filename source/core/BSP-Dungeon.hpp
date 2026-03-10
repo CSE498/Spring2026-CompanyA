@@ -32,7 +32,7 @@ namespace cse498 {
         int x, y, width, height; // (x,y) - (origin point of the grid (top-left corner))
                                  // (width, height) - dimension of the grid cut (lxw)
         std::string name; //Name of the node for debugging purposes
-        std::string split;
+        std::string file_name; //
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
         
 
@@ -156,7 +156,6 @@ namespace cse498 {
                 std::cout << "y " << i.y << std::endl;
                 std::cout << "width " << i.width << std::endl;
                 std::cout << "height " << i.height << std::endl;
-                std::cout << "split " << i.split << std::endl;
                 std::cout << "left_child, [Index]: " << i.left_child << std::endl;
                 std::cout << "right_child, [Index]: " << i.right_child << std::endl;
 
@@ -202,10 +201,13 @@ namespace cse498 {
             mIterations = iter;
         }
 
-        //Don't know if we'll actually need this, leaving this here for now just in-case
-        // void SetRoom (std::vector<std::string>) {
+        std::string GetFileName() {
             
-        // }
+        }
+
+        void SetFileName() {
+
+        }
 
         /// @brief Grabs the number of iterations done in splitting the BSP_Tree
         /// @return number of iterations we want to split the rooms with
