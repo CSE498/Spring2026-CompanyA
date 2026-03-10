@@ -12,7 +12,7 @@
 
 
 #include "BSP-Dungeon.hpp"
-
+#include <cmath>
 
 struct Point {
     int x, y; // x-y points of a room
@@ -47,18 +47,17 @@ namespace cse498 {
             {}
         
 
-
-
-        /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room relationship is created
+        /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room 
+        ///relationship is created through PostOrderRoomConnect()
         void CreateDungeon() { 
             for (const auto& node : mBSP.GetLeafNodes()) {
                 RasterizeGrid(node); //Populates grid with initial, unconnected rooms 
-                PostOrderRoomConnect(node); //populates connection between rooms for linking
             }
-            
+            PostOrderRoomConnect(mBSP.GetBSPTree()[0]); //populates connection between rooms for linking
+            TunnelConnectDungeon();
         }
 
-        /// @brief takes the leaf nodes of the BSP_Tree and 
+        /// @brief takes the leaf node's (x,y) coordinates and room information from the BSP_Tree and translates it onto mGrid
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode& node) { 
             int room_height = node.vector_room.size();
@@ -120,21 +119,69 @@ namespace cse498 {
         }
 
         /// @brief Calculates the distance (x-y) between two rooms) 
-        /// @return 
-        [[nodiscard]] Point ConnectTunnel(LinkedRooms RoomCoordinates) {
-            auto [x1_value, x2_value, y1_value, y2_value] = RoomCoordinates;
+        void ConnectTunnel(LinkedRooms RoomCoordinates) {
+            auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
 
-            std::cout << "Look here" << std::endl;
             std::cout << x1_value << " " << x2_value << " " << y1_value << " " << y2_value << std::endl;
+            auto point_x = x2_value - x1_value;
+            auto point_y = y2_value - y1_value;
 
-            return Point(0,0);
+            bool negative_y = false;
+            bool negative_x = false;
+
+            if (point_y < 0) {
+                negative_y = true;
+                point_y = std::abs(point_y);
+
+            } 
+
+            if (point_x < 0) {
+                negative_x = true;
+                point_x = std::abs(point_x);
+            }
+
+
+            for (int y = 0; y <= point_y; ++y) {
+                int y_point;
+                if (negative_y) {
+                    y_point = y1_value - y;
+                }
+                else {
+                    y_point = y1_value + y;
+
+                }
+
+                if (mGrid[y_point][x1_value] == '#') {
+                    mGrid[y_point][x1_value] = ' ';
+                    mGrid[y_point][x1_value - 1] = ' ';
+                    mGrid[y_point][x1_value + 1] = ' ';
+                }
+
+            }
+
+            for (int x = 0; x <= point_x; ++x) {
+                int x_point;
+                if(negative_x) {
+                    x_point = x1_value -x;
+                }
+                else {
+                    x_point = x1_value + x;
+                }
+
+                if (mGrid[y2_value][x_point] == '#') {
+                    mGrid[y2_value][x_point] = ' ';
+                }
+
+            }
+
+
+
         }
 
         /// @brief 
         void TunnelConnectDungeon() {
             for(auto &i : mConnectedRooms) { 
-                std::cout << "Here" << std::endl;
-                auto tunnel_coordinate = ConnectTunnel(i);
+                ConnectTunnel(i);
             }
         }
 
