@@ -83,6 +83,7 @@ namespace cse498 {
         /// @param node root_node 
         void PostOrderDFS(BSPNode &node) {
             if (node.left_child == -1 && node.right_child == -1) {
+                //Populating node with room and coordinate offset info
                 mRoomHolder.SetCurrentRoom();
                 node.vector_room = mRoomHolder.GetCurrentRoom();
 

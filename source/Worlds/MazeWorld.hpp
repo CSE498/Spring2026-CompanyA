@@ -9,6 +9,7 @@
 #include <cassert>
 
 #include "../core/WorldBase.hpp"
+#include "../core/WorldGeneration.hpp"
 
 namespace cse498 {
 
@@ -32,17 +33,36 @@ namespace cse498 {
       floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
       wall_id  = main_grid.AddCellType("wall",  "Impenetrable wall.",             '#');
 
-      main_grid.Load(std::vector<std::string>{"#######################",
-                                              "# #            ##     #",
-                                              "# #  #  ######    ### #",
-                                              "# #  #  #     #  #  # #",
-                                              "# #  #  #  #  #  #  # #",
-                                              "#    #     #     #    #",
-                                              "##################  # #",
-                                              "#                    ##",
-                                              "#                    ##",
-                                              "#  ####################",
-                                              "#######################"} );
+
+      //Original level commented out
+      // main_grid.Load(std::vector<std::string>{"#######################",
+      //                                         "# #            ##     #",
+      //                                         "# #  #  ######    ### #",
+      //                                         "# #  #  #     #  #  # #",
+      //                                         "# #  #  #  #  #  #  # #",
+      //                                         "#    #     #     #    #",
+      //                                         "##################  # #",
+      //                                         "#                    ##",
+      //                                         "#                    ##",
+      //                                         "#  ####################",
+      //                                         "#######################"} );
+      
+
+      ////////////////////////////////////
+      //    BSP-Dungeon Implementation
+      ///////////////////////////////////
+
+      WorldGen generation; 
+      generation.CreateDungeon(); 
+      std::vector<std::string> testing = generation.GetDungeon();
+
+      // Debugging calls in order to see the Grid Parition outline and coordinate/room information
+      // generation.GetBSP().TreeParser();
+      // generation.GetBSP().GenerateTileMap();
+
+      main_grid.Load(testing);
+
+
     }
     ~MazeWorld() = default;
 
