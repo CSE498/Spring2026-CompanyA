@@ -12,7 +12,7 @@
 #include <cstddef>    // For size_t
 #include <cstdint>
 #include <functional>
-#include "../tools/PathVector.hpp"
+#include <cmath>
 
 namespace cse498 {
 
@@ -35,9 +35,6 @@ namespace cse498 {
 
     WorldPosition(const WorldPosition &) = default;
     WorldPosition & operator=(const WorldPosition &) = default;
-    WorldPosition operator+(const PathVector& v) const { return {x + v.X(), y + v.Y()}; }
-    WorldPosition operator-(const PathVector& v) const { return {x - v.X(), y - v.Y()}; }
-    PathVector operator-(const WorldPosition& pos) const { return {x - pos.X(), y - pos.Y()}; }
 
     // -- Accessors --
 
