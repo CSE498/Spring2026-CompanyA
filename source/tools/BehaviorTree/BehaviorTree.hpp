@@ -22,7 +22,7 @@ Implements:
 #include <any>
 #include <functional>
 
-namespace Pathfinding {
+namespace cse498 {
 namespace BehaviorTrees {
 
 // ============================================================
@@ -241,4 +241,4 @@ public:
 };
 
 } // namespace BehaviorTrees
-} // namespace Pathfinding
+} // namespace cse498

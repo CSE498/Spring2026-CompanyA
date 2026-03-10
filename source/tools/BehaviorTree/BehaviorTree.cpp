@@ -1,6 +1,6 @@
 #include "BehaviorTree.hpp"
 
-namespace Pathfinding {
+namespace cse498 {
 namespace BehaviorTrees {
 
 // ============================================================
@@ -241,4 +241,4 @@ std::unique_ptr<ContinuallyRepeat> TreeBuilder::Repeat(const std::string& name) 
 }
 
 } // namespace BehaviorTrees
-} // namespace Pathfinding
+} // namespace cse498
