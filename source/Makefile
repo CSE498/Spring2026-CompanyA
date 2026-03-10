@@ -20,7 +20,7 @@ CXX = c++
 HEADERS := $(shell find Agents core Interfaces tools Worlds -name '*.hpp')
 
 # List of all available executables
-EXECUTABLES = simple
+EXECUTABLES = simple gameview
 
 # changed from only simple to all
 all: $(EXECUTABLES)
