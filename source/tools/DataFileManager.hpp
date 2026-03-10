@@ -6,7 +6,7 @@
  * This link helped me to understand how to trigger functions to build a new row in the file:
  * https://stackoverflow.com/questions/67628186/how-to-write-the-result-of-a-function-to-a-file-c
  * 
- * The function data_to_string(const T & data) used this link to help me understand how to convert different data types to a string for storage in the file:
+ * The function DataToString(const T & data) used this link to help me understand how to convert different data types to a string for storage in the file:
  * https://chatgpt.com/share/69925206-3bf4-8013-b807-859d6d7d1f89 
  * 
  * Learned and understand to check if two different types are convertible using std::is_convertible_v from this link: 
@@ -53,7 +53,7 @@ namespace cse498 {
     template <typename T>
 
     // Helper function to convert various data types to a string representation for file storage. 
-    std::string data_to_string(const T & data) const {
+    std::string DataToString(const T & data) const {
         if constexpr (std::is_convertible_v<T, std::string>) {
             return std::string(data);
         }
@@ -90,7 +90,7 @@ namespace cse498 {
           return result;
         }
         else {
-            throw std::runtime_error("cse498::DataFileManager::data_to_string(): Unconvertible data type");
+            throw std::runtime_error("cse498::DataFileManager::DataToString(): Unconvertible data type");
         }
     }
 
@@ -126,7 +126,7 @@ namespace cse498 {
 
         data_stored += "\t";
 
-        std::string data_string = data_to_string(data);
+        std::string data_string = DataToString(data);
         data_stored += data_string;
 
         return data_stored;
