@@ -36,8 +36,8 @@ namespace cse498 {
   // The DataFileManager class is responsible for managing the storage of world data into a file. 
   class DataFileManager {
   private:
-    static constexpr std::string_view TILE_TYPE = "Tile";
-    static constexpr std::string_view AGENT_TYPE = "Agent";
+    static constexpr std::string_view m_tile_type = "Tile";
+    static constexpr std::string_view m_agent_type = "Agent";
 
     // The filename where the data will be stored. 
     // This is initialized in the constructor and can be retrieved using the GetFilename() method.
@@ -93,7 +93,7 @@ namespace cse498 {
     // This function formats the data by prefixing it with its type (such as "Tile" or "Agent") 
     // and separating the type and data with a tab character for easy parsing when reading from the file.
     std::string FormatData(std::string_view type, const T & data) const {
-        if (type != TILE_TYPE && type != AGENT_TYPE) 
+        if (type != m_tile_type && type != m_agent_type) 
           throw std::runtime_error("cse498::DataFileManager::FormatData(): Must provide a valid type [Tile, Agent]");
 
         std::string data_stored(type);
@@ -133,7 +133,7 @@ namespace cse498 {
       if (!grid_str.empty() && grid_str.back() == '\n') grid_str.pop_back();
       for (char & c : grid_str) if (c == '\n') c = ',';
 
-      std::string tiles = FormatData(TILE_TYPE, grid_str);
+      std::string tiles = FormatData(m_tile_type, grid_str);
 
       // Collect data for each agent: id,name,symbol,x,y — entries separated by '\t'
       std::string agent_data;
@@ -151,7 +151,7 @@ namespace cse498 {
           agent_data += ",,"; // no position available
         }
       }
-      std::string agents = FormatData(AGENT_TYPE, agent_data);
+      std::string agents = FormatData(m_agent_type, agent_data);
 
       file << tiles << "\n" << agents << "\n";
 
@@ -176,8 +176,8 @@ namespace cse498 {
         std::string type, data;
         if (!std::getline(iss, type, '\t')) continue;
         if (!std::getline(iss, data)) continue;
-        if (type == TILE_TYPE)  tile_data  = data;
-        if (type == AGENT_TYPE) agent_data = data;
+        if (type == m_tile_type)  tile_data  = data;
+        if (type == m_agent_type) agent_data = data;
       }
       file.close();
 
