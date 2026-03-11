@@ -43,5 +43,4 @@ namespace cse498
 
 }
 
-
 #endif //CSE498COMPA_ENEMY_H
