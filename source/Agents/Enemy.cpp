@@ -12,8 +12,8 @@ namespace cse498
 
 size_t Enemy::SelectAction(const WorldGrid &grid)
 {
-
-
+    (void)grid; // basically will be calling into behavior tree to tick or something?
+    return 0;
 }
 
 
