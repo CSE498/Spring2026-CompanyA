@@ -9,35 +9,35 @@
 
 #pragma once
 
-#include <stdint.h>  // This defined the size of uint64_t
+#include <cstdint>  // This defined the size of uint64_t
 #include <chrono>    // Used to get the current time off of the computer
 #include <stdexcept> // Allows the program to throw runtime errors
 
 
 namespace cse498 {
 
-    // Constants
-    constexpr int STATE_NUMBER = 4;
-    constexpr int NUM_BITS = 64;
-    
-    constexpr int RIGHT_SHIFT1 = 30;
-    constexpr int RIGHT_SHIFT2 = 27;
-    constexpr int RIGHT_SHIFT3 = 31;
-    constexpr uint64_t GOLDEN_RATIO = 0x9E3779B97F4A7C15ULL;
-    constexpr uint64_t FIRST_MIXING = 0xBF58476D1CE4E5B9;
-    constexpr uint64_t SECOND_MIXING = 0x94D049BB133111EB;
-    
-    constexpr int LEFT_SHIFT = 23;
-    constexpr int MIX_SHIFT = 17;
-    constexpr int NUM_STATE_VALUES = 45;
-    
-    constexpr int D_LOWER_11 = 11;
-    constexpr double DOUBLE_CONVERSION_FACTOR = 1.0 / 9007199254740992.0;
-    constexpr int F_LOWER_41 = 41;
-    constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
-
     class Random {
         private:
+            // Constants
+            static constexpr int STATE_NUMBER = 4;
+            static constexpr int NUM_BITS = 64;
+            
+            static constexpr int RIGHT_SHIFT1 = 30;
+            static constexpr int RIGHT_SHIFT2 = 27;
+            static constexpr int RIGHT_SHIFT3 = 31;
+            static constexpr uint64_t GOLDEN_RATIO = 0x9E3779B97F4A7C15ULL;
+            static constexpr uint64_t FIRST_MIXING = 0xBF58476D1CE4E5B9;
+            static constexpr uint64_t SECOND_MIXING = 0x94D049BB133111EB;
+            
+            static constexpr int LEFT_SHIFT = 23;
+            static constexpr int MIX_SHIFT = 17;
+            static constexpr int NUM_STATE_VALUES = 45;
+            
+            static constexpr int D_LOWER_11 = 11;
+            static constexpr double DOUBLE_CONVERSION_FACTOR = 1.0 / 9007199254740992.0;
+            static constexpr int F_LOWER_41 = 41;
+            static constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
+
             uint64_t m_seed;
 
 
@@ -49,16 +49,16 @@ namespace cse498 {
 
             // keeps an internal state of 4 64 unsigned 64-bit ints
             // changes each time a number is generated
-            struct xoshiro256pp_state {
+            struct m_Xoshiro256ppState {
                 uint64_t s[STATE_NUMBER];
             };
 
-            struct splitmix64_state {
+            struct m_Splitmix64State {
                 uint64_t s;
             };
 
             // Ensursed state values are non-zero and well-mixed.
-            uint64_t splitmix64(struct splitmix64_state &state) {
+            uint64_t m_Splitmix64(struct m_Splitmix64State &state) {
                 uint64_t result = (state.s += GOLDEN_RATIO);
                 result = (result ^ (result >> RIGHT_SHIFT1)) * FIRST_MIXING;
                 result = (result ^ (result >> RIGHT_SHIFT2)) * SECOND_MIXING;
@@ -66,36 +66,36 @@ namespace cse498 {
             }
 
             // Uses m_seed to generate the state positions
-            void xoshiro256pp_init(struct xoshiro256pp_state &state) {
-                struct splitmix64_state sm = {m_seed};
+            void m_Xoshiro256ppInit(struct m_Xoshiro256ppState &state) {
+                struct m_Splitmix64State sm = {m_seed};
 
-                state.s[0] = splitmix64(sm);
-                state.s[1] = splitmix64(sm);
-                state.s[2] = splitmix64(sm);
-                state.s[3] = splitmix64(sm);
+                state.s[0] = m_Splitmix64(sm);
+                state.s[1] = m_Splitmix64(sm);
+                state.s[2] = m_Splitmix64(sm);
+                state.s[3] = m_Splitmix64(sm);
             }
 
             // Performs a left rotation on x by k bits
-            uint64_t rol64(uint64_t x, int k) {
+            uint64_t m_Rol64(uint64_t x, int k) {
                 // Undefined behavior should never trigger due to constant values
                 // If this triggers, function was used incorrectly.
                 if (k == 0) {
-                    throw std::runtime_error("cse498::Random::rol64(): k = 0 is undefined behavior");
+                    throw std::runtime_error("cse498::Random::m_Rol64(): k = 0 is undefined behavior");
                 }
                 else if (k == 64) {
-                    throw std::runtime_error("cse498::Random::rol64(): k = 64 is undefined behavior");
+                    throw std::runtime_error("cse498::Random::m_Rol64(): k = 64 is undefined behavior");
                 }
 
                 return (x<<k) | (x >> (NUM_BITS-k));
             }
 
             // Generates a random number
-            uint64_t xoshiro256pp(struct xoshiro256pp_state &state) {
+            uint64_t m_Xoshiro256pp(struct m_Xoshiro256ppState &state) {
                 uint64_t *s = state.s;
 
                 // Adds parts 0 and 3 of the state, rotates the sum left by 23 bits
                 // then adds part 0 back into the sum
-                uint64_t result = rol64(s[0] + s[3], LEFT_SHIFT) + s[0];
+                uint64_t result = m_Rol64(s[0] + s[3], LEFT_SHIFT) + s[0];
 
                 // shifts state 1 by 17 bits
                 // helps with state mixing
@@ -107,7 +107,7 @@ namespace cse498 {
                 s[1] ^= s[2];
                 s[0] ^= s[3];
                 s[2] ^= t;
-                s[3] = rol64(s[3], NUM_STATE_VALUES);
+                s[3] = m_Rol64(s[3], NUM_STATE_VALUES);
                 return result;
             }
 
@@ -116,28 +116,26 @@ namespace cse498 {
 
             
             // Generates a double
-            double double_xoshiro(struct xoshiro256pp_state &state) {
-                uint64_t r = xoshiro256pp(state);
+            double m_DoubleXoshiro(struct m_Xoshiro256ppState &state) {
+                uint64_t r = m_Xoshiro256pp(state);
                 return (r >> D_LOWER_11) * (DOUBLE_CONVERSION_FACTOR); // Using the top 53 bits
             }
 
             // Generates a float
-            float float_xoshiro(struct xoshiro256pp_state &state) {
-                uint64_t r = xoshiro256pp(state);
+            float m_FloatXoshiro(struct m_Xoshiro256ppState &state) {
+                uint64_t r = m_Xoshiro256pp(state);
                 return static_cast<float>(r >> F_LOWER_41) * (FLOAT_CONVERSION_FACTOR); // Using the top 23 bits
             }
 
-            struct xoshiro256pp_state m_rng;
+            struct m_Xoshiro256ppState m_rng;
             bool m_used = false;
 
-            void check_rng() {
+            void m_CheckRng() {
                 if (m_used == false) {
-                    xoshiro256pp_init(m_rng);
+                    m_Xoshiro256ppInit(m_rng);
                     m_used = true;
                 }
             }
-
-        protected:
 
         public:
             Random() {
@@ -158,10 +156,10 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetInt(): i_min must be less than i_max.");
                 }
                 
-                check_rng();
+                m_CheckRng();
 
                 // generate the bits
-                uint64_t r = xoshiro256pp(m_rng);
+                uint64_t r = m_Xoshiro256pp(m_rng);
                 // make use of the bits useful for a integer
                 int return_i = i_min + static_cast<int>(r % static_cast<uint64_t>(i_max-i_min+1));
 
@@ -175,10 +173,10 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetDouble(): d_min must be less than d_max.");
                 }
 
-                check_rng();
+                m_CheckRng();
 
                 // for doubles use the 53 bits
-                double return_d = d_min + (d_max - d_min) * double_xoshiro(m_rng);
+                double return_d = d_min + (d_max - d_min) * m_DoubleXoshiro(m_rng);
 
                 return return_d;
             }
@@ -190,10 +188,10 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetFloat(): f_min must be less than f_max.");
                 }
 
-                check_rng();
+                m_CheckRng();
 
                 // for floats use the top 23 bits
-                float return_f = f_min + (f_max - f_min) * float_xoshiro(m_rng);
+                float return_f = f_min + (f_max - f_min) * m_FloatXoshiro(m_rng);
 
                 return return_f;
             }
@@ -205,10 +203,10 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::GetChar(): c_min must be less than c_max.");
                 }
 
-                check_rng();
+                m_CheckRng();
                 
                 // Treat chars as ints
-                uint64_t r = xoshiro256pp(m_rng);
+                uint64_t r = m_Xoshiro256pp(m_rng);
                 char return_c = static_cast<char>(c_min + (r % static_cast<uint64_t>(c_max - c_min + 1)));
 
                 return return_c;
@@ -232,10 +230,10 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::P(): parameter probability must be between 0 and 1.");
                 }
 
-                check_rng();
+                m_CheckRng();
 
                 // Uses the double generation to determine true/false
-                bool return_p = double_xoshiro(m_rng) < probability;
+                bool return_p = m_DoubleXoshiro(m_rng) < probability;
 
                 return return_p;
             }
