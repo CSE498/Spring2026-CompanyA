@@ -31,7 +31,7 @@
 #include "../../source/core/WorldGrid.hpp"
 #include "../../source/Agents/PacingAgent.hpp"
 
-
+// The namespace cse498. 
 namespace cse498 {
   // The DataFileManager class is responsible for managing the storage of world data into a file. 
   class DataFileManager {
@@ -135,7 +135,7 @@ namespace cse498 {
 
       std::string tiles = FormatData(m_tile_type, grid_str);
 
-      // Collect data for each agent: id,name,symbol,x,y — entries separated by '\t'
+      // Collect data for each agent: id,name,symbol,x,y — data blocks separated by '\t'
       std::string agent_data;
       for (size_t i = 0; i < m_world->GetNumAgents(); ++i) {
         const AgentBase & agent = m_world->GetAgent(i);
@@ -148,7 +148,7 @@ namespace cse498 {
           agent_data += "," + std::to_string(pos.X());
           agent_data += "," + std::to_string(pos.Y());
         } else {
-          agent_data += ",,"; // no position available
+          agent_data += ""; // no position available
         }
       }
       std::string agents = FormatData(m_agent_type, agent_data);
