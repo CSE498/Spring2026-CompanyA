@@ -77,8 +77,8 @@ namespace cse498 {
       std::vector<std::string> testing = generation.GetDungeon();
 
       // Debugging calls in order to see the Grid Parition outline and coordinate/room information
-      // generation.GetBSP().TreeParser();
-      // generation.GetBSP().GenerateTileMap();
+       generation.GetBSP().TreeParser();
+       generation.GetBSP().GenerateTileMap();
 
       main_grid.Load(testing);
 
