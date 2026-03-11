@@ -5,7 +5,7 @@ FLAGS_all     = $(FLAGS_version) $(FLAGS_warn)
 # defining SDL library & adding sdl flags
 SDL_DIR    = ../third-party/SDL2
 FLAGS_all += -I$(SDL_DIR)/include
-SRCS       := $(shell find Agents core Interfaces tools Worlds -name '*.cpp')
+SRCS       := $(shell find Agents core Interfaces tools Worlds -name '*.cpp' -not -path '*/WebUI/*')
 SDL_LIBS   = -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image -lSDL2_ttf
 
 FLAGS_debug   = $(FLAGS_all) -g                     # Setup for running a debugger
@@ -17,7 +17,7 @@ FLAGS_grumpy  = $(FLAGS_all) -Wconversion -Weffc++  # Some extra picky warnings
 CXX = c++
 
 # Find all headers
-HEADERS := $(shell find Agents core Interfaces tools Worlds -name '*.hpp')
+HEADERS := $(shell find Agents core Interfaces tools Worlds -name '*.hpp' -not -path '*/WebUI/*')
 
 # List of all available executables
 EXECUTABLES = simple gameview

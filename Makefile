@@ -22,7 +22,7 @@
 # download the SDL library for both macOS & Linux users.
 
 .PHONY: default all build test clean debug opt quick grumpy \
-        src-% test-% help
+        src-% test-% help web_test
 
 # ---------- High-level targets ----------
 
@@ -62,10 +62,15 @@ src-%:
 test-%:
 	$(MAKE) -C tests $*
 
+# Build + run WebUI unit tests (requires Emscripten SDK / em++)
+web_test:
+	$(MAKE) -C tests web_test
+
 help:
 	@echo "Top-level targets:"
 	@echo "  make / make build      Build program(s) in source/"
 	@echo "  make test              Build + run unit tests in tests/"
+	@echo "  make web_test          Build WebUI tests with em++ (requires Emscripten)"
 	@echo "  make all               Build program(s) + run tests"
 	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode (source/)"
 	@echo "  make clean             Clean source/ and tests/"
