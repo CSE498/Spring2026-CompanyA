@@ -198,6 +198,8 @@ namespace cse498 {
       }
       m_world->GetGrid().Load(rows);
 
+      // If no agent data available in the game world means there is no agent is present. 
+      // So I just returned. Since zero agents is a valid state of the world, I don't throw an error there. 
       if (agent_data.empty()) return;
 
       // Restore agent positions: each data block is "id,name,symbol,x,y" separated by '\t'
