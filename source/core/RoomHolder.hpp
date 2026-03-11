@@ -16,7 +16,7 @@
  #include <iostream>
  #include <cassert>
  #include "../tools/Random.hpp"
-
+#include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
     class BSPTree;
@@ -27,12 +27,14 @@ namespace cse498 {
         std::string mFilePath = "../source/core/rooms/Dungeon_";
 
         cse498::Random mRng;
+		cse498::WeightedSet<std::string> mRoomPool;
 
     public:
 
-        RoomHolder() : mRng() { 
-
-        }
+        RoomHolder(const cse498::WeightedSet<std::string>& room_pool) 
+			: mRng(),
+			  mRoomPool(room_pool)
+		{}
 
         /// @brief 
         /// @return 
@@ -73,31 +75,10 @@ namespace cse498 {
         }
 
         [[nodiscard]] std::string GenerateFilePath() { 
-            auto dungeon_select = mRng.GetInt(1,3);
-            auto room_select = mRng.GetInt(1,3);
-            std::string file_path = "";
-
-            switch(dungeon_select) {
-                case 1:
-                    file_path += "one_pool/room_" + std::to_string(room_select) + ".txt";
-                    
-                    break;
-                case 2:
-                    file_path += "two_pool/room_" + std::to_string(room_select) + ".txt";
-                    break;
-                case 3:
-                    file_path += "three_pool/room_" + std::to_string(room_select) + ".txt";
-                    break;
-
-                default:
-                    std::cout << "Error has occurred, deafulting to Dungeon One Pool!" << std::endl;
-                    file_path += "one_pool/room_" + std::to_string(room_select) + ".txt";
-            }
-
+			auto room_select = mRng.GetDouble(0.0, mRoomPool.GetTotalWeight());
+			std::string file_path = mRoomPool.Sample(room_select);
             assert(file_path != "");
             return file_path;
-
-
         }
 
 

@@ -60,7 +60,9 @@ namespace cse498 {
 
 
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
-        BSP() : mRoomHolder() { 
+        BSP(const cse498::WeightedSet<std::string>& room_pool) 
+			: mRoomHolder(room_pool)
+		{ 
             insert_split(mIterations);
             PostOrderDFS();
         }
@@ -202,7 +204,7 @@ namespace cse498 {
         }
 
         std::string GetFileName() {
-            
+            return "";
         }
 
         void SetFileName() {
@@ -266,8 +268,8 @@ namespace cse498 {
         /// @return returns a tuple pair of Nodes, other returning nullopt if threshold width/height not met
         [[nodiscard]] std::optional<std::tuple<BSPNode, BSPNode>> random_split(BSPNode &node, int& iter) {
 
-            bool split_width = true;
-            bool split_height = true;
+            // bool split_width = true;
+            // bool split_height = true;
             //If the width or the height of the partition do not meet the minimum threshold, stop the split
             if (node.width < mThresholdValue * 2 || node.height < mThresholdValue * 2) {
                 return std::nullopt;

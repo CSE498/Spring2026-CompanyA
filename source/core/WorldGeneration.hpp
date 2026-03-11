@@ -29,7 +29,7 @@ namespace cse498 {
     class WorldGen {
     protected:
         BSP mBSP; // BSP_Tree that contains information on the grid and it's dimensions
-        RoomHolder mRoomHolder; //
+        //RoomHolder mRoomHolder;
         std::vector<std::string> mGrid; //Grid we're rasterizing information from mBSP_Tree too
         std::vector<LinkedRooms> mConnectedRooms; //The x-y coord pairs of two rooms used for connecting the room pair
 
@@ -39,11 +39,10 @@ namespace cse498 {
     public: 
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
-        WorldGen() 
-            : mBSP(), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
-              mRoomHolder(), 
+        WorldGen(const cse498::WeightedSet<std::string>& room_pool) 
+            : mBSP(room_pool), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
+              //mRoomHolder(room_pool), 
               mGrid(mBSP.GetHeight(), std::string(mBSP.GetWidth(), '#')) 
-
             {}
         
 
@@ -199,9 +198,9 @@ namespace cse498 {
 
         /// @brief 
         /// @return 
-        [[nodiscard]] RoomHolder GetRoomholder() const { 
-            return mRoomHolder;
-        }
+        // [[nodiscard]] RoomHolder GetRoomholder() const { 
+        //     return mRoomHolder;
+        // }
 
         /// @brief 
         /// @return 
