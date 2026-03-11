@@ -137,7 +137,7 @@ private:
         bool equals(const WorldPosition &p1) const
         {
             assert(p1.IsValid()); // I think this is always true? Let Logan Rimarcik know if this fails
-            return mGoals.contains(round(p1));
+            return mGoals.contains(Round(p1));
         }
     };
 
@@ -156,7 +156,7 @@ private:
         {
             if (!mGoal.IsValid() || !p1.IsValid())
                 return false;
-            return round(mGoal) == round(p1);
+            return Round(mGoal) == Round(p1);
         }
     };
 
@@ -175,7 +175,7 @@ private:
     template<typename Heu> static std::vector<WorldPosition> AStarSearch(const WorldPosition &from,
                                                                          const PathRequest &request,
                                                                          Heu h,
-                                                                         double max_search_dist = MAX_SEARCH_DISTANCE,
+                                                                         double maxSearchDistance = MAX_SEARCH_DISTANCE,
                                                                          bool closest = false);
     /**
      * Rebuilds the path from a given node used exclusively in Astar search
@@ -322,6 +322,16 @@ public:
                                                       const WorldPosition &end,
                                                       const PathRequest &request,
                                                       CircleDirectionFlag flag = CircleDirectionFlag::CW);
+
+    /**
+     * from the start position follows the path vector returning all points
+     * @param start - start position
+     * @param path - path as vector to follow
+     * @param request - other information to verify path
+     * @return true if path is clear
+     */
+    static bool IsPathClear(const WorldPosition& start, const PathVector& path, const PathRequest& request);
+
 };
 
 /*
@@ -340,18 +350,22 @@ public:
     std::unordered_set<WorldPosition> mAvoidTiles;
     const AgentAbility &mAbility;
     const WorldGrid &mWorldGrid;
+    const double mMaxSearchDistance;
 
     /**
      *
-     * @param avoid_tiles pass in {} if there are no such tiles. Otherwise treated as
+     * @param avoidTiles pass in {} if there are no such tiles. Otherwise treated as
      * list of points to avoid default to entire tile. so given (1,1) == [0.5, 1.49) in x,y
      * @param ability  reference as this path is bound and only valid for the created agent so its abilities follow
-     * @param world_grid
+     * @param worldGrid
+     * @param maxSearchDistance - max search distance for the function if it needs to be limited. (0 means ignored)
+     *                            only applicable when `finding` some path through A*
      */
-    PathRequest(std::unordered_set<WorldPosition> avoid_tiles,
+    PathRequest(std::unordered_set<WorldPosition> avoidTiles,
                 const AgentAbility &ability,
-                const WorldGrid &world_grid) : mAvoidTiles(std::move(avoid_tiles)), mAbility(ability),
-                                               mWorldGrid(world_grid)
+                const WorldGrid &worldGrid,
+                const double maxSearchDistance = 0) : mAvoidTiles(std::move(avoidTiles)), mAbility(ability),
+                                               mWorldGrid(worldGrid), mMaxSearchDistance(maxSearchDistance)
     {
     }
 };
@@ -379,11 +393,16 @@ template<typename Heu>
 std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
                                                       const PathRequest &request,
                                                       Heu h,
-                                                      const double max_search_dist,
+                                                      double maxSearchDistance,
                                                       const bool closest)
 {
     if (!request.mWorldGrid.IsWalkable(from))
         return {};
+
+    // check if user defined a search distance param:
+    double maxSearchDist = (request.mMaxSearchDistance <= 0) ? MAX_SEARCH_DISTANCE : request.mMaxSearchDistance;
+    // take the min viable search distance
+    maxSearchDist = std::min(maxSearchDistance, maxSearchDist);
 
     const auto directions = std::to_array<PathVector>({
         {STEP_SIZE, 0}, {0, STEP_SIZE}, {-STEP_SIZE, 0}, {0, -STEP_SIZE},
@@ -401,7 +420,7 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
         auto node = pq.top();
         pq.pop();
         // Just check if the node is too far away from the goal and this is our current best estimate then stop looking
-        if (node->mf > max_search_dist) // Could change this to distance traveled instead
+        if (node->mf > maxSearchDist) // Could change this to distance traveled instead
         {
             if (closest && closest_node != nullptr)
             {
@@ -436,7 +455,7 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
             double g = node->mg + dir.getMagnitude();
             if (!visited.contains(neighbor))
             {
-                pq.push(std::make_shared<ANode>(neighbor, g, g + h(round(neighbor)), node));
+                pq.push(std::make_shared<ANode>(neighbor, g, g + h(Round(neighbor)), node));
                 visited.insert(neighbor);
             }
         }

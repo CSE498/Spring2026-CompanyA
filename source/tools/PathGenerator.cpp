@@ -19,7 +19,7 @@ namespace cse498
 bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &dir, const PathRequest &request)
 {
     auto next_pos = from + dir;
-    if (!request.mWorldGrid.IsWalkable(next_pos) || request.mAvoidTiles.contains(round(next_pos)))
+    if (!request.mWorldGrid.IsWalkable(next_pos) || request.mAvoidTiles.contains(Round(next_pos)))
         return false;
     if (dir.X() == 0 || dir.Y() == 0) // You can always move in the 4 cardinals given tile is valid
         return true;
@@ -305,7 +305,7 @@ std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(cons
         {
             result.push_back(cur);
             cur = cur + directions.at(i);
-            if (request.mAvoidTiles.contains(round(cur)))
+            if (request.mAvoidTiles.contains(Round(cur)))
                 return {};
         }
     }
@@ -337,14 +337,14 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     auto start_path = AStarSearch(agent_pos, request, MultiGoalHeuristic{goals});
     if (start_path.empty())
         return {};
-    assert(goals.contains(round(start_path.back())));
+    assert(goals.contains(Round(start_path.back())));
 
     const auto loop_start = start_path.back();
     std::vector<WorldPosition> loop_path;
     size_t start_index = 0;
     for (size_t i = 0; i < loop_vec.size(); i++)
     {
-        if (round(loop_start) == round(loop_vec.at(i)))
+        if (Round(loop_start) == Round(loop_vec.at(i)))
         {
             start_index = i;
             break;
@@ -450,6 +450,61 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
         return {};
     return WorldPath(result);
 
-    // Test Case: check 2D plane given center is the start point and check every point
 }
+
+
+
+bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &path, const PathRequest &request)
+{
+    // We make an algorithm to go over all tiles that are entered and check if those tiles are walls
+    WorldPosition rounded_start = Round(start);
+    double tileX = rounded_start.X();
+    double tileY = rounded_start.Y();
+
+    int stepX = (path.X() > 0) ? 1 : -1;
+    int stepY = (path.Y() > 0) ? 1 : -1;
+
+    // this bit is adapted from chatgpt telling me about "2D DDA grid raycast" but is simple
+    // chatgpt just sped it up. No chat needed. Just look up ^^^.
+
+    // in short:
+    // essentially value of 't' between two points like x = 3 and x = 4 -- how much needed Solves:
+    // 1. startX + V_X * t = 3
+    // 2. startX + V_X * t = 4
+    // solve for the difference in 't' = delta T. (eq2 - eq1)
+    double tDeltaX = (path.X() != 0) ? std::abs(1 / path.X()) : INFINITY;
+    double tDeltaY = (path.Y() != 0) ? std::abs(1 / path.Y()) : INFINITY;
+
+    // This part is really simple we are just solving for 't' in:
+    //  startX + V.X() * t = floor(startX) + 1
+    // from start position how much of time step to reach the next barrier (depending on direction)
+    double nextBoundaryX = (stepX > 0) ? (rounded_start.X() + 1) : rounded_start.X();
+    double nextBoundaryY = (stepY > 0) ? (rounded_start.Y() + 1) : rounded_start.Y();
+    double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
+    double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
+
+    double distance = 0;
+    double max_distance = path.getMagnitude();
+    while (distance <= max_distance)
+    {
+        if (tMaxX < tMaxY)
+        {
+            tileX += stepX;
+            distance = tMaxX;
+            tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles
+        }
+        else
+        {
+            tileY += stepY;
+            distance = tMaxY;
+            tMaxY += tDeltaY;
+        }
+        if (!request.mWorldGrid.IsWalkable({tileX, tileY}))
+            return false;
+    }
+    return true;
+
+}
+
+
 }

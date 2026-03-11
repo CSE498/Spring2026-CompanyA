@@ -105,7 +105,7 @@ namespace cse498 {
    * @param pos - position to round
    * @return new world position rounded to a tile
    */
-  inline WorldPosition round(const WorldPosition& pos)
+  inline WorldPosition Round(const WorldPosition& pos)
 {
   return WorldPosition(pos).Round();
 }

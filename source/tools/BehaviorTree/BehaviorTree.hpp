@@ -233,10 +233,40 @@ private:
 // Convenience factory methods for constructing trees.
 class TreeBuilder {
 public:
+    /**
+    * Runs children in order until one fails. Succeeds only if all children succeed.
+    * (Manages Multiple children aka a composite)
+     * @param name - name of node
+     * @return seq
+     */
     static std::unique_ptr<Sequence> Seq(const std::string& name);
+    /**
+     *  Runs children in order until one succeeds. Fails only if all children fail.
+     * (Manages Multiple children aka a composite)
+     * @param name - name of node
+     * @return selector node
+     */
     static std::unique_ptr<Selector> Sel(const std::string& name);
+    /**
+     * Leaf node to execute function on reaching it
+     * @param name
+     * @param func - func taking in execution context (blackboard) and return status: suc, fail, running.
+     * @return
+     */
     static std::unique_ptr<Action> Act(const std::string& name, Action::ActionFunc func);
+    /**
+     * Flips Success ↔ Failure. Running passes through unchanged.
+     * (single node control aka Decorator)
+     * @param name - name of node
+     * @return inversion node.
+     */
     static std::unique_ptr<Invert> Inv(const std::string& name);
+    /**
+     * Continuously executes its child. Always returns Running.
+     * (single node control aka Decorator)
+     * @param name - node name
+     * @return
+     */
     static std::unique_ptr<ContinuallyRepeat> Repeat(const std::string& name);
 };
 

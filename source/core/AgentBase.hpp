@@ -26,6 +26,7 @@ namespace cse498 {
     /// which may provide more info about the type of success.
     int action_result = 1;
 
+    // TODO: I would guess this will become some struct with a URI reference to image & other metadata
     char symbol = '*';
 
   public:
