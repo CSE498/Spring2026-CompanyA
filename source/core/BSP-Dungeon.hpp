@@ -60,7 +60,9 @@ namespace cse498 {
 
 
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
-        BSP() : mRoomHolder() { 
+        BSP(const cse498::WeightedSet<std::string>& room_pool) 
+			: mRoomHolder(room_pool)
+		{ 
             insert_split(mIterations);
             PostOrderDFS();
         }
