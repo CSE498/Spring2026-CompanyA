@@ -19,7 +19,7 @@ namespace cse498
 bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &dir, const PathRequest &request)
 {
     auto next_pos = from + dir;
-    if (!request.mWorldGrid.IsWalkable(next_pos) || request.mAvoidTiles.contains(round(next_pos)))
+    if (!request.mWorldGrid.IsWalkable(next_pos) || request.mAvoidTiles.contains(Round(next_pos)))
         return false;
     if (dir.X() == 0 || dir.Y() == 0) // You can always move in the 4 cardinals given tile is valid
         return true;
@@ -305,7 +305,7 @@ std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(cons
         {
             result.push_back(cur);
             cur = cur + directions.at(i);
-            if (request.mAvoidTiles.contains(round(cur)))
+            if (request.mAvoidTiles.contains(Round(cur)))
                 return {};
         }
     }
@@ -337,14 +337,14 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     auto start_path = AStarSearch(agent_pos, request, MultiGoalHeuristic{goals});
     if (start_path.empty())
         return {};
-    assert(goals.contains(round(start_path.back())));
+    assert(goals.contains(Round(start_path.back())));
 
     const auto loop_start = start_path.back();
     std::vector<WorldPosition> loop_path;
     size_t start_index = 0;
     for (size_t i = 0; i < loop_vec.size(); i++)
     {
-        if (round(loop_start) == round(loop_vec.at(i)))
+        if (Round(loop_start) == Round(loop_vec.at(i)))
         {
             start_index = i;
             break;

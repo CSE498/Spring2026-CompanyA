@@ -83,8 +83,8 @@ public:
      * @param this_onto_that whatever is put here is projected onto the object calling this function.
      * @return
      */
-    PathVector Project(const WorldPosition& this_onto_that) const;
-    PathVector Project(const PathVector& this_onto_that) const;
+    [[nodiscard]] PathVector Project(const WorldPosition& this_onto_that) const;
+    [[nodiscard]] PathVector Project(const PathVector& this_onto_that) const;
 
 };
 

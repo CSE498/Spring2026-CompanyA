@@ -137,7 +137,7 @@ private:
         bool equals(const WorldPosition &p1) const
         {
             assert(p1.IsValid()); // I think this is always true? Let Logan Rimarcik know if this fails
-            return mGoals.contains(round(p1));
+            return mGoals.contains(Round(p1));
         }
     };
 
@@ -156,7 +156,7 @@ private:
         {
             if (!mGoal.IsValid() || !p1.IsValid())
                 return false;
-            return round(mGoal) == round(p1);
+            return Round(mGoal) == Round(p1);
         }
     };
 
@@ -436,7 +436,7 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
             double g = node->mg + dir.getMagnitude();
             if (!visited.contains(neighbor))
             {
-                pq.push(std::make_shared<ANode>(neighbor, g, g + h(round(neighbor)), node));
+                pq.push(std::make_shared<ANode>(neighbor, g, g + h(Round(neighbor)), node));
                 visited.insert(neighbor);
             }
         }

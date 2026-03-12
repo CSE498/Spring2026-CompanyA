@@ -40,7 +40,8 @@ PathVector & PathVector::scale(double scale_val)
 }
 PathVector & PathVector::rotate(double angle)
 {
-    auto temp_mx = mX;
+    // rotates according to linear algebra rotate matrix. CCW. See header
+    const auto temp_mx = mX;
     mX = std::cos(angle) * mX - std::sin(angle) * mY;
     mY = std::sin(angle) * temp_mx + std::cos(angle) * mY;
 

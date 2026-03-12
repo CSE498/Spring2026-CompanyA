@@ -9,7 +9,7 @@
 #include "../../source/tools/PathGenerator.hpp"
 #include "../../source/core/WorldBase.hpp"
 #include "../../source/core/WorldGrid.hpp"
-#include "../../source/tools/AgentAbility.hpp"
+#include "../../source/Agents/AgentAbility.hpp"
 #include "../../source/tools/WorldPath.hpp"
 
 using cse498::WorldPath;
