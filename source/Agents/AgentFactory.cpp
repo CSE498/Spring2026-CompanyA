@@ -4,11 +4,12 @@
  */
 
 #include "AgentFactory.h"
+#include "../core/AgentBase.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
-#include "core/WorldBase.hpp"
-#include "tools/AgentAbility.hpp"
-#include "tools/PathGenerator.hpp"
-#include "tools/PathVector.hpp"
+#include "../core/WorldBase.hpp"
+#include "../tools/AgentAbility.hpp"
+#include "../tools/PathGenerator.hpp"
+#include "../tools/PathVector.hpp"
 #include <cmath>
 
 using cse498::BehaviorTrees::TreeBuilder;
@@ -125,12 +126,56 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
     return root;
 }
 
+std::unique_ptr<Node> AgentFactory::CreatePatrolTree(AgentBase* agent)
+{
+    return TreeBuilder::Act("Walk Back And Forth", [agent](ExecutionContext& ctx) {
+        if (!agent) return Node::Status::Failure;
+        std::string dir = ctx.blackboard.Get<std::string>("patrol_direction", "left");
+        size_t actionId;
+        if (dir == "left") {
+            actionId = agent->GetActionID("left");
+            ctx.blackboard.Set<std::string>("patrol_direction", "right");
+        } else {
+            actionId = agent->GetActionID("right");
+            ctx.blackboard.Set<std::string>("patrol_direction", "left");
+        }
+        if (actionId != 0)
+            ctx.blackboard.Set<size_t>("selected_action", actionId);
+        return Node::Status::Running;
+    });
+}
+
+std::unique_ptr<Enemy> AgentFactory::CreatePatrolAgent(WorldBase& world, const WorldPosition& spawn)
+{
+    auto patrol = std::make_unique<Enemy>(world.GetNextAgentId(), "Patrol", world);
+    patrol->SetLocation(spawn);
+    patrol->AddAction("left", 1).AddAction("right", 2);
+    patrol->SetBehaviorTree(CreatePatrolTree(patrol.get()));
+    return patrol;
+}
+
 std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const std::string & name, WorldBase & world)
 {
-    auto skeleton = std::make_unique<Enemy>(world.GetNextAgentId(), name, world);
+    AgentDefinition def;
+    def.name = name;
+    WorldPosition spawn(0, 0); // caller can move after add
+    return CreateAgent(def, world, spawn);
+}
+
+std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const AgentDefinition& def, WorldBase & world, const WorldPosition& spawn)
+{
+    return CreateAgent(def, world, spawn);
+}
+
+std::unique_ptr<Enemy> AgentFactory::CreateAgent(const AgentDefinition& def, WorldBase& world, const WorldPosition& spawn)
+{
+    auto skeleton = std::make_unique<Enemy>(world.GetNextAgentId(), def.name, world);
+    skeleton->SetLocation(spawn);
+    skeleton->SetMaxHealth(def.hp);
+    skeleton->SetHealth(def.hp);
+    // atk can be used by combat later; no member on Enemy yet for minimal impl
     auto root = CreateSkeletonTree(skeleton.get(), world);
     skeleton->SetBehaviorTree(std::move(root));
-
     return skeleton;
 }
 

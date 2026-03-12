@@ -108,7 +108,7 @@ namespace cse498 {
     template <typename AGENT_T>
     AGENT_T & AddAgent(std::string agent_name="None") {
       auto agent_ptr = std::make_unique<AGENT_T>(mAgentIdIndex++, agent_name, *this);
-      return AddAgent(agent_ptr);
+      return AddAgent(std::move(agent_ptr));
     }
 
     /**
@@ -149,6 +149,19 @@ namespace cse498 {
         size_t action_id = agent_ptr->SelectAction(main_grid);
         int result = DoAction(*agent_ptr, action_id);
         agent_ptr->SetActionResult(result);
+      }
+    }
+
+    /// Remove agents that are dead: call OnDestroy() then erase from agent_set.
+    virtual void RemoveDeadAgents() {
+      auto it = agent_set.begin();
+      while (it != agent_set.end()) {
+        if (!(*it)->IsAlive()) {
+          (*it)->OnDestroy();
+          it = agent_set.erase(it);
+        } else {
+          ++it;
+        }
       }
     }
 

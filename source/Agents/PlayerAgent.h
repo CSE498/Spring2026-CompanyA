@@ -7,7 +7,7 @@
 
 #ifndef CSE498COMPA_PLAYERAGENT_H
 #define CSE498COMPA_PLAYERAGENT_H
-#include "core/AgentBase.hpp"
+#include "../core/AgentBase.hpp"
 
 namespace cse498
 {
