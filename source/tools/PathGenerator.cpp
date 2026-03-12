@@ -454,13 +454,16 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
 
 
 
-bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &path, const PathRequest &request)
+bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &path_dir, const PathRequest &request)
 {
     // We make an algorithm to go over all tiles that are entered and check if those tiles are walls
-    WorldPosition rounded_start = Round(start);
-    double tileX = rounded_start.X();
-    double tileY = rounded_start.Y();
+    WorldPosition roundedStart = Round(start);
+    double tileX = roundedStart.X();
+    double tileY = roundedStart.Y();
+    WorldPosition endTile = Round(roundedStart + path_dir);
 
+    PathVector path = path_dir;
+    path.normalize();
     int stepX = (path.X() > 0) ? 1 : -1;
     int stepY = (path.Y() > 0) ? 1 : -1;
 
@@ -478,25 +481,21 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
     // This part is really simple we are just solving for 't' in:
     //  startX + V.X() * t = floor(startX) + 1
     // from start position how much of time step to reach the next barrier (depending on direction)
-    double nextBoundaryX = (stepX > 0) ? (rounded_start.X() + 1) : rounded_start.X();
-    double nextBoundaryY = (stepY > 0) ? (rounded_start.Y() + 1) : rounded_start.Y();
+    double nextBoundaryX = (stepX > 0) ? (roundedStart.X() + 1) : roundedStart.X();
+    double nextBoundaryY = (stepY > 0) ? (roundedStart.Y() + 1) : roundedStart.Y();
     double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
     double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
 
-    double distance = 0;
-    double max_distance = path.getMagnitude();
-    while (distance <= max_distance)
+    while ((endTile - WorldPosition(tileX, tileY)).getMagnitude() > EP)
     {
         if (tMaxX < tMaxY)
         {
             tileX += stepX;
-            distance = tMaxX;
             tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles
         }
         else
         {
             tileY += stepY;
-            distance = tMaxY;
             tMaxY += tDeltaY;
         }
         if (!request.mWorldGrid.IsWalkable({tileX, tileY}))
