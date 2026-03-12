@@ -13,6 +13,7 @@
 
 #include "BSP-Dungeon.hpp"
 #include <cmath>
+#include <ranges>
 
 struct Point {
     int x, y; // x-y points of a room
@@ -120,8 +121,8 @@ namespace cse498 {
         /// @brief Calculates the distance (x-y) between two rooms) 
         void ConnectTunnel(LinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
+            auto const wall_set = {'^','>','<','&'};
 
-            std::cout << x1_value << " " << x2_value << " " << y1_value << " " << y2_value << std::endl;
             auto point_x = x2_value - x1_value;
             auto point_y = y2_value - y1_value;
 
@@ -142,34 +143,35 @@ namespace cse498 {
 
             for (int y = 0; y <= point_y; ++y) {
                 int y_point;
-                if (negative_y) {
-                    y_point = y1_value - y;
-                }
-                else {
-                    y_point = y1_value + y;
 
+                if (negative_y) y_point = y1_value - y;
+                else y_point = y1_value + y;
+
+                auto &y_char = mGrid[y_point][x1_value];
+                auto &y_char_left = mGrid[y_point][x1_value - 1];
+                auto &y_char_right = mGrid[y_point][x1_value + 1];
+
+                auto it = std::ranges::find(wall_set, y_char);
+
+                if (y_char == '#' || it != wall_set.end()) {
+                    y_char = ' ';
+                    y_char_left = ' ';
+                    y_char_right = ' ';
                 }
 
-                if (mGrid[y_point][x1_value] == '#') {
-                    mGrid[y_point][x1_value] = ' ';
-                    mGrid[y_point][x1_value - 1] = ' ';
-                    mGrid[y_point][x1_value + 1] = ' ';
-                }
 
             }
 
             for (int x = 0; x <= point_x; ++x) {
                 int x_point;
-                if(negative_x) {
-                    x_point = x1_value -x;
-                }
-                else {
-                    x_point = x1_value + x;
-                }
 
-                if (mGrid[y2_value][x_point] == '#') {
-                    mGrid[y2_value][x_point] = ' ';
-                }
+                if(negative_x)  x_point = x1_value -x;
+                else x_point = x1_value + x;
+                
+                auto &x_char = mGrid[y2_value][x_point];
+                auto it = std::ranges::find(wall_set, x_char);
+
+                if (x_char == '#' || it != wall_set.end()) x_char = ' ';
 
             }
 

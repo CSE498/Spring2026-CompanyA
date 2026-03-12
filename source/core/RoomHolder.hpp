@@ -87,7 +87,7 @@ namespace cse498 {
         /// @return 
         std::vector<std::string> LoadRoom() {
             std::string selected_pool = GenerateFilePath();
-            std::ifstream file(mFilePath + selected_pool); // this will open one of the 
+            std::ifstream file(mFilePath + selected_pool); // this will open one of the rooms
             std::cout << mFilePath + selected_pool << std::endl;
 
             assert(file.is_open());

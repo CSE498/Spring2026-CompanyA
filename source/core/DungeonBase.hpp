@@ -45,7 +45,7 @@ namespace cse498 {
       floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
       wall_id  = main_grid.AddCellType("wall",  "Impenetrable wall.",'#');
       upper_external = main_grid.AddCellType("wall",  "upper wall.", '^');
-	  lower_external = main_grid.AddCellType("wall",  "lower wall.", '&');
+	    lower_external = main_grid.AddCellType("wall",  "lower wall.", '&');
       left_external = main_grid.AddCellType("wall",  "left external wall.",  '<');
       right_external = main_grid.AddCellType("wall",  "right external  wall.", '>');
       internal_obstacle = main_grid.AddCellType("wall",  "interal obstacle wall.",   '$');
