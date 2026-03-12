@@ -41,9 +41,8 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
     }));
 
     // Placeholder "attack" action: when in range, stop moving (no-op for now).
-    attackSeq->AddChild(TreeBuilder::Act("Attack (No-op)", [enemy](ExecutionContext& ctx)
+    attackSeq->AddChild(TreeBuilder::Act("Attack (No-op)", [enemy]([[maybe_unused]] ExecutionContext& ctx)
     {
-        (void)ctx;
         if (!enemy)
             return Node::Status::Failure;
 
