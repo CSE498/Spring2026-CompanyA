@@ -219,6 +219,21 @@ add_test(
     COMMAND run_tests
 )
 set_tests_properties(native_tests PROPERTIES WORKING_DIRECTORY "${COMPANYA_TEST_DIR}")
+if(EXISTS "${COMPANYA_LOCAL_SDL_PREFIX}/lib")
+    if(APPLE)
+        set_property(
+            TEST native_tests
+            APPEND PROPERTY ENVIRONMENT_MODIFICATION
+            "DYLD_LIBRARY_PATH=path_list_prepend:${COMPANYA_LOCAL_SDL_PREFIX}/lib"
+        )
+    elseif(UNIX)
+        set_property(
+            TEST native_tests
+            APPEND PROPERTY ENVIRONMENT_MODIFICATION
+            "LD_LIBRARY_PATH=path_list_prepend:${COMPANYA_LOCAL_SDL_PREFIX}/lib"
+        )
+    endif()
+endif()
 
 find_program(COMPANYA_EMPP_EXECUTABLE em++)
 set(COMPANYA_WEB_TEST_OUTPUT_DIR "${COMPANYA_TEST_DIR}/build/web_tests")
