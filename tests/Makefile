@@ -1,145 +1,60 @@
-# Makefile for Catch2 unit tests
-#
-# Assumptions:
-# - Production sources live under: source/
-# - Tests live under: tests/ (and mirror source/ directory structure)
-#
-# Usage:
-#   make            # build + run tests
-#   make test       # run tests
-#   make build      # build test binary only
-#   make clean
+# CMake-backed compatibility Makefile for native and WebUI tests.
 
-SRC_DIR   := ../source
-TEST_DIR  := ../tests
-THIRD_PARTY_DIR := ../third-party
-BUILD_DIR := ../tests/build/
-BIN       := $(BUILD_DIR)/run_tests
-
-# create the relative path to the SDL library
-SDL_DIR := $(THIRD_PARTY_DIR)/SDL2
+ROOT_DIR := $(abspath ..)
+SRC_DIR := $(ROOT_DIR)/source
+TEST_DIR := $(ROOT_DIR)/tests
+THIRD_PARTY_DIR := $(ROOT_DIR)/third-party
+BUILD_ROOT := $(ROOT_DIR)/build/cmake
+DEFAULT_BUILD_DIR := $(BUILD_ROOT)/default
+TEST_BUILD_DIR := $(ROOT_DIR)/tests/build
+CMAKE ?= cmake
 
 CATCH_INC := $(THIRD_PARTY_DIR)/Catch/single_include
 THIRD_PARTY_C_FILES := $(THIRD_PARTY_DIR)/Tinyexpr/tinyexpr.c
 
-CXXFLAGS ?= -O2 -g
-WARNFLAGS ?= -Wall -Wextra -Wpedantic -Werror
-CC ?= cc
-CFLAGS ?= -O2 -g
-CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(SDL_DIR)/include
-LDFLAGS  += -Wl,-rpath,'$$ORIGIN/../../third-party/SDL2/lib'
-LDLIBS   += -L$(SDL_DIR)/lib -lSDL2 -lSDL2_image -lSDL2_ttf	# added SDL
-
-# Pick up .cpp from tests/ (exclude WebUI — those require Emscripten/em++)
 TEST_FILES := $(shell find $(TEST_DIR) -type f -name '*.cpp' -not -path '*/WebUI/*')
-
-# Pick up headers from source/, then compile only matching .cpp next to them
-# (exclude WebUI — headers pull in <emscripten/val.h>)
-SRC_HPP    := $(shell find $(SRC_DIR)  -type f -name '*.hpp' -not -path '*/WebUI/*')
-SRC_FILES  := $(patsubst %.hpp,%.cpp,$(SRC_HPP))
-SRC_FILES  := $(filter $(shell find $(SRC_DIR) -type f -name '*.cpp' -not -path '*/WebUI/*'),$(SRC_FILES))
-
+SRC_HPP := $(shell find $(SRC_DIR) -type f -name '*.hpp' -not -path '*/WebUI/*')
+SRC_FILES := $(patsubst %.hpp,%.cpp,$(SRC_HPP))
+SRC_FILES := $(filter $(shell find $(SRC_DIR) -type f -name '*.cpp' -not -path '*/WebUI/*'),$(SRC_FILES))
 OBJ_FILES := \
-  $(patsubst $(TEST_DIR)/%,$(BUILD_DIR)/tests/%.o,$(TEST_FILES)) \
-  $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/source/%.o,$(SRC_FILES)) \
-  $(patsubst $(THIRD_PARTY_DIR)/%,$(BUILD_DIR)/third-party/%.o,$(THIRD_PARTY_C_FILES))
+  $(patsubst $(TEST_DIR)/%,$(TEST_BUILD_DIR)/tests/%.o,$(TEST_FILES)) \
+  $(patsubst $(SRC_DIR)/%,$(TEST_BUILD_DIR)/source/%.o,$(SRC_FILES)) \
+  $(patsubst $(THIRD_PARTY_DIR)/%,$(TEST_BUILD_DIR)/third-party/%.o,$(THIRD_PARTY_C_FILES))
 
-DEP_FILES := $(OBJ_FILES:.o=.d)
+.PHONY: all build test clean list web_test help
 
-.PHONY: all build test clean list install
+define configure_default
+	$(CMAKE) -S $(ROOT_DIR) -B $(DEFAULT_BUILD_DIR) -DCOMPANYA_PROFILE=default
+endef
 
 all: test
 
-build: $(BIN)
+build:
+	$(call configure_default)
+	$(CMAKE) --build $(DEFAULT_BUILD_DIR) --target run_tests
 
-test: $(BIN)
-	$(BIN)
+test: build
+	ctest --test-dir $(DEFAULT_BUILD_DIR) --output-on-failure
 
-# Link test runner
-$(BIN): $(OBJ_FILES) | $(BUILD_DIR)
-	$(CXX) -std=c++23 $(CXXFLAGS) $(WARNFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
+web_test:
+	$(call configure_default)
+	$(CMAKE) --build $(DEFAULT_BUILD_DIR) --target web_test
 
-# Compile source/ -> build/tests/source/...
-$(BUILD_DIR)/source/%.o: $(SRC_DIR)/% | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) -std=c++23 $(CPPFLAGS) $(CXXFLAGS) $(WARNFLAGS) -MMD -MP -c $< -o $@
-
-# Compile tests/ -> build/tests/tests/...
-$(BUILD_DIR)/tests/%.o: $(TEST_DIR)/% | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) -std=c++23 $(CPPFLAGS) $(CXXFLAGS) $(WARNFLAGS) -MMD -MP -c $< -o $@
-
-# Compile third-party C sources -> build/tests/third-party/...
-$(BUILD_DIR)/third-party/%.o: $(THIRD_PARTY_DIR)/% | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CC) -std=c11 $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
-
-$(BUILD_DIR):
-	@mkdir -p $(BUILD_DIR)
-
-# Sanity helper
 list:
 	@echo "Sources:"; echo "$(SRC_FILES)" | tr ' ' '\n'
 	@echo
-	@echo "Tests:";   echo "$(TEST_FILES)" | tr ' ' '\n'
+	@echo "Tests:"; echo "$(TEST_FILES)" | tr ' ' '\n'
 	@echo
 	@echo "Objects:"; echo "$(OBJ_FILES)" | tr ' ' '\n'
 
 clean:
-	rm -rf $(BUILD_DIR)
+	$(CMAKE) -E rm -f $(TEST_BUILD_DIR)/run_tests
+	$(CMAKE) -E rm -rf $(TEST_BUILD_DIR)/web_tests
 
-# Auto-deps
--include $(DEP_FILES)
-
-# ---------- WebUI tests (require Emscripten SDK / em++) ----------
-#
-# Usage:  make web_test          (from this directory)
-#         make test-web_test     (from the repo root)
-#
-# Prerequisites:
-#   1. Install & activate the Emscripten SDK  (emsdk install latest && emsdk activate latest)
-#   2. Source the environment                  (source emsdk_env.sh)
-#
-# After building, serve the HTML files and open them in a browser:
-#   cd build/web_tests && python3 -m http.server 8000
-#   Then visit http://localhost:8000/<TestName>.html
-
-EMCC       ?= em++
-EM_CXXFLAGS = --bind -std=c++23 -s WASM=1 -s ASSERTIONS=1 -DCATCH_CONFIG_MAIN
-
-WEB_TEST_OUT = $(BUILD_DIR)/web_tests
-WEB_SRC      = $(SRC_DIR)/Interfaces/WebUI
-WEB_TEST     = $(TEST_DIR)/Interfaces/WebUI
-
-.PHONY: web_test
-
-web_test:
-	@mkdir -p $(WEB_TEST_OUT)
-	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
-		$(WEB_TEST)/WebTextboxTest.cpp \
-		$(WEB_SRC)/WebTextbox/WebTextbox.cpp \
-		$(WEB_SRC)/WebLayout/WebLayout.cpp \
-		-o $(WEB_TEST_OUT)/WebTextboxTest.html
-	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
-		$(WEB_TEST)/WebImageTest.cpp \
-		$(WEB_SRC)/WebImage/WebImage.cpp \
-		$(WEB_SRC)/WebLayout/WebLayout.cpp \
-		-o $(WEB_TEST_OUT)/WebImageTest.html
-	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
-		$(WEB_TEST)/WebButtonTest.cpp \
-		$(WEB_SRC)/WebButton/WebButton.cpp \
-		$(WEB_SRC)/WebLayout/WebLayout.cpp \
-		-o $(WEB_TEST_OUT)/WebButtonTest.html
-	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
-		$(WEB_TEST)/WebCanvasTest.cpp \
-		$(WEB_SRC)/WebCanvas/WebCanvas.cpp \
-		--js-library ../source/Interfaces/WebUI/WebCanvas/WebCanvas.js \
-		-o $(WEB_TEST_OUT)/WebCanvasTest.html
-	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
-		$(WEB_TEST)/WebLayoutTest.cpp \
-		$(WEB_SRC)/WebLayout/WebLayout.cpp \
-		-o $(WEB_TEST_OUT)/WebLayoutTest.html
-	@echo ""
-	@echo "WebUI tests compiled to $(WEB_TEST_OUT)/"
-	@echo "To run:  cd $(WEB_TEST_OUT) && python3 -m http.server 8000"
-	@echo "Then open http://localhost:8000/<TestName>.html in your browser."
+help:
+	@echo "Test targets:"
+	@echo "  make / make test"
+	@echo "  make build"
+	@echo "  make web_test"
+	@echo "  make list"
+	@echo "  make clean"
