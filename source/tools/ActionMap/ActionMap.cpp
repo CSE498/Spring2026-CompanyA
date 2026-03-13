@@ -30,10 +30,9 @@ namespace cse498
         std::vector<std::string> names;
         names.reserve(mActions.size());
 
-        for (const auto& [name, unused] : mActions)
+        for (const auto& pair : mActions)
         {
-            (void)unused;
-            names.push_back(name);
+            names.push_back(pair.first);
         }
         return names;
     }

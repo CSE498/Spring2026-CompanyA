@@ -39,8 +39,8 @@ namespace cse498
         /**
          * Represents a single registered action.
          *
-         * Kept as a struct instead of mapping directly to std::function to allow
-         * for storing metadata (just a description for now maybe more later)
+         * Stored as a struct rather than mapping directly to std::function so the
+         * action can also carry metadata such as an optional description.
          */
         struct ActionEntry
         {
@@ -53,11 +53,12 @@ namespace cse498
         std::unordered_map<std::string, ActionEntry> mActions;
 
         /**
-         * Helper to define what counts as a valid name.
+         * Returns whether a name is valid for an action.
+         * 
          * For now, it is only required to be non-empty.
          *
-         * @param name attempting to be entered
-         * @return whether name is valid
+         * @param name to validate
+         * @return True if name is valid, false otherwise
          */
         static bool IsValidName(std::string_view name)
         {
@@ -65,8 +66,11 @@ namespace cse498
         }
 
         /**
-         * Helper for looking up an action by name
-         * We take string_view for the public API, but keys are stored as std::string.
+         * Looks up an action by name
+         * The public API accepts std::string_view, while the map stores std::string keys.
+         * 
+         * @param name Name of the action to find
+         * @return Iterator to the found action, or mActions.end() if not found
          */
         auto Find(std::string_view name)
         {
@@ -83,7 +87,7 @@ namespace cse498
          * Wrap a typed function (R(Args...)) into a single uniform callable:
          *   invoker(vector<any>) -> any
          *
-         * This is the core trick that lets one map store different signatures safely.
+         * This allows actions with different signatures to be stored in the same map.
          */
         template <typename R, typename... Args>
         static std::function<std::any(const std::vector<std::any>&)>
@@ -117,6 +121,42 @@ namespace cse498
                 R result = func(std::any_cast<std::remove_cv_t<std::remove_reference_t<Args>>>(packedArgs[I])...);
                 return std::any{std::move(result)};
             }
+        }
+
+        /**
+         * Validates a trigger request, looks up action, checks expected signature, and packs arguments into vector<any>.
+         *
+         * @param name Name of the action to invoke
+         * @param args Arguments for the action
+         * @return A pair containing an iterator to the action and a vector of packed arguments, or {mActions.end(), {}} if validation or lookup fails
+         */
+        template <typename Signature, typename... Args>
+        auto PrepareInvocation(std::string_view name, Args&&... args) const
+             -> std::pair<typename std::unordered_map<std::string, ActionEntry>::const_iterator, std::vector<std::any>>
+        {
+            auto endIt = mActions.end();
+
+            if (!IsValidName(name))
+            {
+                return {endIt, {}};
+            }
+
+            auto it = Find(name);
+            if (it == endIt)
+            {
+                return {endIt, {}};
+            }
+
+            if (it->second.signature != std::type_index(typeid(Signature)))
+            {
+                return {endIt, {}};
+            }
+
+            std::vector<std::any> packedArgs;
+            packedArgs.reserve(sizeof...(Args));
+            (packedArgs.emplace_back(std::forward<Args>(args)), ...);
+
+            return {it, std::move(packedArgs)};
         }
 
     public:
@@ -177,6 +217,8 @@ namespace cse498
          *
          * Note: Unordered maps do not guarantee order. If a stable order is needed for
          * UI, callers can sort the returned vector (or we can add a sorted listing).
+         * 
+         * @return vector of all registered action names
          */
         std::vector<std::string> ListActions() const;
 
@@ -184,6 +226,8 @@ namespace cse498
 
         /**
          * Returns the number of registered actions
+         * 
+         * @return count of registered actions
          */
         std::size_t Size() const;
 
@@ -194,11 +238,19 @@ namespace cse498
 
         /**
          * Renames an action key without modifying the stored function
+         * 
+         * @param oldName current name of the action
+         * @param newName new name to assign to the action
+         * @return true if rename succeeded, false if oldName doesn't exist, newName is invalid, or newName already exists
          */
         bool Rename(std::string_view oldName, std::string newName);
 
         /**
          * Returns true if action exists.
+         * Note: This is not strictly necessary since Trigger* can be used to check existence, but it can be more efficient if caller only needs to check presence without triggering.
+         * 
+         * @param name Name of the action to check
+         * @return true if action exists, false if it doesn't exist or name is invalid
          */
         bool Has(std::string_view name) const
         {
@@ -210,30 +262,41 @@ namespace cse498
         }
 
         /**
-         * Get the description of an action if there is one
+         * Get the description of an action, if there is one.
+         * 
          * @param name Name of the action
-         * @return (optional) Description of action
+         * @return The description if action exists and has one, otherwise std::nullopt
          */
         std::optional<std::string> GetDescription(std::string_view name) const;
 
         /**
-         * Set the description of an action
-         * @param name
-         * @param description
-         * @return True if description is set
+         * Set or clear the description of an action.
+         * 
+         * @param name Name of the action
+         * @param description New description to set, or std::nullopt to clear
+         * @return True if action exists and description was updated, otherwise false
          */
         bool SetDescription(std::string_view name, std::optional<std::string> description);
 
         // -------------------------
         // Typed actions (args + return)
         // -------------------------
+
+        /**
+         * Adds a new function to the action map.
+         *
+         * @param name Name of the action
+         * @param func Function to add
+         * @param description Optional description for the action
+         * @return true if function was added, false if name is invalid or function is empty
+         */
         template <typename R, typename... Args>
         bool AddFunction(std::string name,
                          std::function<R(Args...)> func,
                          std::optional<std::string> description = std::nullopt)
         {
             // Catch empty function in debug
-            assert(static_cast<bool>(func) && "ActionMap::AddFunction function must not be empty");
+            assert(func && "ActionMap::AddFunction function must not be empty");
 
             if (!IsValidName(name) || !func)
             {
@@ -249,9 +312,7 @@ namespace cse498
             entry.invoker = MakeInvoker<R, Args...>(std::move(func));
             entry.description = std::move(description);
 
-            auto [it, inserted] = mActions.emplace(std::move(name), std::move(entry));
-            (void)it;
-            return inserted;
+            return mActions.emplace(std::move(name), std::move(entry)).second;
         }
 
         template <typename R, typename... Args>
@@ -260,27 +321,13 @@ namespace cse498
             static_assert(!std::is_void_v<R>,
                           "Use TriggerVoid<Args...>() for void-returning typed actions.");
 
-            if (!IsValidName(name))
-            {
-                return std::nullopt;
-            }
+            using Signature = std::function<R(Args...)>;
+            auto [it, packedArgs] = PrepareInvocation<Signature>(name, std::forward<Args>(args)...);
 
-            auto it = Find(name);
             if (it == mActions.end())
             {
                 return std::nullopt; // not found
             }
-
-            using Signature = std::function<R(Args...)>;
-            if (it->second.signature != std::type_index(typeid(Signature)))
-            {
-                return std::nullopt; // signature mismatch
-            }
-
-            // Pack args into std::any so invoker can unpack them uniformly.
-            std::vector<std::any> packedArgs;
-            packedArgs.reserve(sizeof...(Args));
-            (packedArgs.emplace_back(std::forward<Args>(args)), ...);
 
             try
             {
@@ -297,26 +344,13 @@ namespace cse498
         template <typename... Args>
         bool TriggerVoid(std::string_view name, Args&&... args) const
         {
-            if (!IsValidName(name))
-            {
-                return false;
-            }
+            using Signature = std::function<void(Args...)>;
+            auto [it, packedArgs] = PrepareInvocation<Signature>(name, std::forward<Args>(args)...);
 
-            auto it = Find(name);
             if (it == mActions.end())
             {
                 return false;
             }
-
-            using Signature = std::function<void(Args...)>;
-            if (it->second.signature != std::type_index(typeid(Signature)))
-            {
-                return false;
-            }
-
-            std::vector<std::any> packedArgs;
-            packedArgs.reserve(sizeof...(Args));
-            (packedArgs.emplace_back(std::forward<Args>(args)), ...);
 
             try
             {
