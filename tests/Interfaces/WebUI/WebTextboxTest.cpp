@@ -1,6 +1,6 @@
 /**
- * WebTextboxTest.cpp
- * Unit tests for the WebTextbox class using the Catch2 testing framework.
+ * @file WebTextboxTest.cpp
+ * @brief Unit tests for the WebTextbox class using the Catch2 testing framework.
  *
  * These tests verify behavior including text updates, styling, visibility,
  * layout integration, DOM synchronization, bounding boxes, and move semantics
@@ -21,8 +21,6 @@
  *
  * All project classes and tests correspond to the cse498 WebUI subsystem.
  *
- * author Lance Motowski
- * date   Spring 2026
  */
 
 #ifdef __EMSCRIPTEN__

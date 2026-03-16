@@ -1,3 +1,14 @@
+/**
+ * @file IDomElement.hpp
+ * @brief Interface for DOM-backed UI elements managed by WebLayout.
+ *
+ * Defines the IDomElement base interface that all WebUI components must
+ * implement in order to participate in WebLayout's lifecycle management
+ * (mounting, unmounting, and model synchronization). Also provides grid
+ * and free-layout positioning helpers.
+ *
+ */
+
 #pragma once
 
 #include <string>

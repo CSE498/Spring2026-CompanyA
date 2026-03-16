@@ -1,3 +1,12 @@
+/**
+ * @file main.cpp
+ * @brief Demo entry point for the WebButton WebUI component.
+ *
+ * Creates a vertical layout and three buttons (one active, one disabled,
+ * one hidden) to demonstrate WebButton features in an Emscripten/WASM build.
+ *
+ */
+
 #include "WebButton.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #include <iostream>
@@ -7,6 +16,8 @@ static constexpr int DEFAULT_SPACING = 10;
 static constexpr int BUTTON_WIDTH = 150;
 static constexpr int BUTTON_HEIGHT = 40;
 
+/// @brief Entry point; constructs the button demo layout and mounts three buttons.
+/// @return 0 on success.
 int main() {
   auto layout = std::make_unique<WebLayout>("button-demo");
   layout->SetLayoutType(LayoutType::Vertical);

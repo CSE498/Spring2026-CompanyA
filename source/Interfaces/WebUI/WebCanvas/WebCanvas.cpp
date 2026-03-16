@@ -1,3 +1,14 @@
+/**
+ * @file WebCanvas.cpp
+ * @brief Implementation of WebCanvas DOM-backed 2D drawing surface.
+ *
+ * Implements IDomElement lifecycle (mount/unmount/sync) and ICanvasElement
+ * render dispatch. Also implements immediate-mode drawing primitives that
+ * delegate to JavaScript canvas helper functions when compiled with
+ * Emscripten, and are safe no-ops in native builds.
+ *
+ */
+
 #include "WebCanvas.hpp"
 
 #include <utility>
@@ -29,6 +40,8 @@ extern "C" {
 // WebCanvas
 // --------------------
 
+/// @brief Constructs a WebCanvas with the given canvas element id.
+/// @param id DOM id of the \<canvas\> element; defaults to "web-canvas" if empty.
 WebCanvas::WebCanvas(std::string id)
   : mId(std::move(id))
 {
@@ -38,6 +51,10 @@ WebCanvas::WebCanvas(std::string id)
 }
 
 // ---- IDomElement ----
+
+/// @brief Records the parent layout and marks this canvas as mounted.
+/// @param parent Parent WebLayout to attach to.
+/// @param align  Alignment within the parent.
 void WebCanvas::MountToLayout(WebLayout& parent, Alignment align)
 {
     mParent  = &parent;
@@ -45,18 +62,23 @@ void WebCanvas::MountToLayout(WebLayout& parent, Alignment align)
     mMounted = true;
 }
 
+/// @brief Clears the parent reference and marks this canvas as unmounted.
 void WebCanvas::Unmount()
 {
     mParent  = nullptr;
     mMounted = false;
 }
 
+/// @brief No-op placeholder; canvas state is managed via RenderFrame().
 void WebCanvas::SyncFromModel()
 {
     // Safe no-op placeholder for now.
 }
 
 // ---- Canvas content management ----
+
+/// @brief Adds a drawable element to the render list.
+/// @param element Unique pointer to the element; null pointers are ignored.
 void WebCanvas::AddElement(std::unique_ptr<ICanvasElement> element)
 {
     if (!element) {
@@ -65,11 +87,14 @@ void WebCanvas::AddElement(std::unique_ptr<ICanvasElement> element)
     m_elements.emplace_back(std::move(element));
 }
 
+/// @brief Removes all ICanvasElement objects from the render list.
 void WebCanvas::ClearElements()
 {
     m_elements.clear();
 }
 
+/// @brief Renders one frame: sorts elements by z-index (stable) and calls
+///        Draw() on each visible element in ascending z-index order.
 void WebCanvas::RenderFrame()
 {
     // Collect raw pointers for stable sorting without moving ownership.
@@ -95,6 +120,9 @@ void WebCanvas::RenderFrame()
 }
 
 // ---- Immediate-mode primitives ----
+
+/// @brief Clears the canvas with the given CSS background color.
+/// @param cssColor CSS color string (e.g., "#000000").
 void WebCanvas::Clear(const std::string& cssColor)
 {
 #ifdef __EMSCRIPTEN__
@@ -104,6 +132,13 @@ void WebCanvas::Clear(const std::string& cssColor)
 #endif
 }
 
+/// @brief Draws a line between two points on the canvas.
+/// @param x1          Start x coordinate.
+/// @param y1          Start y coordinate.
+/// @param x2          End x coordinate.
+/// @param y2          End y coordinate.
+/// @param lineWidth   Stroke width in pixels.
+/// @param strokeColor CSS stroke color string.
 void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
                          float lineWidth, const std::string& strokeColor)
 {
@@ -114,6 +149,13 @@ void WebCanvas::DrawLine(float x1, float y1, float x2, float y2,
 #endif
 }
 
+/// @brief Draws a circle on the canvas.
+/// @param centerX     Center x coordinate.
+/// @param centerY     Center y coordinate.
+/// @param radius      Circle radius in pixels.
+/// @param strokeColor CSS stroke color string.
+/// @param lineWidth   Stroke width in pixels.
+/// @param fillColor   CSS fill color; empty string means no fill.
 void WebCanvas::DrawCircle(float centerX, float centerY, float radius,
                            const std::string& strokeColor, float lineWidth,
                            const std::string& fillColor)
@@ -126,12 +168,22 @@ void WebCanvas::DrawCircle(float centerX, float centerY, float radius,
 #endif
 }
 
+/// @brief Draws a filled point (small circle with no stroke).
+/// @param x         Center x coordinate.
+/// @param y         Center y coordinate.
+/// @param radius    Point radius in pixels.
+/// @param fillColor CSS fill color string.
 void WebCanvas::DrawPoint(float x, float y, float radius, const std::string& fillColor)
 {
     // Treat point as a filled circle with no stroke.
     DrawCircle(x, y, radius, /*stroke*/ "#000000", /*lineWidth*/ 0.0f, fillColor);
 }
 
+/// @brief Draws a polygon defined by an ordered list of vertices.
+/// @param points      Vertex positions; requires at least 2 points.
+/// @param strokeColor CSS stroke color string.
+/// @param lineWidth   Stroke width in pixels.
+/// @param fillColor   CSS fill color; empty string means no fill.
 void WebCanvas::DrawPolygon(const std::vector<Vec2>& points,
                             const std::string& strokeColor, float lineWidth,
                             const std::string& fillColor)

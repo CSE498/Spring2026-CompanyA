@@ -1,3 +1,15 @@
+/**
+ * @file main.cpp
+ * @brief Demo entry point for the WebImage WebUI component.
+ *
+ * Demonstrates four WebImage usage scenarios:
+ *  -# Resize with aspect ratio preservation.
+ *  -# SetSize (stretch, no aspect ratio) with reduced opacity.
+ *  -# Invalid source with BlankRect error mode (red placeholder).
+ *  -# Invalid source with NoOp error mode (broken icon).
+ *
+ */
+
 #include "WebImage.hpp"
 #include <iostream>
 #include <emscripten.h>
@@ -10,6 +22,8 @@ WebImage* img2 = nullptr;
 WebImage* img3 = nullptr;
 WebImage* img4 = nullptr;
 
+/// @brief Entry point; creates four WebImage instances to exercise the WebImage API.
+/// @return 0 on success.
 int main() {
   std::cout << "WebImage demo loading..." << std::endl;
 

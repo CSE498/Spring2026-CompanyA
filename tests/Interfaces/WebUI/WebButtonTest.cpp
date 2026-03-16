@@ -1,3 +1,9 @@
+/**
+ * @file WebButtonTest.cpp
+ * @brief Unit tests for the WebButton WebUI component using Catch2.
+ *
+ */
+
 #ifdef __EMSCRIPTEN__
 
 //#define CATCH_CONFIG_MAIN

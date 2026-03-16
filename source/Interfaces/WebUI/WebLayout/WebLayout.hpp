@@ -1,3 +1,15 @@
+/**
+ * @file WebLayout.hpp
+ * @brief Declaration of WebLayout, a DOM container supporting Flexbox, Grid,
+ *        and Free positioning of IDomElement children.
+ *
+ * WebLayout creates and manages a single root \<div\> element in the browser
+ * DOM and exposes a high-level C++ API for configuring its layout model,
+ * styling, and child elements. It also implements IDomElement so that layouts
+ * can be nested inside other layouts.
+ *
+ */
+
 #pragma once
 
 #include <emscripten/val.h>

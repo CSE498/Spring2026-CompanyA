@@ -1,3 +1,15 @@
+/**
+ * @file WebCanvasDemo.cpp
+ * @brief Demo entry point for the WebCanvas WebUI component.
+ *
+ * Runs an Emscripten main loop that draws animated primitives (pulsing circle,
+ * rotating triangle, sine-wave points, and a moving thick line) on a 900x600
+ * \<canvas\> element at approximately 60 fps.
+ *
+ * In non-Emscripten builds a stub main() is provided so the file still compiles.
+ *
+ */
+
 #include "WebCanvas.hpp"
 
 #ifdef __EMSCRIPTEN__
@@ -10,6 +22,8 @@
 #ifdef __EMSCRIPTEN__
 static cse498::WebCanvas* g_canvas = nullptr;
 
+/// @brief Per-frame callback that draws the animated demo scene.
+/// @param TBD Unused argument pointer required by emscripten_set_main_loop_arg.
 static void demo_frame(void* /*arg*/) {
     const double now_ms = emscripten_get_now();
     const float t = static_cast<float>(now_ms * 0.001); // seconds
@@ -64,6 +78,8 @@ static void demo_frame(void* /*arg*/) {
     }
 }
 
+/// @brief Entry point; creates the canvas element and starts the animation loop.
+/// @return 0 on success (does not return in Emscripten builds; the main loop takes over).
 int main() {
     static cse498::WebCanvas canvas("web-canvas");
     g_canvas = &canvas;
@@ -88,6 +104,7 @@ int main() {
     return 0;
 }
 #else
-// Non-emscripten build: provide a tiny stub main so the file can still compile if included.
+/// @brief Non-Emscripten stub: provided so the file compiles in native test builds.
+/// @return 0.
 int main() { return 0; }
 #endif
