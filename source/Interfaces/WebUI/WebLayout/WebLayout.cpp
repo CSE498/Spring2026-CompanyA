@@ -1,3 +1,15 @@
+/**
+ * @file WebLayout.cpp
+ * @brief Implementation of WebLayout DOM container and layout engine.
+ *
+ * Contains the DOM interaction logic for creating, configuring, and
+ * destroying a root \<div\> element, as well as applying Flexbox, CSS Grid,
+ * or Free (absolute/relative) positioning to child IDomElement objects.
+ * Requires Emscripten; the entire file is conditionally compiled with
+ * \c __EMSCRIPTEN__.
+ *
+ */
+
 #ifdef __EMSCRIPTEN__
 
 #include "WebLayout.hpp"
@@ -18,6 +30,10 @@ static std::string px(int v) noexcept {
   return std::to_string(v) + "px";
 }
 
+/// @brief Constructs a WebLayout, creating or adopting a root DOM element.
+/// @param rootId Optional ID; if an element with this ID exists in the DOM it
+///               is adopted as root, otherwise a new \<div\> is created and
+///               appended to \<body\>.
 WebLayout::WebLayout(const std::string& rootId) noexcept {
   mDocument = val::global("document");
   if (!rootId.empty()) {
@@ -47,6 +63,7 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
   assert(mRoot["id"].as<std::string>() == mId);
 }
 
+/// @brief Destructor: unmounts all children and removes the root element from the DOM.
 WebLayout::~WebLayout() noexcept {
   // unmount children
   Clear();
@@ -60,20 +77,31 @@ WebLayout::~WebLayout() noexcept {
   mRoot = val::undefined();
 }
 
+/// @brief Sets the layout type (Free, Horizontal, Vertical, Grid).
+/// @param t Desired LayoutType value.
 void WebLayout::SetLayoutType(LayoutType t) noexcept { mType = t; }
 
+/// @brief Sets the main-axis justification for flex/grid child elements.
+/// @param j Desired Justification value.
 void WebLayout::SetJustification(Justification j) noexcept {
   mJustification = j;
 }
 
+/// @brief Sets the cross-axis alignment for all child elements.
+/// @param a Desired Alignment value.
 void WebLayout::SetAlignItems(Alignment a) noexcept { mAlignItems = a; }
 
-/// Sets the gap/spacing between child elements.
+/// @brief Sets the gap/spacing between child elements.
+/// @param pxv Spacing in pixels; must be >= 0.
 void WebLayout::SetSpacing(int pxv) noexcept {
   assert(pxv >= 0);
   mSpacing = pxv;
 }
 
+/// @brief Adds a child element to this layout and appends it to the DOM.
+/// @param elem  Pointer to the IDomElement to add; must not be null.
+/// @param align Alignment for this child within the layout.
+/// @return True if successfully added; false if elem is null or has no DOM id.
 bool WebLayout::AddElement(IDomElement* elem, Alignment align) noexcept {
   if (!elem) return false;
   const ElementID& id = elem->Id();
@@ -97,6 +125,9 @@ bool WebLayout::AddElement(IDomElement* elem, Alignment align) noexcept {
   return true;
 }
 
+/// @brief Removes a child element from this layout and the DOM.
+/// @param elem Pointer to the child element to remove.
+/// @return True if found and removed; false if not found.
 bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
   if (!elem) return false;
   auto it = std::find(mChildren.begin(), mChildren.end(), elem);
@@ -115,6 +146,9 @@ bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
   return true;
 }
 
+/// @brief Updates the per-child alignment stored in this layout.
+/// @param elem Pointer to the child element to update.
+/// @param a    New Alignment value for that child.
 void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
   if (!elem) return;
   auto it = mParams.find(elem);
@@ -124,63 +158,89 @@ void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
 
 // ===== Styling Methods =====
 
+/// @brief Sets the background color of the layout container.
+/// @param color CSS color string (e.g., "#ffffff", "red").
 void WebLayout::SetBackgroundColor(const std::string& color) noexcept {
   mBackgroundColor = color;
 }
 
+/// @brief Sets the border color of the layout container.
+/// @param color CSS color string.
 void WebLayout::SetBorderColor(const std::string& color) noexcept {
   mBorderColor = color;
 }
 
+/// @brief Sets the border width in pixels; must be >= 0.
+/// @param width Border width in pixels.
 void WebLayout::SetBorderWidth(int width) noexcept {
   assert(width >= 0);
   mBorderWidth = width;
 }
 
+/// @brief Sets the border radius for rounded corners; must be >= 0.
+/// @param radius Border radius in pixels.
 void WebLayout::SetBorderRadius(int radius) noexcept {
   assert(radius >= 0);
   mBorderRadius = radius;
 }
 
+/// @brief Sets the padding of the layout container; must be >= 0.
+/// @param padding Padding size in pixels.
 void WebLayout::SetPadding(int padding) noexcept {
   assert(padding >= 0);
   mPadding = padding;
 }
 
+/// @brief Sets the margin of the layout container; must be >= 0.
+/// @param margin Margin size in pixels.
 void WebLayout::SetMargin(int margin) noexcept {
   assert(margin >= 0);
   mMargin = margin;
 }
 
+/// @brief Sets the width of the layout container; must be > 0.
+/// @param width Width in pixels.
 void WebLayout::SetWidth(int width) noexcept {
   assert(width > 0);
   mWidth = width;
 }
 
+/// @brief Sets the height of the layout container; must be > 0.
+/// @param height Height in pixels.
 void WebLayout::SetHeight(int height) noexcept {
   assert(height > 0);
   mHeight = height;
 }
 
+/// @brief Sets the CSS opacity of the layout container.
+/// @param opacity Value in [0.0, 1.0]; 0.0 = transparent, 1.0 = opaque.
 void WebLayout::SetOpacity(double opacity) noexcept {
   assert(opacity >= 0.0 && opacity <= 1.0);
   mOpacity = opacity;
 }
 
+/// @brief Sets the CSS box-shadow property of the layout container.
+/// @param shadow CSS box-shadow string (e.g., "0 4px 6px rgba(0,0,0,0.1)").
 void WebLayout::SetBoxShadow(const std::string& shadow) noexcept {
   mBoxShadow = shadow;
 }
 
+/// @brief Toggles this layout's visibility between visible and hidden.
 void WebLayout::ToggleVisibility() noexcept { mIsVisible = !mIsVisible; }
 
 // ===== IDomElement Interface Implementations =====
 
+/// @brief Registers this layout as a child of @p parent and ensures the DOM
+///        parent–child relationship is established.
+/// @param parent Parent WebLayout to mount into.
+/// @param align  Alignment of this layout within the parent.
 void WebLayout::MountToLayout(WebLayout& parent, Alignment align) noexcept {
   // register this layout element with parent and ensure DOM parent-child
   // relationship
   parent.AddElement(this, align);
 }
 
+/// @brief Removes this layout's root element from its DOM parent, if attached.
 void WebLayout::Unmount() noexcept {
   // destroying nested layouts can cause mRoot to be undefined
   if (mRoot.isNull() || mRoot.isUndefined()) return;
@@ -190,6 +250,7 @@ void WebLayout::Unmount() noexcept {
   }
 }
 
+/// @brief Synchronizes the layout state with the DOM by calling Apply().
 void WebLayout::SyncFromModel() noexcept {
   // default sync behavior: re-apply layout to reflect params/state
   Apply();
@@ -364,6 +425,9 @@ void WebLayout::ApplyChildren() noexcept {
   }
 }
 
+/// @brief Applies all pending layout and style changes to the DOM.
+/// Calls ApplyStyling(), ApplyLayout(), and ApplyChildren() in order.
+/// No-op when the layout is currently hidden (mIsVisible == false).
 void WebLayout::Apply() noexcept {
   if (!mIsVisible) return;
   val style = mRoot["style"];
@@ -372,6 +436,7 @@ void WebLayout::Apply() noexcept {
   ApplyChildren();
 }
 
+/// @brief Unmounts and removes all child elements from this layout.
 void WebLayout::Clear() noexcept {
   // remove children from DOM by unmounting them
   for (const auto& elem : mChildren) {
