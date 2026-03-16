@@ -1,7 +1,3 @@
-# SDL2 local installment files
-third-party/SDL2/
-third-party/sdl-build/
-
 # Prerequisites
 *.d
 
