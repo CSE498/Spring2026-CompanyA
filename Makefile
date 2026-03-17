@@ -1,25 +1,5 @@
 # Top-level Makefile (repo root)
-#
-# Delegates builds to:
-#   source/   (program executables)
-#   tests/    (Catch2 unit tests)
-#
-# Common usage:
-#   make                # build default program(s)
-#   make test           # build+run unit tests
-#   make all            # build program(s) + run tests
-#   make clean          # clean both
-#   make debug          # debug build (programs)
-#   make opt            # optimized build (programs)
-#
-# You can also forward any target directly:
-#   make src-simple
-#   make src-debug-simple
-#   make test-build
-#   make test-list
-
-# AI Disclaimer: Used ChatGPT to create the 'make install' target in order to
-# download the SDL library for both macOS & Linux users.
+# Use `make help` to see available targets and common workflows.
 
 .PHONY: default all build test clean debug opt quick grumpy \
         src-% test-% help web_test
@@ -67,17 +47,31 @@ web_test:
 	$(MAKE) -C tests web_test
 
 help:
-	@echo "Top-level targets:"
-	@echo "  make / make build      Build program(s) in source/"
-	@echo "  make test              Build + run unit tests in tests/"
-	@echo "  make web_test          Build WebUI tests with em++ (requires Emscripten)"
-	@echo "  make all               Build program(s) + run tests"
-	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode (source/)"
-	@echo "  make clean             Clean source/ and tests/"
-	@echo
-	@echo "Forwarding targets:"
-	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"
-	@echo "  make test-<tgt>        Run 'make <tgt>' in tests/"
+	@echo ""
+	@echo "Repository Makefile"
+	@echo "==================="
+	@echo ""
+	@echo "Common targets:"
+	@echo "  make, make build      Build default executable(s) in source/"
+	@echo "  make test             Build and run unit tests"
+	@echo "  make web_test         Build WebUI tests with Emscripten"
+	@echo "  make all              Build executable(s) and run tests"
+	@echo "  make clean            Clean source/ and tests/ build outputs"
+	@echo ""
+	@echo "Build modes:"
+	@echo "  make debug            Build debug executable(s)"
+	@echo "  make opt              Build optimized executable(s)"
+	@echo "  make quick            Build quick executable(s)"
+	@echo "  make grumpy           Build with stricter warnings"
+	@echo ""
+	@echo "Forwarding helpers:"
+	@echo "  make src-<target>     Run 'make <target>' inside source/"
+	@echo "  make test-<target>    Run 'make <target>' inside tests/"
+	@echo ""
+	@echo "SDL dependency setup:"
+	@echo "  make install          Download and build local SDL dependencies"
+	@echo "  make install-clean    Remove local SDL build/install artifacts"
+	@echo ""
 
 # ---------- SDL INSTALL SECTION ----------
 
