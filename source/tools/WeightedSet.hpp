@@ -185,6 +185,7 @@ namespace cse498 {
 		size_t GetSize() const { return set_size; }
 		double GetItemSum(const T& item) const { return sum_tree.at(item_idx.at(item)); }
 		double GetWeight(const T& item) const { return weights.at(item_idx.at(item)); }
+		double GetTotalWeight() const { return sum_tree.at(0); }
 	};
 
 } // End of namespace cse498

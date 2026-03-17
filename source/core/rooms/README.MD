@@ -1,5 +1,5 @@
 Here is the syntax for the aski rooms:
- /#= a bottom external wall, non-traversable
+& = a bottom external wall, non-traversable
 ^ = an upper external wall, non-traversable
 < = an left side external wall, non-traversable
 >= an right side external wall, non traversable
