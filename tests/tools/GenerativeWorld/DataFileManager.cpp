@@ -3,6 +3,7 @@
 
 #include "../../../source/tools/DataFileManager.hpp"
 #include "../../../source/core/WorldBase.hpp"
+#include <sstream>
 
 
 
@@ -123,5 +124,10 @@ TEST_CASE("Testing DataFileManager Load restores grid", "[core]") {
 */
 TEST_CASE("Testing DataFileManager Load with missing file", "[core]") {
     cse498::DataFileManager manager("NonExistentFile.csv", std::make_unique<cse498::MazeWorld>());
+
+    std::stringstream buffer;
+    auto old = std::cerr.rdbuf(buffer.rdbuf());
     manager.LoadData();
+    std::cerr.rdbuf(old);
+    REQUIRE(buffer.str().find("ERROR") != std::string::npos);
 }
