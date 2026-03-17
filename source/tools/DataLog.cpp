@@ -6,7 +6,7 @@
  * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
  * Samples are stored in the format of (Value, timestamp/seconds since start)
  * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
- * Used AI to help refactor the Min, Max, and Mean functions to use algorithms 
+ * Used AI to help in developing the Min, Max, Mean, and Threshold functions.
  **/
 
 #include "DataLog.hpp"
@@ -17,28 +17,24 @@
 namespace cse498{
 
 /*
-Constructs a Datalog class and sets the start_timestamp to now
+Constructor for DataLog
 */
-DataLog::DataLog() : start_timestamp(std::chrono::steady_clock::now()){
-
-}
+DataLog::DataLog() = default;
 
 /*
-Adds a new data value and the fuction associates a timestamp with the data
-Used AI to help create duration in seconds using std::chrono
+Adds a new data value and the function associates a timestamp with the data
 */
 void DataLog::Add(double value){
-    auto current_timestamp = std::chrono::steady_clock::now();
-    // Calculate the duration in seconds since the start timestamp
-    auto duration = current_timestamp - start_timestamp;
-    std::pair<double, double> combined_data = {value, std::chrono::duration<double>(duration).count()};
-    data_values.push_back(combined_data);
+    DataSample sample;
+    sample.value = value;
+    sample.timestamp = stopwatch.elapsed();
+    data_values.push_back(sample);
 }
 
 /*
 Function returns a reference to the collection of data samples in the format (data_value, timestamp)
 */
-const std::vector<std::pair<double,double>>& DataLog::DataSamples() const{
+const std::vector<DataLog::DataSample>& DataLog::DataSamples() const{
     return data_values;
 }
 
@@ -66,11 +62,11 @@ std::optional<double> DataLog::Min() const{
         return std::nullopt;
     }
 
-    auto min = std::min_element(data_values.begin(), data_values.end(), [](const auto& left, const auto& right) {
-        return left.first < right.first;
+    auto min = std::min_element(data_values.begin(), data_values.end(), [](const DataSample& left, const DataSample& right) {
+        return left.value < right.value;
     });
-    
-    return min->first;
+
+    return min->value;
 }
 
 /*
@@ -81,11 +77,11 @@ std::optional<double> DataLog::Max() const{
         return std::nullopt;
     }
 
-    auto max = std::max_element(data_values.begin(), data_values.end(), [](const auto& left, const auto& right) {
-        return left.first < right.first;
+    auto max = std::max_element(data_values.begin(), data_values.end(), [](const DataSample& left, const DataSample& right) {
+        return left.value < right.value;
     });
 
-    return max->first;
+    return max->value;
 }
 
 /*
@@ -97,8 +93,8 @@ std::optional<double> DataLog::Mean() const{
         return std::nullopt;
     }
 
-    auto sum = std::accumulate(data_values.begin(), data_values.end(), 0.0, [](double total, const auto& val) {
-        return total + val.first;
+    auto sum = std::accumulate(data_values.begin(), data_values.end(), 0.0, [](double total, const DataSample& val) {
+        return total + val.value;
     });
 
     double num_size = static_cast<double>(data_values.size());
@@ -118,7 +114,7 @@ std::optional<double> DataLog::Median() const{
     std::vector<double> stored_data;
 
     for(const auto& val : data_values){
-        stored_data.push_back(val.first);
+        stored_data.push_back(val.value);
     }
 
     std::sort(stored_data.begin(),stored_data.end());
@@ -136,5 +132,65 @@ std::optional<double> DataLog::Median() const{
     return median;
     
 } 
+
+/*
+Function returns the total time that the values in datalog were under a specific threshold
+*/
+double DataLog::TimeUnderThreshold(double threshold) const{
+    //2 samples needed for an interval
+    if(data_values.size() < 2){
+        return 0.0;
+    }
+
+    double total_time = 0.0;
+    for(std::size_t i = 0; i + 1 < data_values.size(); ++i){
+        const auto& current_sample = data_values[i];
+        const auto& next_sample = data_values[i + 1];
+        
+        //duration that the current value held
+        const double time_diff = next_sample.timestamp - current_sample.timestamp;
+
+        //if the value during [t_cur, t_next) is under the threshold, add the duration to total_time
+        if(current_sample.value < threshold){
+            total_time += time_diff;
+        }
+    }
+
+    return total_time;
+}
+
+/*
+Function returns the total time that the values in datalog were over a specific threshold
+*/
+double DataLog::TimeOverThreshold(double threshold) const{
+    //2 samples needed for an interval
+    if(data_values.size() < 2){
+        return 0.0;
+    }
+
+    double total_time = 0.0;
+    for(std::size_t i = 0; i + 1 < data_values.size(); ++i){
+        const auto& current_sample = data_values[i];
+        const auto& next_sample = data_values[i + 1];
+        
+        //duration that the current value held
+        const double time_diff = next_sample.timestamp - current_sample.timestamp;
+
+        //if the value during [t_cur, t_next) is over the threshold, add the duration to total_time
+        if(current_sample.value > threshold){
+            total_time += time_diff;
+        }
+    }
+
+    return total_time;
+}
+
+/*
+Helper function whose purpose is to advance the stopwatch for timestamp testing purposes without manually waiting
+*/
+void DataLog::advanceTimeForTesting(double seconds){
+    stopwatch.advanceTime(seconds);
+}
+
 
 }

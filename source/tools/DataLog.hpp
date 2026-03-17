@@ -12,32 +12,35 @@
 #include <vector>
 #include <cstddef>
 #include <optional>
-#include <utility>
-#include <chrono>
+#include "Stopwatch.hpp"
 
 namespace cse498{
     class DataLog{
-    private:
-        //(data_value, timestamp)
-        std::vector<std::pair<double, double>> data_values;
-
-        std::chrono::steady_clock::time_point start_timestamp;
-
     public:
         /*
-        Constructs a Datalog class and sets the start_timestamp to now
+        A struct to represent a recorded sample in the log
+        - value: the numeric value of the sample
+        - timestamp: seconds since the datalog instance was constructed
+        */
+        struct DataSample{
+            double value;
+            double timestamp;
+        };
+
+        /*
+        Constructor for DataLog
         */
         DataLog();
 
         /*
-        Adds a new data value and the fuction associates a timestamp with the data
+        Adds a new data value and the function associates a timestamp with the data
         */
         void Add(double value);
 
         /*
-        Function returns a reference to the collection of data samples in the format (data_value, timestamp)
+        Function returns a const reference to the collection of data samples
         */
-        const std::vector<std::pair<double,double>>& DataSamples() const;
+        const std::vector<DataSample>& DataSamples() const;
 
         /*
         Function clears all samples from the data log
@@ -61,7 +64,7 @@ namespace cse498{
         std::optional<double> Max() const;
 
         /*
-        Function returns the average of the values in the data log
+        Function returns the average of the values in the data log/Arithmetic mean
         */
         std::optional<double> Mean() const;
 
@@ -69,6 +72,28 @@ namespace cse498{
         Function returns the median of the values in the data log
         */
         std::optional<double> Median() const;
+
+        /*
+        Function returns the total time that the values in datalog were under a specific threshold
+        */
+        double TimeUnderThreshold(double threshold) const;
+
+        /*
+        Function returns the total time that the values in datalog were over a specific threshold
+        */
+        double TimeOverThreshold(double threshold) const;
+
+        /*
+        Helper function whose purpose is to advance the stopwatch for timestamp testing purposes without manually waiting
+        */
+        void advanceTimeForTesting(double seconds);
+
+
+    private:
+        std::vector<DataSample> data_values;
+
+        //Stopwatch to measure elapsed time since datalog was constructed
+        Stopwatch stopwatch{"DataLog"};
 
     }; 
 }
