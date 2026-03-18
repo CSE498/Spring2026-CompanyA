@@ -122,7 +122,7 @@ namespace cse498 {
       std::ofstream file;
       file.open(m_filename, std::ofstream::app);
       if (!file.is_open()){
-        std::cerr << "cse498::DataFileManager::Update(): Failed to open file " << m_filename << std::endl;
+        std::cerr << "ERROR::cse498::DataFileManager::Update(): Failed to open file " << m_filename << std::endl;
         return;
       }
 
@@ -163,7 +163,7 @@ namespace cse498 {
     {
       std::ifstream file(m_filename);
       if (!file.is_open()) {
-        std::cerr << "cse498::DataFileManager::LoadData(): Failed to open file " << m_filename << std::endl;
+        std::cerr << "ERROR::cse498::DataFileManager::LoadData(): Failed to open file " << m_filename << std::endl;
         return;
       }
 
@@ -182,7 +182,7 @@ namespace cse498 {
       file.close();
 
       if (tile_data.empty()) {
-        throw std::runtime_error("cse498::DataFileManager::LoadData(): No tile data found in file " + m_filename);
+        throw std::runtime_error("ERROR::cse498::DataFileManager::LoadData(): No tile data found in file " + m_filename);
         return;
       }
 
