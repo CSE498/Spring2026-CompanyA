@@ -1,20 +1,19 @@
 /**
- * WebTextbox.cpp
- * Implementation of the WebTextbox class for styled text elements in the WebUI.
+ * @file WebTextbox.cpp
+ * @brief Implementation of the WebTextbox class for styled text elements in the WebUI.
  *
  * This file contains the DOM interaction logic, style application, and
- * model view synchronization used by the WebTextbox component within the
+ * model-view synchronization used by the WebTextbox component within the
  * CSE 498 WebUI subsystem. Emscripten’s embind APIs are used to interface
  * with underlying JavaScript DOM objects.
  *
- * Additional Note:
- *      Portions of formatting, documentation, and cleanup were assisted by
- *      AI tooling to improve consistency and readability.
+ * @note Portions of formatting, documentation, and cleanup were assisted by
+ *       AI tooling to improve consistency and readability.
  *
  * All project classes must reside in the cse498 namespace.
  *
- * author Lance Motowski
- * date   Spring 2026
+ * @author Lance Motowski
+ * @date Spring 2026
  */
 
 #include "WebTextbox.hpp"
@@ -29,32 +28,35 @@ namespace cse498 {
 
 int WebTextbox::mNextIdCounter = 1;
 
-/** 
-  * -------------- Helpers --------------
-  * These helper functions centralize access to global JS objects.
-  * They also avoid repeated calls to val::global("document") etc. which may have some overhead.
-  */
+/// @brief Returns the browser document object.
+/// Centralizes access to avoid repeated calls to val::global("document").
 static val GetDocument() 
 { 
   return val::global("document"); 
 }
+
+/// @brief Returns the browser window object.
 static val GetWindow()   
 { 
   return val::global("window"); 
 }
+
+/// @brief Returns the browser console object.
 static val GetConsole()  
 { 
   return val::global("console"); 
 }
 
-/**
- * Constuctor / Destructor / Move semantics
- */
+// ===== Constructor / Destructor / Move semantics =====
+
+/// @brief Default constructor; delegates to WebTextbox(std::string("")).
 WebTextbox::WebTextbox()
     : WebTextbox(std::string(""))
 {
 }
-// Constructor creates element with correct text and styles
+
+/// @brief Constructs a WebTextbox with the given initial text content.
+/// @param initial_text Text to display on creation.
 WebTextbox::WebTextbox(const std::string& initial_text)
     : mText(initial_text),
       mElement(val::null())
@@ -76,7 +78,7 @@ WebTextbox::WebTextbox(const std::string& initial_text)
 }
 
 
-// Destructor unmounts from DOM if needed and releases element reference.
+/// @brief Destructor: unmounts the element from the DOM and releases the reference.
 WebTextbox::~WebTextbox()
 {
   Unmount();
@@ -84,7 +86,8 @@ WebTextbox::~WebTextbox()
 }
 
 
-// Move constructor and move assignment transfer ownership of the DOM element and state.
+/// @brief Move constructor: transfers DOM ownership and all state from @p other.
+/// @param other Source WebTextbox to move from.
 WebTextbox::WebTextbox(WebTextbox&& other) noexcept
     : mText(std::move(other.mText)),
       mIsVisible(other.mIsVisible),
@@ -108,7 +111,9 @@ WebTextbox::WebTextbox(WebTextbox&& other) noexcept
 }
 
 
-// Move assignment operator
+/// @brief Move assignment operator: transfers DOM ownership and all state from @p other.
+/// @param other Source WebTextbox to move from.
+/// @return Reference to this object.
 WebTextbox& WebTextbox::operator=(WebTextbox&& other) noexcept
 {
   if (this != &other)
@@ -141,13 +146,9 @@ WebTextbox& WebTextbox::operator=(WebTextbox&& other) noexcept
 /* ---------------- Text ---------------- */
 
 /**
- * SetText
- * 
- * Replaces the current text stored in mText and immediately updates the
- * associated DOM element via ApplyText().
+ * @brief Replaces the current text content and immediately updates the DOM element.
  *
- * param:
- *    text - The new string to assign to the textbox.
+ * @param text The new string to assign to the textbox.
  */
 void WebTextbox::SetText(const std::string& text)
 {
@@ -156,13 +157,9 @@ void WebTextbox::SetText(const std::string& text)
 }
 
 /**
- * AppendText
+ * @brief Appends a string to the existing text content and updates the DOM element.
  *
- * Appends the provided string to the existing mText value and updates the
- * DOM representation by calling ApplyText().
- *
- * param:
- *    text - Additional text to append to the current content.
+ * @param text Additional text to append to the current content.
  */
 void WebTextbox::AppendText(const std::string& text)
 {
@@ -171,13 +168,9 @@ void WebTextbox::AppendText(const std::string& text)
 }
 
 /**
- * AppendText
+ * @brief Returns the current text content stored in the textbox.
  *
- * Appends the provided string to the existing mText value and updates the
- * DOM representation by calling ApplyText().
- *
- * param:
- *    text - Additional text to append to the current content.
+ * @return Copy of the current text string.
  */
 std::string WebTextbox::GetText() const
 {
@@ -185,9 +178,7 @@ std::string WebTextbox::GetText() const
 }
 
 /**
- * Clear
- *
- * Removes all text from mText and updates the DOM through ApplyText().
+ * @brief Removes all text from the textbox and updates the DOM element.
  */
 void WebTextbox::Clear()
 {
@@ -196,9 +187,9 @@ void WebTextbox::Clear()
 }
 
 /**
- * Clear
+ * @brief Applies the current mText value to the DOM element's textContent.
  *
- * Removes all text from mText and updates the DOM through ApplyText().
+ * No-op if the DOM element has not yet been created.
  */
 void WebTextbox::ApplyText()
 {
@@ -211,14 +202,11 @@ void WebTextbox::ApplyText()
 /* -------------- Formatting -------------- */
 
 /**
- * SetFontFamily
+ * @brief Sets the primary font family and reapplies styles to the DOM.
  *
- * Updates the primary font family used when rendering the textbox text.
- * Also reapplies styles to propagate the change to the DOM and emits a
- * warning to the console if the requested font is not actually applied.
+ * Emits a console warning if the requested font is not available in the browser.
  *
- * param:
- *    family - The preferred CSS font-family name (e.g., "Arial").
+ * @param family The preferred CSS font-family name (e.g., "Arial").
  */
 void WebTextbox::SetFontFamily(const std::string& family)
 {
@@ -239,14 +227,9 @@ void WebTextbox::SetFontFamily(const std::string& family)
 }
 
 /**
- * SetFallbackFontFamily
+ * @brief Sets the fallback font family appended after the primary in the font chain.
  *
- * Sets a fallback font family that will be appended to the primary font
- * family chain used by the textbox. The updated font chain is then applied
- * to the DOM via ApplyStyles().
- *
- * param:
- *    fallback_family - CSS fallback font-family
+ * @param fallback_family CSS fallback font-family name.
  */
 void WebTextbox::SetFallbackFontFamily(const std::string& fallback_family)
 {
@@ -255,14 +238,12 @@ void WebTextbox::SetFallbackFontFamily(const std::string& fallback_family)
 }
 
 /**
- * SetFontSize
+ * @brief Sets the font size in pixels; must be > 0.
  *
- * Sets the font size (in pixels) used to render the textbox text. Invalid
- * non-positive values are rejected in both debug (assert) and release
- * (early return) builds to avoid invalid DOM state.
+ * Non-positive values are rejected in both debug (assert) and release
+ * (early-return) builds to avoid invalid DOM state.
  *
- * param:
- *    size_px - Font size in pixels, must be strictly greater than zero.
+ * @param size_px Font size in pixels, must be strictly greater than zero.
  */
 void WebTextbox::SetFontSize(float size_px)
 {
@@ -278,14 +259,12 @@ void WebTextbox::SetFontSize(float size_px)
 }
 
 /**
- * SetLineHeight
+ * @brief Sets the line height in pixels; must be > 0.
  *
- * Sets the line height (in pixels) used for the textbox text. This
- * controls vertical spacing between lines. Non-positive values are
+ * Controls vertical spacing between lines. Non-positive values are
  * rejected to prevent invalid CSS line-height in the DOM.
  *
- * param:
- *    line_height_px - Line height in pixels, must be greater than zero.
+ * @param line_height_px Line height in pixels, must be greater than zero.
  */
 void WebTextbox::SetLineHeight(float line_height_px)
 {
@@ -301,13 +280,9 @@ void WebTextbox::SetLineHeight(float line_height_px)
 }
 
 /**
- * SetColor
+ * @brief Updates the CSS text color and reapplies styles to the DOM element.
  *
- * Updates the CSS text color for the textbox and reapplies styles to
- * the DOM element.
- *
- * param:
- *    css_color - A valid CSS color string
+ * @param css_color A valid CSS color string.
  */
 void WebTextbox::SetColor(const std::string& css_color)
 {
@@ -316,13 +291,9 @@ void WebTextbox::SetColor(const std::string& css_color)
 }
 
 /**
- * SetBold
+ * @brief Enables or disables bold font weight and updates the DOM style.
  *
- * Enables or disables bold font weight for the textbox text and updates
- * the DOM style accordingly.
- *
- * param:
- *    enabled - True to set bold text, false for normal weight.
+ * @param enabled True for bold text, false for normal weight.
  */
 void WebTextbox::SetBold(bool enabled)
 {
@@ -331,13 +302,9 @@ void WebTextbox::SetBold(bool enabled)
 }
 
 /**
- * SetItalic
+ * @brief Enables or disables italic styling and updates the DOM style.
  *
- * Enables or disables italic styling for the textbox text and updates
- * the DOM style accordingly.
- *
- * param:
- *    enabled - True to render text in italic, false for normal style.
+ * @param enabled True to render text in italic, false for normal style.
  */
 void WebTextbox::SetItalic(bool enabled)
 {
@@ -346,13 +313,9 @@ void WebTextbox::SetItalic(bool enabled)
 }
 
 /**
- * SetAlignment
+ * @brief Sets the horizontal text alignment and reapplies styles to the DOM.
  *
- * Sets the horizontal text alignment within the textbox using a strongly
- * typed TextAlign enum, then reapplies styles to the DOM.
- *
- * param:
- *    alignment - Desired text alignment (left, center, or right).
+ * @param alignment Desired text alignment (Left, Center, or Right).
  */
 void WebTextbox::SetAlignment(TextAlign alignment)
 {
@@ -370,13 +333,11 @@ void WebTextbox::SetAlignment(TextAlign alignment)
 }
 
 /**
- * SetMaxWidth
+ * @brief Sets the maximum width of the textbox in pixels; must be > 0.
  *
- * Sets the maximum width of the textbox (in pixels). Non-positive values
- * are rejected to prevent invalid CSS max-width values.
+ * Non-positive values are rejected to prevent invalid CSS max-width values.
  *
- * param:
- *    width_px - Maximum width in pixels, must be greater than zero.
+ * @param width_px Maximum width in pixels, must be greater than zero.
  */
 void WebTextbox::SetMaxWidth(float width_px)
 {
@@ -392,13 +353,9 @@ void WebTextbox::SetMaxWidth(float width_px)
 }
 
 /**
- * SetWrap
+ * @brief Controls whether text wraps (pre-wrap) or preserves whitespace without wrapping (pre).
  *
- * Controls whether the textbox text wraps across multiple lines or
- * preserves whitespace and line breaks without wrapping.
- *
- * param:
- *    enabled - True to enable wrapping (pre-wrap), false for no wrapping (pre).
+ * @param enabled True to enable wrapping, false to disable.
  */
 void WebTextbox::SetWrap(bool enabled)
 {
@@ -407,14 +364,11 @@ void WebTextbox::SetWrap(bool enabled)
 }
 
 /**
- * SetBackgroundColor
+ * @brief Sets an explicit background color and applies it to the DOM element.
  *
- * Sets an explicit background color for the textbox and applies it to
- * the DOM element. A later call to ClearBackgroundColor() will remove
- * this and revert to transparent.
+ * Call ClearBackgroundColor() to revert to transparent.
  *
- * param:
- *    css_color - A valid CSS color string for the background.
+ * @param css_color A valid CSS color string for the background.
  */
 void WebTextbox::SetBackgroundColor(const std::string& css_color)
 {
@@ -423,10 +377,7 @@ void WebTextbox::SetBackgroundColor(const std::string& css_color)
 }
 
 /**
- * ClearBackgroundColor
- *
- * Clears any previously set background color from the textbox model,
- * causing the DOM element to use a transparent background.
+ * @brief Clears any previously set background color, reverting to transparent.
  */
 void WebTextbox::ClearBackgroundColor()
 {
@@ -539,14 +490,11 @@ void WebTextbox::ApplyAlignment(Alignment align)
 /* -------------- Bounding box -------------- */
 
 /**
- * GetBoundingBoxPx
+ * @brief Returns the bounding box of the textbox’s DOM element in pixel units.
  *
- * Returns the bounding box of the textbox’s DOM element in pixel units.
- * If the element is not mounted or the DOM node is missing, a zero-initialized
- * RectPx is returned.
+ * Returns a zero-initialized RectPx if the element is not mounted.
  *
- * return:
- *    Struct containing x, y, width, and height in pixels.
+ * @return RectPx containing x, y, width, and height in pixels.
  */
 WebTextbox::RectPx WebTextbox::GetBoundingBoxPx() const
 {
@@ -567,12 +515,9 @@ WebTextbox::RectPx WebTextbox::GetBoundingBoxPx() const
 }
 
 /**
- * GetWidthPx
+ * @brief Returns the width component of the textbox’s bounding box.
  *
- * Returns the width component of the textbox’s bounding box.
- *
- * return:
- *    Width in pixels, or 0 if the element is not mounted.
+ * @return Width in pixels, or 0 if the element is not mounted.
  */
 double WebTextbox::GetWidthPx() const  
 { 
@@ -580,12 +525,9 @@ double WebTextbox::GetWidthPx() const
 }
 
 /**
- * GetHeightPx
+ * @brief Returns the height component of the textbox’s bounding box.
  *
- * Returns the height component of the textbox’s bounding box.
- *
- * return:
- *    Height in pixels, or 0 if the element is not mounted.
+ * @return Height in pixels, or 0 if the element is not mounted.
  */
 double WebTextbox::GetHeightPx() const 
 { 
@@ -595,10 +537,7 @@ double WebTextbox::GetHeightPx() const
 /* -------------- Visibility -------------- */
 
 /**
- * Show
- *
- * Makes the textbox visible by setting the internal visibility flag and
- * updating the DOM display style.
+ * @brief Makes the textbox visible by setting the visibility flag and updating the DOM.
  */
 void WebTextbox::Show()
 {
@@ -607,9 +546,7 @@ void WebTextbox::Show()
 }
 
 /**
- * Hide
- *
- * Hides the textbox by disabling visibility and updating the DOM display style.
+ * @brief Hides the textbox by clearing the visibility flag and updating the DOM.
  */
 void WebTextbox::Hide()
 {
@@ -618,12 +555,9 @@ void WebTextbox::Hide()
 }
 
 /**
- * IsVisible
+ * @brief Returns whether the textbox is currently marked as visible.
  *
- * Indicates whether the textbox is currently marked as visible.
- *
- * return:
- *    True if the textbox should be shown; false otherwise.
+ * @return True if the textbox should be shown; false otherwise.
  */
 bool WebTextbox::IsVisible() const
 {
@@ -687,10 +621,9 @@ void WebTextbox::Unmount()
 }
 
 /**
- * SyncFromModel
+ * @brief Synchronizes internal model values (text and style) with the DOM element.
  *
- * Synchronizes internal model values (text + style properties)
- * with the DOM element. Called automatically after mounting.
+ * Called automatically after mounting.
  */
 void WebTextbox::SyncFromModel()
 {
@@ -699,13 +632,9 @@ void WebTextbox::SyncFromModel()
 }
 
 /**
- * Id
+ * @brief Returns the unique DOM id assigned to this textbox’s root element.
  *
- * Returns the unique string identifier assigned to this textbox’s
- * DOM element. Useful for locating the element in DOM operations.
- *
- * return:
- *    Const reference to the unique element ID string.
+ * @return Const reference to the unique element id string.
  */
 const std::string& WebTextbox::Id() const
 {

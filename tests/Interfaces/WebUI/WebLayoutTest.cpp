@@ -1,7 +1,11 @@
-/// File: WebLayoutTest.cpp
-/// Unit tests for WebLayout class using Catch2 framework
-/// Tests cover layout configuration, child element management, styling,
-/// positioning, and DOM lifecycle behaviors.
+/**
+ * @file WebLayoutTest.cpp
+ * @brief Unit tests for WebLayout class using Catch2 framework.
+ *
+ * Tests cover layout configuration, child element management, styling,
+ * positioning, and DOM lifecycle behaviors.
+ *
+ */
 
 #ifdef __EMSCRIPTEN__
 

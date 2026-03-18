@@ -1,3 +1,14 @@
+/**
+ * @file WebImage.cpp
+ * @brief Implementation of WebImage, a DOM-backed HTML \<img\> element for WebUI.
+ *
+ * Manages DOM creation, event listener attachment, loading/error state
+ * tracking, placeholder rendering, and lifecycle management (mount/unmount/sync)
+ * for HTML \<img\> elements. An integer registry is used to safely forward
+ * JavaScript load and error events back to C++ without unsafe pointer casts.
+ *
+ */
+
 #include "WebImage.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #include <cassert>
@@ -14,20 +25,31 @@ namespace {
 std::unordered_map<int, cse498::WebImage*> sImageRegistry;
 int sNextRegistryId = 0;
 
+/// @brief Registers a WebImage instance and returns its unique integer id.
+/// @param img Pointer to the WebImage to register.
+/// @return Integer id that can be passed to JS event listeners.
 int RegisterImage(cse498::WebImage* img) {
   int id = sNextRegistryId++;
   sImageRegistry[id] = img;
   return id;
 }
 
+/// @brief Removes the registry entry for the given id.
+/// @param id Registry id previously returned by RegisterImage().
 void UnregisterImage(int id) {
   sImageRegistry.erase(id);
 }
 
+/// @brief Updates the registry entry for @p id to point to @p img (used after move).
+/// @param id  Registry id of the entry to update.
+/// @param img New WebImage pointer to store.
 void UpdateRegistryEntry(int id, cse498::WebImage* img) {
   sImageRegistry[id] = img;
 }
 
+/// @brief Looks up the WebImage registered under @p id.
+/// @param id Registry id to look up.
+/// @return Pointer to the registered WebImage, or nullptr if not found.
 cse498::WebImage* LookupImage(int id) {
   auto it = sImageRegistry.find(id);
   return it != sImageRegistry.end() ? it->second : nullptr;
@@ -433,6 +455,8 @@ void WebImage::ApplyPlaceholder() {
 
 // C functions invoked from JS event listeners via the integer registry ID.
 extern "C" {
+  /// @brief C trampoline called by the JS load event listener.
+  /// @param registry_id Integer id of the WebImage to notify.
   EMSCRIPTEN_KEEPALIVE
   void WebImage_handleLoad(int registry_id) {
     auto* img = LookupImage(registry_id);
@@ -441,6 +465,8 @@ extern "C" {
     }
   }
 
+  /// @brief C trampoline called by the JS error event listener.
+  /// @param registry_id Integer id of the WebImage to notify.
   EMSCRIPTEN_KEEPALIVE
   void WebImage_handleError(int registry_id) {
     auto* img = LookupImage(registry_id);

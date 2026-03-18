@@ -1,6 +1,10 @@
-// File: tests/Interfaces/WebUI/WebCanvasTest.cpp
-// Notes:
-// - Do NOT define CATCH_CONFIG_MAIN here if another test file already defines it.
+/**
+ * @file WebCanvasTest.cpp
+ * @brief Unit tests for WebCanvas, the DOM-backed 2D drawing surface.
+ *
+ * Do NOT define CATCH_CONFIG_MAIN here if another test file already defines it.
+ *
+ */
 
 #include <type_traits>
 #include <memory>
