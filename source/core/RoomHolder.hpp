@@ -23,10 +23,10 @@ namespace cse498 {
     class RoomHolder { 
 
     protected:
-        std::vector<std::string> current_room;
-        std::string mFilePath = "../source/core/rooms/Dungeon_";
+        std::vector<std::string> current_room; //Holds the currently selected/stored room
+        std::string mFilePath = "../source/core/rooms/Dungeon_"; //File path used to access the directory of different .txt rooms
 
-        cse498::Random mRng;
+        cse498::Random mRng; //Random 
 		cse498::WeightedSet<std::string> mRoomPool;
 
     public:

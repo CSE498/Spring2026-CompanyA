@@ -21,7 +21,7 @@ namespace cse498 {
     size_t floor_id; ///< Easy access to floor CellType ID.
     size_t wall_id;  ///< Easy access to wall CellType ID.
     size_t upper_external;
-	size_t lower_external;
+	  size_t lower_external;
     size_t left_external;
     size_t right_external;
     size_t internal_obstacle;
@@ -60,8 +60,8 @@ namespace cse498 {
       std::vector<std::string> testing = generation.GetDungeon();
 
       // Debugging calls in order to see the Grid Parition outline and coordinate/room information
-      // generation.GetBSP().TreeParser();
-      // generation.GetBSP().GenerateTileMap();
+      //generation.GetBSP().TreeParser();
+      //generation.GetBSP().GenerateTileMap();
 
       main_grid.Load(testing);
 

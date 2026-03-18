@@ -14,6 +14,7 @@
 #include "BSP-Dungeon.hpp"
 #include <cmath>
 #include <ranges>
+#include <algorithm>
 
 struct Point {
     int x, y; // x-y points of a room
@@ -33,7 +34,7 @@ namespace cse498 {
         //RoomHolder mRoomHolder;
         std::vector<std::string> mGrid; //Grid we're rasterizing information from mBSP_Tree too
         std::vector<LinkedRooms> mConnectedRooms; //The x-y coord pairs of two rooms used for connecting the room pair
-
+        Random mRng;
         int mOffsetX; //x offset of room placement
         int mOffsetY; //y offset of room placement
             
@@ -50,10 +51,13 @@ namespace cse498 {
         /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room 
         ///relationship is created through PostOrderRoomConnect()
         void CreateDungeon() { 
+            auto& tree = mBSP.GetBSPTree();
             for (const auto& node : mBSP.GetLeafNodes()) {
                 RasterizeGrid(node); //Populates grid with initial, unconnected rooms 
             }
-            PostOrderRoomConnect(mBSP.GetBSPTree()[0]); //populates connection between rooms for linking
+            PostOrderRoomConnect(tree[0]); //populates connection between rooms for linking
+            PostOrderRoomConnect(tree[0]); //Tried to implement BFS Room connection for more varied layouts, but duplicating DFS is better 
+
             TunnelConnectDungeon();
         }
 
@@ -61,7 +65,6 @@ namespace cse498 {
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode& node) { 
             int room_height = node.vector_room.size();
-            std::cout << room_height << std::endl;
              
 
             assert(room_height != 0); //Ensures room is properly assigned and not empty
@@ -105,8 +108,19 @@ namespace cse498 {
 
             mConnectedRooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
 
-            return left; //need to send a node upwards, allowing connectivity between nodes for linking 
+            auto gamble = mRng.GetInt(0,1); //Determines which node is returned
+            if (gamble == 0) {
+                return right; //need to send a node upwards, allowing connectivity between nodes for linking 
+            }
+            else {
+                return left;
+            }
+
+            return left;
+            
         }
+
+        
 
         /// @brief Calculate center of room placed in grid
         /// @param room we're inputting the BSP_Tree Node's room value
@@ -132,7 +146,6 @@ namespace cse498 {
             if (point_y < 0) {
                 negative_y = true;
                 point_y = std::abs(point_y);
-
             } 
 
             if (point_x < 0) {
@@ -140,31 +153,21 @@ namespace cse498 {
                 point_x = std::abs(point_x);
             }
 
-
             for (int y = 0; y <= point_y; ++y) {
                 int y_point;
-
                 if (negative_y) y_point = y1_value - y;
                 else y_point = y1_value + y;
 
                 auto &y_char = mGrid[y_point][x1_value];
-                auto &y_char_left = mGrid[y_point][x1_value - 1];
-                auto &y_char_right = mGrid[y_point][x1_value + 1];
-
                 auto it = std::ranges::find(wall_set, y_char);
 
                 if (y_char == '#' || it != wall_set.end()) {
                     y_char = ' ';
-                    y_char_left = ' ';
-                    y_char_right = ' ';
                 }
-
-
             }
 
             for (int x = 0; x <= point_x; ++x) {
                 int x_point;
-
                 if(negative_x)  x_point = x1_value -x;
                 else x_point = x1_value + x;
                 
@@ -174,9 +177,6 @@ namespace cse498 {
                 if (x_char == '#' || it != wall_set.end()) x_char = ' ';
 
             }
-
-
-
         }
 
         /// @brief 
@@ -212,4 +212,4 @@ namespace cse498 {
 
 
     };
- }
+ };
