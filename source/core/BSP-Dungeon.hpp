@@ -105,11 +105,14 @@ namespace cse498 {
             PostOrderDFS(mBSP_Tree[0]);
         }
 
-        /// @brief Called when player agent will enter new level, layout and tile grid will be remade, may not need this
-        void Update() {
+
+        /**
+         * @brief Regenerates the BSP Tree incase any modifications to width/height/properties after its creation are made in order to 
+         * ensure the object's state is up to date when new dungeons are later created
+         */
+        void RegnerateObjectState() {
             mBSP_Tree.clear();
             mLeafNodes.clear();
-            
         }
 
         ////////////////////////////////////

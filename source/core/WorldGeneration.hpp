@@ -32,7 +32,7 @@ namespace cse498 {
     protected:
         BSP mBSP; // BSP_Tree that contains information on the grid and it's dimensions
         //RoomHolder mRoomHolder;
-        std::vector<std::string> mGrid; //Grid we're rasterizing information from mBSP_Tree too
+        std::vector<std::string> mGrid; //Grid we're rasterizing information from mBSP_Tree to
         std::vector<LinkedRooms> mConnectedRooms; //The x-y coord pairs of two rooms used for connecting the room pair
         Random mRng;
         int mOffsetX; //x offset of room placement
@@ -61,6 +61,27 @@ namespace cse498 {
             TunnelConnectDungeon();
         }
 
+
+        /// @brief Grabs the Dungeon map vector grid for loading the information in WorldGrid
+        /// @return 
+        [[nodiscard]] std::vector<std::string> GetDungeon() const { 
+            return mGrid;
+        }
+
+        /// @brief Grabs the Generated BSP Tree in order to extract room information to extract onto the grid
+        /// @return 
+        [[nodiscard]] BSP GetBSP() const {
+            return mBSP;
+        }
+
+        /// @brief Grabs the vector of BSPNodes that have relations have a relationship with each other 
+        /// @return vector of LinkedRoom Struct
+        [[nodiscard]] std::vector<LinkedRooms> GetConnectedRooms() const { 
+            return mConnectedRooms;
+        }
+
+    private:
+        
         /// @brief takes the leaf node's (x,y) coordinates and room information from the BSP_Tree and translates it onto mGrid
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode& node) { 
@@ -92,36 +113,7 @@ namespace cse498 {
             }
         }
 
-        /// @brief DFS to go through the populated BSP tree in order to connect rooms together
-        /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
-        /// @return (x,y) pair coordinate struct of room's location in the grid
-        Point PostOrderRoomConnect(BSPNode node) { //Need to change Node node to idx int later 
-            if (node.left_child == -1 && node.right_child == -1) {
-                auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
-
-                return (Point{node.x + pair.x, node.y + pair.y});
-            }
-
-            Point left = PostOrderRoomConnect(mBSP.GetBSPTree()[node.left_child]);
-            Point right = PostOrderRoomConnect(mBSP.GetBSPTree()[node.right_child]);
-            
-
-            mConnectedRooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
-
-            auto gamble = mRng.GetInt(0,1); //Determines which node is returned
-            if (gamble == 0) {
-                return right; //need to send a node upwards, allowing connectivity between nodes for linking 
-            }
-            else {
-                return left;
-            }
-
-            return left;
-            
-        }
-
         
-
         /// @brief Calculate center of room placed in grid
         /// @param room we're inputting the BSP_Tree Node's room value
         /// @return pair of coordinates 
@@ -132,7 +124,17 @@ namespace cse498 {
             return Point(width / 2 , height / 2);
         }
 
-        /// @brief Calculates the distance (x-y) between two rooms) 
+        /// @brief Parses through the list of Room Nodes (BSPNodes) that hava relation with each other and connects those
+        void TunnelConnectDungeon() {
+            for(auto &i : mConnectedRooms) { 
+                ConnectTunnel(i);
+            }
+        }
+
+        /**
+         * @brief Calculates the distance (x-y) between two rooms) and connects a corridor tunnel between them 
+         * taking into consideration their ascii symbol
+         */
         void ConnectTunnel(LinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
             auto const wall_set = {'^','>','<','&'};
@@ -179,37 +181,34 @@ namespace cse498 {
             }
         }
 
-        /// @brief 
-        void TunnelConnectDungeon() {
-            for(auto &i : mConnectedRooms) { 
-                ConnectTunnel(i);
+        /// @brief DFS to go through the populated BSP tree in order to connect rooms together
+        /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
+        /// @return (x,y) pair coordinate struct of room's location in the grid
+        Point PostOrderRoomConnect(BSPNode node) { //Need to change Node node to idx int later 
+            if (node.left_child == -1 && node.right_child == -1) {
+                auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
+
+                return (Point{node.x + pair.x, node.y + pair.y});
             }
+
+            Point left = PostOrderRoomConnect(mBSP.GetBSPTree()[node.left_child]);
+            Point right = PostOrderRoomConnect(mBSP.GetBSPTree()[node.right_child]);
+            
+
+            mConnectedRooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
+
+            auto gamble = mRng.GetInt(0,1); //Determines which node is returned
+
+            //sends a node upwards, allowing connectivity between nodes for linking 
+            if (gamble == 0) {
+                return right; 
+            }
+            else {
+                return left;
+            }
+
+            return left;
+            
         }
-
-        /// @brief 
-        /// @return 
-        [[nodiscard]] std::vector<std::string> GetDungeon() const { 
-            return mGrid;
-        }
-
-        /// @brief 
-        /// @return 
-        [[nodiscard]] BSP GetBSP() const {
-            return mBSP;
-        }
-
-        /// @brief 
-        /// @return 
-        // [[nodiscard]] RoomHolder GetRoomholder() const { 
-        //     return mRoomHolder;
-        // }
-
-        /// @brief 
-        /// @return 
-        [[nodiscard]] std::vector<LinkedRooms> GetConnectedRooms() const { 
-            return mConnectedRooms;
-        }
-
-
     };
  };

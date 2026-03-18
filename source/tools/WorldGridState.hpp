@@ -12,8 +12,9 @@
 #include <vector>
 
 #include "../core/Location.hpp"
-#include "../tools/io_utils.hpp"
 #include "../core/WorldGrid.hpp"
+
+#include "../tools/io_utils.hpp"
 
 constexpr size_t UNKNOWN_CELL_TYPE_ID = 0;
 
@@ -47,10 +48,10 @@ namespace cse498 {
   };
 
 
-  /// @class WorldGrid
+  /// @class WorldGridState
   /// @brief Represents a 2D grid of cells.
   /// This class provides utilities to manage, access, and modify cells within a grid.
-  class WorldStateGrid : public WorldGrid {
+  class WorldGridState : public WorldGrid {
   protected:
     size_t width = 0;   ///< Number of cells in each row of the grid.
     size_t height = 0;  ///< Number of rows of cells in the grid.
@@ -75,7 +76,7 @@ namespace cse498 {
     // File format is width and height followed by all
     // values in the grid on each line thereafter.
 
-    std::string GetTypeName() const { return "cse498::WorldGrid"; }
+    std::string GetTypeName() const { return "cse498::WorldGridState"; }
 
     /// Write the current state of this grid into the provided stream.
     void Serialize(std::ostream & os) const {
@@ -92,22 +93,57 @@ namespace cse498 {
     }
 
   public:
-    WorldStateGrid(size_t width, size_t height, size_t default_type=0)
+    WorldGridState(size_t width, size_t height, size_t default_type=0)
       : width(width), height(height), cells(width*height, default_type)
     {
       // The first cell type (ID 0) is reserved for errors or non-existant
       // positions in a cell grid (e.g., for a non-rectangular world).
       AddCellType("Unknown", "This is an invalid cell type and should not be reachable.");
     }
-    WorldStateGrid() : width(UNKNOWN_CELL_TYPE_ID), height(UNKNOWN_CELL_TYPE_ID), cells() {
+    WorldGridState() : width(UNKNOWN_CELL_TYPE_ID), height(UNKNOWN_CELL_TYPE_ID), cells() {
       AddCellType("Unknown", "This is an invalid cell type and should not be reachable.");
     }
-    WorldStateGrid(const WorldStateGrid &) = default;
-    WorldStateGrid(WorldStateGrid &&) = default;
+    WorldGridState(const WorldGridState &) = default;
+    WorldGridState(WorldGridState &&) = default;
     
-    WorldStateGrid & operator=(const WorldStateGrid &) = default;
-    WorldStateGrid & operator=(WorldStateGrid &&) = default;
+    WorldGridState & operator=(const WorldGridState &) = default;
+    WorldGridState & operator=(WorldGridState &&) = default;
 
+    // -- Accessors --
+    [[nodiscard]] size_t GetWidth() const { return width; }
+    [[nodiscard]] size_t GetHeight() const { return height; }
+    [[nodiscard]] size_t GetNumCells() const { return cells.size(); }
+
+    /// Test if specific coordinates are in range for this GridWorld.
+    [[nodiscard]] bool IsValid(double x, double y) const {
+      return x >= 0.0 && x < width && y >= 0.0 && y < height;
+    }
+
+    /// Test if a WorldPosition is in range for this GridWorld.
+    [[nodiscard]] bool IsValid(WorldPosition pos) const {
+      return IsValid(pos.X(), pos.Y());
+    }
+
+    /// @return The grid state at the provided x and y coordinates
+    [[nodiscard]] size_t operator[](std::pair<size_t, size_t> coordinates) const {
+      assert(IsValid(coordinates.first, coordinates.second));
+      return cells[ToIndex(coordinates.first, coordinates.second)];
+    }
+
+     /// @return A reference to the grid state at the provided x and y coordinates
+     [[nodiscard]] size_t & operator[](std::pair<size_t, size_t> coordinates) {
+      assert(IsValid(coordinates.first, coordinates.second));
+      return cells[ToIndex(coordinates.first, coordinates.second)];
+     }
+
+    [[nodiscard]] size_t operator[](WorldPosition pos) const { 
+      assert(IsValid(pos));
+      return cells[ToIndex(pos)]; 
+    }
+    [[nodiscard]] size_t & operator[](WorldPosition pos) { 
+      assert(IsValid(pos));
+      return cells[ToIndex(pos)]; 
+    }
 
     // ===========================
     //   Cell type management...
@@ -127,28 +163,26 @@ namespace cse498 {
       return cell_types.size() - 1;
     }
 
-    [[nodiscard]] const CellTypeModifiers& GetCellTypeModifiers(size_t id) const {
-      if (id >= cell_types.size()) return cell_types[0].tile_modifiers;
-      return cell_types[id].tile_modifiers;
+    /// @brief Return the ID associated with the cell type name.
+    /// @param name The unique name of the cell type
+    /// @return The unique ID of the cell type (or 0 if it doesn't exist.)
+    [[nodiscard]] size_t GetCellTypeID(const std::string & name) const { 
+      for (size_t i=1; i < cell_types.size(); ++i) {
+        if (cell_types[i].name == name) return i;
+      }
+      return 0;
     }
 
-    [[nodiscard]] const CellTypeModifiers& GetCellTypeModifiers(size_t id) {
-      if (id >= cell_types.size()) return cell_types[0].tile_modifiers;
-      return cell_types[id].tile_modifiers;
+    [[nodiscard]] const std::string & GetCellTypeName(size_t id) const {
+      if (id >= cell_types.size()) return cell_types[0].name;
+      return cell_types[id].name;
     }
 
-
-    [[nodiscard]] bool IsTraversable(size_t id) const {
-      return GetCellTypeModifiers(id).traversable;
+    [[nodiscard]] char GetCellTypeSymbol(size_t id) const {
+      if (id >= cell_types.size()) return cell_types[0].symbol;
+      return cell_types[id].symbol;
     }
 
-    [[nodiscard]] bool IsBreakable(size_t id) const {
-      return GetCellTypeModifiers(id).isBreakable;
-    }
-
-    [[nodiscard]] bool IsLocked(size_t id) const {
-      return GetCellTypeModifiers(id).locked;
-    }
 
   };
 
