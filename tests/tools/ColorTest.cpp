@@ -1,6 +1,10 @@
-// File: tests/tools/ColorTest.cpp
-// Notes:
-// - Do NOT define CATCH_CONFIG_MAIN here if another test file already defines it.
+/**
+ * @file ColorTest.cpp
+ * @brief Contains Catch2 test cases for the Color class.
+ *
+ * @note Do not define CATCH_CONFIG_MAIN in this file if it is already
+ * defined in another test translation unit.
+ */
 
 #include <array>
 #include <optional>
@@ -255,4 +259,66 @@ TEST_CASE("Color string formatting matches stored values", "[tools][color][strin
 
     REQUIRE(color.ToRgbString() == "rgb(255, 128, 0)");
     REQUIRE(color.ToRgbaString() == "rgba(255, 128, 0, 0.25098)");
+}
+
+TEST_CASE("Color supports constexpr construction and access", "[tools][color][constexpr]") {
+    constexpr Color color = Color::FromRGBA255(1, 2, 3, 4);
+
+    STATIC_REQUIRE(color.R() == 1);
+    STATIC_REQUIRE(color.G() == 2);
+    STATIC_REQUIRE(color.B() == 3);
+    STATIC_REQUIRE(color.A() == 4);
+
+    constexpr auto values = color.ToArray();
+    STATIC_REQUIRE(values[0] == 1);
+    STATIC_REQUIRE(values[1] == 2);
+    STATIC_REQUIRE(values[2] == 3);
+    STATIC_REQUIRE(values[3] == 4);
+}
+
+TEST_CASE("Color template integral factory clamps into byte range", "[tools][color][templates]") {
+    const Color color = Color::FromRGBIntegral(-10, 300, 42, 999);
+
+    REQUIRE(color.R() == 0);
+    REQUIRE(color.G() == 255);
+    REQUIRE(color.B() == 42);
+    REQUIRE(color.A() == 255);
+}
+
+TEST_CASE("Color template floating-point factory accepts multiple float types", "[tools][color][templates]") {
+    const Color color = Color::FromRGBNormalized(1.0, 0.5, 0.0, 0.25);
+
+    REQUIRE(color.R() == 255);
+    REQUIRE(color.G() == 128);
+    REQUIRE(color.B() == 0);
+    REQUIRE(color.A() == 64);
+}
+
+TEST_CASE("Color parsing is case-insensitive for named colors and prefixes", "[tools][color][string]") {
+    SECTION("named color") {
+        const auto color = Color::FromString("OrAnGe");
+        REQUIRE(color.has_value());
+        REQUIRE(color->R() == 255);
+        REQUIRE(color->G() == 165);
+        REQUIRE(color->B() == 0);
+        REQUIRE(color->A() == 255);
+    }
+
+    SECTION("RGB prefix") {
+        const auto color = Color::FromString("RGB(255, 128, 0)");
+        REQUIRE(color.has_value());
+        REQUIRE(color->R() == 255);
+        REQUIRE(color->G() == 128);
+        REQUIRE(color->B() == 0);
+        REQUIRE(color->A() == 255);
+    }
+
+    SECTION("RGBA prefix") {
+        const auto color = Color::FromString("RgBa(255, 128, 0, 0.5)");
+        REQUIRE(color.has_value());
+        REQUIRE(color->R() == 255);
+        REQUIRE(color->G() == 128);
+        REQUIRE(color->B() == 0);
+        REQUIRE(color->A() == 128);
+    }
 }
