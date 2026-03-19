@@ -9,6 +9,7 @@ class AnalyticsManager{
     private:
         DataLog mHealthLog;
         DataLog mEnemiesTrackedLog;
+        DataLog mDamageDealtLog;
 
 
     public:
@@ -17,10 +18,12 @@ class AnalyticsManager{
         void Reset();
 
         void LogHealth(double health);
-        void LogEnemiesTracked(int num_enemies);
+        void LogEnemiesTracked(double count_enemies);
+        void LogDamageDealt(double damage);
 
         const DataLog& GetHealthLog() const;
         const DataLog& GetEnemiesTrackedLog() const;
+        const DataLog& GetDamageDealtLog() const;
 
 };
 

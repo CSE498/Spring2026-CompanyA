@@ -7,6 +7,7 @@ namespace cse498
     {
         mHealthLog.Clear();
         mEnemiesTrackedLog.Clear();
+        mDamageDealtLog.Clear();
     }
 
     void AnalyticsManager::LogHealth(double health)
@@ -14,9 +15,14 @@ namespace cse498
         mHealthLog.Add(health);
     }
 
-    void AnalyticsManager::LogEnemiesTracked(int count_enemies)
+    void AnalyticsManager::LogEnemiesTracked(double count_enemies)
     {
         mEnemiesTrackedLog.Add(count_enemies);
+    }
+
+    void AnalyticsManager::LogDamageDealt(double damage)
+    {
+        mDamageDealtLog.Add(damage);
     }
 
     const DataLog& AnalyticsManager::GetHealthLog() const
@@ -27,6 +33,11 @@ namespace cse498
     const DataLog& AnalyticsManager::GetEnemiesTrackedLog() const
     {
         return mEnemiesTrackedLog;
+    }
+
+    const DataLog& AnalyticsManager::GetDamageDealtLog() const
+    {
+        return mDamageDealtLog;
     }
 
 }
