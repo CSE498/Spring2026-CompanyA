@@ -72,13 +72,12 @@ namespace cse498 {
         BSP(const cse498::WeightedSet<std::string>& room_pool) 
 			: mRoomHolder(room_pool)
 		{ 
-            mRng.SetSeed(12345);
             insert_split(mIterations); //Creates BSP Tree
             PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
 
         /// @brief Constructor call creates BSP Tree with a set seed
-        /// @attention This constructor is purely meant to be used for debugging purposes
+        /// @attention This constructor is purely meant to be used for debugging purposes to test proper Tree/Leaf Node initialization
         /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
         /// @param seed Set int value to determine room generation layout
         BSP(const cse498::WeightedSet<std::string>& room_pool, uint64_t seed)  
@@ -191,6 +190,17 @@ namespace cse498 {
             }
         }
  
+        /// @brief Sets RNG seed primarily for test case purposes
+        /// @param integer seed value we want to set the RNG object too
+        void SetRngSeed(uint64_t integer) {
+            mRng.SetSeed(integer);
+        }
+
+        u_int64_t GetRngSeed() { 
+            return mRng.GetSeed();
+        }
+
+
         ////////////////////////////////////
         //    Getters and Setters
         ///////////////////////////////////
@@ -249,12 +259,6 @@ namespace cse498 {
         /// @brief Returns the reference to entirety of the created BSP_Tree
         [[nodiscard]] std::vector<BSPNode>& GetBSPTree() {
             return mBSP_Tree;
-        }
-
-        /// @brief Sets RNG seed primarily for test case purposes
-        /// @param integer seed value we want to set the RNG object too
-        void SetRngSeed(uint64_t integer) {
-            mRng.SetSeed(integer);
         }
 
 

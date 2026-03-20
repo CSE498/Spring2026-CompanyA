@@ -85,7 +85,7 @@ namespace cse498 {
 
         /// @brief Picks an image file for an item/tile/agent/other creature
         /// @param tile_c is a char representing the current square of the dungeon
-        std::string GetImageFile(char tile_c, char adj_tile) {
+        std::string GetImageFile(char tile_c /*, char adj_tile*/) {
             if (!tile_c) {}
 
             int level = 1; // TODO: Add a counter for number of levels generated
