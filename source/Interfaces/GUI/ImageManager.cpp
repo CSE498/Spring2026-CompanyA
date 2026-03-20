@@ -128,4 +128,14 @@ namespace cse498
 
         return true;
     }
+
+    // Overload version
+    bool ImageManager::draw_image(const std::string& name, int x, int y, int w, int h) const {
+        auto it = mTextures.find(name);
+        if (it == mTextures.end()) return false;
+
+        SDL_Rect dest = { x, y, w, h };
+        SDL_RenderCopy(mRenderer, it->second.get(), nullptr, &dest);
+        return true;
+    }
 }

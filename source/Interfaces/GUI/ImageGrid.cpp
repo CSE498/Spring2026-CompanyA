@@ -1,13 +1,14 @@
 /**
  * @file ImageGrid.cpp
  * @author Deni Tepic
- * 
+ *
  */
 
 #include "ImageGrid.hpp"
 #include "ImageManager.hpp"
 
 #include <cassert>
+#include <algorithm>
 
 using namespace cse498;
 
@@ -44,6 +45,10 @@ void ImageGrid::SetCell(size_t x, size_t y,
   mCells[ToIndex(x, y)] = image_name;
 }
 
+void ImageGrid::Fill(const std::string& image_name) {
+  for (auto& cell : mCells) cell = image_name;
+}
+
 /**
  * clear all image names.
  */
@@ -55,7 +60,7 @@ void ImageGrid::Clear() {
 
 /**
  * resize grid while preserving overlapping region.
- * *AIGENERATED double for-loop* 
+ * *AIGENERATED double for-loop*
  */
 void ImageGrid::Resize(size_t new_width, size_t new_height)
 {
@@ -80,25 +85,49 @@ void ImageGrid::Resize(size_t new_width, size_t new_height)
  * draw the entire grid.
  * converts grid coordinates to pixel coordinates
  * using the configured tile dimensions.
- *  *AIGENERATED* 
+ *  *AIGENERATED*
  */
 void ImageGrid::Draw(const ImageManager& image_manager) const
 {
-  for (size_t x = 0; x < mWidth; ++x) {
-    for (size_t y = 0; y < mHeight; ++y) {
+  for (size_t y = 0; y < mHeight; ++y) {
+    for (size_t x = 0; x < mWidth; ++x) {
 
       const std::string& image_name =
-          mCells[ToIndex(x, y)];      
+          mCells[ToIndex(x, y)];
 
       if (!image_name.empty()) {
 
         int pixel_x = static_cast<int>(x) * mTileWidth;
         int pixel_y = static_cast<int>(y) * mTileHeight;
 
-        image_manager.draw_image(image_name,
-                                 pixel_x,
-                                 pixel_y);
+        image_manager.draw_image(image_name, pixel_x, pixel_y,
+                         static_cast<int>(mTileWidth),
+                         static_cast<int>(mTileHeight));
       }
     }
   }
 }
+
+void ImageGrid::DrawViewport(const ImageManager& image_manager,
+                               int cam_x, int cam_y,
+                               int viewport_w, int viewport_h) const {
+  int tw = static_cast<int>(mTileWidth);
+  int th = static_cast<int>(mTileHeight);
+
+  // Which tiles are visible?
+  int start_x = std::max(0, cam_x);
+  int start_y = std::max(0, cam_y);
+  int end_x   = std::min(static_cast<int>(mWidth),  cam_x + (viewport_w / tw) + 1);
+  int end_y   = std::min(static_cast<int>(mHeight), cam_y + (viewport_h / th) + 1);
+
+  for (int y = start_y; y < end_y; ++y) {
+    for (int x = start_x; x < end_x; ++x) {
+      const std::string& name = mCells[ToIndex(x, y)];
+      if (name.empty()) continue;
+      int px = (x - cam_x) * tw;
+      int py = (y - cam_y) * th;
+      image_manager.draw_image(name, px, py, tw, th);
+    }
+  }
+}
+

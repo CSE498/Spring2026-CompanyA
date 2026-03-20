@@ -53,7 +53,12 @@ namespace cse498 {
         // class functions
         void load_image(const std::string& name, const std::string& file_path);
         bool has_image(const std::string& name) const;
+
+        /// Draw image at (x, y) at its native size
         bool draw_image(const std::string& name, int x, int y) const;
+
+        /// Draw image at (x, y) scaled to (w, h) pixels. Overload
+        bool draw_image(const std::string& name, int x, int y, int w, int h) const;
 
         // ImageManager retains ownership of this texture. Do not call SDL_DestroyTexture on the returned pointer.
         SDL_Texture* get_texture(const std::string& name) const;

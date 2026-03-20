@@ -1,7 +1,7 @@
 /**
     * @file ImageGrid.hpp
     * @author Deni Tepic
-    * 
+    *
     * A grid of image names used to render world background
  **/
 
@@ -61,6 +61,8 @@ namespace cse498 {
     /// Set image name at a cell
     void SetCell(size_t x, size_t y, const std::string& image_name);
 
+    void Fill(const std::string& image_name);
+
     /// Clear all cells (set to empty string)
     void Clear();
 
@@ -69,6 +71,16 @@ namespace cse498 {
 
     /// Draw entire grid using ImageManager
     void Draw(const ImageManager& image_manager) const;
+
+    /// Draw only the tiles visible within the given pixel viewport.
+    /// @param image_manager  Image source
+    /// @param cam_x          Camera top-left x in tile coordinates
+    /// @param cam_y          Camera top-left y in tile coordinates
+    /// @param viewport_w     Viewport width in pixels
+    /// @param viewport_h     Viewport height in pixels
+    void DrawViewport(const ImageManager& image_manager,
+                      int cam_x, int cam_y,
+                      int viewport_w, int viewport_h) const;
   };
 
 } // namespace cse498
