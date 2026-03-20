@@ -317,7 +317,7 @@ namespace cse498 {
             bool directional_split;
 
             if (split_width && split_height) {
-                directional_split = (mRng.GetInt(0,1) == 0);
+                directional_split = (mRng.GetValue(0,1) == 0);
             }
             else {
                 directional_split = split_width;
@@ -325,7 +325,7 @@ namespace cse498 {
             
             if (directional_split) {
                 ///Left split
-                auto width_distributor = mRng.GetInt(mThresholdWidthValue, node.width - mThresholdWidthValue);
+                auto width_distributor = mRng.GetValue(mThresholdWidthValue, node.width - mThresholdWidthValue);
                 const int stored_width = width_distributor; 
 
                 left_split = {
@@ -347,7 +347,7 @@ namespace cse498 {
             }
 
             else {
-                auto height_distributor = mRng.GetInt(mThresholdHeightValue, node.height - mThresholdHeightValue);
+                auto height_distributor = mRng.GetValue(mThresholdHeightValue, node.height - mThresholdHeightValue);
                 const int stored_height = height_distributor; 
 
                 ///top split
