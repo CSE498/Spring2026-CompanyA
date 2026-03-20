@@ -10,6 +10,7 @@
  */
 
 #include "WebImage.hpp"
+#include "../WebCanvas/WebCanvas.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #include <cassert>
 #include <iostream>
@@ -377,9 +378,30 @@ const std::string& WebImage::Id() const {
 
 // ----- ICanvasElement Interface -----
 
-/// Draws the image on a WebCanvas (stub; primary rendering is DOM-based).
+/// Stores the canvas-space rectangle used by Draw().
+void WebImage::SetCanvasRect(float x, float y, float w, float h) {
+  mCanvasX = x;
+  mCanvasY = y;
+  mCanvasW = w;
+  mCanvasH = h;
+}
+
+float WebImage::CanvasX() const { return mCanvasX; }
+float WebImage::CanvasY() const { return mCanvasY; }
+float WebImage::CanvasW() const { return mCanvasW; }
+float WebImage::CanvasH() const { return mCanvasH; }
+
+/// Draws the image onto @p canvas at the position set by SetCanvasRect().
+/// If the image failed to load and the error mode is BlankRect, a colored
+/// rectangle is drawn as a placeholder instead.
 void WebImage::Draw(WebCanvas& canvas) {
-  (void)canvas;
+  if (mHasError && mErrorMode == ImageErrorMode::BlankRect) {
+    float w = (mCanvasW > 0) ? mCanvasW : static_cast<float>(mWidth > 0 ? mWidth : 100);
+    float h = (mCanvasH > 0) ? mCanvasH : static_cast<float>(mHeight > 0 ? mHeight : 100);
+    canvas.DrawRect(mCanvasX, mCanvasY, w, h, mPlaceholderColor);
+    return;
+  }
+  canvas.DrawImage(mSrc, mCanvasX, mCanvasY, mCanvasW, mCanvasH);
 }
 
 // ----- Event Handlers -----

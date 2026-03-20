@@ -17,6 +17,7 @@
 #include <emscripten/val.h>
 
 #include "../internal/IDomElement.hpp"
+#include "../internal/ICanvasElement.hpp"
 
 namespace cse498 {
 
@@ -29,7 +30,7 @@ namespace cse498 {
  * It implements IDomElement so it can be mounted into and managed by
  * WebLayout containers.
  */
-class WebButton : public IDomElement {
+class WebButton : public IDomElement, public ICanvasElement {
  public:
   /// @brief Creates a button with the given label, appended to the document body.
   /// @param label Display text for the button.
@@ -123,6 +124,20 @@ class WebButton : public IDomElement {
   /// @brief Called by the JS click listener to fire the click callback.
   void HandleClick();
 
+  // ----- ICanvasElement Interface -----
+
+  /// @brief Sets the position and size used when drawing this button on a WebCanvas.
+  /// @param x Canvas x coordinate (left edge).
+  /// @param y Canvas y coordinate (top edge).
+  /// @param w Button width in pixels; pass -1 to use GetWidth() value.
+  /// @param h Button height in pixels; pass -1 to use GetHeight() value.
+  void SetCanvasRect(float x, float y, float w = -1.0f, float h = -1.0f);
+
+  /// @brief Draws this button onto the given WebCanvas.
+  /// Renders the button background rectangle and label text.
+  /// @param canvas The WebCanvas to draw onto.
+  void Draw(WebCanvas& canvas) override;
+
  private:
   std::string mLabel;                   ///< Current button label text.
   std::function<void()> mCallback;      ///< Click callback; may be empty.
@@ -134,6 +149,11 @@ class WebButton : public IDomElement {
   std::string mTextColor;               ///< Text color CSS string.
   emscripten::val mElement;             ///< Underlying DOM \<button\> element.
   std::string mId;                      ///< Unique DOM id for this button.
+
+  float mCanvasX = 0.0f;   ///< Canvas draw position x (pixels).
+  float mCanvasY = 0.0f;   ///< Canvas draw position y (pixels).
+  float mCanvasW = -1.0f;  ///< Canvas draw width (-1 = use mWidth).
+  float mCanvasH = -1.0f;  ///< Canvas draw height (-1 = use mHeight).
 
   static int mNextIdCounter;            ///< Counter for generating unique DOM ids.
 

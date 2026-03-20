@@ -25,6 +25,7 @@
 #include "../WebLayout/WebLayout.hpp"
 
 #include "../internal/IDomElement.hpp"
+#include "../internal/ICanvasElement.hpp"
 
 namespace cse498 {
 
@@ -38,7 +39,7 @@ namespace cse498 {
  * wrapping, and visibility. It implements IDomElement so it can be
  * mounted into and managed by WebLayout containers.
  */
-class WebTextbox : public IDomElement
+class WebTextbox : public IDomElement, public ICanvasElement
 {
 public:
   /// @brief Rectangle in pixel units returned by bounding-box queries.
@@ -185,6 +186,18 @@ public:
   /// @return Const reference to the id string.
   const std::string& Id() const override;
 
+  // -------- ICanvasElement overrides --------
+
+  /// @brief Sets the canvas-space position used when drawing this textbox.
+  /// @param x Canvas x coordinate (left edge of the text baseline).
+  /// @param y Canvas y coordinate (baseline y).
+  void SetCanvasPosition(float x, float y);
+
+  /// @brief Draws the textbox text onto the given WebCanvas using the current
+  ///        font size and color settings.
+  /// @param canvas The WebCanvas to draw onto.
+  void Draw(WebCanvas& canvas) override;
+
 private:
   
   // -------- Internal helper methods --------
@@ -226,6 +239,9 @@ private:
 
   std::string mId;                        ///< Unique DOM id for this textbox's root element.
   Alignment mAlign{Alignment::None};      ///< Alignment within parent layout.
+
+  float mCanvasX = 0.0f;  ///< Canvas draw position x (pixels).
+  float mCanvasY = 0.0f;  ///< Canvas draw position y (pixels).
 
   static int mNextIdCounter;  ///< Counter for generating unique DOM ids.
 };

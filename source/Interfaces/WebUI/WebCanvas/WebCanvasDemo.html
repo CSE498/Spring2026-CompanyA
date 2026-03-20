@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>WebCanvas Demo</title>
+    <title>WebCanvas Demo — ICanvasElement Pipeline</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
@@ -38,15 +38,13 @@
 <div class="container">
     <h2>WebCanvas Demo</h2>
     <canvas id="web-canvas" width="900" height="600"></canvas>
-    <div class="hint">Powered by Emscripten + Canvas2D</div>
+    <div class="hint">
+        <strong>Left (Section A):</strong> immediate-mode primitives — DrawLine, DrawCircle, DrawPolygon, DrawRect, DrawText<br>
+        <strong>Right (Section B):</strong> real <code>WebImage</code> / <code>WebButton</code> / <code>WebTextbox</code> objects via ICanvasElement pipeline<br>
+        <em>Blue/green/red rects → WebImage (BlankRect error mode) &nbsp;|&nbsp; Bars → WebButton (enabled/disabled) &nbsp;|&nbsp; Text → WebTextbox</em>
+    </div>
 </div>
 
-<!-- ES6 module loader -->
-<script type="module">
-    import createModule from "./WebCanvasDemo.js";
-    createModule().catch(err => {
-        console.error("Failed to start WebCanvasDemo:", err);
-    });
-</script>
+<script src="./WebCanvasDemo.js"></script>
 </body>
 </html>

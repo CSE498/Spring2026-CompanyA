@@ -33,6 +33,12 @@ extern "C" {
                                 const char* strokeColor, float lineWidth, const char* fillColor);
     void webcanvas__draw_polygon(const char* id, const float* coordsXY, int count,
                                  const char* strokeColor, float lineWidth, const char* fillColor);
+    void webcanvas__draw_rect(const char* id, float x, float y, float w, float h,
+                              const char* fillColor);
+    void webcanvas__fill_text(const char* id, float x, float y, const char* text,
+                              const char* color, float fontSize);
+    void webcanvas__draw_image(const char* id, const char* imgSrc,
+                               float x, float y, float w, float h);
 }
 #endif
 
@@ -208,6 +214,57 @@ void WebCanvas::DrawPolygon(const std::vector<Vec2>& points,
                             fillColor.c_str());
 #else
     (void)points; (void)strokeColor; (void)lineWidth; (void)fillColor;
+#endif
+}
+
+/// @brief Draws a filled rectangle on the canvas.
+/// @param x         Left edge x coordinate.
+/// @param y         Top edge y coordinate.
+/// @param w         Width in pixels.
+/// @param h         Height in pixels.
+/// @param fillColor CSS fill color string.
+void WebCanvas::DrawRect(float x, float y, float w, float h,
+                         const std::string& fillColor)
+{
+#ifdef __EMSCRIPTEN__
+    webcanvas__draw_rect(mId.c_str(), x, y, w, h, fillColor.c_str());
+#else
+    (void)x; (void)y; (void)w; (void)h; (void)fillColor;
+#endif
+}
+
+/// @brief Draws a text string onto the canvas.
+/// @param x        Left edge x coordinate.
+/// @param y        Baseline y coordinate.
+/// @param text     UTF-8 string to render.
+/// @param color    CSS fill color string for the text.
+/// @param fontSize Font size in pixels.
+void WebCanvas::DrawText(float x, float y,
+                         const std::string& text,
+                         const std::string& color,
+                         float fontSize)
+{
+#ifdef __EMSCRIPTEN__
+    webcanvas__fill_text(mId.c_str(), x, y, text.c_str(), color.c_str(), fontSize);
+#else
+    (void)x; (void)y; (void)text; (void)color; (void)fontSize;
+#endif
+}
+
+/// @brief Draws an image (by source URL) onto the canvas.
+/// @param imgSrc URL or asset path of the image.
+/// @param x      Left edge x coordinate.
+/// @param y      Top edge y coordinate.
+/// @param w      Width in pixels; -1 uses the image's natural width.
+/// @param h      Height in pixels; -1 uses the image's natural height.
+void WebCanvas::DrawImage(const std::string& imgSrc,
+                          float x, float y,
+                          float w, float h)
+{
+#ifdef __EMSCRIPTEN__
+    webcanvas__draw_image(mId.c_str(), imgSrc.c_str(), x, y, w, h);
+#else
+    (void)imgSrc; (void)x; (void)y; (void)w; (void)h;
 #endif
 }
 
