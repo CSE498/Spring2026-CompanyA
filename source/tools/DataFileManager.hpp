@@ -126,30 +126,41 @@ namespace cse498 {
         return;
       }
 
-      // Capture the full grid layout as rows joined by ','
-      std::ostringstream oss;
-      m_world->GetGrid().Print(oss);
-      std::string grid_str = oss.str();
-      if (!grid_str.empty() && grid_str.back() == '\n') grid_str.pop_back();
-      for (char & c : grid_str) if (c == '\n') c = ',';
+      const auto serialize_grid = [this]() {
+        std::ostringstream oss;
+        m_world->GetGrid().Print(oss);
 
-      std::string tiles = FormatData(m_tile_type, grid_str);
+        std::string grid_str = oss.str();
+        if (!grid_str.empty() && grid_str.back() == '\n') grid_str.pop_back();
+        for (char & cell : grid_str) {
+          if (cell == '\n') cell = ',';
+        }
+
+        return grid_str;
+      };
+
+      std::string tiles = FormatData(m_tile_type, serialize_grid());
 
       // Collect data for each agent: id,name,symbol,x,y — data blocks separated by '\t'
       std::string agent_data;
+
+      // Captured agent_data by reference to append each agent's information into the original agent_data string.
+      // To avoid unnecessary copying of the agent_data string. 
+      const auto append_agent_position = [&agent_data](const AgentBase & agent) {
+        if (!agent.GetLocation().IsPosition()) return;
+
+        const WorldPosition & pos = agent.GetLocation().AsWorldPosition();
+        agent_data += "," + std::to_string(pos.X());
+        agent_data += "," + std::to_string(pos.Y());
+      };
+
       for (size_t i = 0; i < m_world->GetNumAgents(); ++i) {
         const AgentBase & agent = m_world->GetAgent(i);
         if (i > 0) agent_data += "\t";
         agent_data += std::to_string(agent.GetID());
         agent_data += "," + agent.GetName();
         agent_data += "," + std::string(1, agent.GetSymbol());
-        if (agent.GetLocation().IsPosition()) {
-          const WorldPosition & pos = agent.GetLocation().AsWorldPosition();
-          agent_data += "," + std::to_string(pos.X());
-          agent_data += "," + std::to_string(pos.Y());
-        } else {
-          agent_data += ""; // no position available
-        }
+        append_agent_position(agent);
       }
       std::string agents = FormatData(m_agent_type, agent_data);
 
