@@ -45,6 +45,12 @@ namespace cse498 {
     };
     
 
+    static constexpr int DEFAULT_WIDTH = 150;
+    static constexpr int DEFAULT_HEIGHT = 100;
+    static constexpr int DEFAULT_WIDTH_THRESHOLD = 30;
+    static constexpr int DEFAULT_HEIGHT_THRESHOLD = 20;
+    static constexpr int DEFAULT_ITERATIONS = 20;
+
     ///Class which handles the creation, management, and modification of a Binary Space Partition (BSP) Tree in its dungeon creation
     class BSP {
     protected:
@@ -52,21 +58,35 @@ namespace cse498 {
         std::vector<BSPNode> mBSP_Tree; //The entire tree
         std::vector<BSPNode> mLeafNodes; //the split region tile rooms
 
-        int mWidth = 150; //width of the grid (MAY NEED TO MAKE CONST)
-        int mHeight = 100; //hegiht of the grid (MAY NEED TO MAKE CONST)
-        int mThresholdWidthValue = 30; //minimum width value before BSP stops splitting
-        int mThresholdHeightValue = 20;
-        int mIterations = 20; //number of splits into the grid
+        int mWidth = DEFAULT_WIDTH; //width of the grid (MAY NEED TO MAKE CONST)
+        int mHeight = DEFAULT_HEIGHT; //hegiht of the grid (MAY NEED TO MAKE CONST)
+        const int mThresholdWidthValue = DEFAULT_WIDTH_THRESHOLD; //minimum width value before BSP stops splitting
+        const int mThresholdHeightValue = DEFAULT_HEIGHT_THRESHOLD;
+        int mIterations = DEFAULT_ITERATIONS; //number of splits into the grid
         Random mRng; //Random number generator
 
 
     public: 
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
+        /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
         BSP(const cse498::WeightedSet<std::string>& room_pool) 
 			: mRoomHolder(room_pool)
 		{ 
+            mRng.SetSeed(12345);
             insert_split(mIterations); //Creates BSP Tree
             PostOrderDFS(); //Grabs all the generated room slots from the tree
+        }
+
+        /// @brief Constructor call creates BSP Tree with a set seed
+        /// @attention This constructor is purely meant to be used for debugging purposes
+        /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
+        /// @param seed Set int value to determine room generation layout
+        BSP(const cse498::WeightedSet<std::string>& room_pool, uint64_t seed)  
+            : mRoomHolder(room_pool)
+        {
+            mRng.SetSeed(seed);
+            insert_split(mIterations);
+            PostOrderDFS();
         }
 
         ////////////////////////////////////
@@ -105,14 +125,23 @@ namespace cse498 {
             PostOrderDFS(mBSP_Tree[0]);
         }
 
+        void ClearState() { 
+            mBSP_Tree.clear();
+            mLeafNodes.clear();
+        }
+
+        void RepopulateTree() { 
+            insert_split(mIterations); //Creates BSP Tree
+            PostOrderDFS(); //Grabs all the generated room slots from the tree
+        }
 
         /**
          * @brief Regenerates the BSP Tree incase any modifications to width/height/properties after its creation are made in order to 
          * ensure the object's state is up to date when new dungeons are later created
          */
         void RegnerateObjectState() {
-            mBSP_Tree.clear();
-            mLeafNodes.clear();
+            ClearState();
+            RepopulateTree();
         }
 
         ////////////////////////////////////
@@ -222,6 +251,12 @@ namespace cse498 {
             return mBSP_Tree;
         }
 
+        /// @brief Sets RNG seed primarily for test case purposes
+        /// @param integer seed value we want to set the RNG object too
+        void SetRngSeed(uint64_t integer) {
+            mRng.SetSeed(integer);
+        }
+
 
     private:
 
@@ -264,6 +299,7 @@ namespace cse498 {
 
             bool split_width = true;
             bool split_height = true;
+
             //If the width or the height of the partition do not meet the minimum threshold, stop the split
             // std::println("This is width: {}", node.width);
             // std::println("This is height: {}", node.height);
