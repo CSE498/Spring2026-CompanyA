@@ -57,7 +57,9 @@ namespace cse498 {
                 uint64_t s;
             };
 
-            // Ensursed state values are non-zero and well-mixed.
+            /// @brief Ensurses state values are non-zero and well-mixed.
+            /// @param The splitmix state being mixed
+            /// @return A well-mixed, non-zero uint64_t value
             uint64_t m_Splitmix64(struct m_Splitmix64State &state) {
                 uint64_t result = (state.s += GOLDEN_RATIO);
                 result = (result ^ (result >> RIGHT_SHIFT1)) * FIRST_MIXING;
@@ -65,7 +67,8 @@ namespace cse498 {
                 return result ^ (result >> RIGHT_SHIFT3);
             }
 
-            // Uses m_seed to generate the state positions
+            /// @brief Uses m_seed to generate the state positions
+            /// @param The xoshiro state being initalized
             void m_Xoshiro256ppInit(struct m_Xoshiro256ppState &state) {
                 struct m_Splitmix64State sm = {m_seed};
 
@@ -75,7 +78,9 @@ namespace cse498 {
                 state.s[3] = m_Splitmix64(sm);
             }
 
-            // Performs a left rotation on x by k bits
+            /// @brief Performs a left rotation on x by k bits
+            /// @param x and k, x is the value being rotated and k is how much it is rotated by
+            /// @return A rotated x value
             uint64_t m_Rol64(uint64_t x, int k) {
                 // Undefined behavior should never trigger due to constant values
                 // If this triggers, function was used incorrectly.
@@ -89,7 +94,9 @@ namespace cse498 {
                 return (x<<k) | (x >> (NUM_BITS-k));
             }
 
-            // Generates a random number
+            /// @brief Generates a random number
+            /// @param the xoshiro state being used to generated the number
+            /// @return a randomly generated uint64_t value
             uint64_t m_Xoshiro256pp(struct m_Xoshiro256ppState &state) {
                 uint64_t *s = state.s;
 
@@ -114,14 +121,18 @@ namespace cse498 {
             ///
             ////////////////////////////////////////////////////////////
 
-            
-            // Generates a double
+
+            /// @brief Generates a double
+            /// @param the xoshiro state being used to generated the number
+            /// @return a randomly generated double
             double m_DoubleXoshiro(struct m_Xoshiro256ppState &state) {
                 uint64_t r = m_Xoshiro256pp(state);
                 return (r >> D_LOWER_11) * (DOUBLE_CONVERSION_FACTOR); // Using the top 53 bits
             }
 
-            // Generates a float
+            /// @brief Generates a float
+            /// @param the xoshiro state being used to generated the number
+            /// @return a randomly generated float
             float m_FloatXoshiro(struct m_Xoshiro256ppState &state) {
                 uint64_t r = m_Xoshiro256pp(state);
                 return static_cast<float>(r >> F_LOWER_41) * (FLOAT_CONVERSION_FACTOR); // Using the top 23 bits
@@ -130,6 +141,7 @@ namespace cse498 {
             struct m_Xoshiro256ppState m_rng;
             bool m_used = false;
 
+            /// @brief Checks if the rng has been initalized or not
             void m_CheckRng() {
                 if (m_used == false) {
                     m_Xoshiro256ppInit(m_rng);
@@ -138,18 +150,46 @@ namespace cse498 {
             }
 
         public:
+            /// @brief The constructor for a Random object
             Random() {
                 m_seed =  std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             }
 
-            // Public getter and setter for the current seed.
+            /// @brief Public setter for the current seed.
+            /// @param the desired seed
             void SetSeed(uint64_t seed) {
                 m_seed = seed;
                 m_used = false;
             }
+            /// @brief Public getter for the current seed
+            /// @return the current seed
             uint64_t GetSeed() const {return m_seed;}
 
-            // Generate and return a random int
+
+            /// @brief Templated function to generate and return values
+            template <typename T>
+            T GetValue(T min, T max) {
+                assert(min <= max);
+
+                m_CheckRng();
+
+                // generate the bits
+                uint64_t r = m_Xoshiro256pp(m_rng);
+                
+                // Turn the bits into the appropriate type
+                if constexpr (std::is_integral_v<T>) {
+                    // Handle int type values: ints, bools, chars
+                    return min + static_cast<T> (r % static_cast<uint64_t>(max-min+1));
+                }
+                else {
+                    // Handle decimal type values: doubles, floats
+                    double decimal_value = static_cast<double>(r)/static_cast<double>(UINT64_MAX);
+                    return static_cast<T>(min + decimal_value * (max-min));
+                }
+            }
+            /*/// @brief Generate and return a random int
+            /// @param the minimum and maximum values to be used
+            /// @return a randomly generated int
             int GetInt(int i_min = 0, int i_max = 100) {
                 // Error handling: i_min must be less than i_max
                 if (i_min > i_max) {
@@ -166,7 +206,9 @@ namespace cse498 {
                 return return_i;
             }
 
-            // Generate and return a random double
+            /// @brief Generate and return a random double
+            /// @param the minimum and maximum values to be used
+            /// @return a randomly generated double
             double GetDouble(double d_min = 0.0, double d_max = 100.0){
                 // Error handling: d_min must be less than d_max
                 if (d_min > d_max) {
@@ -181,7 +223,9 @@ namespace cse498 {
                 return return_d;
             }
 
-            // Generate and return a random float
+            /// @brief Generate and return a random float
+            /// @param the minimum and maximum values to be used
+            /// @return a randomly generated float
             float GetFloat(float f_min = 0.0f, float f_max = 100.0f) {
                 // Error handling: f_min must be less than f_max
                 if (f_min > f_max) {
@@ -196,7 +240,9 @@ namespace cse498 {
                 return return_f;
             }
 
-            // Generate and return a random char
+            /// @brief Generate and return a random char
+            /// @param the minimum and maximum values to be used
+            /// @return a randomly generated char
             char GetChar(char c_min = 'A', char c_max = 'Z'){
                 // Error handling: c_min must be less than c_max
                 if (c_min > c_max) {
@@ -212,7 +258,9 @@ namespace cse498 {
                 return return_c;
             }
 
-            // Generate and return a random bool
+            /// @brief Generate and return a random bool
+            /// @param the minimum and maximum values to be used
+            /// @return a randomly generated bool
             bool GetBool(){
                 //Generate between 0 and 1 using an int
                 int i = GetInt(0,1);
@@ -221,9 +269,11 @@ namespace cse498 {
                     return false;
                 }
                 return true;
-            }
+            }*/
 
-            // Generates based off of a given probability, and returns a bool
+            /// @brief Generates based off of a given probability, and returns a bool
+            /// @param the desired probaility of a true value
+            /// @return a weighted generated bool
             bool P(double probability = 0.5){
                 // Error handling: probability must be between 0 and 1
                 if (0 > probability || 1 < probability) {

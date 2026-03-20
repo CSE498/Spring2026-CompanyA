@@ -73,8 +73,8 @@ namespace cse498 {
         }
 
         [[nodiscard]] std::string GenerateFilePath() { 
-            auto dungeon_select = mRng.GetInt(1,3);
-            auto room_select = mRng.GetInt(1,3);
+            auto dungeon_select = mRng.GetValue(1,3);
+            auto room_select = mRng.GetValue(1,3);
             std::string file_path = "";
 
             switch(dungeon_select) {

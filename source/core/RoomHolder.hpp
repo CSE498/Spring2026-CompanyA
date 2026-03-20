@@ -25,6 +25,7 @@ namespace cse498 {
     protected:
         std::vector<std::string> current_room; //Holds the currently selected/stored room
         std::string mFilePath = "../source/core/rooms/Dungeon_"; //File path used to access the directory of different .txt rooms
+        std::string mImagePath = "../assets/";  //File path location for images
 
         cse498::Random mRng; //Random 
 		cse498::WeightedSet<std::string> mRoomPool;
@@ -75,13 +76,110 @@ namespace cse498 {
         }
 
         [[nodiscard]] std::string GenerateFilePath() { 
-			auto room_select = mRng.GetDouble(0.0, mRoomPool.GetTotalWeight());
+			auto room_select = mRng.GetValue(0.0, mRoomPool.GetTotalWeight());
 			std::string file_path = mRoomPool.Sample(room_select);
             assert(file_path != "");
             return file_path;
         }
 
 
+        /// @brief Picks an image file for an item/tile/agent/other creature
+        /// @param tile_c is a char representing the current square of the dungeon
+        std::string GetImageFile(char tile_c, char adj_tile) {
+            if (!tile_c) {}
+
+            int level = 1; // TODO: Add a counter for number of levels generated
+            std::string file_path = mImagePath;
+
+            // World objects (floor tiles, walls, doors, barriers, ect.)
+            if (tile_c == '&' || tile_c == '^' || tile_c == '<' || tile_c == '>' || tile_c == '$'
+                || tile_c == 'd' || tile_c == 's' || tile_c == ' ' || tile_c == 'v') {
+
+                // Level folder
+                file_path += "world/";
+                if (level == 1) {file_path += "forest/";}
+                else if (level == 2) {file_path += "cave/";}
+                else if (level == 3) {file_path += "dungeon/";}
+                else {file_path += "castle/";}
+
+                // Floor tiles
+                if (tile_c == ' ' || tile_c == 'v') {
+                    file_path += "floor_tiles/tile_";
+
+                    if (level == 1) {file_path += "grass_";}
+                    else if (level == 2) {file_path += "cave_";}
+                    else if (level == 3) {file_path += "stoneBrick_";}
+                    else {file_path += "wood_";}
+
+                    // Regular floor tile
+                    if (tile_c == ' ') {
+                        file_path += "1.png";
+                        return file_path;
+                    }
+
+                    // Variant floor tiles
+                    file_path += std::to_string(mRng.GetValue(2,5));
+                    file_path += ".png";
+                    return file_path;
+                }
+
+                // Walls
+                else {
+                    file_path += "walls/";
+                    // TODO: Internal walls/barriers, waiting for image assests to be created
+
+                    // External walls/barriers
+                    if (tile_c == '&' || tile_c == '^' || tile_c == '<' || tile_c == '>' || tile_c == '$'
+                        || tile_c == 'd' || tile_c == 's') {
+                            file_path += "external/";
+
+                            // Regular door
+                            if(tile_c == 'd') {file_path += "door_";}
+                            // Everything else
+                            else {file_path += "border_";}
+
+                            // Position on grid
+                            if (tile_c == '&') {file_path += "bottom_";}
+                            else if (tile_c == '^') {file_path += "top_";}
+                            else if (tile_c == '<') {file_path += "left_";}
+                            else if (tile_c == '>') {file_path += "right_";}\
+                            else {
+                                // TODO: figure out how to determine if door is left or right
+                                file_path += "left_";
+                            }
+
+                            if (level == 1) {file_path += "forest.png";}
+                            else if (level == 2) {file_path += "cave.png";}
+                            else if (level == 3) {file_path += "dungeon.png";}
+                            else {file_path += "castle.png";}
+                        }
+                }
+            }
+
+
+            else if (tile_c == 't') {
+                // TODO: Trap tile, waiting for image assests to be created
+            }
+            else if (tile_c == 'l') {
+                // TODO: Loot tile, waiting for image assests to be created
+            }
+            else if (tile_c == 'm') {
+                file_path += "agents/monsters/agent_monster_";
+
+                int monster = mRng.GetValue(1,2);
+                if (monster == 1) {
+                    file_path += "goblin.png";
+                }
+                else if (monster == 2) {
+                    file_path += "skeleton.png";
+                }
+                return file_path;
+            }
+            else {
+
+            }
+            return file_path;
+        }
 
         /// @brief Loads a random pre-made room based off of the level dungeon we're currently in
         /// @return 

@@ -197,7 +197,7 @@ namespace cse498 {
 
             mConnectedRooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
 
-            auto gamble = mRng.GetInt(0,1); //Determines which node is returned
+            auto gamble = mRng.GetValue(0,1); //Determines which node is returned
 
             //sends a node upwards, allowing connectivity between nodes for linking 
             if (gamble == 0) {
