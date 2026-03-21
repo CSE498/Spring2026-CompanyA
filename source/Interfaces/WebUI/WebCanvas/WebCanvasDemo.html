@@ -45,6 +45,11 @@
     </div>
 </div>
 
-<script src="./WebCanvasDemo.js"></script>
+<script type="module">
+    import createModule from "./WebCanvasDemo.js";
+    createModule().catch(err => {
+        console.error("Failed to start WebCanvasDemo:", err);
+    });
+</script>
 </body>
 </html>
