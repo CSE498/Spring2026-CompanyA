@@ -50,3 +50,13 @@ third-party/SDL2/
 
 /source/simple
 /tests/build/run_tests
+
+# ====== Doxygen Output ======
+# The folder where the result reports generated after each Doxygen scan are stored
+# (config this in your Doxyfile: OUTPUT_DIRECTORY = ./doxygen-output)
+doxygen-output
+
+# ====== Doxygen Warnings ======
+# The file where Doxygen warnings are logged
+# (config this in your Doxyfile: WARN_LOGFILE = ./doxygen-warnings.log)
+doxygen-warnings.log
