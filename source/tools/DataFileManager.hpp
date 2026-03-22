@@ -20,10 +20,17 @@
 #pragma once
 
 #include <cassert>
-#include <string>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 #include <string_view>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // For demonstration purposes, we are saving the data from MazeWorld
 #include "../../source/Worlds/MazeWorld.hpp"
