@@ -178,18 +178,22 @@ namespace cse498 {
         return;
       }
 
-      std::string tile_data;
-      std::string agent_data;
-      std::string line;
-      while (std::getline(file, line)) {
-        if (line.empty()) continue;
-        std::istringstream iss(line);
-        std::string type, data;
-        if (!std::getline(iss, type, '\t')) continue;
-        if (!std::getline(iss, data)) continue;
-        if (type == m_tile_type)  tile_data  = data;
-        if (type == m_agent_type) agent_data = data;
-      }
+      const auto read_data = [&file](std::string_view expected_type) {
+        std::string data;
+        std::string line;
+
+        while (std::getline(file, line)) {
+          if (line.empty()) continue;
+          std::istringstream iss(line);
+          std::string type;
+          if (!std::getline(iss, type, '\t')) continue;
+          if (!std::getline(iss, data)) continue;
+          if (type == expected_type) break;
+        }
+        return data;
+      };
+      std::string tile_data = read_data(m_tile_type);
+      std::string agent_data = read_data(m_agent_type);
       file.close();
 
       if (tile_data.empty()) {
