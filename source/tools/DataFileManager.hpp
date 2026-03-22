@@ -177,7 +177,10 @@ namespace cse498 {
         std::cerr << "ERROR::cse498::DataFileManager::LoadData(): Failed to open file " << m_filename << std::endl;
         return;
       }
-
+      
+      // Helper lambda to read the data for a specific type (Tile or Agent) from the file.
+      // Captured file by reference to read through the file line by line and extract the data corresponding to the specified type.
+      // To avoid unnecessary copying of the file stream and to maintain the current position in the file as we read through it.
       const auto read_data = [&file](std::string_view expected_type) {
         std::string data;
         std::string line;
