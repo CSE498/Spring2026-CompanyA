@@ -46,45 +46,62 @@ public:
     PathVector(double x, double y) : mX(x), mY(y) {}
     PathVector operator+(const PathVector& rhs) const;
     PathVector operator-(const PathVector& rhs) const;
+    bool operator==(const PathVector& rhs) const
+    {
+        return std::abs(mX - rhs.mX) < 1e-6 && std::abs(mY - rhs.mY) < 1e-6;
+    }
     /// Classic dot project
-    [[nodiscard]] double Dot(const PathVector& second) const
-    { return mX * second.mX + mY * second.mY; }
+    [[nodiscard]] constexpr double Dot(const PathVector& second) const { return mX * second.mX + mY * second.mY; }
     /// Hadamard Product
-    [[nodiscard]] PathVector mult(const PathVector& second) const { return {mX * second.mX, mY * second.mY}; }
-    [[nodiscard]] PathVector mult(const double x, const double y) const { return {mX * x, mY * y}; }
+    [[nodiscard]] constexpr PathVector Mult(const PathVector& second) const { return {mX * second.mX, mY * second.mY}; }
+    [[nodiscard]] constexpr PathVector Mult(const double x, const double y) const { return {mX * x, mY * y}; }
 
     // Operations:
     /**
      * Normalizes the vector IN-PLACE so magnitude is approx 1
      * @return modified in place vector
      */
-    PathVector& normalize();
+    constexpr PathVector& Normalize()
+    {
+        double mag = GetMagnitude();
+        mX /= mag;
+        mY /= mag;
+        return *this;
+    }
     /**
      * IN-PLACE operation to scale the vector
      * @param scale_val scale factor for the vector. Changes x,y by this amount so mag --> mag * scale_val
      * @return scaled vector in place.
      */
-    PathVector& scale(double scale_val);
+    constexpr PathVector& Scale(double scale_val)
+    {
+        mX *= scale_val;
+        mY *= scale_val;
+
+        return *this;
+    }
 
     /**
      * rotates the path vector with respect to its start position counterclockwise by angle
-     * @param angle - angle of rotation CCW
+     * not possible for constexpr until c++26 though
+     * @param angle - angle of rotation CCW radians
      * @return in place modification of vector position
      */
-    PathVector& rotate(double angle);
+    PathVector& Rotate(double angle);
 
     [[nodiscard]] double X() const { return mX; }
     [[nodiscard]] double Y() const { return mY; }
-    [[nodiscard]] double getMagnitude() const { return std::sqrt(mX * mX + mY * mY); }
-    [[nodiscard]] double getAngle() const { return std::atan2(mY, mX); }
+    /// can't be constexpr because of sqrt but put it anyway since close to c++26
+    [[nodiscard]] constexpr double GetMagnitude() const { return std::sqrt(mX * mX + mY * mY); }
+    [[nodiscard]] constexpr double GetAngle() const { return std::atan2(mY, mX); }
 
     /**
      * Projects argument onto calling object returning new position of where the projection lands
      * @param this_onto_that whatever is put here is projected onto the object calling this function.
      * @return
      */
-    PathVector Project(const WorldPosition& this_onto_that) const;
-    PathVector Project(const PathVector& this_onto_that) const;
+    [[nodiscard]] PathVector Project(const WorldPosition& this_onto_that) const;
+    [[nodiscard]] PathVector Project(const PathVector& this_onto_that) const;
 
 };
 

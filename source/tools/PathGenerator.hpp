@@ -82,7 +82,7 @@ private:
     {
         const double x_x = p1.X() - p2.X();
         const double y_y = p1.Y() - p2.Y();
-        return std::sqrt(x_x * x_x + y_y * y_y);
+        return std::sqrt(x_x * x_x + y_y * y_y); // can't be constexpr but c++26 is nearby
     }
 
     /**
@@ -94,8 +94,9 @@ private:
         double mg = 0; // cost from start position (total distance traveled)
         double mf = 0; // g + h
         /// This is for reconstruction. Not sure what is best here maybe std::optional<WorldPosition> and just copy store it
-        std::shared_ptr<ANode> mPrev;
-        ANode(const WorldPosition& pos, double g, double f, std::shared_ptr<ANode> other) : mPos(pos), mg(g), mf(f), mPrev(std::move(other)) {}
+        /// This is for ANode.
+        ANode* mPrev = nullptr;
+        ANode(const WorldPosition& pos, double g, double f, ANode* prev) : mPos(pos), mg(g), mf(f), mPrev(prev) {}
     };
 
     /**
@@ -103,7 +104,7 @@ private:
      */
     struct ANodeCompare
     {
-        bool operator()(const std::shared_ptr<ANode> &a, const std::shared_ptr<ANode> &b) const
+        bool operator()(const ANode* a, const ANode* b) const
         {
             return a->mf > b->mf;
         }
@@ -179,10 +180,10 @@ private:
                                                                          bool closest = false);
     /**
      * Rebuilds the path from a given node used exclusively in Astar search
-     * @param node - provided node to rebuild backwards path from
+     * @param end - start for reconstruction far down the tree (end of tree then climb up)
      * @return a path of world positions from path backwards to root
      */
-    static std::vector<WorldPosition> AStarReconstruction(const std::shared_ptr<ANode> &node);
+    static std::vector<WorldPosition> AStarReconstruction(const ANode* end);
 
     /**
      * Creates the next point circle step size in the direction on a circle
@@ -224,7 +225,7 @@ private:
      * @param flag - direction of the circle generation
      * @return T/F
      */
-    static bool IsPointBefore(const WorldPosition &test_pt,
+    static constexpr bool IsPointBefore(const WorldPosition &test_pt,
                               const WorldPosition &relative_pt,
                               const WorldPosition &center,
                               CircleDirectionFlag flag);
@@ -238,6 +239,7 @@ private:
      * @param flag - flag for how to generate circle, expand pushes agent outwards, skip chops the circle if not available
      * @param circle_flag - CCW or CW
      * @return
+     * can't be constexpr until c++26 for trig.
      */
     static WorldPath MakeCircle(const WorldPosition &start,
                                 const WorldPosition &circ_center,
@@ -255,7 +257,7 @@ private:
      * @param flag direction flag CCW or CW
      * @return a list of points for the loop
      */
-    static std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bot_left,
+    static constexpr std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bot_left,
                                                                         const WorldPosition &top_right,
                                                                         const PathRequest &request,
                                                                         CircleDirectionFlag flag);
@@ -264,6 +266,8 @@ public:
     PathGenerator() = delete;
     PathGenerator(const PathGenerator&) = delete;
     PathGenerator(PathGenerator&&) = delete;
+
+    // Note none of these can be constexpr because they all need to measure distance with sqrt()
 
     /**
      * This isn't *fully* functional intentionally because the correct world doesn't exist yet for this.
@@ -408,16 +412,21 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
         {STEP_SIZE, 0}, {0, STEP_SIZE}, {-STEP_SIZE, 0}, {0, -STEP_SIZE},
         {STEP_SIZE, STEP_SIZE}, {-STEP_SIZE, STEP_SIZE}, {STEP_SIZE, -STEP_SIZE}, {-STEP_SIZE, -STEP_SIZE}
     });
-    std::priority_queue<std::shared_ptr<ANode>, std::vector<std::shared_ptr<ANode> >, ANodeCompare> pq;
+    ANode* closest_node = nullptr;
+
+    // pq can't own these because you can't std::move pq.top() and don't get it from pq.pop
+    std::vector<std::unique_ptr<ANode>> storage;
+
+    std::priority_queue<ANode*, std::vector<ANode*>, ANodeCompare> pq;
     std::unordered_set<WorldPosition> visited = {};
     double closest_distance = h(from); // Does heuristic calc to check distances
-    std::shared_ptr<ANode> closest_node;
 
-    pq.push(std::make_shared<ANode>(from, 0, 0, nullptr));
+    storage.push_back(std::make_unique<ANode>(from, 0, 0, nullptr));
+    pq.push(storage.back().get());
     visited.insert({from.X(), from.Y()});
     while (!pq.empty())
     {
-        auto node = pq.top();
+        auto node = pq.top(); // at no point can these be null because storage is never manipulated and all comes from there
         pq.pop();
         // Just check if the node is too far away from the goal and this is our current best estimate then stop looking
         if (node->mf > maxSearchDist) // Could change this to distance traveled instead
@@ -452,10 +461,11 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
                 continue;
 
             // Order of arguments is Node, g, f, prev node
-            double g = node->mg + dir.getMagnitude();
+            double g = node->mg + dir.GetMagnitude();
             if (!visited.contains(neighbor))
             {
-                pq.push(std::make_shared<ANode>(neighbor, g, g + h(Round(neighbor)), node));
+                storage.push_back(std::make_unique<ANode>(neighbor, g, g + h(Round(neighbor)), node));
+                pq.push(storage.back().get());
                 visited.insert(neighbor);
             }
         }

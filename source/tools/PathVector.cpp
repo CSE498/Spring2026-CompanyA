@@ -24,22 +24,9 @@ PathVector PathVector::operator-(const PathVector &rhs) const
     return {mX - rhs.mX, mY - rhs.mY};
 }
 
-PathVector & PathVector::normalize()
+PathVector & PathVector::Rotate(double angle)
 {
-    double mag = getMagnitude();
-    mX /= mag;
-    mY /= mag;
-    return *this;
-}
-PathVector & PathVector::scale(double scale_val)
-{
-    mX *= scale_val;
-    mY *= scale_val;
-
-    return *this;
-}
-PathVector & PathVector::rotate(double angle)
-{
+    // radians rotation CCW -- classic matrix rotation from LA
     auto temp_mx = mX;
     mX = std::cos(angle) * mX - std::sin(angle) * mY;
     mY = std::sin(angle) * temp_mx + std::cos(angle) * mY;
@@ -53,10 +40,11 @@ PathVector PathVector::Project(const WorldPosition &this_onto_that) const
 }
 PathVector PathVector::Project(const PathVector &this_onto_that) const
 {
+    // project input onto "this"
     PathVector result = *this;
     double top = this_onto_that.Dot(*this);
     double bottom = this->Dot(*this);
-    result.scale(top / bottom);
+    result.Scale(top / bottom);
     return result;
 }
 }

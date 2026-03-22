@@ -193,7 +193,7 @@ bool AgentFactory::IsInRange(const Enemy &enemy, const WorldPosition &entityPosi
     {
         // then we are pretty much good. Just check Euclidean Distance is less than range with respect to the player
         // hitbox. TODO: update once hitbox information is more well-defined
-        if ((p1 - p2).getMagnitude() < enemy.GetAttackRange())
+        if ((p1 - p2).GetMagnitude() < enemy.GetAttackRange())
             return true;
     }
     return false;

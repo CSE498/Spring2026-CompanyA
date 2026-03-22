@@ -31,8 +31,8 @@ bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &di
      *      _x_
      *      in this 3x3 the bottom left can't be traveled to because two blocks are cutting it off
      */
-    const WorldPosition test1 = from + dir.mult({1, 0});
-    const WorldPosition test2 = from + dir.mult({0, 1});
+    const WorldPosition test1 = from + dir.Mult({1, 0});
+    const WorldPosition test2 = from + dir.Mult({0, 1});
     return request.mWorldGrid.IsWalkable(test1) && request.mWorldGrid.IsWalkable(test2);
 }
 
@@ -42,10 +42,10 @@ PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPositio
 {
     // find the direction of the 'to'
     const auto vec = PathVector(from, to);
-    if (vec.getMagnitude() > 1 + 1e-6)
+    if (vec.GetMagnitude() > 1 + EP) // can't be constexpr
     {
         // Some point was skipped. We no longer know if we can travel there directly: Find weird path there instead
-        auto pth = AStarSearch(from, request, SingleGoalHeuristic{to}, vec.getMagnitude() * 2, false);
+        auto pth = AStarSearch(from, request, SingleGoalHeuristic{to}, vec.GetMagnitude() * 2, false);
         if (!pth.empty())
         {
             // it brings us to the right tile but we change the actual position on that tile to what we want.
@@ -62,7 +62,7 @@ PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPositio
 
     return {IsTravelable(from, vec, request), {from, to}};
 }
-bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
+constexpr bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
                                   const WorldPosition &relative_pt,
                                   const WorldPosition &center,
                                   const CircleDirectionFlag flag)
@@ -71,15 +71,15 @@ bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
     // Assume both points are on the circle
     const PathVector center_to_test(test_pt, center);
     const PathVector center_to_relative(relative_pt, center);
-    assert(std::abs(center_to_relative.getMagnitude() - center_to_test.getMagnitude()) < 1e-6);
+    assert(std::abs(center_to_relative.GetMagnitude() - center_to_test.GetMagnitude()) < EP);
 
     const PathVector test(test_pt.X() - center.X(), test_pt.Y() - center.Y());
     const PathVector relative(relative_pt.X() - center.X(), relative_pt.Y() - center.Y());
 
     // This determines if a point is before another point by comparing the angles they make.
     // The weird if statements are because of how the angle is returned from getAngle -- it returns in domain [-pi, pi]
-    double test_angle = test.getAngle();
-    double rel_angle = relative.getAngle();
+    double test_angle = test.GetAngle();
+    double rel_angle = relative.GetAngle();
     if (flag == CircleDirectionFlag::CW && rel_angle < 0 && test_angle > 0)
         rel_angle += 2 * std::numbers::pi;
     if (flag == CircleDirectionFlag::CCW && rel_angle > 0 && test_angle < 0)
@@ -91,12 +91,12 @@ bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
     return flag == CircleDirectionFlag::CCW ? result < 0 : result > 0;
 }
 
-std::vector<WorldPosition> PathGenerator::AStarReconstruction(const std::shared_ptr<ANode> &node)
+std::vector<WorldPosition> PathGenerator::AStarReconstruction(const ANode* end)
 {
     std::vector<WorldPosition> result;
     // Reconstruct the path and return.
-    result.push_back(node->mPos);
-    auto prev = node->mPrev;
+    result.push_back(end->mPos);
+    auto prev = end->mPrev;
     while (prev)
     {
         result.push_back(prev->mPos);
@@ -113,15 +113,15 @@ WorldPosition PathGenerator::FindNextCirclePos(const WorldPosition &start,
 {
     // Simple rotation to find the next point
     PathVector center_to_start(center, start);
-    assert(std::abs(center_to_start.getMagnitude() - radius) < EP); // just to ensure no bugs from this.
+    assert(std::abs(center_to_start.GetMagnitude() - radius) < EP); // just to ensure no bugs from this.
 
     // NOTE!! opposite from expected because Worlds are inverted
     const double direction_decider = flag == CircleDirectionFlag::CW ? 1 : -1;
 
     // Find rotation angle: (just math equation of triangle bisect. Not magic numbers)
-    const double angle = 2 * std::asin(STEP_SIZE / (2 * radius));
+    const double angle = 2 * std::asin(STEP_SIZE / (2 * radius)); // can't be constexpr
 
-    return center + center_to_start.rotate(angle * direction_decider);
+    return center + center_to_start.Rotate(angle * direction_decider);
 }
 
 WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
@@ -189,7 +189,7 @@ WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
                 result.push_back(next); // We do not extend paths. Just need to know it is possible or not
             else
             {
-                const double search_distance = PathVector(result.back(), next).getMagnitude() *
+                const double search_distance = PathVector(result.back(), next).GetMagnitude() *
                     CIRCLE_EXPAND_MULTIPLIER;
                 auto path = AStarSearch(result.back(), request, SingleGoalHeuristic{next}, search_distance, true);
                 if (path.size() > 1)
@@ -244,7 +244,7 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
 
     // Step 1: Find the starting point
     auto circle_dir = PathVector(agent_pos, circ_center);
-    circle_dir.normalize().scale(circ_radius * -1);
+    circle_dir.Normalize().Scale(circ_radius * -1);
     auto start_point = circ_center + circle_dir;
     std::vector<WorldPosition> path_to_circle;
 
@@ -282,7 +282,7 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
     return CirclePath(WorldPath(path_to_circle), circle_path);
 }
 
-std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(const WorldPosition &bot_left,
+constexpr std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(const WorldPosition &bot_left,
                                                                             const WorldPosition &top_right,
                                                                             const PathRequest &request,
                                                                             const CircleDirectionFlag flag)
@@ -352,7 +352,7 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     }
     // The original start_path worked with finding cell positions, not actual positions. This can affect
     // The creation of the loop vs intended.
-    if ((loop_start - loop_vec.at(start_index)).getMagnitude() > EP)
+    if ((loop_start - loop_vec.at(start_index)).GetMagnitude() > EP)
         start_path.push_back(loop_vec.at(start_index));
     for (size_t i = 0; i < loop_vec.size(); i++)
     {
@@ -403,7 +403,7 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
     auto fup_down = [&](const WorldPosition &start_pos)
     {
         int const direction_sign = endy - starty >= 0 ? 1 : -1;
-        auto const direction = PathVector(0, 1).mult(0, direction_sign);
+        auto const direction = PathVector(0, 1).Mult(0, direction_sign);
         size_t const steps = std::abs(endy - starty);
         WorldPosition cur = start_pos;
         for (size_t i = 0; i < steps; i++)
@@ -418,7 +418,7 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
     auto fright_left = [&](const WorldPosition &start_pos)
     {
         int const direction_sign = endx - startx >= 0 ? 1 : -1;
-        auto const direction = PathVector(1, 0).mult(direction_sign, 0);
+        auto const direction = PathVector(1, 0).Mult(direction_sign, 0);
         size_t const steps = std::abs(endx - startx);
         WorldPosition cur = start_pos;
         for (size_t i = 0; i < steps; i++)
@@ -463,7 +463,7 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
     WorldPosition endTile = Round(roundedStart + path_dir);
 
     PathVector path = path_dir;
-    path.normalize();
+    path.Normalize();
     int stepX = (path.X() > 0) ? 1 : -1;
     int stepY = (path.Y() > 0) ? 1 : -1;
 
@@ -486,7 +486,7 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
     double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
     double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
 
-    while ((endTile - WorldPosition(tileX, tileY)).getMagnitude() > EP)
+    while ((endTile - WorldPosition(tileX, tileY)).GetMagnitude() > EP)
     {
         if (tMaxX < tMaxY)
         {
