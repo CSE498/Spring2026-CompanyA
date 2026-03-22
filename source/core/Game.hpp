@@ -46,6 +46,11 @@ namespace cse498 {
     int mCamX = 0; ///< Camera position in tile coordinates
     int mCamY = 0;
 
+    // Dungeon
+    std::unique_ptr<ImageGrid> mDungeonGrid;
+    int mDungeonCamX = 0; ///< Dungeon camera position in tile coordinates
+    int mDungeonCamY = 0;
+
     bool mRunning = false;
 
     // -- Per-state update and render --
@@ -62,6 +67,9 @@ namespace cse498 {
     void RenderDungeon();
     void RenderPaused();
     void RenderSettings();
+
+    void UpdateWorld(ImageGrid& grid, int& camX, int& camY);
+    void RenderWorld(ImageGrid& grid, int camX, int camY);
 
     // -- Helpers --
     void SetupMainMenu();

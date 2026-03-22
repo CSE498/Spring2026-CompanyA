@@ -32,10 +32,15 @@ namespace cse498 {
     // Set up image manager
     mImageManager = std::make_unique<ImageManager>(renderer);
     mImageManager->LoadImage("grass", "assets/tiles/grass.png");
+    mImageManager->LoadImage("stone", "assets/tiles/stone.png");
 
     // Set up overworld — 50x50 tile world, rendered at 64x64 per tile
     mOverworldGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
     mOverworldGrid->Fill("grass");
+
+    // Set up dungeon world — 50x50 tile world, rendered at 64x64 per tile
+    mDungeonGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
+    mDungeonGrid->Fill("stone");
 
     SetupMainMenu();
     SetupPauseMenu();
@@ -48,12 +53,6 @@ namespace cse498 {
     mMainMenu.add_option("New Game", [this]() {
       TransitionTo(GameState::OVERWORLD);
     });
-
-    /*
-    mMainMenu.add_option("Continue", [this]() {
-      // TODO: load save state and transition to OVERWORLD or DUNGEON
-    });
-     */
 
     mMainMenu.add_option("Settings", [this]() {
       TransitionTo(GameState::SETTINGS);
@@ -69,6 +68,16 @@ namespace cse498 {
 
     mPauseMenu.add_option("Resume", [this]() {
       Resume();
+    });
+
+    mPauseMenu.add_option("Go to Dungeon World", [this]() {
+      TransitionTo(GameState::DUNGEON);
+      mPreviousState = GameState::DUNGEON;
+    });
+
+    mPauseMenu.add_option("Go to Overworld", [this]() {
+      TransitionTo(GameState::OVERWORLD);
+      mPreviousState = GameState::OVERWORLD;
     });
 
     mPauseMenu.add_option("Settings", [this]() {
@@ -148,7 +157,7 @@ namespace cse498 {
             } else if (mState == GameState::PAUSED) {
               Resume();
             } else if (mState == GameState::SETTINGS) {
-              TransitionTo(GameState::MAIN_MENU);
+              Resume();
             }
             break;
 
@@ -183,28 +192,27 @@ namespace cse498 {
 
   void Game::UpdateMainMenu() { }
 
-  void Game::UpdateOverworld() {
+  void Game::UpdateOverworld() { UpdateWorld(*mOverworldGrid, mCamX, mCamY); }
+  void Game::UpdateDungeon()   { UpdateWorld(*mDungeonGrid,  mDungeonCamX, mDungeonCamY); }
+
+  void Game::UpdateWorld(ImageGrid& grid, int& camX, int& camY) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
 
-    int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
-    int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+    int tw = static_cast<int>(grid.GetTileWidth());
+    int th = static_cast<int>(grid.GetTileHeight());
 
     // How many tiles fit on screen
     int tiles_x = mGameView->GetWidth()  / tw;
     int tiles_y = mGameView->GetHeight() / th;
 
     // Max camera position so the viewport never scrolls past the grid edge
-    int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth())  - tiles_x);
-    int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
+    int max_cam_x = std::max(0, static_cast<int>(grid.GetWidth())  - tiles_x);
+    int max_cam_y = std::max(0, static_cast<int>(grid.GetHeight()) - tiles_y);
 
-    if (keys[SDL_SCANCODE_W]) mCamY = std::max(0, mCamY - 1);
-    if (keys[SDL_SCANCODE_S]) mCamY = std::min(max_cam_y, mCamY + 1);
-    if (keys[SDL_SCANCODE_A]) mCamX = std::max(0, mCamX - 1);
-    if (keys[SDL_SCANCODE_D]) mCamX = std::min(max_cam_x, mCamX + 1);
-  }
-
-  void Game::UpdateDungeon() {
-    // TODO: tick dungeon world logic
+    if (keys[SDL_SCANCODE_W]) camY = std::max(0, camY - 1);
+    if (keys[SDL_SCANCODE_S]) camY = std::min(max_cam_y, camY + 1);
+    if (keys[SDL_SCANCODE_A]) camX = std::max(0, camX - 1);
+    if (keys[SDL_SCANCODE_D]) camX = std::min(max_cam_x, camX + 1);
   }
 
   void Game::UpdatePaused() { }
@@ -231,17 +239,16 @@ namespace cse498 {
     mMainMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
-  void Game::RenderOverworld() {
-    mOverworldGrid->DrawViewport(
+  void Game::RenderOverworld() { RenderWorld(*mOverworldGrid, mCamX, mCamY); }
+  void Game::RenderDungeon()   { RenderWorld(*mDungeonGrid,  mDungeonCamX, mDungeonCamY); }
+
+  void Game::RenderWorld(ImageGrid& grid, int camX, int camY) {
+    grid.DrawViewport(
         *mImageManager,
-        mCamX, mCamY,
+        camX, camY,
         mGameView->GetWidth(),
         mGameView->GetHeight()
     );
-  }
-
-  void Game::RenderDungeon() {
-    // TODO: render the dungeon
   }
 
   void Game::RenderPaused() {
@@ -264,7 +271,7 @@ namespace cse498 {
     int menu_w = w / 4;
     int menu_h = static_cast<int>(mPauseMenu.get_option_count()) * 50;
     int menu_x = (w - menu_w) / 2;
-    int menu_y = (h - menu_h) / 2;
+    int menu_y = pause_y + mPauseText.GetHeight() + (h / 30);
     mPauseMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
