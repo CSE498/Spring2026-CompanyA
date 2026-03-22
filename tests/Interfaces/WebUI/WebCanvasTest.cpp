@@ -305,3 +305,45 @@ TEST_CASE("WebCanvas immediate-mode primitives are safe to call (expanded)", "[w
     std::vector<WebCanvas::Vec2> two{{0,0},{10,0}};
     REQUIRE_NOTHROW(canvas.DrawPolygon(two, "#fff", 1.0f, "#000"));   // 2 points -> allowed, implementation-defined
 }
+
+TEST_CASE("WebCanvas DrawRect is safe to call with various inputs", "[web][canvas][primitives]") {
+    WebCanvas canvas("canvas-test-drawrect");
+
+    // Normal rect
+    REQUIRE_NOTHROW(canvas.DrawRect(0, 0, 100, 50, "#ff0000"));
+    // Zero-size rect
+    REQUIRE_NOTHROW(canvas.DrawRect(10, 10, 0, 0, "#00ff00"));
+    // Negative coordinates (allowed, implementation-defined on canvas)
+    REQUIRE_NOTHROW(canvas.DrawRect(-5, -5, 20, 20, "#0000ff"));
+    // Empty color string
+    REQUIRE_NOTHROW(canvas.DrawRect(0, 0, 10, 10, ""));
+    // Invalid color string (should not crash)
+    REQUIRE_NOTHROW(canvas.DrawRect(0, 0, 10, 10, "not-a-color"));
+}
+
+TEST_CASE("WebCanvas DrawText is safe to call with various inputs", "[web][canvas][primitives]") {
+    WebCanvas canvas("canvas-test-drawtext");
+
+    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "Hello", "#000000", 16.0f));
+    // Empty text
+    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "", "#000000", 16.0f));
+    // Zero font size
+    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "test", "#ff0000", 0.0f));
+    // Empty color
+    REQUIRE_NOTHROW(canvas.DrawText(0, 0, "x", "", 12.0f));
+    // Large font
+    REQUIRE_NOTHROW(canvas.DrawText(0, 0, "big", "#ffffff", 100.0f));
+}
+
+TEST_CASE("WebCanvas DrawImage is safe to call with various inputs", "[web][canvas][primitives]") {
+    WebCanvas canvas("canvas-test-drawimage");
+
+    // Normal call
+    REQUIRE_NOTHROW(canvas.DrawImage("sprite.png", 0, 0, 64, 64));
+    // Negative size sentinel (-1 = natural size)
+    REQUIRE_NOTHROW(canvas.DrawImage("sprite.png", 10, 10, -1, -1));
+    // Empty src
+    REQUIRE_NOTHROW(canvas.DrawImage("", 0, 0, 32, 32));
+    // Zero position
+    REQUIRE_NOTHROW(canvas.DrawImage("img.png", 0, 0, 0, 0));
+}

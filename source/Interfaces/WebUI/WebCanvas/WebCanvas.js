@@ -82,6 +82,94 @@ mergeInto(LibraryManager.library, {
         ctx.restore();
     },
 
+    webcanvas__draw_rect: function (idPtr, x, y, w, h, fillColorPtr) {
+        if (typeof document === "undefined") return;
+
+        var id = UTF8ToString(idPtr);
+        var canvas = document.getElementById(id);
+        if (!canvas) return;
+
+        var ctx = canvas.getContext && canvas.getContext("2d");
+        if (!ctx) return;
+
+        var fill = UTF8ToString(fillColorPtr);
+
+        ctx.save();
+        ctx.fillStyle = fill;
+        ctx.fillRect(x, y, w, h);
+        ctx.restore();
+    },
+
+    webcanvas__fill_text: function (idPtr, x, y, textPtr, colorPtr, fontSize) {
+        if (typeof document === "undefined") return;
+
+        var id = UTF8ToString(idPtr);
+        var canvas = document.getElementById(id);
+        if (!canvas) return;
+
+        var ctx = canvas.getContext && canvas.getContext("2d");
+        if (!ctx) return;
+
+        var text = UTF8ToString(textPtr);
+        var color = UTF8ToString(colorPtr);
+
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.font = fontSize + "px sans-serif";
+        ctx.fillText(text, x, y);
+        ctx.restore();
+    },
+
+    webcanvas__draw_image: function (idPtr, imgSrcPtr, x, y, w, h) {
+        if (typeof document === "undefined") return;
+
+        var id = UTF8ToString(idPtr);
+        var canvas = document.getElementById(id);
+        if (!canvas) return;
+
+        var ctx = canvas.getContext && canvas.getContext("2d");
+        if (!ctx) return;
+
+        var src = UTF8ToString(imgSrcPtr);
+
+        // Reuse an existing <img> element with the same src if present in the DOM,
+        // otherwise create a temporary Image object. This avoids redundant network
+        // fetches and respects the browser cache.
+        var imgEl = null;
+        var imgs = document.querySelectorAll("img");
+        for (var i = 0; i < imgs.length; i++) {
+            if (imgs[i].src === src || imgs[i].getAttribute("src") === src) {
+                imgEl = imgs[i];
+                break;
+            }
+        }
+
+        if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
+            ctx.save();
+            if (w > 0 && h > 0) {
+                ctx.drawImage(imgEl, x, y, w, h);
+            } else {
+                ctx.drawImage(imgEl, x, y);
+            }
+            ctx.restore();
+        } else {
+            // Image not ready yet: create a one-shot loader and draw on load.
+            var tmp = new Image();
+            tmp.onload = (function(capturedCtx, capturedX, capturedY, capturedW, capturedH) {
+                return function() {
+                    capturedCtx.save();
+                    if (capturedW > 0 && capturedH > 0) {
+                        capturedCtx.drawImage(tmp, capturedX, capturedY, capturedW, capturedH);
+                    } else {
+                        capturedCtx.drawImage(tmp, capturedX, capturedY);
+                    }
+                    capturedCtx.restore();
+                };
+            })(ctx, x, y, w, h);
+            tmp.src = src;
+        }
+    },
+
     webcanvas__draw_polygon: function (idPtr, coordsXYPtr, count, strokeColorPtr, lineWidth, fillColorPtr) {
         if (typeof document === "undefined") return;
 
@@ -131,3 +219,6 @@ webcanvas__clear__deps = ['$UTF8ToString'];
 webcanvas__draw_line__deps = ['$UTF8ToString'];
 webcanvas__draw_circle__deps = ['$UTF8ToString'];
 webcanvas__draw_polygon__deps = ['$UTF8ToString'];
+webcanvas__draw_rect__deps = ['$UTF8ToString'];
+webcanvas__fill_text__deps = ['$UTF8ToString'];
+webcanvas__draw_image__deps = ['$UTF8ToString'];

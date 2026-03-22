@@ -9,6 +9,7 @@
  */
 
 #include "WebButton.hpp"
+#include "../WebCanvas/WebCanvas.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #include <cassert>
 #include <emscripten.h>
@@ -279,6 +280,39 @@ void WebButton::AttachClickListener() {
       Module._WebButton_handleClick(ptrVal);
     });
   }, mElement.as_handle(), reinterpret_cast<intptr_t>(this));
+}
+
+// ----- ICanvasElement Interface -----
+
+/// @brief Stores the canvas-space rectangle used by Draw().
+void WebButton::SetCanvasRect(float x, float y, float w, float h) {
+  mCanvasX = x;
+  mCanvasY = y;
+  mCanvasW = w;
+  mCanvasH = h;
+}
+
+/// @brief Draws the button background rectangle and label text onto @p canvas.
+/// Disabled buttons use a grey background; enabled buttons use mBgColor (or a
+/// default blue if none is set). The label is drawn centered in the rect.
+void WebButton::Draw(WebCanvas& canvas) {
+  float w = (mCanvasW > 0) ? mCanvasW : static_cast<float>(mWidth > 0 ? mWidth : 80);
+  float h = (mCanvasH > 0) ? mCanvasH : static_cast<float>(mHeight > 0 ? mHeight : 30);
+
+  std::string bg = mIsEnabled
+      ? (mBgColor.empty() ? std::string("#4a90d9") : mBgColor)
+      : std::string("#aaaaaa");
+
+  canvas.DrawRect(mCanvasX, mCanvasY, w, h, bg);
+
+  if (!mLabel.empty()) {
+    std::string textColor = mTextColor.empty() ? std::string("#ffffff") : mTextColor;
+    float fontSize = 14.0f;
+    // Approximate vertical center: baseline ~70% down the rect.
+    float tx = mCanvasX + w * 0.5f - static_cast<float>(mLabel.size()) * fontSize * 0.3f;
+    float ty = mCanvasY + h * 0.7f;
+    canvas.DrawText(tx, ty, mLabel, textColor, fontSize);
+  }
 }
 
 /// @brief C trampoline called from the JS click listener; looks up the WebButton

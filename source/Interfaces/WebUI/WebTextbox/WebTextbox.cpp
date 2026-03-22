@@ -17,6 +17,7 @@
  */
 
 #include "WebTextbox.hpp"
+#include "../WebCanvas/WebCanvas.hpp"
 
 #include <cassert>
 #include <utility>
@@ -640,4 +641,24 @@ const std::string& WebTextbox::Id() const
 {
   return mId;
 }
+
+// -------- ICanvasElement overrides --------
+
+/// @brief Stores the canvas-space position used by Draw().
+void WebTextbox::SetCanvasPosition(float x, float y)
+{
+  mCanvasX = x;
+  mCanvasY = y;
+}
+
+/// @brief Draws the textbox text onto @p canvas at the position set by
+///        SetCanvasPosition(), using the current color and font-size settings.
+void WebTextbox::Draw(WebCanvas& canvas)
+{
+  if (mText.empty()) {
+    return;
+  }
+  canvas.DrawText(mCanvasX, mCanvasY, mText, mColor, mFontSizePx);
+}
+
 }

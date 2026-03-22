@@ -10,8 +10,7 @@
  *
  */
 
-#ifndef WEBIMAGE_HPP_
-#define WEBIMAGE_HPP_
+#pragma once
 
 #include <string>
 #include <functional>
@@ -130,6 +129,23 @@ class WebImage : public IDomElement, public ICanvasElement {
 
   // ----- ICanvasElement Interface -----
 
+  /// Sets the position and optional size used when drawing this image on a
+  /// WebCanvas via Draw(). Coordinates are in canvas pixel space.
+  /// @param x Canvas x coordinate (left edge).
+  /// @param y Canvas y coordinate (top edge).
+  /// @param w Draw width in pixels; pass -1 to use the image's display width.
+  /// @param h Draw height in pixels; pass -1 to use the image's display height.
+  void SetCanvasRect(float x, float y, float w = -1.0f, float h = -1.0f);
+
+  /// Returns the canvas x coordinate set by SetCanvasRect().
+  [[nodiscard]] float CanvasX() const;
+  /// Returns the canvas y coordinate set by SetCanvasRect().
+  [[nodiscard]] float CanvasY() const;
+  /// Returns the canvas draw width set by SetCanvasRect() (-1 = use display width).
+  [[nodiscard]] float CanvasW() const;
+  /// Returns the canvas draw height set by SetCanvasRect() (-1 = use display height).
+  [[nodiscard]] float CanvasH() const;
+
   void Draw(WebCanvas& canvas) override;
 
   /// Handle load event (called when image finishes loading).
@@ -154,6 +170,11 @@ class WebImage : public IDomElement, public ICanvasElement {
   std::string mId;                          ///< Unique DOM id for this image element.
   int mRegistryId = -1;                     ///< Registry id for JS event forwarding.
 
+  float mCanvasX = 0.0f;   ///< Canvas draw position x (pixels).
+  float mCanvasY = 0.0f;   ///< Canvas draw position y (pixels).
+  float mCanvasW = -1.0f;  ///< Canvas draw width (-1 = use mWidth).
+  float mCanvasH = -1.0f;  ///< Canvas draw height (-1 = use mHeight).
+
   static int mNextIdCounter;                ///< Counter for generating unique DOM ids.
 
   /// Mark the image as loaded or not (for tracking async loading).
@@ -173,5 +194,3 @@ class WebImage : public IDomElement, public ICanvasElement {
 };
 
 }  // namespace cse498
-
-#endif  // WEBIMAGE_HPP_

@@ -131,8 +131,38 @@ public:
                      float lineWidth,
                      const std::string& fillColor);
 
+    /// @brief Draws a filled rectangle.
+    /// @param x         Left edge x coordinate.
+    /// @param y         Top edge y coordinate.
+    /// @param w         Width in pixels.
+    /// @param h         Height in pixels.
+    /// @param fillColor CSS fill color string.
+    void DrawRect(float x, float y, float w, float h,
+                  const std::string& fillColor);
+
+    /// @brief Draws a text string onto the canvas.
+    /// @param x        Left edge x coordinate of the text baseline.
+    /// @param y        Baseline y coordinate.
+    /// @param text     UTF-8 string to render.
+    /// @param color    CSS fill color string for the text.
+    /// @param fontSize Font size in pixels.
+    void DrawText(float x, float y,
+                  const std::string& text,
+                  const std::string& color,
+                  float fontSize);
+
+    /// @brief Draws an image (by source URL) onto the canvas.
+    /// @param imgSrc  URL or asset path of the image to draw.
+    /// @param x       Left edge x coordinate.
+    /// @param y       Top edge y coordinate.
+    /// @param w       Width in pixels; pass -1 to use the image's natural width.
+    /// @param h       Height in pixels; pass -1 to use the image's natural height.
+    void DrawImage(const std::string& imgSrc,
+                   float x, float y,
+                   float w, float h);
+
 private:
-    std::vector<std::unique_ptr<ICanvasElement>> m_elements;  ///< Owned canvas elements.
+    std::vector<std::unique_ptr<ICanvasElement>> mElements;  ///< Owned canvas elements.
 
     std::string mId;                          ///< DOM id of the underlying \<canvas\> element.
     WebLayout*  mParent  = nullptr;           ///< Non-owning pointer to the parent layout.
