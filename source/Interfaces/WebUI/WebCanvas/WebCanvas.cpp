@@ -90,13 +90,13 @@ void WebCanvas::AddElement(std::unique_ptr<ICanvasElement> element)
     if (!element) {
         return;
     }
-    m_elements.emplace_back(std::move(element));
+    mElements.emplace_back(std::move(element));
 }
 
 /// @brief Removes all ICanvasElement objects from the render list.
 void WebCanvas::ClearElements()
 {
-    m_elements.clear();
+    mElements.clear();
 }
 
 /// @brief Renders one frame: sorts elements by z-index (stable) and calls
@@ -105,8 +105,8 @@ void WebCanvas::RenderFrame()
 {
     // Collect raw pointers for stable sorting without moving ownership.
     std::vector<ICanvasElement*> ordered;
-    ordered.reserve(m_elements.size());
-    for (auto& e : m_elements) {
+    ordered.reserve(mElements.size());
+    for (auto& e : mElements) {
         ordered.push_back(e.get());
     }
 

@@ -9,8 +9,7 @@
  *
  */
 
-#ifndef WEBBUTTON_HPP_
-#define WEBBUTTON_HPP_
+#pragma once
 
 #include <string>
 #include <functional>
@@ -161,5 +160,3 @@ class WebButton : public IDomElement, public ICanvasElement {
   void AttachClickListener();
 };
 }
-
-#endif

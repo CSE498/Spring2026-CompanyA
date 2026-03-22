@@ -110,6 +110,8 @@ EM_CXXFLAGS = --bind -std=c++23 -s WASM=1 -s ASSERTIONS=1 -DCATCH_CONFIG_MAIN
 WEB_TEST_OUT = $(BUILD_DIR)/web_tests
 WEB_SRC      = $(SRC_DIR)/Interfaces/WebUI
 WEB_TEST     = $(TEST_DIR)/Interfaces/WebUI
+WEB_CANVAS_CPP = $(WEB_SRC)/WebCanvas/WebCanvas.cpp
+WEB_CANVAS_JS  = --js-library ../source/Interfaces/WebUI/WebCanvas/WebCanvas.js
 
 .PHONY: web_test
 
@@ -119,21 +121,27 @@ web_test:
 		$(WEB_TEST)/WebTextboxTest.cpp \
 		$(WEB_SRC)/WebTextbox/WebTextbox.cpp \
 		$(WEB_SRC)/WebLayout/WebLayout.cpp \
+		$(WEB_CANVAS_CPP) \
+		$(WEB_CANVAS_JS) \
 		-o $(WEB_TEST_OUT)/WebTextboxTest.html
 	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
 		$(WEB_TEST)/WebImageTest.cpp \
 		$(WEB_SRC)/WebImage/WebImage.cpp \
 		$(WEB_SRC)/WebLayout/WebLayout.cpp \
+		$(WEB_CANVAS_CPP) \
+		$(WEB_CANVAS_JS) \
 		-o $(WEB_TEST_OUT)/WebImageTest.html
 	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
 		$(WEB_TEST)/WebButtonTest.cpp \
 		$(WEB_SRC)/WebButton/WebButton.cpp \
 		$(WEB_SRC)/WebLayout/WebLayout.cpp \
+		$(WEB_CANVAS_CPP) \
+		$(WEB_CANVAS_JS) \
 		-o $(WEB_TEST_OUT)/WebButtonTest.html
 	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
 		$(WEB_TEST)/WebCanvasTest.cpp \
-		$(WEB_SRC)/WebCanvas/WebCanvas.cpp \
-		--js-library ../source/Interfaces/WebUI/WebCanvas/WebCanvas.js \
+		$(WEB_CANVAS_CPP) \
+		$(WEB_CANVAS_JS) \
 		-o $(WEB_TEST_OUT)/WebCanvasTest.html
 	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
 		$(WEB_TEST)/WebLayoutTest.cpp \

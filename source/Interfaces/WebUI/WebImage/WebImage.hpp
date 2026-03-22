@@ -10,8 +10,7 @@
  *
  */
 
-#ifndef WEBIMAGE_HPP_
-#define WEBIMAGE_HPP_
+#pragma once
 
 #include <string>
 #include <functional>
@@ -195,5 +194,3 @@ class WebImage : public IDomElement, public ICanvasElement {
 };
 
 }  // namespace cse498
-
-#endif  // WEBIMAGE_HPP_

@@ -162,7 +162,7 @@ public:
                    float w, float h);
 
 private:
-    std::vector<std::unique_ptr<ICanvasElement>> m_elements;  ///< Owned canvas elements.
+    std::vector<std::unique_ptr<ICanvasElement>> mElements;  ///< Owned canvas elements.
 
     std::string mId;                          ///< DOM id of the underlying \<canvas\> element.
     WebLayout*  mParent  = nullptr;           ///< Non-owning pointer to the parent layout.
