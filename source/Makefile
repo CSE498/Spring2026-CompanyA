@@ -1,50 +1,48 @@
-FLAGS_version = -std=c++23
-FLAGS_warn    = -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
-FLAGS_all     = $(FLAGS_version) $(FLAGS_warn)
+ROOT_DIR := $(abspath ..)
+BUILD_ROOT := $(ROOT_DIR)/build/cmake
+DEFAULT_BUILD_DIR := $(BUILD_ROOT)/default
+DEBUG_BUILD_DIR := $(BUILD_ROOT)/debug
+OPT_BUILD_DIR := $(BUILD_ROOT)/opt
+QUICK_BUILD_DIR := $(BUILD_ROOT)/quick
+GRUMPY_BUILD_DIR := $(BUILD_ROOT)/grumpy
+CMAKE ?= cmake
 
-FLAGS_debug   = $(FLAGS_all) -g                     # Setup for running a debugger
-FLAGS_opt     = $(FLAGS_all) -O3 -DNDEBUG           # Fastest possible executable
-FLAGS_quick   = $(FLAGS_all) -DNDEBUG               # Fastest possible compilation
-FLAGS_grumpy  = $(FLAGS_all) -Wconversion -Weffc++  # Some extra picky warnings
+.PHONY: default all clean debug opt quick grumpy simple \
+	debug-simple opt-simple quick-simple grumpy-simple help
 
-CXX = c++
+define configure_profile
+	$(CMAKE) -S $(ROOT_DIR) -B $(BUILD_ROOT)/$(1) -DCOMPANYA_PROFILE=$(1)
+endef
 
-# Find all headers
-HEADERS := $(shell find Agents core Interfaces tools Worlds -name '*.hpp')
+define build_profile
+	$(call configure_profile,$(1))
+	$(CMAKE) --build $(BUILD_ROOT)/$(1) --target simple
+endef
 
-# List of all available executables
-EXECUTABLES = simple
+default: all
 
-default: simple
-debug: debug-simple
-opt: opt-simple
-grumpy: grumpy-simple
+all simple:
+	$(call build_profile,default)
 
-.PHONY: default clean debug-% opt-% quick-% $(EXECUTABLES)
+debug debug-simple:
+	$(call build_profile,debug)
 
-# Generic rule to build default version of any executable
-$(EXECUTABLES): %: %_main.cpp $(HEADERS)
-	$(CXX) $@_main.cpp $(FLAGS_all) -o $@
+opt opt-simple:
+	$(call build_profile,opt)
 
-# Generic rule to build debug version of any executable
-debug-%: 
-	$(CXX) $*_main.cpp $(FLAGS_debug) -o $*
+quick quick-simple:
+	$(call build_profile,quick)
 
-# Generic rule to build opt version of any executable
-opt-%: 
-	$(CXX) $*_main.cpp $(FLAGS_opt) -o $*
-
-# Generic rule to build quick version of any executable
-quick-%: 
-	$(CXX) $*_main.cpp $(FLAGS_quick) -o $*
-
-# Generic rule to build quick version of any executable
-grumpy-%: 
-	$(CXX) $*_main.cpp $(FLAGS_grumpy) -o $*
-
-FILES_backup	= *~ *.dSYM
-FILES_generated = *.o $(EXECUTABLES)
+grumpy grumpy-simple:
+	$(call build_profile,grumpy)
 
 clean:
-	rm -rf $(FILES_backup) $(FILES_generated)
+	$(CMAKE) -E rm -rf $(BUILD_ROOT)
+	$(CMAKE) -E rm -f $(ROOT_DIR)/source/simple
 
+help:
+	@echo "Source targets:"
+	@echo "  make / make all / make simple"
+	@echo "  make debug|opt|quick|grumpy"
+	@echo "  make debug-simple|opt-simple|quick-simple|grumpy-simple"
+	@echo "  make clean"
