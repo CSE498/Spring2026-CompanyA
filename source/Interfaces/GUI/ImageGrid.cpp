@@ -100,7 +100,7 @@ void ImageGrid::Draw(const ImageManager& image_manager) const
         int pixel_x = static_cast<int>(x) * mTileWidth;
         int pixel_y = static_cast<int>(y) * mTileHeight;
 
-        image_manager.draw_image(image_name, pixel_x, pixel_y,
+        image_manager.DrawImage(image_name, pixel_x, pixel_y,
                          static_cast<int>(mTileWidth),
                          static_cast<int>(mTileHeight));
       }
@@ -126,7 +126,7 @@ void ImageGrid::DrawViewport(const ImageManager& image_manager,
       if (name.empty()) continue;
       int px = (x - cam_x) * tw;
       int py = (y - cam_y) * th;
-      image_manager.draw_image(name, px, py, tw, th);
+      image_manager.DrawImage(name, px, py, tw, th);
     }
   }
 }

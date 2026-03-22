@@ -31,13 +31,28 @@ namespace cse498 {
         }
     };
 
+    // type alias for readability
+    using TexturePtr = std::unique_ptr<SDL_Texture, TextureDeleter>;
+
+    // custom deleter for SDL_Surface to use with std::unique_ptr
+    struct SurfaceDeleter {
+        void operator()(SDL_Surface* surface) const {
+            if (surface) {
+                SDL_FreeSurface(surface);
+            }
+        }
+    };
+
+    // type alias for readability
+    using SurfacePtr = std::unique_ptr<SDL_Surface, SurfaceDeleter>;
+
     class ImageManager {
     private:
         // renderer for images
         SDL_Renderer* mRenderer;
 
         // map to store & associate images names to textures
-        std::unordered_map<std::string, std::unique_ptr<SDL_Texture, TextureDeleter>> mTextures;
+        std::unordered_map<std::string, TexturePtr> mTextures;
 
     public:
         // constructor
@@ -51,17 +66,17 @@ namespace cse498 {
         ImageManager& operator=(ImageManager&&) = default;
 
         // class functions
-        void load_image(const std::string& name, const std::string& file_path);
-        bool has_image(const std::string& name) const;
+        void LoadImage(const std::string& name, const std::string& file_path);
+        bool HasImage(const std::string& name) const;
 
-        /// Draw image at (x, y) at its native size
-        bool draw_image(const std::string& name, int x, int y) const;
+        /// draw image at (x, y) at its native size
+        bool DrawImage(const std::string& name, int x, int y) const;
 
-        /// Draw image at (x, y) scaled to (w, h) pixels. Overload
-        bool draw_image(const std::string& name, int x, int y, int w, int h) const;
+        /// draw image at (x, y) scaled to (w, h) pixels. overload function
+        bool DrawImage(const std::string& name, int x, int y, int w, int h) const;
 
-        // ImageManager retains ownership of this texture. Do not call SDL_DestroyTexture on the returned pointer.
-        SDL_Texture* get_texture(const std::string& name) const;
+        // ImageManager retains ownership of this texture. do not call SDL_DestroyTexture on the returned pointer.
+        SDL_Texture* GetTexture(const std::string& name) const;
 
     };
 

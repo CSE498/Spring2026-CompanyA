@@ -31,7 +31,7 @@ namespace cse498 {
 
     // Set up image manager
     mImageManager = std::make_unique<ImageManager>(renderer);
-    mImageManager->load_image("grass", "assets/tiles/grass.png");
+    mImageManager->LoadImage("grass", "assets/tiles/grass.png");
 
     // Set up overworld — 50x50 tile world, rendered at 64x64 per tile
     mOverworldGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
@@ -49,9 +49,11 @@ namespace cse498 {
       TransitionTo(GameState::OVERWORLD);
     });
 
+    /*
     mMainMenu.add_option("Continue", [this]() {
       // TODO: load save state and transition to OVERWORLD or DUNGEON
     });
+     */
 
     mMainMenu.add_option("Settings", [this]() {
       TransitionTo(GameState::SETTINGS);

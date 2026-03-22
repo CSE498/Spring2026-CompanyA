@@ -4,7 +4,7 @@
  *
  * AI Disclaimer: Used ChatGPT to check overall class correctness. It helped me
  * handle my memory in a safer manner & suggested to throw error messages
- * in the load_image class.
+ * in the LoadImage class.
  */
 
 #include "ImageManager.hpp"
@@ -30,7 +30,7 @@ namespace cse498
      * @param name unique name of the image
      * @param file_path path to the image file
      */
-    void ImageManager::load_image(const std::string& name,
+    void ImageManager::LoadImage(const std::string& name,
                                   const std::string& file_path)
     {
         // empty string checks
@@ -40,13 +40,14 @@ namespace cse498
         }
 
         // avoids duplications/overwrites
-        if (has_image(name))
+        if (HasImage(name))
         {
             throw std::runtime_error("Duplicate image name: " + name);
         }
 
-        // load the file into memory as a surface (not texture yet because it's an image)
-        SDL_Surface* surface = IMG_Load(file_path.c_str());
+        // load the file into memory as a surface (freed automatically via custom deleter)
+        SurfacePtr surface;
+        surface.reset(IMG_Load(file_path.c_str()));
         if (!surface)
         {
             // if surface could not be created, throw error
@@ -55,9 +56,9 @@ namespace cse498
             );
         }
 
-        // convert surface to a texture & free it
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(mRenderer, surface);
-        SDL_FreeSurface(surface);
+        // convert surface to a texture (freed automatically via custom deleter)
+        TexturePtr texture;
+        texture.reset(SDL_CreateTextureFromSurface(mRenderer, surface.get()));
 
         // if surface couldn't be converted, throw error
         if (!texture)
@@ -68,7 +69,7 @@ namespace cse498
         }
 
         // add texture to map
-        mTextures[name].reset(texture);
+        mTextures[name] = std::move(texture);
     }
 
     /**
@@ -76,7 +77,7 @@ namespace cse498
      * @param name unique name of the image
      * @return bool whether it exists or not
      */
-    bool ImageManager::has_image(const std::string& name) const
+    bool ImageManager::HasImage(const std::string& name) const
     {
         return mTextures.find(name) != mTextures.end();
     }
@@ -86,7 +87,7 @@ namespace cse498
      * @param name unique name of the image
      * @return pointer to the texture associated with the image, otherwise nullptr
      */
-    SDL_Texture * ImageManager::get_texture(const std::string& name) const
+    SDL_Texture * ImageManager::GetTexture(const std::string& name) const
     {
         auto pair = mTextures.find(name);
         // if it DNE
@@ -105,10 +106,10 @@ namespace cse498
      * @param y y-coordinate
      * @return bool whether the image was drawn or not
      */
-    bool ImageManager::draw_image(const std::string& name, int x, int y) const
+    bool ImageManager::DrawImage(const std::string& name, int x, int y) const
     {
-        // get texture if it exists
-        SDL_Texture* texture = get_texture(name);
+        // get texture if it exists (raw ptr here b/c we're getting it from mTextures)
+        SDL_Texture* texture = GetTexture(name);
         if (!texture)
         {
             return false;
@@ -119,7 +120,7 @@ namespace cse498
         rect.x = x;
         rect.y = y;
 
-        // query the attributes of the texture (returns 0 on success)
+        // query the texture's width and height, storing them in rect (returns 0 on success)
         if (SDL_QueryTexture(texture, nullptr, nullptr, &rect.w, &rect.h) != 0)
             return false;
         // copy the texture to the current rendering target (returns 0 on success)
@@ -129,8 +130,8 @@ namespace cse498
         return true;
     }
 
-    // Overload version
-    bool ImageManager::draw_image(const std::string& name, int x, int y, int w, int h) const {
+    // Overload version of DrawImage
+    bool ImageManager::DrawImage(const std::string& name, int x, int y, int w, int h) const {
         auto it = mTextures.find(name);
         if (it == mTextures.end()) return false;
 

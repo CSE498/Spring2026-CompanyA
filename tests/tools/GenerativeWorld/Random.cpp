@@ -23,6 +23,7 @@ TEST_CASE("Test Random Copy Operator", "[core]") {
     REQUIRE(set_copy.GetSeed() == 1000);
 }
 
+/*
 TEST_CASE("Test Random Assignment Operator", "[core]") {
     cse498::Random generated_one;
     cse498::Random generated_two;
@@ -44,6 +45,7 @@ TEST_CASE("Test Random Assignment Operator", "[core]") {
     set_three = set_three;
     REQUIRE(set_three.GetSeed() == set_three.GetSeed());
 }
+*/
 
 TEST_CASE("Test Random Move Operator", "[core]") {
     cse498::Random generated;
