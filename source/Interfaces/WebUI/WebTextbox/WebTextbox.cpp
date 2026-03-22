@@ -18,6 +18,7 @@
 
 #include "WebTextbox.hpp"
 #include "../WebCanvas/WebCanvas.hpp"
+#include "../WebUtils.hpp"
 
 #include <cassert>
 #include <utility>
@@ -29,23 +30,11 @@ namespace cse498 {
 
 int WebTextbox::mNextIdCounter = 1;
 
-/// @brief Returns the browser document object.
-/// Centralizes access to avoid repeated calls to val::global("document").
-static val GetDocument() 
-{ 
-  return val::global("document"); 
-}
 
 /// @brief Returns the browser window object.
 static val GetWindow()   
 { 
   return val::global("window"); 
-}
-
-/// @brief Returns the browser console object.
-static val GetConsole()  
-{ 
-  return val::global("console"); 
 }
 
 // ===== Constructor / Destructor / Move semantics =====
@@ -59,8 +48,7 @@ WebTextbox::WebTextbox()
 /// @brief Constructs a WebTextbox with the given initial text content.
 /// @param initial_text Text to display on creation.
 WebTextbox::WebTextbox(const std::string& initial_text)
-    : mText(initial_text),
-      mElement(val::null())
+    : mText(initial_text)
 {
   // unique id like WebImage
   mId = "webtextbox-" + std::to_string(mNextIdCounter++);
@@ -103,10 +91,10 @@ WebTextbox::WebTextbox(WebTextbox&& other) noexcept
       mMaxWidthPx(other.mMaxWidthPx),
       mWrap(other.mWrap),
       mBackgroundColor(std::move(other.mBackgroundColor)),
-      mElement(other.mElement),
-      mId(std::move(other.mId)),
       mAlign(other.mAlign)
 {
+  mId = std::move(other.mId);
+  mElement = std::move(other.mElement);
   other.mElement = val::null();
   other.mIsVisible = false;
 }
@@ -582,43 +570,10 @@ void WebTextbox::MountToLayout(WebLayout& parent, Alignment align)
 {
   mAlign = align;
 
-  // Find parents DOM element by id and append ourselves.
-  // This avoids depending on WebLayout internals and matches WebImage Id() pattern.
-  val doc_ = GetDocument();
-  val parentEl_ = doc_.call<val>("getElementById", parent.Id());
-
-  // If parent isnt in DOM yet, this will be null layout should ensure mount order
-  if (parentEl_.isNull() || parentEl_.isUndefined())
-  {
-    GetConsole().call<void>("warn",std::string("WebTextbox: mountToLayout failed; parent element not found: ") + parent.Id());
-    return;
-  }
-
   // If already mounted somewhere else, unmount first.
   Unmount();
 
-  parentEl_.call<void>("appendChild", mElement);
-  SyncFromModel();
-}
-
-/**
- * Unmount
- *
- * Removes the textbox's DOM element from its current parent container,
- * if it is currently mounted.
- */
-void WebTextbox::Unmount()
-{
-  if (mElement.isNull())
-  {
-     return;
-  }
-
-  val parent_ = mElement["parentNode"];
-  if (!parent_.isNull() && !parent_.isUndefined())
-  {
-    parent_.call<void>("removeChild", mElement);
-  }
+  parent.AddElement(this, align);
 }
 
 /**
@@ -630,16 +585,6 @@ void WebTextbox::SyncFromModel()
 {
   ApplyText();
   ApplyStyles();
-}
-
-/**
- * @brief Returns the unique DOM id assigned to this textbox’s root element.
- *
- * @return Const reference to the unique element id string.
- */
-const std::string& WebTextbox::Id() const
-{
-  return mId;
 }
 
 // -------- ICanvasElement overrides --------

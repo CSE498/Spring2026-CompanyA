@@ -13,6 +13,7 @@
 #ifdef __EMSCRIPTEN__
 
 #include "WebLayout.hpp"
+#include "../WebUtils.hpp"
 
 #include <string>
 
@@ -39,28 +40,24 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
   if (!rootId.empty()) {
     val found = mDocument.call<val>("getElementById", rootId);
     if (!found.isNull() && !found.isUndefined()) {
-      mRoot = found;
+      mElement = found;
     } else {
       // create a container div with the requested id and append to body
-      mRoot = mDocument.call<val>("createElement", std::string("div"));
-      mRoot.set("id", rootId);
-      mDocument["body"].call<void>("appendChild", mRoot);
+      mElement = mDocument.call<val>("createElement", std::string("div"));
+      mElement.set("id", rootId);
     }
     mId = rootId;
-    val style = mRoot["style"];
-    style.set("boxSizing", std::string("border-box"));
+    mElement["style"].set("boxSizing", std::string("border-box"));
     return;
   }
 
   // no id passed: create a container div and append to body with generated id
   mId = "weblayout-" + std::to_string(mNextIdCounter++);
-  mRoot = mDocument.call<val>("createElement", std::string("div"));
-  mRoot.set("id", mId);
-  val style = mRoot["style"];
-  style.set("boxSizing", std::string("border-box"));
-  mDocument["body"].call<void>("appendChild", mRoot);
-  assert(!mRoot.isNull() && !mRoot.isUndefined());
-  assert(mRoot["id"].as<std::string>() == mId);
+  mElement = mDocument.call<val>("createElement", std::string("div"));
+  mElement.set("id", mId);
+  mElement["style"].set("boxSizing", std::string("border-box"));
+  assert(!mElement.isNull() && !mElement.isUndefined());
+  assert(mElement["id"].as<std::string>() == mId);
 }
 
 /// @brief Destructor: unmounts all children and removes the root element from the DOM.
@@ -69,12 +66,9 @@ WebLayout::~WebLayout() noexcept {
   Clear();
 
   // remove the root element from DOM if present
-  val parent = mRoot["parentNode"];
-  if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", mRoot);
-  }
+  Unmount();
   mDocument = val::undefined();
-  mRoot = val::undefined();
+  mElement = val::undefined();
 }
 
 /// @brief Sets the layout type (Free, Horizontal, Vertical, Grid).
@@ -94,7 +88,7 @@ void WebLayout::SetAlignItems(Alignment a) noexcept { mAlignItems = a; }
 /// @brief Sets the gap/spacing between child elements.
 /// @param pxv Spacing in pixels; must be >= 0.
 void WebLayout::SetSpacing(int pxv) noexcept {
-  assert(pxv >= 0);
+  if (pxv < 0) return;
   mSpacing = pxv;
 }
 
@@ -107,18 +101,20 @@ bool WebLayout::AddElement(IDomElement* elem, Alignment align) noexcept {
   const ElementID& id = elem->Id();
   if (id.empty()) return false;
 
-  val el = mDocument.call<val>("getElementById", id);
-  if (el.isNull() || el.isUndefined()) {
+  auto element = elem->GetElement();
+
+  if (element.isNull() || element.isUndefined()) {
+    GetConsole().call<void>("warn", "element with Id: " + elem->Id() + " is undefined");
     return false;
   }
 
   // attach now; Apply() will re-check parent when re-applying
   // if element already exists in this layout, this will just move it to the end
-  mRoot.call<void>("appendChild", el);
+  mElement.call<void>("appendChild", elem->GetElement());
+  elem->SetParent(this);
 
   // if element already exists in this layout, don't add it to mChildren again
-  if (std::find(mChildren.begin(), mChildren.end(), elem) != mChildren.end())
-    return true;
+  if (std::find(mChildren.begin(), mChildren.end(), elem) != mChildren.end()) return true;
 
   mChildren.push_back(elem);
   mParams[elem] = align;
@@ -132,17 +128,11 @@ bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
   if (!elem) return false;
   auto it = std::find(mChildren.begin(), mChildren.end(), elem);
   if (it == mChildren.end()) return false;
-  (*it)->Unmount();
   mChildren.erase(it);
   mParams.erase(elem);
 
-  const ElementID& id = elem->Id();
-  val el = mDocument.call<val>("getElementById", id);
-  if (!el.isNull() && !el.isUndefined()) {
-    if (mRoot == el["parentNode"]) {
-      mRoot.call<void>("removeChild", el);
-    }
-  }
+  // remove DOM element from this layout
+  IDomElement::RemoveChild(elem);
   return true;
 }
 
@@ -173,49 +163,70 @@ void WebLayout::SetBorderColor(const std::string& color) noexcept {
 /// @brief Sets the border width in pixels; must be >= 0.
 /// @param width Border width in pixels.
 void WebLayout::SetBorderWidth(int width) noexcept {
-  assert(width >= 0);
+  if (width < 0) {
+    GetConsole().call<void>("warn", "Invalid Border Width value: " + std::to_string(width));
+    return;
+  }
   mBorderWidth = width;
 }
 
 /// @brief Sets the border radius for rounded corners; must be >= 0.
 /// @param radius Border radius in pixels.
 void WebLayout::SetBorderRadius(int radius) noexcept {
-  assert(radius >= 0);
+  if (radius < 0) {
+    GetConsole().call<void>("warn", "Invalid Border Radius value: " + std::to_string(radius));
+    return;
+  }
   mBorderRadius = radius;
 }
 
 /// @brief Sets the padding of the layout container; must be >= 0.
 /// @param padding Padding size in pixels.
 void WebLayout::SetPadding(int padding) noexcept {
-  assert(padding >= 0);
+  if (padding < 0) {
+    GetConsole().call<void>("warn", "Invalid Padding value: " + std::to_string(padding));
+    return;
+  }
   mPadding = padding;
 }
 
 /// @brief Sets the margin of the layout container; must be >= 0.
 /// @param margin Margin size in pixels.
 void WebLayout::SetMargin(int margin) noexcept {
-  assert(margin >= 0);
+  if (margin < 0) {
+    GetConsole().call<void>("warn", "Invalid Margin value: " + std::to_string(margin));
+    return;
+  }
   mMargin = margin;
 }
 
 /// @brief Sets the width of the layout container; must be > 0.
 /// @param width Width in pixels.
 void WebLayout::SetWidth(int width) noexcept {
-  assert(width > 0);
+  if (width <= 0) {
+    GetConsole().call<void>("warn", "Invalid Width value: " + std::to_string(width));
+    return;
+  }
   mWidth = width;
 }
 
 /// @brief Sets the height of the layout container; must be > 0.
 /// @param height Height in pixels.
 void WebLayout::SetHeight(int height) noexcept {
-  assert(height > 0);
+  if (height <= 0) {
+    GetConsole().call<void>("warn", "Invalid Height value: " + std::to_string(height));
+    return;
+  }
   mHeight = height;
 }
 
 /// @brief Sets the CSS opacity of the layout container.
 /// @param opacity Value in [0.0, 1.0]; 0.0 = transparent, 1.0 = opaque.
 void WebLayout::SetOpacity(double opacity) noexcept {
-  assert(opacity >= 0.0 && opacity <= 1.0);
+  if (opacity < 0.0 || opacity > 1.0) {
+    GetConsole().call<void>("warn", "Invalid Opacity value: " + std::to_string(opacity));
+    return;
+  }
   mOpacity = opacity;
 }
 
@@ -235,19 +246,7 @@ void WebLayout::ToggleVisibility() noexcept { mIsVisible = !mIsVisible; }
 /// @param parent Parent WebLayout to mount into.
 /// @param align  Alignment of this layout within the parent.
 void WebLayout::MountToLayout(WebLayout& parent, Alignment align) noexcept {
-  // register this layout element with parent and ensure DOM parent-child
-  // relationship
   parent.AddElement(this, align);
-}
-
-/// @brief Removes this layout's root element from its DOM parent, if attached.
-void WebLayout::Unmount() noexcept {
-  // destroying nested layouts can cause mRoot to be undefined
-  if (mRoot.isNull() || mRoot.isUndefined()) return;
-  val parent = mRoot["parentNode"];
-  if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", mRoot);
-  }
 }
 
 /// @brief Synchronizes the layout state with the DOM by calling Apply().
@@ -256,41 +255,30 @@ void WebLayout::SyncFromModel() noexcept {
   Apply();
 }
 
-void WebLayout::ApplyStyling(val& style) noexcept {
-  if (!mBackgroundColor.empty()) {
-    style.set("backgroundColor", mBackgroundColor);
+void WebLayout::RemoveChild(IDomElement * element) {
+  // remove element from mChildren vector then from DOM
+  RemoveElement(element);
+}
+
+void WebLayout::ApplyStyling(val style) noexcept {
+  style.set("backgroundColor", mBackgroundColor);
+  style.set("borderWidth", px(mBorderWidth));
+  style.set("borderStyle", std::string("solid"));
+  style.set("borderColor", mBorderColor);
+  style.set("borderRadius", px(mBorderRadius));
+  style.set("padding", px(mPadding));
+  style.set("margin", px(mMargin));
+  style.set("opacity", mOpacity);
+  style.set("boxShadow", mBoxShadow);
+  if (mWidth.has_value()) {
+    style.set("width", px(mWidth.value()));
   }
-  if (mBorderWidth > 0) {
-    style.set("borderWidth", px(mBorderWidth));
-    style.set("borderStyle", std::string("solid"));
-    if (!mBorderColor.empty()) {
-      style.set("borderColor", mBorderColor);
-    }
-  }
-  if (mBorderRadius > 0) {
-    style.set("borderRadius", px(mBorderRadius));
-  }
-  if (mPadding > 0) {
-    style.set("padding", px(mPadding));
-  }
-  if (mMargin > 0) {
-    style.set("margin", px(mMargin));
-  }
-  if (mWidth > 0) {
-    style.set("width", px(mWidth));
-  }
-  if (mHeight > 0) {
-    style.set("height", px(mHeight));
-  }
-  if (mOpacity < 1.0) {
-    style.set("opacity", mOpacity);
-  }
-  if (!mBoxShadow.empty()) {
-    style.set("boxShadow", mBoxShadow);
+  if (mHeight.has_value()) {
+    style.set("height", px(mHeight.value()));
   }
 }
 
-void WebLayout::ApplyLayout(val& style) noexcept {
+void WebLayout::ApplyLayout(val style) noexcept {
   // Helper lambda to convert Justification to CSS justify-content string.
   auto getJustifyStr = [](Justification j) -> std::string {
     switch (j) {
@@ -368,8 +356,11 @@ void WebLayout::ApplyChildren() noexcept {
 
     elem->SyncFromModel();
 
-    val el = mDocument.call<val>("getElementById", id);
-    if (el.isNull() || el.isUndefined()) continue;
+    val el = elem->GetElement();
+    if (el.isNull() || el.isUndefined()) {
+      GetConsole().call<void>("warn", "element with Id: '" + id + "' not found.");
+      continue;
+    }
     val est = el["style"];
 
     // apply alignment only; sizing is handled by element itself
@@ -408,7 +399,7 @@ void WebLayout::ApplyChildren() noexcept {
       }
     }
 
-    // For free layout, apply positioning relative to mRoot if set
+    // For free layout, apply positioning relative to mElement if set
     if (mType == LayoutType::Free) {
       int top = elem->FreeTop();
       int left = elem->FreeLeft();
@@ -430,7 +421,7 @@ void WebLayout::ApplyChildren() noexcept {
 /// No-op when the layout is currently hidden (mIsVisible == false).
 void WebLayout::Apply() noexcept {
   if (!mIsVisible) return;
-  val style = mRoot["style"];
+  val style = mElement["style"];
   ApplyStyling(style);
   ApplyLayout(style);
   ApplyChildren();

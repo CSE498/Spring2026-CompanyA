@@ -41,7 +41,7 @@ public:
 
     /// @brief Constructs a WebCanvas associated with the given canvas element id.
     /// @param id DOM id of the \<canvas\> element (default: "web-canvas").
-    explicit WebCanvas(std::string id = "web-canvas");
+    explicit WebCanvas(const std::string & id = "web-canvas");
 
     ~WebCanvas() override = default;
 
@@ -63,10 +63,6 @@ public:
 
     /// @brief Synchronizes canvas state with the DOM (currently a no-op).
     void SyncFromModel() override;
-
-    /// @brief Returns the DOM id of the underlying \<canvas\> element.
-    /// @return Const reference to the canvas id string.
-    const std::string& Id() const override { return mId; }
 
     // ---- Canvas content management ----
 
@@ -164,8 +160,6 @@ public:
 private:
     std::vector<std::unique_ptr<ICanvasElement>> mElements;  ///< Owned canvas elements.
 
-    std::string mId;                          ///< DOM id of the underlying \<canvas\> element.
-    WebLayout*  mParent  = nullptr;           ///< Non-owning pointer to the parent layout.
     Alignment   mAlign   = Alignment::Start;  ///< Alignment within the parent layout.
     bool        mMounted = false;             ///< Whether this canvas is currently mounted.
 };

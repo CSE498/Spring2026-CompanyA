@@ -110,15 +110,8 @@ class WebButton : public IDomElement, public ICanvasElement {
   /// @param align  Alignment within the parent container.
   void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
 
-  /// @brief Removes this button from its current DOM parent.
-  void Unmount() override;
-
   /// @brief Synchronizes the DOM element with the current model state.
   void SyncFromModel() override;
-
-  /// @brief Returns the unique DOM id assigned to this button's element.
-  /// @return Const reference to the id string.
-  const std::string& Id() const override;
 
   /// @brief Called by the JS click listener to fire the click callback.
   void HandleClick();
@@ -146,8 +139,6 @@ class WebButton : public IDomElement, public ICanvasElement {
   int mHeight = 0;                      ///< Height in pixels (0 = browser default).
   std::string mBgColor;                 ///< Background color CSS string.
   std::string mTextColor;               ///< Text color CSS string.
-  emscripten::val mElement;             ///< Underlying DOM \<button\> element.
-  std::string mId;                      ///< Unique DOM id for this button.
 
   float mCanvasX = 0.0f;   ///< Canvas draw position x (pixels).
   float mCanvasY = 0.0f;   ///< Canvas draw position y (pixels).

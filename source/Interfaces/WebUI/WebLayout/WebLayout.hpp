@@ -86,14 +86,10 @@ class WebLayout : public IDomElement {
   void MountToLayout(WebLayout& parent,
                      Alignment align = Alignment::None) noexcept override;
 
-  /// Unmounts this layout from its parent in the DOM.
-  void Unmount() noexcept override;
+  void RemoveChild(IDomElement * elem) override;
 
   /// Synchronizes the layout state with the DOM. Calls Apply() to refresh.
   void SyncFromModel() noexcept override;
-
-  /// Returns the unique identifier of this layout's root element.
-  const std::string& Id() const noexcept override { return mId; }
 
   // ===== Layout Configuration =====
 
@@ -190,11 +186,9 @@ class WebLayout : public IDomElement {
 
  private:
   // ===== DOM References =====
-  emscripten::val mRoot;      ///< Reference to the root DOM element
   emscripten::val mDocument;  ///< Reference to the document object
 
   // ===== Element Tracking =====
-  std::string mId;  ///< Unique identifier of the root element
   std::vector<IDomElement*> mChildren{};  ///< Pointers to child elements
   std::unordered_map<IDomElement*, Alignment>
       mParams{};  ///< Alignment per child
@@ -212,8 +206,8 @@ class WebLayout : public IDomElement {
   int mBorderRadius = 0;
   int mPadding = 0;
   int mMargin = 0;
-  int mWidth = -1;
-  int mHeight = -1;
+  std::optional<int> mWidth{};
+  std::optional<int> mHeight{};
   double mOpacity = 1.0;
   bool mIsVisible = true;
   std::string mBoxShadow;
@@ -222,11 +216,11 @@ class WebLayout : public IDomElement {
 
   /// Apply styling options to root layout
   /// @param style the style object for the root layout
-  void ApplyStyling(emscripten::val& style) noexcept;
+  void ApplyStyling(emscripten::val style) noexcept;
 
   /// Apply layout options to root layout
   /// @param style the style object for the root layout
-  void ApplyLayout(emscripten::val& style) noexcept;
+  void ApplyLayout(emscripten::val style) noexcept;
 
   /// Apply children style and layout
   void ApplyChildren() noexcept;

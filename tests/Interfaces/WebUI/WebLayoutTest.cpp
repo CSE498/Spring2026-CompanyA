@@ -19,9 +19,10 @@
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../../source/Interfaces/WebUI/WebLayout/WebLayout.hpp"
 #include "../../../source/Interfaces/WebUI/internal/IDomElement.hpp"
+#include "../../../source/Interfaces/WebUI/WebUtils.hpp"
+#include "./SharedWebContext.hpp"
 
-using cse498::IDomElement, cse498::WebLayout, cse498::Alignment,
-    cse498::Justification, cse498::LayoutType;
+using namespace cse498;
 
 // ---------------------------
 // Test Helpers & Stubs
@@ -30,43 +31,37 @@ using cse498::IDomElement, cse498::WebLayout, cse498::Alignment,
 /// A minimal test double for IDomElement that tracks lifecycle and state
 class MockDomElement : public IDomElement {
 public:
- explicit MockDomElement(const std::string& id = "test-elem") : mId(id) {
-   // create DOM element so add and remove element can find it
-   emscripten::val document = emscripten::val::global("document");
-   emscripten::val el =
-       document.call<emscripten::val>("createElement", std::string("div"));
-   el.set("id", mId);
-   document["body"].call<void>("appendChild", el);
+ explicit MockDomElement(const std::string & id = "mock-element") {
+    mId = id;
+    // create DOM element so add and remove element can find it
+    mElement = GetDocument().call<emscripten::val>("createElement", std::string("div"));
+    mElement.set("id", mId);
  }
 
-    virtual ~MockDomElement() = default;
+    virtual ~MockDomElement() {
+      if (mId.empty()) return;
+
+      Unmount();
+    };
 
     void MountToLayout(WebLayout& parent,
                        Alignment align = Alignment::None) noexcept override {
-      parent.AddElement(this, align);
-      mountCount++;
+      if (parent.AddElement(this, align)) mountCount++;
     }
 
     void Unmount() noexcept override {
-        unmountCount++;
+      IDomElement::Unmount();
+      unmountCount++;
     }
 
     void SyncFromModel() noexcept override {
         syncCount++;
     }
 
-    const std::string& Id() const noexcept override {
-        return mId;
-    }
-
     // Test instrumentation
     int mountCount = 0;
     int unmountCount = 0;
     int syncCount = 0;
-    bool shouldExist = true;  // For simulating invalid elements
-
-private:
-    std::string mId;
 };
 
 /// Test helper to reset ID counter between tests
@@ -82,75 +77,105 @@ private:
 TEST_CASE("WebLayout constructor with default ID", "[weblayout][constructor]") {
     WebLayout layout;
     std::string id = layout.Id();
-    REQUIRE(!id.empty());
-    REQUIRE(id.find("weblayout-") == 0);  // Auto-generated ID
+    CHECK(!id.empty());
+    CHECK(id.find("weblayout-") == 0);  // Auto-generated ID
 }
 
 TEST_CASE("WebLayout constructor with explicit ID", "[weblayout][constructor]") {
     WebLayout layout("my-custom-layout");
-    REQUIRE(layout.Id() == "my-custom-layout");
+    CHECK(layout.Id() == "my-custom-layout");
 }
 
-TEST_CASE("WebLayout destructor is safe and idempotent", "[weblayout][destructor]") {
-    WebLayout layout("destruct-test");
-    REQUIRE(layout.Id() == "destruct-test");
+TEST_CASE_METHOD(SharedWebContext, "WebLayout destructor is safe and idempotent", "[weblayout][destructor]") {
+    {
+      WebLayout layout("destruct-test");
+      layout.MountToLayout(root);
+    }
     // Destructor called here, should clean up DOM
+    CHECK(GetElement("destruct-test") == val::undefined());
 }
 
 // ---------------------------
 // Tests: IDomElement Interface
 // ---------------------------
 
-TEST_CASE("WebLayout implements IDomElement contract", "[weblayout][dom]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout implements IDomElement contract", "[weblayout][dom]") {
     STATIC_REQUIRE(std::is_base_of_v<IDomElement, WebLayout>);
 }
 
-TEST_CASE("WebLayout ID remains stable after operations", "[weblayout][dom]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout ID remains stable after operations", "[weblayout][dom]") {
     WebLayout layout("stable-id-test");
-    REQUIRE(layout.Id() == "stable-id-test");
+    CHECK(layout.Id() == "stable-id-test");
 
     // ID should not change even if we mount/unmount
-    REQUIRE_NOTHROW(layout.Unmount());
-    REQUIRE(layout.Id() == "stable-id-test");
+    layout.Unmount();
+    CHECK(layout.Id() == "stable-id-test");
 }
 
-TEST_CASE("WebLayout mountToLayout and unmount are safe", "[weblayout][dom]") {
-    WebLayout parent("parent");
-    WebLayout child("child");
+TEST_CASE_METHOD(SharedWebContext, "WebLayout mountToLayout and unmount are safe", "[weblayout][dom]") {
+    WebLayout parent("mount-parent");
+    parent.MountToLayout(root);
+    WebLayout child("mount-child");
+    child.MountToLayout(parent, Alignment::Center);
+    auto parent_elem = GetElement(parent.Id());
+    auto child_elem = GetElement(child.Id());
 
-    REQUIRE_NOTHROW(child.MountToLayout(parent, Alignment::Center));
-    REQUIRE_NOTHROW(child.Unmount());
-    REQUIRE_NOTHROW(child.Unmount());  // Idempotent unmount
+    CHECK(GetProperty(child_elem, "parentElement") == parent_elem);
+    child.Unmount();
+    CHECK(GetProperty(child_elem, "parentElement") == val::undefined());
+    child.Unmount();  // Idempotent unmount
+    CHECK(GetProperty(child_elem, "parentElement") == val::undefined());
 }
 
-TEST_CASE("WebLayout syncFromModel calls Apply", "[weblayout][dom]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout syncFromModel calls Apply", "[weblayout][dom]") {
     WebLayout layout("sync-test");
-    // syncFromModel calls Apply internally; should not throw
-    REQUIRE_NOTHROW(layout.SyncFromModel());
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
+    layout.SetMargin(10);
+    layout.SyncFromModel();
+    CHECK(GetCSSProperty(elem, "margin") == "10px");
 }
 
 // ---------------------------
 // Tests: Layout Configuration
 // ---------------------------
 
-TEST_CASE("WebLayout SetLayoutType stores and applies correctly", "[weblayout][layout-config]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetLayoutType stores and applies correctly", "[weblayout][layout-config]") {
     WebLayout layout("layout-type-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetLayoutType(LayoutType::Horizontal));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetLayoutType(LayoutType::Horizontal);
+    layout.Apply();
 
-    REQUIRE_NOTHROW(layout.SetLayoutType(LayoutType::Vertical));
-    REQUIRE_NOTHROW(layout.Apply());
+    CHECK(GetCSSProperty(elem, "display") == "flex");
+    CHECK(GetCSSProperty(elem, "flex-direction") == "row");
 
-    REQUIRE_NOTHROW(layout.SetLayoutType(LayoutType::Grid));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetLayoutType(LayoutType::Vertical);
+    layout.Apply();
 
-    REQUIRE_NOTHROW(layout.SetLayoutType(LayoutType::Free));
-    REQUIRE_NOTHROW(layout.Apply());
+    CHECK(GetCSSProperty(elem, "display") == "flex");
+    CHECK(GetCSSProperty(elem, "flex-direction") == "column");
+
+    layout.SetLayoutType(LayoutType::Grid);
+    layout.Apply();
+
+    CHECK(GetCSSProperty(elem, "display") == "grid");
+
+    layout.SetLayoutType(LayoutType::Free);
+    layout.Apply();
+
+    CHECK(GetCSSProperty(elem, "display") == "block");
+
 }
 
-TEST_CASE("WebLayout SetJustification stores multiple values", "[weblayout][layout-config]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetJustification stores multiple values", "[weblayout][layout-config]") {
     WebLayout layout("justification-test");
+    layout.SetLayoutType(LayoutType::Horizontal);
+    layout.MountToLayout(root);
+    MockDomElement element("justification-test-element");
+    element.MountToLayout(layout);
+    auto elem = GetElement(layout.Id());
 
     std::vector<Justification> justifications = {
         Justification::Start,
@@ -161,14 +186,38 @@ TEST_CASE("WebLayout SetJustification stores multiple values", "[weblayout][layo
         Justification::SpaceEvenly
     };
 
+    auto getJustifyStr = [](Justification j) -> string {
+    switch (j) {
+      case Justification::Start:
+        return "flex-start";
+      case Justification::Center:
+        return "center";
+      case Justification::End:
+        return "flex-end";
+      case Justification::SpaceBetween:
+        return "space-between";
+      case Justification::SpaceAround:
+        return "space-around";
+      case Justification::SpaceEvenly:
+        return "space-evenly";
+    }
+  };
+
     for (auto j : justifications) {
-        REQUIRE_NOTHROW(layout.SetJustification(j));
-        REQUIRE_NOTHROW(layout.Apply());
+        layout.SetJustification(j);
+        layout.Apply();
+
+        CHECK(GetCSSProperty(elem, "justify-content") == getJustifyStr(j));
     }
 }
 
-TEST_CASE("WebLayout SetAlignItems stores alignment values", "[weblayout][layout-config]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetAlignItems stores alignment values", "[weblayout][layout-config]") {
     WebLayout layout("align-items-test");
+    layout.SetLayoutType(LayoutType::Vertical);
+    layout.MountToLayout(root);
+    MockDomElement element("align-items-test-element");
+    element.MountToLayout(layout);
+    auto elem = GetElement(layout.Id());
 
     std::vector<Alignment> alignments = {
         Alignment::None,
@@ -178,9 +227,26 @@ TEST_CASE("WebLayout SetAlignItems stores alignment values", "[weblayout][layout
         Alignment::Stretch
     };
 
+    auto getAlignItemsStr = [](Alignment a) -> std::string {
+    switch (a) {
+      case Alignment::Start:
+        return "flex-start";
+      case Alignment::Center:
+        return "center";
+      case Alignment::End:
+        return "flex-end";
+      case Alignment::Stretch:
+        return "stretch";
+      case Alignment::None:
+        return "";
+    }
+  };
+
     for (auto a : alignments) {
-        REQUIRE_NOTHROW(layout.SetAlignItems(a));
-        REQUIRE_NOTHROW(layout.Apply());
+        layout.SetAlignItems(a);
+        layout.Apply();
+
+        CHECK(GetCSSProperty(elem, "align-items") == getAlignItemsStr(a));
     }
 }
 
@@ -188,285 +254,380 @@ TEST_CASE("WebLayout SetAlignItems stores alignment values", "[weblayout][layout
 // Tests: Child Element Management
 // ---------------------------
 
-TEST_CASE("WebLayout AddElement with null pointer returns false", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout AddElement with null pointer returns false", "[weblayout][children]") {
     WebLayout layout("add-null-test");
-    REQUIRE(layout.AddElement(nullptr) == false);
+    layout.MountToLayout(root);
+    CHECK(layout.AddElement(nullptr) == false);
 }
 
-TEST_CASE("WebLayout AddElement with invalid element ID returns false", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout AddElement with invalid element ID returns false", "[weblayout][children]") {
     WebLayout layout("add-invalid-test");
+    layout.MountToLayout(root);
     MockDomElement elem("");  // Empty ID
-    REQUIRE(layout.AddElement(&elem) == false);
-    REQUIRE(elem.mountCount == 0);
+    CHECK(layout.AddElement(&elem) == false);
+    CHECK(elem.mountCount == 0);
 }
 
-TEST_CASE("WebLayout can add and remove single element", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout can add and remove single element", "[weblayout][children]") {
     WebLayout layout("add-remove-test");
-    MockDomElement elem("elem-1");
+    layout.MountToLayout(root);
+    MockDomElement elem("add-remove-elem");
 
-    // Add element (note: in real scenario would need DOM to exist)
-    // The test checks internal state through Apply behavior
-    REQUIRE_NOTHROW(elem.MountToLayout(layout, Alignment::Center));
-    REQUIRE_NOTHROW(layout.Apply());
+    elem.MountToLayout(layout, Alignment::Center);
+    layout.Apply();
 
-    REQUIRE(layout.RemoveElement(&elem) == true);
-    REQUIRE_NOTHROW(layout.Apply());
-    REQUIRE(elem.mountCount == 1);
-    REQUIRE(elem.unmountCount == 1);
-    REQUIRE(elem.syncCount == 1);
+    CHECK(layout.RemoveElement(&elem) == true);
+    layout.Apply();
+    CHECK(elem.mountCount == 1);
+    CHECK(elem.unmountCount == 0);
+    CHECK(elem.syncCount == 1);
 }
 
-TEST_CASE("WebLayout RemoveElement returns false for non-existent element", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout RemoveElement returns false for non-existent element", "[weblayout][children]") {
     WebLayout layout("remove-nonexist-test");
+    layout.MountToLayout(root);
     MockDomElement elem("elem-1");
 
-    REQUIRE(layout.RemoveElement(&elem) == false);
-    REQUIRE(elem.unmountCount == 0);
+    CHECK(layout.RemoveElement(&elem) == false);
+    CHECK(elem.unmountCount == 0);
 }
 
-TEST_CASE("WebLayout RemoveElement with null pointer returns false", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout RemoveElement with null pointer returns false", "[weblayout][children]") {
     WebLayout layout("remove-null-test");
-    REQUIRE(layout.RemoveElement(nullptr) == false);
+    layout.MountToLayout(root);
+    CHECK(layout.RemoveElement(nullptr) == false);
 }
 
-TEST_CASE("WebLayout SetAlignment on non-existent element is safe", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetAlignment on non-existent element is safe", "[weblayout][children]") {
     WebLayout layout("set-align-test");
+    layout.SetLayoutType(LayoutType::Horizontal);
+    layout.MountToLayout(root);
     MockDomElement elem("elem-1");
+    elem.MountToLayout(layout, Alignment::Center);
+    auto elem_val = GetElement(elem.Id());
 
-    REQUIRE_NOTHROW(layout.SetAlignment(&elem, Alignment::Center));
-    REQUIRE_NOTHROW(layout.SetAlignment(nullptr, Alignment::Center));
+    layout.Apply();
+    CHECK(GetCSSProperty(elem_val, "align-self") == "center");
+  
+    layout.SetAlignment(nullptr, Alignment::Center);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem_val, "align-self") == "center");
 }
 
-TEST_CASE("WebLayout SetAlignment on added element works", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetAlignment on added element works", "[weblayout][children]") {
     WebLayout layout("set-align-added-test");
+    layout.SetLayoutType(LayoutType::Horizontal);
+    layout.MountToLayout(root);
     MockDomElement elem("elem-1");
+    elem.MountToLayout(layout, Alignment::Start);
+    auto elem_val = GetElement(elem.Id());
 
-    REQUIRE_NOTHROW(elem.MountToLayout(layout, Alignment::Start));
-    REQUIRE_NOTHROW(layout.SetAlignment(&elem, Alignment::Center));
-    REQUIRE_NOTHROW(layout.SetAlignment(&elem, Alignment::End));
-    REQUIRE_NOTHROW(layout.Apply());
-    REQUIRE(elem.mountCount == 1);
-    REQUIRE(elem.syncCount == 1);
+    layout.SetAlignment(&elem, Alignment::Center);
+    layout.SetAlignment(&elem, Alignment::End);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem_val, "align-self") == "flex-end");
 }
 
-TEST_CASE("WebLayout can add multiple elements", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout can add multiple elements", "[weblayout][children]") {
     WebLayout layout("multiple-children-test");
-    MockDomElement elem1("elem-1");
-    MockDomElement elem2("elem-2");
-    MockDomElement elem3("elem-3");
+    layout.MountToLayout(root);
+    MockDomElement elem1("multiple-children-test-elem-1");
+    MockDomElement elem2("multiple-children-test-elem-2");
+    MockDomElement elem3("multiple-children-test-elem-3");
 
-    REQUIRE_NOTHROW(elem1.MountToLayout(layout, Alignment::Start));
-    REQUIRE_NOTHROW(elem2.MountToLayout(layout, Alignment::Center));
-    REQUIRE_NOTHROW(elem3.MountToLayout(layout, Alignment::End));
+    elem1.MountToLayout(layout, Alignment::Start);
+    elem2.MountToLayout(layout, Alignment::Center);
+    elem3.MountToLayout(layout, Alignment::End);
 
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.Apply();
 
     // Remove first and verify others remain
-    REQUIRE(layout.RemoveElement(&elem1) == true);
-    REQUIRE_NOTHROW(layout.Apply());
+    CHECK(layout.RemoveElement(&elem1) == true);
+    layout.Apply();
 
     // Second should still be removable
-    REQUIRE(layout.RemoveElement(&elem2) == true);
-    REQUIRE(layout.RemoveElement(&elem3) == true);
+    CHECK(layout.RemoveElement(&elem2) == true);
+    CHECK(layout.RemoveElement(&elem3) == true);
 
-    REQUIRE(elem1.mountCount == 1);
-    REQUIRE(elem2.mountCount == 1);
-    REQUIRE(elem3.mountCount == 1);
-    REQUIRE(elem1.unmountCount == 1);
-    REQUIRE(elem2.unmountCount == 1);
-    REQUIRE(elem3.unmountCount == 1);
-    REQUIRE(elem1.syncCount == 1);
-    REQUIRE(elem2.syncCount == 2);
-    REQUIRE(elem3.syncCount == 2);
+    CHECK(elem1.mountCount == 1);
+    CHECK(elem2.mountCount == 1);
+    CHECK(elem3.mountCount == 1);
+    CHECK(elem1.unmountCount == 0);
+    CHECK(elem2.unmountCount == 0);
+    CHECK(elem3.unmountCount == 0);
+    CHECK(elem1.syncCount == 1);
+    CHECK(elem2.syncCount == 2);
+    CHECK(elem3.syncCount == 2);
 }
 
-TEST_CASE("WebLayout Clear removes all elements", "[weblayout][children]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout Clear removes all elements", "[weblayout][children]") {
     WebLayout layout("clear-test");
-    MockDomElement elem1("elem-1");
-    MockDomElement elem2("elem-2");
+    layout.MountToLayout(root);
+    MockDomElement elem1("clear-test-elem-1");
+    MockDomElement elem2("clear-test-elem-2");
 
     elem1.MountToLayout(layout);
     elem2.MountToLayout(layout);
 
-    REQUIRE_NOTHROW(layout.Clear());
+    layout.Clear();
 
     // After clear, elements should not be removable (not in layout)
-    REQUIRE(layout.RemoveElement(&elem1) == false);
-    REQUIRE(layout.RemoveElement(&elem2) == false);
-    REQUIRE(elem1.mountCount == 1);
-    REQUIRE(elem2.mountCount == 1);
-    REQUIRE(elem1.unmountCount == 1);
-    REQUIRE(elem2.unmountCount == 1);
+    CHECK(layout.RemoveElement(&elem1) == false);
+    CHECK(layout.RemoveElement(&elem2) == false);
+    CHECK(elem1.mountCount == 1);
+    CHECK(elem2.mountCount == 1);
+    CHECK(elem1.unmountCount == 1);
+    CHECK(elem2.unmountCount == 1);
 }
 
 // ---------------------------
 // Tests: Styling Methods
 // ---------------------------
 
-TEST_CASE("WebLayout SetSpacing stores positive values", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetSpacing stores positive values", "[weblayout][styling]") {
     WebLayout layout("spacing-test");
+    layout.SetLayoutType(LayoutType::Horizontal);
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetSpacing(0));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetSpacing(0);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "gap") == "0px");
 
-    REQUIRE_NOTHROW(layout.SetSpacing(10));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetSpacing(10);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "gap") == "10px");
 
-    REQUIRE_NOTHROW(layout.SetSpacing(100));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetSpacing(-10);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "gap") == "10px");
+
 }
 
-TEST_CASE("WebLayout SetBackgroundColor stores colors", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetBackgroundColor stores colors", "[weblayout][styling]") {
     WebLayout layout("bg-color-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    std::vector<std::string> colors = {
+    std::vector<std::string> colors {
         "#ffffff",
         "#000000",
         "red",
         "rgb(255, 0, 0)",
         "rgba(255, 0, 0, 0.5)",
-        "transparent"
+        "transparent",
+        ""
     };
 
-    for (const auto& color : colors) {
-        REQUIRE_NOTHROW(layout.SetBackgroundColor(color));
-        REQUIRE_NOTHROW(layout.Apply());
+    std::vector<std::string> outputs {
+      "rgb(255, 255, 255)",
+      "rgb(0, 0, 0)",
+      "red",
+      "rgb(255, 0, 0)",
+      "rgba(255, 0, 0, 0.5)",
+      "transparent",
+      ""
+    };
+
+    for (int i{0}; i < colors.size(); i++) {
+        layout.SetBackgroundColor(colors[i]);
+        layout.Apply();
+        CHECK(GetCSSProperty(elem, "background-color") == outputs[i]);
     }
 }
 
-TEST_CASE("WebLayout SetBorderColor stores colors", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetBorderColor stores colors", "[weblayout][styling]") {
     WebLayout layout("border-color-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetBorderColor("#ff0000"));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetBorderColor("#ff0000");
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "border-color") == "rgb(255, 0, 0)");
 
-    REQUIRE_NOTHROW(layout.SetBorderColor("blue"));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetBorderColor("blue");
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "border-color") == "blue");
+
+    layout.SetBorderColor("");
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "border-color") == "");
+
 }
 
-TEST_CASE("WebLayout SetBorderWidth stores positive values", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetBorderWidth stores positive values", "[weblayout][styling]") {
     WebLayout layout("border-width-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    std::vector<int> widths = {0, 1, 5, 10, 100};
+    std::vector<int> widths = {0, 1, 5, 10, 100, -10};
     for (int w : widths) {
-        REQUIRE_NOTHROW(layout.SetBorderWidth(w));
-        REQUIRE_NOTHROW(layout.Apply());
+        layout.SetBorderWidth(w);
+        layout.Apply();
+
+        if (w >= 0) CHECK(GetCSSProperty(elem, "border-width") == std::to_string(w) + "px");
+        else CHECK(GetCSSProperty(elem, "border-width") != std::to_string(w) + "px");
     }
 }
 
-TEST_CASE("WebLayout SetBorderRadius stores positive values", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetBorderRadius stores positive values", "[weblayout][styling]") {
     WebLayout layout("border-radius-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    std::vector<int> radii = {0, 1, 5, 10, 50};
+    std::vector<int> radii = {0, 1, 5, 10, 50, -10};
     for (int r : radii) {
-        REQUIRE_NOTHROW(layout.SetBorderRadius(r));
-        REQUIRE_NOTHROW(layout.Apply());
+        layout.SetBorderRadius(r);
+        layout.Apply();
+        if (r >= 0) CHECK(GetCSSProperty(elem, "border-radius") == std::to_string(r) + "px");
+        else CHECK(GetCSSProperty(elem, "border-radius") != std::to_string(r) + "px");
     }
 }
 
-TEST_CASE("WebLayout SetPadding stores positive values", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetPadding stores positive values", "[weblayout][styling]") {
     WebLayout layout("padding-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetPadding(0));
-    REQUIRE_NOTHROW(layout.SetPadding(5));
-    REQUIRE_NOTHROW(layout.SetPadding(20));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetPadding(20);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "padding") == "20px");
+
+    layout.SetPadding(0);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "padding") == "0px");
+
+    layout.SetPadding(-10);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "padding") == "0px");
 }
 
-TEST_CASE("WebLayout SetMargin stores positive values", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetMargin stores positive values", "[weblayout][styling]") {
     WebLayout layout("margin-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetMargin(0));
-    REQUIRE_NOTHROW(layout.SetMargin(5));
-    REQUIRE_NOTHROW(layout.SetMargin(20));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetMargin(20);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "margin") == "20px");
+
+    layout.SetMargin(0);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "margin") == "0px");
+
+    layout.SetMargin(-10);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "margin") == "0px");
 }
 
-TEST_CASE("WebLayout SetWidth stores positive values", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetWidth stores positive values", "[weblayout][styling]") {
     WebLayout layout("width-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetWidth(1));
-    REQUIRE_NOTHROW(layout.SetWidth(100));
-    REQUIRE_NOTHROW(layout.SetWidth(1000));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetWidth(100);
+    layout.Apply();
+    REQUIRE(GetCSSProperty(elem, "width") == "100px");
+
+    layout.SetWidth(1000);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "width") == "1000px");
+
+    layout.SetWidth(-10);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "width") == "1000px");
 }
 
-TEST_CASE("WebLayout SetHeight stores positive values", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetHeight stores positive values", "[weblayout][styling]") {
     WebLayout layout("height-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetHeight(1));
-    REQUIRE_NOTHROW(layout.SetHeight(100));
-    REQUIRE_NOTHROW(layout.SetHeight(1000));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetHeight(100);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "height") == "100px");
+
+    layout.SetHeight(1000);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "height") == "1000px");
+
+    layout.SetHeight(-10);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "height") == "1000px");
 }
 
-TEST_CASE("WebLayout SetOpacity stores values in valid range", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetOpacity stores values in valid range", "[weblayout][styling]") {
     WebLayout layout("opacity-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetOpacity(0.0));  // Fully transparent
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetOpacity(0.0);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "opacity") == "0");
 
-    REQUIRE_NOTHROW(layout.SetOpacity(0.5));  // Half transparent
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetOpacity(0.5);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "opacity") == "0.5");
 
-    REQUIRE_NOTHROW(layout.SetOpacity(1.0));  // Fully opaque
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetOpacity(-0.5);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "opacity") == "0.5");
 }
 
-TEST_CASE("WebLayout SetBoxShadow stores shadow strings", "[weblayout][styling]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetBoxShadow stores shadow strings", "[weblayout][styling]") {
     WebLayout layout("box-shadow-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
     std::vector<std::string> shadows = {
-        "0 4px 6px rgba(0, 0, 0, 0.1)",
-        "0 0 10px #000000",
-        "inset 0 0 5px #cccccc",
+        "rgba(0, 0, 0, 0.1) 0px 4px 6px",
+        "rgb(0, 0, 0) 0px 0px 10px",
+        "rgb(204, 204, 204) 0px 0px 5px inset",
         ""
     };
 
     for (const auto& shadow : shadows) {
-        REQUIRE_NOTHROW(layout.SetBoxShadow(shadow));
-        REQUIRE_NOTHROW(layout.Apply());
+        layout.SetBoxShadow(shadow);
+        layout.Apply();
+        CHECK(GetCSSProperty(elem, "box-shadow") == shadow);
     }
 }
 
-TEST_CASE("WebLayout ToggleVisibility toggles state", "[weblayout][visibility]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout ToggleVisibility toggles state", "[weblayout][visibility]") {
     WebLayout layout("visibility-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.ToggleVisibility());
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.ToggleVisibility();
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "display") == "");
 
-    REQUIRE_NOTHROW(layout.ToggleVisibility());
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.ToggleVisibility();
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "display") == "block");
 }
 
-TEST_CASE("WebLayout ToggleVisibility multiple times", "[weblayout][visibility]") {
-    WebLayout layout("visibility-multiple-test");
-
-    for (int i = 0; i < 5; ++i) {
-        REQUIRE_NOTHROW(layout.ToggleVisibility());
-    }
-
-    REQUIRE_NOTHROW(layout.Apply());
-}
-
-TEST_CASE("WebLayout ToggleVisibility prevents style application",
+TEST_CASE_METHOD(SharedWebContext, "WebLayout ToggleVisibility prevents style application",
           "[weblayout][styling][visibility]") {
   WebLayout layout("visibility-multiple-test");
-  MockDomElement elem("elem");
+  layout.MountToLayout(root);
+  MockDomElement elem("visibility-multiple-test-elem");
 
   elem.MountToLayout(layout);
   layout.ToggleVisibility();
 
-  REQUIRE_NOTHROW(layout.Apply());
-  REQUIRE(elem.syncCount == 0);
+  layout.Apply();
+  CHECK(elem.syncCount == 0);
 }
 
 // ---------------------------
 // Tests: Combined Styling
 // ---------------------------
 
-TEST_CASE("WebLayout complex styling scenario", "[weblayout][styling][integration]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout complex styling scenario", "[weblayout][styling][integration]") {
     WebLayout layout("complex-style-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
     // Set multiple styling properties
     layout.SetBackgroundColor("lightblue");
@@ -478,287 +639,284 @@ TEST_CASE("WebLayout complex styling scenario", "[weblayout][styling][integratio
     layout.SetWidth(300);
     layout.SetHeight(200);
     layout.SetOpacity(0.95);
-    layout.SetBoxShadow("0 4px 6px rgba(0, 0, 0, 0.1)");
+    layout.SetBoxShadow("rgba(0, 0, 0, 0.1) 0 4px 6px");
 
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.Apply();
+
+    CHECK(GetCSSProperty(elem, "background-color") == "lightblue");
+    CHECK(GetCSSProperty(elem, "border-color") == "navy");
+    CHECK(GetCSSProperty(elem, "border-width") == "2px");
+    CHECK(GetCSSProperty(elem, "border-radius") == "8px");
+    CHECK(GetCSSProperty(elem, "padding") == "10px");
+    CHECK(GetCSSProperty(elem, "margin") == "5px");
+    CHECK(GetCSSProperty(elem, "width") == "300px");
+    CHECK(GetCSSProperty(elem, "height") == "200px");
+    CHECK(GetCSSProperty(elem, "opacity") == "0.95");
+    CHECK(GetCSSProperty(elem, "box-shadow") == "rgba(0, 0, 0, 0.1) 0px 4px 6px");
 }
 
 // ---------------------------
 // Tests: Grid Positioning
 // ---------------------------
 
-TEST_CASE("IDomElement grid position helpers work correctly", "[weblayout][positioning][grid]") {
+TEST_CASE_METHOD(SharedWebContext, "IDomElement grid position helpers work correctly", "[weblayout][positioning][grid]") {
     MockDomElement elem("grid-test");
 
     // Default state: unset (-1)
-    REQUIRE(elem.GridRow() == -1);
-    REQUIRE(elem.GridCol() == -1);
+    CHECK(elem.GridRow() == -1);
+    CHECK(elem.GridCol() == -1);
 
     // Set positions
     elem.SetGridPosition(2, 3);
-    REQUIRE(elem.GridRow() == 2);
-    REQUIRE(elem.GridCol() == 3);
+    CHECK(elem.GridRow() == 2);
+    CHECK(elem.GridCol() == 3);
 
     // Change positions
     elem.SetGridPosition(0, 0);
-    REQUIRE(elem.GridRow() == 0);
-    REQUIRE(elem.GridCol() == 0);
+    CHECK(elem.GridRow() == 0);
+    CHECK(elem.GridCol() == 0);
 
     // Clear positions
     elem.ClearGridPosition();
-    REQUIRE(elem.GridRow() == -1);
-    REQUIRE(elem.GridCol() == -1);
+    CHECK(elem.GridRow() == -1);
+    CHECK(elem.GridCol() == -1);
 }
 
-TEST_CASE("IDomElement grid position with large indices", "[weblayout][positioning][grid]") {
+TEST_CASE_METHOD(SharedWebContext, "IDomElement grid position with large indices", "[weblayout][positioning][grid]") {
     MockDomElement elem("large-grid-test");
 
     elem.SetGridPosition(100, 200);
-    REQUIRE(elem.GridRow() == 100);
-    REQUIRE(elem.GridCol() == 200);
+    CHECK(elem.GridRow() == 100);
+    CHECK(elem.GridCol() == 200);
 }
 
-TEST_CASE("WebLayout applies grid positions to children", "[weblayout][positioning][grid]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout applies grid positions to children", "[weblayout][positioning][grid]") {
     WebLayout layout("grid-layout-test");
     layout.SetLayoutType(LayoutType::Grid);
+    layout.MountToLayout(root);
 
     MockDomElement elem("grid-child");
     elem.SetGridPosition(1, 2);
 
-    REQUIRE_NOTHROW(elem.MountToLayout(layout));
-    REQUIRE_NOTHROW(layout.Apply());
+    elem.MountToLayout(layout);
+    layout.Apply();
 
     // Grid position should be preserved
-    REQUIRE(elem.GridRow() == 1);
-    REQUIRE(elem.GridCol() == 2);
+    CHECK(elem.GridRow() == 1);
+    CHECK(elem.GridCol() == 2);
 }
 
 // ---------------------------
 // Tests: Free Layout Positioning
 // ---------------------------
 
-TEST_CASE("IDomElement free position helpers work correctly", "[weblayout][positioning][free]") {
+TEST_CASE_METHOD(SharedWebContext, "IDomElement free position helpers work correctly", "[weblayout][positioning][free]") {
     MockDomElement elem("free-test");
 
     // Default state: unset (-1)
-    REQUIRE(elem.FreeTop() == -1);
-    REQUIRE(elem.FreeLeft() == -1);
+    CHECK(elem.FreeTop() == -1);
+    CHECK(elem.FreeLeft() == -1);
 
     // Set positions
     elem.SetFreePosition(50, 100);
-    REQUIRE(elem.FreeTop() == 50);
-    REQUIRE(elem.FreeLeft() == 100);
+    CHECK(elem.FreeTop() == 50);
+    CHECK(elem.FreeLeft() == 100);
 
     // Change positions
     elem.SetFreePosition(10, 20);
-    REQUIRE(elem.FreeTop() == 10);
-    REQUIRE(elem.FreeLeft() == 20);
+    CHECK(elem.FreeTop() == 10);
+    CHECK(elem.FreeLeft() == 20);
 
     // Clear positions
     elem.ClearFreePosition();
-    REQUIRE(elem.FreeTop() == -1);
-    REQUIRE(elem.FreeLeft() == -1);
+    CHECK(elem.FreeTop() == -1);
+    CHECK(elem.FreeLeft() == -1);
 }
 
-TEST_CASE("IDomElement free position with zero coordinates", "[weblayout][positioning][free]") {
+TEST_CASE_METHOD(SharedWebContext, "IDomElement free position with zero coordinates", "[weblayout][positioning][free]") {
     MockDomElement elem("zero-free-test");
 
     elem.SetFreePosition(0, 0);
-    REQUIRE(elem.FreeTop() == 0);
-    REQUIRE(elem.FreeLeft() == 0);
+    CHECK(elem.FreeTop() == 0);
+    CHECK(elem.FreeLeft() == 0);
 }
 
-TEST_CASE("IDomElement free position with large coordinates", "[weblayout][positioning][free]") {
+TEST_CASE_METHOD(SharedWebContext, "IDomElement free position with large coordinates", "[weblayout][positioning][free]") {
     MockDomElement elem("large-free-test");
 
     elem.SetFreePosition(5000, 10000);
-    REQUIRE(elem.FreeTop() == 5000);
-    REQUIRE(elem.FreeLeft() == 10000);
+    CHECK(elem.FreeTop() == 5000);
+    CHECK(elem.FreeLeft() == 10000);
 }
 
-TEST_CASE("WebLayout applies free positions to children", "[weblayout][positioning][free]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout applies free positions to children", "[weblayout][positioning][free]") {
     WebLayout layout("free-layout-test");
     layout.SetLayoutType(LayoutType::Free);
+    layout.MountToLayout(root);
 
     MockDomElement elem("free-child");
     elem.SetFreePosition(50, 75);
 
-    REQUIRE_NOTHROW(elem.MountToLayout(layout));
-    REQUIRE_NOTHROW(layout.Apply());
+    elem.MountToLayout(layout);
+    layout.Apply();
 
     // Free position should be preserved
-    REQUIRE(elem.FreeTop() == 50);
-    REQUIRE(elem.FreeLeft() == 75);
+    CHECK(elem.FreeTop() == 50);
+    CHECK(elem.FreeLeft() == 75);
 }
 
 // ---------------------------
 // Tests: Edge Cases
 // ---------------------------
 
-TEST_CASE("WebLayout with empty ID is safe", "[weblayout][edge-case]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout with empty ID is safe", "[weblayout][edge-case]") {
     WebLayout layout("");
     // Constructor should handle empty string by generating an ID
-    REQUIRE(!layout.Id().empty());
+    CHECK(!layout.Id().empty());
 }
 
-TEST_CASE("WebLayout SetSpacing with zero spacing", "[weblayout][edge-case]") {
-    WebLayout layout("zero-spacing-test");
-    REQUIRE_NOTHROW(layout.SetSpacing(0));
-    REQUIRE_NOTHROW(layout.Apply());
-}
-
-TEST_CASE("WebLayout SetBorderWidth zero border", "[weblayout][edge-case]") {
-    WebLayout layout("zero-border-test");
-    REQUIRE_NOTHROW(layout.SetBorderWidth(0));
-    REQUIRE_NOTHROW(layout.Apply());
-}
-
-TEST_CASE("WebLayout SetPadding and SetMargin with zero", "[weblayout][edge-case]") {
-    WebLayout layout("zero-padding-margin-test");
-    REQUIRE_NOTHROW(layout.SetPadding(0));
-    REQUIRE_NOTHROW(layout.SetMargin(0));
-    REQUIRE_NOTHROW(layout.Apply());
-}
-
-TEST_CASE("WebLayout SetOpacity edge values", "[weblayout][edge-case]") {
-    WebLayout layout("opacity-edge-test");
-
-    REQUIRE_NOTHROW(layout.SetOpacity(0.0));    // Min value
-    REQUIRE_NOTHROW(layout.SetOpacity(1.0));    // Max value
-    REQUIRE_NOTHROW(layout.SetOpacity(0.001));  // Near min
-    REQUIRE_NOTHROW(layout.SetOpacity(0.999));  // Near max
-    REQUIRE_NOTHROW(layout.Apply());
-}
-
-TEST_CASE("WebLayout empty color strings are safe", "[weblayout][edge-case]") {
-    WebLayout layout("empty-color-test");
-
-    REQUIRE_NOTHROW(layout.SetBackgroundColor(""));
-    REQUIRE_NOTHROW(layout.SetBorderColor(""));
-    REQUIRE_NOTHROW(layout.SetBoxShadow(""));
-    REQUIRE_NOTHROW(layout.Apply());
-}
-
-TEST_CASE("WebLayout rapid Apply calls are safe", "[weblayout][edge-case]") {
-    WebLayout layout("rapid-apply-test");
-
-    for (int i = 0; i < 10; ++i) {
-        REQUIRE_NOTHROW(layout.Apply());
-    }
-}
-
-TEST_CASE("WebLayout remove same element multiple times", "[weblayout][edge-case]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout remove same element multiple times", "[weblayout][edge-case]") {
     WebLayout layout("add-remove-repeat-test");
+    layout.MountToLayout(root);
     MockDomElement elem("repeat-elem");
 
-    REQUIRE_NOTHROW(elem.MountToLayout(layout));
-    REQUIRE(layout.RemoveElement(&elem) == true);
-    REQUIRE(layout.RemoveElement(&elem) == false);  // Already removed
-    REQUIRE(elem.mountCount == 1);
-    REQUIRE(elem.unmountCount == 1);
+    elem.MountToLayout(layout);
+    CHECK(layout.RemoveElement(&elem) == true);
+    CHECK(layout.RemoveElement(&elem) == false);  // Already removed
+    CHECK(elem.mountCount == 1);
+    CHECK(elem.unmountCount == 0);
 }
 
-TEST_CASE("WebLayout SetAlignment on untrack element is safe", "[weblayout][edge-case]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetAlignment on untrack element is safe", "[weblayout][edge-case]") {
     WebLayout layout("untrack-align-test");
-    MockDomElement elem1("elem-1");
-    MockDomElement elem2("elem-2");
+    layout.MountToLayout(root);
+    MockDomElement elem1("untrack-align-test-elem-1");
+    MockDomElement elem2("untrack-align-test-elem-2");
 
-    REQUIRE_NOTHROW(elem1.MountToLayout(layout));
-    REQUIRE_NOTHROW(layout.SetAlignment(&elem2, Alignment::Center));  // Not tracked
-    REQUIRE(elem1.mountCount == 1);
-    REQUIRE(elem2.mountCount == 0);
+    elem1.MountToLayout(layout);
+    layout.SetAlignment(&elem2, Alignment::Center);  // Not tracked
+    CHECK(elem1.mountCount == 1);
+    CHECK(elem2.mountCount == 0);
 }
 
-TEST_CASE("WebLayout consecutive Clear calls are safe", "[weblayout][edge-case]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout consecutive Clear calls are safe", "[weblayout][edge-case]") {
     WebLayout layout("clear-clear-test");
-    MockDomElement elem("elem");
+    layout.MountToLayout(root);
+    MockDomElement elem("clear-clear-test-elem");
+    elem.MountToLayout(layout);
+    auto elem_val = GetElement(elem.Id());
 
-    REQUIRE_NOTHROW(elem.MountToLayout(layout));
-    REQUIRE_NOTHROW(layout.Clear());
-    REQUIRE_NOTHROW(layout.Clear());  // Should be safe
+    layout.Clear();
+    layout.Clear();  // Should be safe
+    CHECK(GetProperty(elem_val, "parentElement") == val::undefined());
 }
 
-TEST_CASE("WebLayout nested layouts", "[weblayout][edge-case]") {
-    WebLayout parent("parent");
-    WebLayout child("child");
-    MockDomElement grandchild("grandchild");
+TEST_CASE_METHOD(SharedWebContext, "WebLayout nested layouts", "[weblayout][edge-case]") {
+    WebLayout parent("nested-parent");
+    parent.MountToLayout(root);
+    WebLayout child("nested-child");
+    MockDomElement grandchild("nested-grandchild");
 
-    REQUIRE_NOTHROW(child.MountToLayout(parent));
-    REQUIRE_NOTHROW(grandchild.MountToLayout(child));
-    REQUIRE_NOTHROW(parent.Apply());
-    REQUIRE(grandchild.mountCount == 1);
-    REQUIRE(grandchild.syncCount == 1);
+    child.MountToLayout(parent);
+    grandchild.MountToLayout(child);
+    parent.Apply();
+    CHECK(grandchild.mountCount == 1);
+    CHECK(grandchild.syncCount == 1);
 }
 
-TEST_CASE("WebLayout very large spacing values", "[weblayout][edge-case]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout very large spacing values", "[weblayout][edge-case]") {
     WebLayout layout("large-spacing-test");
+    layout.SetLayoutType(LayoutType::Vertical);
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
-    REQUIRE_NOTHROW(layout.SetSpacing(10000));
-    REQUIRE_NOTHROW(layout.SetPadding(10000));
-    REQUIRE_NOTHROW(layout.SetMargin(10000));
-    REQUIRE_NOTHROW(layout.SetWidth(10000));
-    REQUIRE_NOTHROW(layout.SetHeight(10000));
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.SetSpacing(10000);
+    layout.SetPadding(10000);
+    layout.SetMargin(10000);
+    layout.SetWidth(10000);
+    layout.SetHeight(10000);
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "gap") == "10000px");
+    CHECK(GetCSSProperty(elem, "padding") == "10000px");
+    CHECK(GetCSSProperty(elem, "margin") == "10000px");
+    CHECK(GetCSSProperty(elem, "width") == "10000px");
+    CHECK(GetCSSProperty(elem, "height") == "10000px");
 }
 
 // ---------------------------
 // Tests: State Preservation
 // ---------------------------
 
-TEST_CASE("WebLayout preserves styling through multiple Apply calls", "[weblayout][state]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout preserves styling through multiple Apply calls", "[weblayout][state]") {
     WebLayout layout("state-preservation-test");
+    layout.MountToLayout(root);
+    auto elem = GetElement(layout.Id());
 
     layout.SetBackgroundColor("red");
     layout.SetBorderWidth(3);
     layout.SetPadding(10);
 
-    REQUIRE_NOTHROW(layout.Apply());
-    REQUIRE_NOTHROW(layout.Apply());
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.Apply();
+
+    CHECK(GetCSSProperty(elem, "background-color") == "red");
+    CHECK(GetCSSProperty(elem, "border-width") == "3px");
+    CHECK(GetCSSProperty(elem, "padding") == "10px");
+
+    layout.Apply();
+    layout.Apply();
+
+    CHECK(GetCSSProperty(elem, "background-color") == "red");
+    CHECK(GetCSSProperty(elem, "border-width") == "3px");
+    CHECK(GetCSSProperty(elem, "padding") == "10px");
 
     // Should still be applied
 }
 
-TEST_CASE("WebLayout preserves child order through operations", "[weblayout][state]") {
+TEST_CASE_METHOD(SharedWebContext, "WebLayout preserves child order through operations", "[weblayout][state]") {
     WebLayout layout("child-order-test");
-    MockDomElement elem1("elem-1");
-    MockDomElement elem2("elem-2");
-    MockDomElement elem3("elem-3");
+    layout.MountToLayout(root);
+    MockDomElement elem1("child-order-test-elem-1");
+    MockDomElement elem2("child-order-test-elem-2");
+    MockDomElement elem3("child-order-test-elem-3");
+    elem1.MountToLayout(layout);
+    elem2.MountToLayout(layout);
+    elem3.MountToLayout(layout);
+    auto layout_val = GetElement(layout.Id());
+    auto val_1 = GetElement(elem1.Id());
+    auto val_2 = GetElement(elem2.Id());
+    auto val_3 = GetElement(elem3.Id());
 
-    REQUIRE_NOTHROW(elem1.MountToLayout(layout));
-    REQUIRE_NOTHROW(elem2.MountToLayout(layout));
-    REQUIRE_NOTHROW(elem3.MountToLayout(layout));
 
     layout.Apply();
+
+    auto firstChildId = GetProperty(layout_val, "firstElementChild")["id"].as<string>();
+    auto lastChildId = GetProperty(layout_val, "lastElementChild")["id"].as<string>();
+
     layout.Apply();  // Order should be preserved
+
+    auto appliedFirstChildId = GetProperty(layout_val, "firstElementChild")["id"].as<string>();
+    auto appliedLastChildId = GetProperty(layout_val, "lastElementChild")["id"].as<string>();
+
+    CHECK(appliedFirstChildId == firstChildId);
+    CHECK(appliedLastChildId == lastChildId);
 
     // Now remove middle element
     layout.RemoveElement(&elem2);
-    REQUIRE_NOTHROW(layout.Apply());
+    layout.Apply();
 
-    REQUIRE(elem1.mountCount == 1);
-    REQUIRE(elem2.mountCount == 1);
-    REQUIRE(elem3.mountCount == 1);
-    REQUIRE(elem1.syncCount == 3);
-    REQUIRE(elem2.syncCount == 2);
-    REQUIRE(elem3.syncCount == 3);
-    REQUIRE(elem2.unmountCount == 1);
-}
+    auto removalFirstChildId = GetProperty(layout_val, "firstElementChild")["id"].as<string>();
+    auto removalLastChildId = GetProperty(layout_val, "lastElementChild")["id"].as<string>();
 
-TEST_CASE("WebLayout maintains all layout configurations through operations", "[weblayout][state]") {
-    WebLayout layout("config-preservation-test");
+    CHECK(removalFirstChildId == firstChildId);
+    CHECK(removalLastChildId == lastChildId);
 
-    layout.SetLayoutType(LayoutType::Vertical);
-    layout.SetJustification(Justification::Center);
-    layout.SetAlignItems(Alignment::Stretch);
-    layout.SetSpacing(15);
-
-    MockDomElement elem("elem");
-    REQUIRE_NOTHROW(elem.MountToLayout(layout));
-
-    REQUIRE_NOTHROW(layout.Apply());
-    REQUIRE_NOTHROW(layout.Apply());
-    // Configuration should be preserved
+    CHECK(elem1.mountCount == 1);
+    CHECK(elem2.mountCount == 1);
+    CHECK(elem3.mountCount == 1);
+    CHECK(elem1.syncCount == 3);
+    CHECK(elem2.syncCount == 2);
+    CHECK(elem3.syncCount == 3);
+    CHECK(elem2.unmountCount == 0);
 }
 
 #endif

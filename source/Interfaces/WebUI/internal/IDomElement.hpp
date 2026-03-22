@@ -11,7 +11,10 @@
 
 #pragma once
 
+#include <emscripten/val.h>
 #include <string>
+
+#include "../WebUtils.hpp"
 
 namespace cse498 {
 
@@ -40,8 +43,15 @@ class IDomElement {
   virtual void MountToLayout(WebLayout& parent,
                              Alignment align = Alignment::None) = 0;
 
-  /// Unmounts this element from its current parent layout.
-  virtual void Unmount() = 0;
+  /// @brief Removes this element from its current DOM parent.
+  virtual void Unmount() {
+  if (mElement.isNull()) return;
+
+  if (mParent != nullptr) {
+    mParent->RemoveChild(this);
+    mParent = nullptr;
+  }
+}
 
   /// Synchronizes this element's state with the DOM.
   /// Called when the element model has changed and needs to be reflected in the
@@ -50,7 +60,47 @@ class IDomElement {
 
   /// Returns the unique identifier of this DOM element.
   /// @return Const reference to the element's unique ID string
-  virtual const std::string& Id() const = 0;
+  const std::string& Id() const { return mId; };
+
+  /// @brief Get a reference to DOM Element for this element
+  /// @return a reference to DOM Element for this element
+  emscripten::val GetElement() { return mElement; }
+
+  /// @brief Get a pointer to the parent element of this element
+  /// @return a pointer to the parent element of this element or nullptr if no parent
+  IDomElement * GetParent() { return mParent; }
+
+  /// @brief Set the parent of this element
+  /// @param parent a pointer to the parent element
+  void SetParent(IDomElement * parent) { mParent = parent; }
+
+  /// @brief Remove the specified child element from the DOM.
+  ///        Can be overridden to allow side effects.
+  /// @param element a pointer to the child element to remove
+  virtual void RemoveChild(IDomElement * element) {
+    if (mElement.isNull() && mElement.isUndefined()) {
+      GetConsole().call<void>("warn", "element with Id: " + Id() + " is undefined");
+      return;
+    };
+
+    auto parent = element->GetParent();
+
+    if (!parent) return;
+
+    auto parentElement = parent->GetElement();
+
+    if (parentElement.isNull() || parentElement.isUndefined()) {
+      GetConsole().call<void>("warn", string("parent is not nullptr but parent element is undefined"));
+      return;
+    }
+
+    if (parent->GetElement() != mElement) {
+      GetConsole().call<void>("warn", "element with Id: " + element->Id() + " is not a child of element with Id: " + Id());
+      return;
+    }
+
+    mElement.call<void>("removeChild", element->GetElement());
+  }
 
   // ===== Grid Layout Support =====
 
@@ -96,7 +146,11 @@ class IDomElement {
   /// Clears the free position offsets for this element.
   void ClearFreePosition() { mTop = mLeft = -1; }
 
- private:
+ protected:
+  emscripten::val mElement = emscripten::val::undefined();  ///< HTML element for this dom element
+  IDomElement * mParent = nullptr;                          ///< DOM element for the parent of this element
+  std::string mId{};                                        ///< DOM Id of this element
+
   int mGridRow = -1;  ///< Grid row position (-1 = unset)
   int mGridCol = -1;  ///< Grid column position (-1 = unset)
   int mTop = -1;      ///< Free layout top offset in pixels (-1 = unset)
