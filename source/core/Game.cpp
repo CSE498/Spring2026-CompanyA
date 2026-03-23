@@ -233,6 +233,11 @@ namespace cse498 {
   void Game::UpdateWorld(ImageGrid& grid, int& camX, int& camY) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
 
+    // Only move once every 150ms TODO
+    static Uint32 last_move_time = 0;
+    Uint32 now = SDL_GetTicks();
+    if (now - last_move_time < 150) return;
+
     int tw = static_cast<int>(grid.GetTileWidth());
     int th = static_cast<int>(grid.GetTileHeight());
 
@@ -244,10 +249,13 @@ namespace cse498 {
     int max_cam_x = std::max(0, static_cast<int>(grid.GetWidth())  - tiles_x);
     int max_cam_y = std::max(0, static_cast<int>(grid.GetHeight()) - tiles_y);
 
-    if (keys[SDL_SCANCODE_W]) camY = std::max(0, camY - 1);
-    if (keys[SDL_SCANCODE_S]) camY = std::min(max_cam_y, camY + 1);
-    if (keys[SDL_SCANCODE_A]) camX = std::max(0, camX - 1);
-    if (keys[SDL_SCANCODE_D]) camX = std::min(max_cam_x, camX + 1);
+    bool moved = false;
+    if (keys[SDL_SCANCODE_W]) { camY = std::max(0, camY - 1);          moved = true; }
+    if (keys[SDL_SCANCODE_S]) { camY = std::min(max_cam_y, camY + 1);  moved = true; }
+    if (keys[SDL_SCANCODE_A]) { camX = std::max(0, camX - 1);          moved = true; }
+    if (keys[SDL_SCANCODE_D]) { camX = std::min(max_cam_x, camX + 1);  moved = true; }
+
+    if (moved) last_move_time = now;
   }
 
   void Game::UpdatePaused()   { }
