@@ -31,7 +31,7 @@ using ElementID = std::string;
 /// - Horizontal: Flex row layout
 /// - Vertical: Flex column layout
 /// - Grid: CSS Grid layout
-enum class LayoutType { Free, Horizontal, Vertical, Grid };
+enum class LayoutType { Free, Horizontal, Vertical, Grid, None };
 
 /// Enum defining justification (main axis alignment) for layout items.
 /// - Start: Align items to the start of the main axis
@@ -46,7 +46,8 @@ enum class Justification {
   End,
   SpaceBetween,
   SpaceAround,
-  SpaceEvenly
+  SpaceEvenly,
+  None
 };
 
 /// WebLayout manages a DOM container element and arranges child IDomElements
@@ -174,6 +175,10 @@ class WebLayout : public IDomElement {
   /// Toggles the visibility of this layout.
   void ToggleVisibility() noexcept;
 
+  /// @brief check if the layout is visible
+  /// @return true if visible, false if hidden
+  bool IsVisible() const noexcept { return mIsVisible; }
+
   // ===== DOM Synchronization =====
 
   /// Applies all layout configuration and styling to the DOM.
@@ -199,18 +204,18 @@ class WebLayout : public IDomElement {
   Alignment mAlignItems = Alignment::None;  ///< Cross axis alignment
 
   // ===== Styling Properties =====
-  std::string mBackgroundColor;
-  std::string mBorderColor;
-  int mSpacing = 0;
-  int mBorderWidth = 0;
-  int mBorderRadius = 0;
-  int mPadding = 0;
-  int mMargin = 0;
+  std::string mBackgroundColor{};
+  std::string mBorderColor{};
+  std::optional<int> mSpacing{};
+  std::optional<int> mBorderWidth{};
+  std::optional<int> mBorderRadius{};
+  std::optional<int> mPadding{};
+  std::optional<int> mMargin{};
   std::optional<int> mWidth{};
   std::optional<int> mHeight{};
-  double mOpacity = 1.0;
+  std::optional<double> mOpacity{};
+  std::string mBoxShadow{};
   bool mIsVisible = true;
-  std::string mBoxShadow;
 
   static int mNextIdCounter;  ///< Counter for auto-generated element IDs
 

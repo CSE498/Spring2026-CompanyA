@@ -603,7 +603,10 @@ void WebTextbox::Draw(WebCanvas& canvas)
   if (mText.empty()) {
     return;
   }
-  canvas.DrawText(mCanvasX, mCanvasY, mText, mColor, mFontSizePx);
+  string fontString = mRequestedFontFamily;
+  if (fontString == "") fontString = mFallbackFontFamily;
+  else if (mFallbackFontFamily != "") fontString += ", " + mFallbackFontFamily;
+  canvas.DrawText(mCanvasX, mCanvasY, mText, mColor, mFontSizePx, fontString);
 }
 
 }

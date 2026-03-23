@@ -57,3 +57,24 @@ FILES_generated = *.o $(EXECUTABLES)
 clean:
 	rm -rf $(FILES_backup) $(FILES_generated)
 
+
+EMCC       ?= ../third-party/emsdk/upstream/emscripten/em++
+EM_CXXFLAGS = --bind -std=c++23 -sWASM=1 -sASSERTIONS=1 -sNO_EXIT_RUNTIME=1 -gsource-map
+
+WEB_SRC      = ./Interfaces/WebUI
+WEB_CANVAS_JS  = --js-library ./Interfaces/WebUI/WebCanvas/WebCanvas.js
+
+group18_main:
+	$(EMCC) $(EM_CXXFLAGS) $(WEB_CANVAS_JS) -I./ \
+		$(WEB_SRC)/WebTextbox/WebTextbox.cpp \
+		$(WEB_SRC)/WebLayout/WebLayout.cpp \
+		$(WEB_SRC)/WebImage/WebImage.cpp \
+		$(WEB_SRC)/WebButton/WebButton.cpp \
+		$(WEB_SRC)/WebCanvas/WebCanvas.cpp \
+		$(WEB_SRC)/interface/WebInterface.cpp \
+		$(WEB_SRC)/InputManager.cpp \
+		./Group18_main.cpp \
+		-o ./Group18_main.js
+
+
+

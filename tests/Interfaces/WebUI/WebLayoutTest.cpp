@@ -183,7 +183,8 @@ TEST_CASE_METHOD(SharedWebContext, "WebLayout SetJustification stores multiple v
         Justification::End,
         Justification::SpaceBetween,
         Justification::SpaceAround,
-        Justification::SpaceEvenly
+        Justification::SpaceEvenly,
+        Justification::None
     };
 
     auto getJustifyStr = [](Justification j) -> string {
@@ -200,6 +201,8 @@ TEST_CASE_METHOD(SharedWebContext, "WebLayout SetJustification stores multiple v
         return "space-around";
       case Justification::SpaceEvenly:
         return "space-evenly";
+      case Justification::None:
+        return "";
     }
   };
 
@@ -600,7 +603,7 @@ TEST_CASE_METHOD(SharedWebContext, "WebLayout ToggleVisibility toggles state", "
 
     layout.ToggleVisibility();
     layout.Apply();
-    CHECK(GetCSSProperty(elem, "display") == "");
+    CHECK(GetCSSProperty(elem, "display") == "none");
 
     layout.ToggleVisibility();
     layout.Apply();

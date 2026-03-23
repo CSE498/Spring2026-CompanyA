@@ -2,7 +2,7 @@
 # Use `make help` to see available targets and common workflows.
 
 .PHONY: default all build test clean debug opt quick grumpy \
-        src-% test-% help web_test
+        src-% test-% help web_test group18_main
 
 # ---------- High-level targets ----------
 
@@ -45,6 +45,9 @@ test-%:
 # Build + run WebUI unit tests (requires Emscripten SDK / em++)
 web_test:
 	$(MAKE) -C tests web_test
+
+group18_main:
+	$(MAKE) -C source group18_main
 
 help:
 	@echo ""

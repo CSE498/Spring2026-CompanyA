@@ -100,7 +100,7 @@ mergeInto(LibraryManager.library, {
         ctx.restore();
     },
 
-    webcanvas__fill_text: function (idPtr, x, y, textPtr, colorPtr, fontSize) {
+    webcanvas__fill_text: function (idPtr, x, y, textPtr, colorPtr, fontSize, fontFamily) {
         if (typeof document === "undefined") return;
 
         var id = UTF8ToString(idPtr);
@@ -112,11 +112,18 @@ mergeInto(LibraryManager.library, {
 
         var text = UTF8ToString(textPtr);
         var color = UTF8ToString(colorPtr);
+        var family = UTF8ToString(fontFamily);
+
+        var lines = text.split("\n");
+        var lineY = y;
 
         ctx.save();
         ctx.fillStyle = color;
-        ctx.font = fontSize + "px sans-serif";
-        ctx.fillText(text, x, y);
+        ctx.font = fontSize + "px " + (family !== "" ? family : "sans-serif");
+        lines.forEach(line => {
+          ctx.fillText(line, x, lineY);
+          lineY += fontSize + 2;
+        });
         ctx.restore();
     },
 
@@ -211,6 +218,25 @@ mergeInto(LibraryManager.library, {
         }
 
         ctx.restore();
+    },
+
+    webcanvas__init: function (idPtr) {
+      if (typeof document === "undefined") return;
+
+        var id = UTF8ToString(idPtr);
+        var canvas = document.getElementById(id);
+        if (!canvas) return;
+
+        var rect = canvas.getBoundingClientRect();
+
+        var dpr = window.devicePixelRatio;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+
+        var ctx = canvas.getContext && canvas.getContext("2d");
+        if (!ctx) return;
+
+        ctx.scale(dpr, dpr);
     }
 });
 
@@ -222,3 +248,4 @@ webcanvas__draw_polygon__deps = ['$UTF8ToString'];
 webcanvas__draw_rect__deps = ['$UTF8ToString'];
 webcanvas__fill_text__deps = ['$UTF8ToString'];
 webcanvas__draw_image__deps = ['$UTF8ToString'];
+webcanvas__init__deps = ['$UTF8ToString'];

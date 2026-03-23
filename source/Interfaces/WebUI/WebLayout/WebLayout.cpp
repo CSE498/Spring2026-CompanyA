@@ -26,9 +26,9 @@ int WebLayout::mNextIdCounter = 1;
 /// Helper function to convert a pixel value to a CSS string.
 /// @param v Pixel value (non-negative)
 /// @return CSS string like "10px" or empty string if v < 0
-static std::string px(int v) noexcept {
-  if (v < 0) return std::string();
-  return std::to_string(v) + "px";
+static std::string px(std::optional<int> v) noexcept {
+  if (!v.has_value() || *v < 0) return "";
+  return std::to_string(*v) + "px";
 }
 
 /// @brief Constructs a WebLayout, creating or adopting a root DOM element.
@@ -110,7 +110,7 @@ bool WebLayout::AddElement(IDomElement* elem, Alignment align) noexcept {
 
   // attach now; Apply() will re-check parent when re-applying
   // if element already exists in this layout, this will just move it to the end
-  mElement.call<void>("appendChild", elem->GetElement());
+  mElement.call<void>("appendChild", element);
   elem->SetParent(this);
 
   // if element already exists in this layout, don't add it to mChildren again
@@ -263,19 +263,15 @@ void WebLayout::RemoveChild(IDomElement * element) {
 void WebLayout::ApplyStyling(val style) noexcept {
   style.set("backgroundColor", mBackgroundColor);
   style.set("borderWidth", px(mBorderWidth));
-  style.set("borderStyle", std::string("solid"));
+  style.set("borderStyle", mBorderWidth.has_value() ? "solid" : "");
   style.set("borderColor", mBorderColor);
   style.set("borderRadius", px(mBorderRadius));
   style.set("padding", px(mPadding));
   style.set("margin", px(mMargin));
-  style.set("opacity", mOpacity);
+  style.set("opacity", mOpacity.has_value() ? std::to_string(*mOpacity) : "");
   style.set("boxShadow", mBoxShadow);
-  if (mWidth.has_value()) {
-    style.set("width", px(mWidth.value()));
-  }
-  if (mHeight.has_value()) {
-    style.set("height", px(mHeight.value()));
-  }
+  style.set("width", px(mWidth));
+  style.set("height", px(mHeight));
 }
 
 void WebLayout::ApplyLayout(val style) noexcept {
@@ -294,6 +290,8 @@ void WebLayout::ApplyLayout(val style) noexcept {
         return "space-around";
       case Justification::SpaceEvenly:
         return "space-evenly";
+      case Justification::None:
+        return "";
     }
     assert(false && "Unhandled Justification");
   };
@@ -311,12 +309,15 @@ void WebLayout::ApplyLayout(val style) noexcept {
       case Alignment::Stretch:
         return "stretch";
       case Alignment::None:
-        return "none";
+        return "";
     }
     assert(false && "Unhandled Alignment");
   };
 
   switch (mType) {
+    // leave to default styling
+    case LayoutType::None: return;
+
     case LayoutType::Free:
       style.set("position", std::string("relative"));
       style.set("display",
@@ -382,7 +383,7 @@ void WebLayout::ApplyChildren() noexcept {
           alignStr = "stretch";
           break;
         default:
-          alignStr = "none";
+          alignStr = "";
       }
       est.set("alignSelf", alignStr);
     }
@@ -420,10 +421,12 @@ void WebLayout::ApplyChildren() noexcept {
 /// Calls ApplyStyling(), ApplyLayout(), and ApplyChildren() in order.
 /// No-op when the layout is currently hidden (mIsVisible == false).
 void WebLayout::Apply() noexcept {
-  if (!mIsVisible) return;
   val style = mElement["style"];
   ApplyStyling(style);
   ApplyLayout(style);
+
+  // Do not apply children if this layout is invisible
+  if (!mIsVisible) return;
   ApplyChildren();
 }
 

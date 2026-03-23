@@ -51,6 +51,8 @@ public:
     WebCanvas(WebCanvas&&) noexcept = default;
     WebCanvas& operator=(WebCanvas&&) noexcept = default;
 
+    void SetBackgroundColor(const std::string & color) { mBackgroundColor = color; }
+
     // ---- IDomElement ----
 
     /// @brief Mounts this canvas into the given parent layout.
@@ -142,10 +144,12 @@ public:
     /// @param text     UTF-8 string to render.
     /// @param color    CSS fill color string for the text.
     /// @param fontSize Font size in pixels.
+    /// @param fontFamily Name of font to use
     void DrawText(float x, float y,
                   const std::string& text,
                   const std::string& color,
-                  float fontSize);
+                  float fontSize,
+                  const std::string& fontFamily);
 
     /// @brief Draws an image (by source URL) onto the canvas.
     /// @param imgSrc  URL or asset path of the image to draw.
@@ -159,6 +163,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<ICanvasElement>> mElements;  ///< Owned canvas elements.
+    std::string mBackgroundColor{};
 
     Alignment   mAlign   = Alignment::Start;  ///< Alignment within the parent layout.
     bool        mMounted = false;             ///< Whether this canvas is currently mounted.

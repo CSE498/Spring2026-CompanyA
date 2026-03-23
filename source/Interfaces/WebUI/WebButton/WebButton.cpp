@@ -293,7 +293,7 @@ void WebButton::Draw(WebCanvas& canvas) {
     // Approximate vertical center: baseline ~70% down the rect.
     float tx = mCanvasX + w * 0.5f - static_cast<float>(mLabel.size()) * fontSize * 0.3f;
     float ty = mCanvasY + h * 0.7f;
-    canvas.DrawText(tx, ty, mLabel, textColor, fontSize);
+    canvas.DrawText(tx, ty, mLabel, textColor, fontSize, "");
   }
 }
 

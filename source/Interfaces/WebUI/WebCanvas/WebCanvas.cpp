@@ -37,9 +37,10 @@ extern "C" {
     void webcanvas__draw_rect(const char* id, float x, float y, float w, float h,
                               const char* fillColor);
     void webcanvas__fill_text(const char* id, float x, float y, const char* text,
-                              const char* color, float fontSize);
+                              const char* color, float fontSize, const char* fontFamily);
     void webcanvas__draw_image(const char* id, const char* imgSrc,
                                float x, float y, float w, float h);
+    void webcanvas__init(const char* id);
 }
 #endif
 
@@ -56,8 +57,9 @@ WebCanvas::WebCanvas(const std::string & id)
         mId = "web-canvas";
     }
 #ifdef __EMSCRIPTEN__
-  mElement = GetDocument().call<emscripten::val>("getElementById", mId);
+    mElement = GetDocument().call<emscripten::val>("getElementById", mId);
 #endif
+    webcanvas__init(mId.c_str());
 }
 
 // ---- IDomElement ----
@@ -86,7 +88,8 @@ void WebCanvas::Unmount()
 /// @brief No-op placeholder; canvas state is managed via RenderFrame().
 void WebCanvas::SyncFromModel()
 {
-    // Safe no-op placeholder for now.
+    Clear(mBackgroundColor);
+    RenderFrame();
 }
 
 // ---- Canvas content management ----
@@ -250,12 +253,13 @@ void WebCanvas::DrawRect(float x, float y, float w, float h,
 void WebCanvas::DrawText(float x, float y,
                          const std::string& text,
                          const std::string& color,
-                         float fontSize)
+                         float fontSize,
+                         const std::string& fontFamily)
 {
 #ifdef __EMSCRIPTEN__
-    webcanvas__fill_text(mId.c_str(), x, y, text.c_str(), color.c_str(), fontSize);
+    webcanvas__fill_text(mId.c_str(), x, y, text.c_str(), color.c_str(), fontSize, fontFamily.c_str());
 #else
-    (void)x; (void)y; (void)text; (void)color; (void)fontSize;
+    (void)x; (void)y; (void)text; (void)color; (void)fontSize; (void)fontFamily;
 #endif
 }
 
