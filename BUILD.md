@@ -31,6 +31,14 @@ After building, go to `source` and run:
 ./simple
 ```
 
+## Running the `gameview` Executable
+
+After building, go to `source` and run:
+
+```bash
+./gameview
+```
+
 ## Running Non-Web Tests
 
 After building, go to `tests/build` and run:
