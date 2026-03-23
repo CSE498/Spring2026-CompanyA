@@ -333,3 +333,38 @@ TEST_CASE("ActionLog handles a large number of actions correctly", "[actionlog][
         CHECK(log.GetActionCount() == 0);
     }
 }
+
+TEST_CASE("ActionLog::GetMostActiveEntity returns entity with most actions", "[actionlog][mostactive]")
+{
+    cse498::ActionLog log;
+
+    SECTION("Empty log returns nullopt")
+    {
+        CHECK_FALSE(log.GetMostActiveEntity().has_value());
+    }
+
+    SECTION("Returns the most active entity")
+    {
+        log.UpdateTime(1.0);
+        log.LogAction(1, "move",   {0, 0}, {1, 0});
+        log.LogAction(1, "move",   {1, 0}, {2, 0});
+        log.LogAction(2, "move",   {5, 5}, {6, 5});
+
+        auto result = log.GetMostActiveEntity();
+        REQUIRE(result.has_value());
+        CHECK(*result == 1);
+    }
+}
+
+TEST_CASE("ActionLog::GetActionCountInRange returns correct count", "[actionlog][countrange]")
+{
+    cse498::ActionLog log;
+
+    log.UpdateTime(1.0); log.LogAction(1, "move", {0, 0}, {1, 0});
+    log.UpdateTime(2.0); log.LogAction(1, "move", {1, 0}, {2, 0});
+    log.UpdateTime(3.0); log.LogAction(1, "move", {2, 0}, {3, 0});
+
+    CHECK(log.GetActionCountInRange(1.0, 2.0) == 2);
+    CHECK(log.GetActionCountInRange(1.5, 3.0) == 2);
+    CHECK(log.GetActionCountInRange(5.0, 10.0) == 0);
+}

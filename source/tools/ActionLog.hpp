@@ -66,6 +66,12 @@ public:
     /// Returns the total number of recorded actions.
     int GetActionCount() const;
 
+    /// Returns the ID of the entity with the most logged actions, or nullopt if empty.
+    std::optional<int> GetMostActiveEntity() const;
+
+    /// Returns the number of actions whose timestamps fall within [startTime, endTime].
+    int GetActionCountInRange(double startTime, double endTime) const;
+
     /// Clears all actions and resets sequence counter (CurrentTime is preserved).
     void Clear();
 

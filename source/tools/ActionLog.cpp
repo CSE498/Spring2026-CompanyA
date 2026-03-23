@@ -62,6 +62,30 @@ int ActionLog::GetActionCount() const {
     return static_cast<int>(Actions.size());
 }
 
+std::optional<int> ActionLog::GetMostActiveEntity() const {
+    if (Actions.empty()) {
+        return std::nullopt;
+    }
+
+    std::unordered_map<int, int> counts;
+    std::for_each(Actions.begin(), Actions.end(),
+        [&counts](const Action& a) { ++counts[a.EntityId]; });
+
+    auto maxEntry = std::max_element(counts.begin(), counts.end(),
+        [](const auto& a, const auto& b) { return a.second < b.second; });
+
+    return maxEntry->first;
+}
+
+int ActionLog::GetActionCountInRange(double startTime, double endTime) const {
+    assert(startTime <= endTime && "startTime must be <= endTime");
+
+    return static_cast<int>(std::count_if(Actions.begin(), Actions.end(),
+        [startTime, endTime](const Action& a) {
+            return a.Timestamp >= startTime && a.Timestamp <= endTime;
+        }));
+}
+
 void ActionLog::Clear() {
     Actions.clear();
     NextSequenceNumber = 0;
