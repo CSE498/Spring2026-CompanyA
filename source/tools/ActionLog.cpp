@@ -11,6 +11,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <iterator>
 
 namespace cse498 {
 
@@ -44,21 +45,16 @@ std::vector<Action> ActionLog::GetActionRange(double startTime, double endTime) 
     assert(startTime <= endTime && "startTime must be <= endTime");
 
     std::vector<Action> result;
-    for (const auto& action : Actions) {
-        if (action.Timestamp >= startTime && action.Timestamp <= endTime) {
-            result.push_back(action);
-        }
-    }
+    auto inRange = [startTime, endTime](const Action& a) {
+        return a.Timestamp >= startTime && a.Timestamp <= endTime;
+    };
+    std::copy_if(Actions.begin(), Actions.end(), std::back_inserter(result), inRange);
     return result;
 }
 
 std::vector<Action> ActionLog::GetEntityActions(int entityId) const {
     std::vector<Action> result;
-    for (const auto& action : Actions) {
-        if (action.EntityId == entityId) {
-            result.push_back(action);
-        }
-    }
+    std::copy_if(Actions.begin(), Actions.end(), std::back_inserter(result), [entityId](const Action& a) { return a.EntityId == entityId; });
     return result;
 }
 
@@ -85,12 +81,10 @@ double AgentActionLog::GetStuckAgentRatio(int windowSize) const {
         return 0.0;
     }
 
-    int stuckCount = 0;
-    for (int id : agentIds) {
-        if (IsEntityStuck(*this, id, windowSize)) {
-            ++stuckCount;
-        }
-    }
+    int stuckCount = std::count_if(agentIds.begin(), agentIds.end(),
+    [this, windowSize](int id) {
+        return cse498::IsEntityStuck(*this, id, windowSize);
+    });
 
     return static_cast<double>(stuckCount) / static_cast<double>(agentIds.size());
 }
@@ -110,9 +104,7 @@ std::optional<std::string> UserActionLog::GetMostFrequentActionType() const {
     }
 
     std::unordered_map<std::string, int> counts;
-    for (const auto& action : Actions) {
-        ++counts[action.ActionType];
-    }
+    std::for_each(Actions.begin(), Actions.end(), [&counts](const Action& a) { ++counts[a.ActionType]; });
 
     auto maxEntry = std::max_element(counts.begin(), counts.end(),
         [](const auto& a, const auto& b) { return a.second < b.second; });
@@ -131,12 +123,10 @@ bool IsEntityStuck(const ActionLog& log, int entityId, int windowSize) {
     }
 
     auto begin = entityActions.end() - windowSize;
-    for (auto it = begin; it != entityActions.end(); ++it) {
-        if (it->Position != it->NewPosition) { 
-            return false;
-        }
-    }
-    return true;
+    return std::all_of(begin, entityActions.end(), [](const Action& a) {
+        return a.Position.X() == a.NewPosition.X() &&
+            a.Position.Y() == a.NewPosition.Y();
+    });
 }
 
 bool ExportToCsv(const ActionLog& log, const std::string& filePath) {
@@ -169,7 +159,7 @@ std::string Serialize(const ActionLog& log) {
             << action.Position.X()    << " "
             << action.Position.Y()    << " "
             << action.NewPosition.X() << " "
-            << action.NewPosition.Y() << "\n"
+            << action.NewPosition.Y() << " "
             << action.ActionType      << "\n";
     }
     return oss.str();
@@ -183,6 +173,7 @@ void Deserialize(ActionLog& log, const std::string& data) {
     iss >> count;
 
     for (int i = 0; i < count; ++i) {
+        Action action;
         double px, py, npx, npy;
         if (iss >> action.SequenceNumber
         >> action.EntityId
