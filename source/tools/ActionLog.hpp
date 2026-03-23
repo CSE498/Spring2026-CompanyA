@@ -119,7 +119,9 @@ public:
  * @param windowSize  Number of recent actions to examine (must be > 0)
  * @return true if all recent actions show zero displacement
  */
-bool IsEntityStuck(const ActionLog& log, int entityId, int windowSize = 5);
+bool IsEntityStuck(int entityId, int windowSize = 5) const {
+    return cse498::IsEntityStuck(*this, entityId, windowSize);
+}
 
 /**
  * Exports a log to a CSV file for external analysis.
@@ -133,14 +135,19 @@ bool ExportToCsv(const ActionLog& log, const std::string& filePath);
  * Serializes a log's state to a string for save/resume.
  * @return Newline-delimited representation of all actions
  */
-std::string Serialize(const ActionLog& log);
+std::string Serialize() const {
+    return cse498::Serialize(*this);
+}
+
 
 /**
  * Restores log state previously produced by Serialize().
  * @param log   Log to restore into; replaces any existing content
  * @param data  Serialized string
  */
-void Deserialize(ActionLog& log, const std::string& data);
+void Deserialize(const std::string& data) {
+    cse498::Deserialize(*this, data);
+}
 
 }
 
