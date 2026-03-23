@@ -14,6 +14,7 @@
 #include "../Interfaces/GUI/Text.hpp"
 #include "../Interfaces/GUI/ImageManager.hpp"
 #include "../Interfaces/GUI/ImageGrid.hpp"
+#include "OverWorld.hpp"
 
 namespace cse498 {
 
@@ -43,6 +44,7 @@ namespace cse498 {
     // Overworld
     std::unique_ptr<ImageManager> mImageManager;
     std::unique_ptr<ImageGrid>    mOverworldGrid;
+    std::unique_ptr<OverWorld>    mOverWorld;
     int mCamX = 0; ///< Camera position in tile coordinates
     int mCamY = 0;
 
@@ -74,6 +76,7 @@ namespace cse498 {
     // -- Helpers --
     void SetupMainMenu();
     void SetupPauseMenu();
+    void SetupOverworld();
     void TransitionTo(GameState new_state);
     void Pause();
     void Resume();

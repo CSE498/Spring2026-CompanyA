@@ -29,14 +29,30 @@ namespace cse498 {
     mPauseText.SetSize(48);
     mPauseText.SetBold(true);
 
-    // Set up image manager
+    // Set up image manager and load all tile assets
     mImageManager = std::make_unique<ImageManager>(renderer);
-    mImageManager->LoadImage("grass", "assets/tiles/grass.png");
-    mImageManager->LoadImage("stone", "assets/tiles/stone.png");
 
-    // Set up overworld — 50x50 tile world, rendered at 64x64 per tile
-    mOverworldGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
-    mOverworldGrid->Fill("grass");
+    // Grass variants
+    mImageManager->LoadImage("grass",         "assets/tiles/grass.png");
+    mImageManager->LoadImage("grass_flowers", "assets/tiles/grass_flowers.png");
+    mImageManager->LoadImage("grass_bones",   "assets/tiles/grass_bones.png");
+    mImageManager->LoadImage("grass_mud",     "assets/tiles/grass_mud.png");
+    mImageManager->LoadImage("grass_rock",    "assets/tiles/grass_rock.png");
+
+    // Structure
+    mImageManager->LoadImage("entrance",      "assets/tiles/grass_left_entrance.png");
+
+    // Border walls
+    mImageManager->LoadImage("wall_left",     "assets/tiles/grass_wall_left.png");
+    mImageManager->LoadImage("wall_right",    "assets/tiles/grass_wall_right.png");
+    mImageManager->LoadImage("wall_top",      "assets/tiles/grass_wall_up.png");
+    mImageManager->LoadImage("wall_bottom",   "assets/tiles/grass_wall_bottom.png");
+    mImageManager->LoadImage("wall_corner",   "assets/tiles/grass_wall_up.png");
+
+    // Dungeon
+    mImageManager->LoadImage("stone",         "assets/tiles/stone.png");
+
+    SetupOverworld();
 
     // Set up dungeon world — 50x50 tile world, rendered at 64x64 per tile
     mDungeonGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
@@ -45,6 +61,25 @@ namespace cse498 {
     SetupMainMenu();
     SetupPauseMenu();
     return true;
+  }
+
+  void Game::SetupOverworld() {
+    mOverWorld = std::make_unique<OverWorld>();
+
+    const WorldGrid & grid = mOverWorld->GetGrid();
+    size_t world_w = grid.GetWidth();
+    size_t world_h = grid.GetHeight();
+
+    mOverworldGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+
+    // Map every WorldGrid cell type name to its matching image name
+    for (size_t y = 0; y < world_h; ++y) {
+      for (size_t x = 0; x < world_w; ++x) {
+        WorldPosition pos(x, y);
+        const std::string & cell_name = grid.GetCellTypeName(grid[pos]);
+        mOverworldGrid->SetCell(x, y, cell_name);
+      }
+    }
   }
 
   void Game::SetupMainMenu() {
@@ -136,7 +171,7 @@ namespace cse498 {
       if (event.type == SDL_KEYDOWN) {
         switch (event.key.keysym.sym) {
 
-          // Main menu navigation
+          // Navigation in menus
           case SDLK_UP:
             if (mState == GameState::MAIN_MENU) mMainMenu.select_previous();
             if (mState == GameState::PAUSED)    mPauseMenu.select_previous();
@@ -193,7 +228,7 @@ namespace cse498 {
   void Game::UpdateMainMenu() { }
 
   void Game::UpdateOverworld() { UpdateWorld(*mOverworldGrid, mCamX, mCamY); }
-  void Game::UpdateDungeon()   { UpdateWorld(*mDungeonGrid,  mDungeonCamX, mDungeonCamY); }
+  void Game::UpdateDungeon()   { UpdateWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
 
   void Game::UpdateWorld(ImageGrid& grid, int& camX, int& camY) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
@@ -215,8 +250,7 @@ namespace cse498 {
     if (keys[SDL_SCANCODE_D]) camX = std::min(max_cam_x, camX + 1);
   }
 
-  void Game::UpdatePaused() { }
-
+  void Game::UpdatePaused()   { }
   void Game::UpdateSettings() { }
 
   // -----------------------------------------------------------------------
@@ -240,7 +274,7 @@ namespace cse498 {
   }
 
   void Game::RenderOverworld() { RenderWorld(*mOverworldGrid, mCamX, mCamY); }
-  void Game::RenderDungeon()   { RenderWorld(*mDungeonGrid,  mDungeonCamX, mDungeonCamY); }
+  void Game::RenderDungeon()   { RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
 
   void Game::RenderWorld(ImageGrid& grid, int camX, int camY) {
     grid.DrawViewport(
