@@ -20,17 +20,14 @@ ActionLog::ActionLog()
     : NextSequenceNumber(0), CurrentTime(0.0) {}
 
 void ActionLog::LogAction(int entityId, const std::string& actionType,
-                          double x, double y, double newX, double newY) {
+                          WorldPosition position, WorldPosition newPosition) {
     Action action;
     action.EntityId       = entityId;
     action.ActionType     = actionType;
     action.Timestamp      = CurrentTime;
-    action.X              = x;
-    action.Y              = y;
-    action.NewX           = newX;
-    action.NewY           = newY;
+    action.Position       = position;
+    action.NewPosition    = newPosition;
     action.SequenceNumber = NextSequenceNumber++;
-
     Actions.push_back(action);
 }
 
@@ -135,7 +132,7 @@ bool IsEntityStuck(const ActionLog& log, int entityId, int windowSize) {
 
     auto begin = entityActions.end() - windowSize;
     for (auto it = begin; it != entityActions.end(); ++it) {
-        if (it->X != it->NewX || it->Y != it->NewY) {
+        if (it->Position != it->NewPosition) { 
             return false;
         }
     }
@@ -150,14 +147,14 @@ bool ExportToCsv(const ActionLog& log, const std::string& filePath) {
 
     file << "SequenceNumber,EntityId,ActionType,Timestamp,X,Y,NewX,NewY\n";
     for (const auto& action : log.GetActions()) {
-        file << action.SequenceNumber << ","
-             << action.EntityId       << ","
-             << action.ActionType     << ","
-             << action.Timestamp      << ","
-             << action.X              << ","
-             << action.Y              << ","
-             << action.NewX           << ","
-             << action.NewY           << "\n";
+        file << action.SequenceNumber  << ","
+             << action.EntityId        << ","
+             << action.ActionType      << ","
+             << action.Timestamp       << ","
+             << action.Position.X()    << ","
+             << action.Position.Y()    << ","
+             << action.NewPosition.X() << ","
+             << action.NewPosition.Y() << "\n";
     }
     return true;
 }
@@ -166,14 +163,14 @@ std::string Serialize(const ActionLog& log) {
     std::ostringstream oss;
     oss << log.GetActionCount() << "\n";
     for (const auto& action : log.GetActions()) {
-        oss << action.SequenceNumber << " "
-            << action.EntityId       << " "
-            << action.Timestamp      << " "
-            << action.X              << " "
-            << action.Y              << " "
-            << action.NewX           << " "
-            << action.NewY           << " "
-            << action.ActionType     << "\n";
+        oss << action.SequenceNumber  << " "
+            << action.EntityId        << " "
+            << action.Timestamp       << " "
+            << action.Position.X()    << " "
+            << action.Position.Y()    << " "
+            << action.NewPosition.X() << " "
+            << action.NewPosition.Y() << "\n"
+            << action.ActionType      << "\n";
     }
     return oss.str();
 }
@@ -186,18 +183,16 @@ void Deserialize(ActionLog& log, const std::string& data) {
     iss >> count;
 
     for (int i = 0; i < count; ++i) {
-        Action action;
+        double px, py, npx, npy;
         if (iss >> action.SequenceNumber
-                >> action.EntityId
-                >> action.Timestamp
-                >> action.X
-                >> action.Y
-                >> action.NewX
-                >> action.NewY
-                >> action.ActionType) {
+        >> action.EntityId
+        >> action.Timestamp
+        >> px >> py >> npx >> npy
+        >> action.ActionType) {
+            action.Position    = WorldPosition{px, py};
+            action.NewPosition = WorldPosition{npx, npy};
             log.UpdateTime(action.Timestamp);
-            log.LogAction(action.EntityId, action.ActionType,
-                          action.X, action.Y, action.NewX, action.NewY);
+            log.LogAction(action.EntityId, action.ActionType, action.Position, action.NewPosition);
         }
     }
 }

@@ -16,8 +16,8 @@ static void FillLog(cse498::ActionLog& log, int entityId, int count) {
     for (int i = 0; i < count; ++i) {
         log.UpdateTime(static_cast<double>(i));
         log.LogAction(entityId, "move",
-                      static_cast<double>(i), 0.0,
-                      static_cast<double>(i + 1), 0.0);
+              cse498::WorldPosition{static_cast<double>(i), 0.0},
+              cse498::WorldPosition{static_cast<double>(i + 1), 0.0});
     }
 }
 
@@ -38,10 +38,10 @@ TEST_CASE("ActionLog records actions with correct fields", "[actionlog][log]")
     cse498::ActionLog log;
 
     log.UpdateTime(1.0);
-    log.LogAction(1, "move", 0.0, 0.0, 5.0, 5.0);
+    log.LogAction(1, "move", {0.0, 0.0}, {5.0, 5.0});
 
     log.UpdateTime(2.0);
-    log.LogAction(2, "attack", 1.0, 1.0, 6.0, 6.0);
+    log.LogAction(2, "attack", {1.0, 1.0}, {6.0, 6.0});
 
     REQUIRE(log.GetActionCount() == 2);
 
@@ -49,14 +49,14 @@ TEST_CASE("ActionLog records actions with correct fields", "[actionlog][log]")
 
     SECTION("First action fields are correct")
     {
-        CHECK(actions[0].EntityId       == 1);
-        CHECK(actions[0].ActionType     == "move");
-        CHECK(actions[0].Timestamp      == 1.0);
-        CHECK(actions[0].X              == 0.0);
-        CHECK(actions[0].Y              == 0.0);
-        CHECK(actions[0].NewX           == 5.0);
-        CHECK(actions[0].NewY           == 5.0);
-        CHECK(actions[0].SequenceNumber == 0);
+        CHECK(actions[0].EntityId        == 1);
+        CHECK(actions[0].ActionType      == "move");
+        CHECK(actions[0].Timestamp       == 1.0);
+        CHECK(actions[0].Position.X()    == 0.0);
+        CHECK(actions[0].Position.Y()    == 0.0);
+        CHECK(actions[0].NewPosition.X() == 5.0);
+        CHECK(actions[0].NewPosition.Y() == 5.0);
+        CHECK(actions[0].SequenceNumber  == 0);
     }
 
     SECTION("Second action fields are correct")
@@ -75,9 +75,9 @@ TEST_CASE("ActionLog::GetEntityActions filters by entity ID", "[actionlog][geten
     cse498::ActionLog log;
 
     log.UpdateTime(1.0);
-    log.LogAction(1, "move",   0.0, 0.0, 1.0, 0.0);
-    log.LogAction(2, "move",   5.0, 5.0, 6.0, 5.0);
-    log.LogAction(1, "attack", 1.0, 0.0, 1.0, 0.0);
+    log.LogAction(1, "move",   {0.0, 0.0}, {1.0, 0.0});
+    log.LogAction(2, "move",   {5.0, 5.0}, {6.0, 5.0});
+    log.LogAction(1, "attack", {1.0, 0.0}, {1.0, 0.0});
 
     SECTION("Entity 1 has two actions")
     {
@@ -106,9 +106,9 @@ TEST_CASE("ActionLog::GetActionRange filters by time range", "[actionlog][range]
 {
     cse498::ActionLog log;
 
-    log.UpdateTime(1.0); log.LogAction(1, "move", 0, 0, 1, 0);
-    log.UpdateTime(2.0); log.LogAction(1, "move", 1, 0, 2, 0);
-    log.UpdateTime(3.0); log.LogAction(1, "move", 2, 0, 3, 0);
+    log.UpdateTime(1.0); log.LogAction(1, "move", {0, 0}, {1, 0});
+    log.UpdateTime(2.0); log.LogAction(1, "move", {1, 0}, {2, 0});
+    log.UpdateTime(3.0); log.LogAction(1, "move", {2, 0}, {3, 0});
 
     SECTION("Exact range returns matching actions")
     {
@@ -138,8 +138,8 @@ TEST_CASE("ActionLog::Clear resets action list and sequence counter", "[actionlo
     cse498::ActionLog log;
 
     log.UpdateTime(1.0);
-    log.LogAction(1, "move", 0, 0, 1, 0);
-    log.LogAction(1, "move", 1, 0, 2, 0);
+    log.LogAction(1, "move", {0, 0}, {1, 0});
+    log.LogAction(1, "move", {1, 0}, {2, 0});
     REQUIRE(log.GetActionCount() == 2);
 
     log.Clear();
@@ -147,7 +147,7 @@ TEST_CASE("ActionLog::Clear resets action list and sequence counter", "[actionlo
     CHECK(log.GetActions().empty());
 
     // Sequence numbers should restart from 0 after a clear
-    log.LogAction(1, "move", 0, 0, 1, 0);
+    log.LogAction(1, "move", {0, 0}, {1, 0});
     CHECK(log.GetActions()[0].SequenceNumber == 0);
 }
 
@@ -161,7 +161,7 @@ TEST_CASE("ActionLog::IsEntityStuck detects stationary entities", "[actionlog][s
     {
         for (int i = 0; i < 5; ++i) {
             log.UpdateTime(static_cast<double>(i));
-            log.LogAction(1, "idle", 3.0, 3.0, 3.0, 3.0); // no displacement
+            log.LogAction(1, "idle", {3.0, 3.0}, {3.0, 3.0}); // no displacement
         }
         CHECK(log.IsEntityStuck(1, 5));
     }
@@ -171,8 +171,8 @@ TEST_CASE("ActionLog::IsEntityStuck detects stationary entities", "[actionlog][s
         for (int i = 0; i < 5; ++i) {
             log.UpdateTime(static_cast<double>(i));
             log.LogAction(1, "move",
-                          static_cast<double>(i), 0.0,
-                          static_cast<double>(i + 1), 0.0);
+                        {static_cast<double>(i), 0.0},
+                        {static_cast<double>(i + 1), 0.0});
         }
         CHECK_FALSE(log.IsEntityStuck(1, 5));
     }
@@ -180,7 +180,7 @@ TEST_CASE("ActionLog::IsEntityStuck detects stationary entities", "[actionlog][s
     SECTION("Fewer actions than window size returns false")
     {
         log.UpdateTime(0.0);
-        log.LogAction(1, "idle", 0.0, 0.0, 0.0, 0.0);
+        log.LogAction(1, "idle", {0.0, 0.0}, {0.0, 0.0});
         CHECK_FALSE(log.IsEntityStuck(1, 5));
     }
 
@@ -197,9 +197,9 @@ TEST_CASE("ActionLog serialize and deserialize round-trips correctly", "[actionl
     cse498::ActionLog original;
 
     original.UpdateTime(1.0);
-    original.LogAction(1, "move",   0.0, 0.0, 5.0, 5.0);
+    original.LogAction(1, "move",   {0.0, 0.0}, {5.0, 5.0});
     original.UpdateTime(2.0);
-    original.LogAction(2, "attack", 5.0, 5.0, 5.0, 5.0);
+    original.LogAction(2, "attack", {5.0, 5.0}, {5.0, 5.0});
 
     std::string data = original.Serialize();
 
@@ -225,15 +225,15 @@ TEST_CASE("AgentActionLog::GetStuckAgentRatio reports correct proportion", "[age
     // Agent 1: stationary for 5 actions
     for (int i = 0; i < 5; ++i) {
         log.UpdateTime(static_cast<double>(i));
-        log.LogAction(1, "idle", 2.0, 2.0, 2.0, 2.0);
+        log.LogAction(1, "idle", {2.0, 2.0}, {2.0, 2.0});
     }
 
     // Agent 2: moves each action
     for (int i = 0; i < 5; ++i) {
         log.UpdateTime(static_cast<double>(i));
         log.LogAction(2, "move",
-                      static_cast<double>(i), 0.0,
-                      static_cast<double>(i + 1), 0.0);
+                {static_cast<double>(i), 0.0},
+                {static_cast<double>(i + 1), 0.0});
     }
 
     SECTION("Half the agents are stuck")
@@ -262,8 +262,8 @@ TEST_CASE("UserActionLog::GetLastAction returns the most recent entry", "[userlo
 
     SECTION("Returns the last logged action")
     {
-        log.UpdateTime(1.0); log.LogAction(0, "jump", 0, 0, 0, 1);
-        log.UpdateTime(2.0); log.LogAction(0, "run",  0, 1, 5, 1);
+        log.UpdateTime(1.0); log.LogAction(0, "jump", {0, 0}, {0, 1});
+        log.UpdateTime(2.0); log.LogAction(0, "run",  {0, 1}, {5, 1});
 
         auto last = log.GetLastAction();
         REQUIRE(last.has_value());
@@ -283,10 +283,10 @@ TEST_CASE("UserActionLog::GetMostFrequentActionType identifies dominant action",
 
     SECTION("Returns the most common action type")
     {
-        log.UpdateTime(0.0); log.LogAction(0, "move",  0, 0, 1, 0);
-        log.UpdateTime(1.0); log.LogAction(0, "move",  1, 0, 2, 0);
-        log.UpdateTime(2.0); log.LogAction(0, "jump",  2, 0, 2, 1);
-        log.UpdateTime(3.0); log.LogAction(0, "move",  2, 1, 3, 1);
+        log.UpdateTime(0.0); log.LogAction(0, "move",  {0, 0}, {1, 0});
+        log.UpdateTime(1.0); log.LogAction(0, "move",  {1, 0}, {2, 0});
+        log.UpdateTime(2.0); log.LogAction(0, "jump",  {2, 0}, {2, 1});
+        log.UpdateTime(3.0); log.LogAction(0, "move",  {2, 1}, {3, 1});
 
         auto freq = log.GetMostFrequentActionType();
         REQUIRE(freq.has_value());
