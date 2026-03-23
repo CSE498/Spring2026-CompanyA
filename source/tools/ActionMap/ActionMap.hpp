@@ -4,17 +4,6 @@
  *
  * This class serves as a command registry that maps string action names
  * to callable functions.
- *
- * AI Assistance:
- * Portions of this implementation were developed with assistance from AI tools
- * (ChatGPT) as a brainstorming and learning aid. The assistance was primarily
- * focused on:
- * - Designing the typed action system (supporting functions with arguments
- *   and return values).
- * - Exploring type-erasure patterns using std::any and std::function.
- * - Discussing alternative API designs and improving template structure.
- * All final design decisions, implementation details, and testing
- * were reviewed, modified, and validated by the author (Ty Maksimowski).
  */
 
 #pragma once
@@ -30,12 +19,20 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <expected>
 
 namespace cse498
 {
     class ActionMap
     {
     private:
+
+        enum class InvokeError
+        {
+            WrongArgCount,
+            WrongArgType
+        };
+
         /**
          * Represents a single registered action.
          *
@@ -45,7 +42,7 @@ namespace cse498
         struct ActionEntry
         {
             std::type_index signature{typeid(void)}; // exact std::function signature we registered with
-            std::function<std::any(const std::vector<std::any>&)> invoker; // type-erased call wrapper
+            std::function<std::expected<std::any, InvokeError>(const std::vector<std::any>&)> invoker; // type-erased call wrapper
             std::optional<std::string> description; // optional UI tooltip text
         };
 
@@ -82,6 +79,11 @@ namespace cse498
             return mActions.find(std::string(name));
         }
 
+        template <typename T>
+        static const std::remove_cvref_t<T>* AnyPtr(const std::any& value)
+        {
+            return std::any_cast<std::remove_cvref_t<T>>(&value);
+        }
 
         /**
          * Wrap a typed function (R(Args...)) into a single uniform callable:
@@ -90,15 +92,16 @@ namespace cse498
          * This allows actions with different signatures to be stored in the same map.
          */
         template <typename R, typename... Args>
-        static std::function<std::any(const std::vector<std::any>&)>
+        static std::function<std::expected<std::any, InvokeError>(const std::vector<std::any>&)>
         MakeInvoker(std::function<R(Args...)> func)
         {
-            return [fn = std::move(func)](const std::vector<std::any>& packedArgs) -> std::any
+            return [fn = std::move(func)](const std::vector<std::any>& packedArgs)
+                -> std::expected<std::any, InvokeError>
             {
                 // If argument count doesn't match, treat it as a failure
                 if (packedArgs.size() != sizeof...(Args))
                 {
-                    throw std::bad_any_cast{};
+                    return std::unexpected(InvokeError::WrongArgCount);
                 }
 
                 return InvokeImpl<R, Args...>(fn, packedArgs, std::index_sequence_for<Args...>{});
@@ -106,19 +109,24 @@ namespace cse498
         }
 
         template <typename R, typename... Args, std::size_t... I>
-        static std::any InvokeImpl(const std::function<R(Args...)>& func, const std::vector<std::any>& packedArgs,
-                                   std::index_sequence<I...>)
+        static std::expected<std::any, InvokeError>
+        InvokeImpl(const std::function<R(Args...)>& func,
+                   const std::vector<std::any>& packedArgs,
+                   std::index_sequence<I...>)
         {
+            if ((((AnyPtr<Args>(packedArgs[I])) == nullptr) || ...))
+            {
+                return std::unexpected(InvokeError::WrongArgType);
+            }
+
             if constexpr (std::is_void_v<R>)
             {
-                // Cast each packed arg to its expected type, then call the function.
-                func(std::any_cast<std::remove_cv_t<std::remove_reference_t<Args>>>(packedArgs[I])...);
+                func((*AnyPtr<Args>(packedArgs[I]))...);
                 return std::any{}; // void returns an empty any
             }
             else
             {
-                // Same cast path, but return the actual value back into std::any.
-                R result = func(std::any_cast<std::remove_cv_t<std::remove_reference_t<Args>>>(packedArgs[I])...);
+                R result = func((*AnyPtr<Args>(packedArgs[I]))...);
                 return std::any{std::move(result)};
             }
         }
@@ -329,16 +337,17 @@ namespace cse498
                 return std::nullopt; // not found
             }
 
-            try
+            auto out = it->second.invoker(packedArgs);
+            if (!out)
             {
-                std::any out = it->second.invoker(packedArgs);
-                return std::any_cast<R>(out);
-            }
-            catch (const std::bad_any_cast&)
-            {
-                // Bad arg types or wrong arg count.
                 return std::nullopt;
             }
+
+            if (auto result = std::any_cast<R>(&out.value()))
+            {
+                return *result;
+            }
+            return std::nullopt;
         }
 
         template <typename... Args>
@@ -351,16 +360,7 @@ namespace cse498
             {
                 return false;
             }
-
-            try
-            {
-                (void)it->second.invoker(packedArgs);
-                return true;
-            }
-            catch (const std::bad_any_cast&)
-            {
-                return false;
-            }
+            return it->second.invoker(packedArgs).has_value();
         }
     };
 }
