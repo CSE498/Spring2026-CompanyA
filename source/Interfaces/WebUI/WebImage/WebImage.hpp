@@ -123,9 +123,7 @@ class WebImage : public IDomElement, public ICanvasElement {
   // ----- IDomElement Interface -----
 
   void MountToLayout(WebLayout& parent, Alignment align) override;
-  void Unmount() override;
   void SyncFromModel() override;
-  [[nodiscard]] const std::string& Id() const override;
 
   // ----- ICanvasElement Interface -----
 
@@ -166,8 +164,6 @@ class WebImage : public IDomElement, public ICanvasElement {
   std::string mPlaceholderColor = "#CCCCCC";  ///< Color used for the BlankRect placeholder.
   std::function<void()> mOnLoadCallback;    ///< Callback invoked on successful load.
   std::function<void()> mOnErrorCallback;   ///< Callback invoked on load failure.
-  emscripten::val mElement;                 ///< Underlying HTML \<img\> DOM element.
-  std::string mId;                          ///< Unique DOM id for this image element.
   int mRegistryId = -1;                     ///< Registry id for JS event forwarding.
 
   float mCanvasX = 0.0f;   ///< Canvas draw position x (pixels).

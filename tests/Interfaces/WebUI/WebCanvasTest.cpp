@@ -324,15 +324,15 @@ TEST_CASE("WebCanvas DrawRect is safe to call with various inputs", "[web][canva
 TEST_CASE("WebCanvas DrawText is safe to call with various inputs", "[web][canvas][primitives]") {
     WebCanvas canvas("canvas-test-drawtext");
 
-    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "Hello", "#000000", 16.0f));
+    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "Hello", "#000000", 16.0f, "test"));
     // Empty text
-    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "", "#000000", 16.0f));
+    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "", "#000000", 16.0f, "test"));
     // Zero font size
-    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "test", "#ff0000", 0.0f));
+    REQUIRE_NOTHROW(canvas.DrawText(10, 20, "test", "#ff0000", 0.0f, "test"));
     // Empty color
-    REQUIRE_NOTHROW(canvas.DrawText(0, 0, "x", "", 12.0f));
+    REQUIRE_NOTHROW(canvas.DrawText(0, 0, "x", "", 12.0f, "test"));
     // Large font
-    REQUIRE_NOTHROW(canvas.DrawText(0, 0, "big", "#ffffff", 100.0f));
+    REQUIRE_NOTHROW(canvas.DrawText(0, 0, "big", "#ffffff", 100.0f, "test"));
 }
 
 TEST_CASE("WebCanvas DrawImage is safe to call with various inputs", "[web][canvas][primitives]") {

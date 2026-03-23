@@ -16,6 +16,7 @@
 #include <vector>
 
 #ifdef __EMSCRIPTEN__
+#include "../WebLayout/WebLayout.hpp"
 #include <emscripten.h>
 #endif
 
@@ -36,9 +37,10 @@ extern "C" {
     void webcanvas__draw_rect(const char* id, float x, float y, float w, float h,
                               const char* fillColor);
     void webcanvas__fill_text(const char* id, float x, float y, const char* text,
-                              const char* color, float fontSize);
+                              const char* color, float fontSize, const char* fontFamily);
     void webcanvas__draw_image(const char* id, const char* imgSrc,
                                float x, float y, float w, float h);
+    void webcanvas__init(const char* id);
 }
 #endif
 
@@ -48,12 +50,16 @@ extern "C" {
 
 /// @brief Constructs a WebCanvas with the given canvas element id.
 /// @param id DOM id of the \<canvas\> element; defaults to "web-canvas" if empty.
-WebCanvas::WebCanvas(std::string id)
-  : mId(std::move(id))
+WebCanvas::WebCanvas(const std::string & id)
 {
+    mId = std::move(id);
     if (mId.empty()) {
         mId = "web-canvas";
     }
+#ifdef __EMSCRIPTEN__
+    mElement = GetDocument().call<emscripten::val>("getElementById", mId);
+#endif
+    webcanvas__init(mId.c_str());
 }
 
 // ---- IDomElement ----
@@ -63,7 +69,9 @@ WebCanvas::WebCanvas(std::string id)
 /// @param align  Alignment within the parent.
 void WebCanvas::MountToLayout(WebLayout& parent, Alignment align)
 {
-    mParent  = &parent;
+#ifdef __EMSCRIPTEN__
+    parent.AddElement(this, align);
+#endif
     mAlign   = align;
     mMounted = true;
 }
@@ -71,14 +79,17 @@ void WebCanvas::MountToLayout(WebLayout& parent, Alignment align)
 /// @brief Clears the parent reference and marks this canvas as unmounted.
 void WebCanvas::Unmount()
 {
-    mParent  = nullptr;
+#ifdef __EMSCRIPTEN__
+    IDomElement::Unmount();
+#endif
     mMounted = false;
 }
 
 /// @brief No-op placeholder; canvas state is managed via RenderFrame().
 void WebCanvas::SyncFromModel()
 {
-    // Safe no-op placeholder for now.
+    Clear(mBackgroundColor);
+    RenderFrame();
 }
 
 // ---- Canvas content management ----
@@ -242,12 +253,13 @@ void WebCanvas::DrawRect(float x, float y, float w, float h,
 void WebCanvas::DrawText(float x, float y,
                          const std::string& text,
                          const std::string& color,
-                         float fontSize)
+                         float fontSize,
+                         const std::string& fontFamily)
 {
 #ifdef __EMSCRIPTEN__
-    webcanvas__fill_text(mId.c_str(), x, y, text.c_str(), color.c_str(), fontSize);
+    webcanvas__fill_text(mId.c_str(), x, y, text.c_str(), color.c_str(), fontSize, fontFamily.c_str());
 #else
-    (void)x; (void)y; (void)text; (void)color; (void)fontSize;
+    (void)x; (void)y; (void)text; (void)color; (void)fontSize; (void)fontFamily;
 #endif
 }
 

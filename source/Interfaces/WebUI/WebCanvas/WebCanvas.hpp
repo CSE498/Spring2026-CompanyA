@@ -41,7 +41,7 @@ public:
 
     /// @brief Constructs a WebCanvas associated with the given canvas element id.
     /// @param id DOM id of the \<canvas\> element (default: "web-canvas").
-    explicit WebCanvas(std::string id = "web-canvas");
+    explicit WebCanvas(const std::string & id = "web-canvas");
 
     ~WebCanvas() override = default;
 
@@ -50,6 +50,8 @@ public:
     WebCanvas& operator=(const WebCanvas&) = delete;
     WebCanvas(WebCanvas&&) noexcept = default;
     WebCanvas& operator=(WebCanvas&&) noexcept = default;
+
+    void SetBackgroundColor(const std::string & color) { mBackgroundColor = color; }
 
     // ---- IDomElement ----
 
@@ -63,10 +65,6 @@ public:
 
     /// @brief Synchronizes canvas state with the DOM (currently a no-op).
     void SyncFromModel() override;
-
-    /// @brief Returns the DOM id of the underlying \<canvas\> element.
-    /// @return Const reference to the canvas id string.
-    const std::string& Id() const override { return mId; }
 
     // ---- Canvas content management ----
 
@@ -146,10 +144,12 @@ public:
     /// @param text     UTF-8 string to render.
     /// @param color    CSS fill color string for the text.
     /// @param fontSize Font size in pixels.
+    /// @param fontFamily Name of font to use
     void DrawText(float x, float y,
                   const std::string& text,
                   const std::string& color,
-                  float fontSize);
+                  float fontSize,
+                  const std::string& fontFamily);
 
     /// @brief Draws an image (by source URL) onto the canvas.
     /// @param imgSrc  URL or asset path of the image to draw.
@@ -163,9 +163,8 @@ public:
 
 private:
     std::vector<std::unique_ptr<ICanvasElement>> mElements;  ///< Owned canvas elements.
+    std::string mBackgroundColor{};
 
-    std::string mId;                          ///< DOM id of the underlying \<canvas\> element.
-    WebLayout*  mParent  = nullptr;           ///< Non-owning pointer to the parent layout.
     Alignment   mAlign   = Alignment::Start;  ///< Alignment within the parent layout.
     bool        mMounted = false;             ///< Whether this canvas is currently mounted.
 };

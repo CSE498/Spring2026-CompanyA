@@ -35,8 +35,7 @@ static std::string ToPx(int value) {
 ///        \<body\>, and attaches the JS click listener.
 /// @param label Initial button label text.
 WebButton::WebButton(const std::string& label)
-    : mLabel(label),
-      mElement(val::null()) {
+    : mLabel(label) {
   mId = "webbutton-" + std::to_string(mNextIdCounter++);
 
   val doc = GetDocument();
@@ -45,7 +44,6 @@ WebButton::WebButton(const std::string& label)
   mElement.set("textContent", mLabel);
   mElement["style"].set("boxSizing", std::string("border-box"));
 
-  doc["body"].call<void>("appendChild", mElement);
   AttachClickListener();
 }
 
@@ -65,9 +63,9 @@ WebButton::WebButton(WebButton&& other) noexcept
       mWidth(other.mWidth),
       mHeight(other.mHeight),
       mBgColor(std::move(other.mBgColor)),
-      mTextColor(std::move(other.mTextColor)),
-      mElement(other.mElement),
-      mId(std::move(other.mId)) {
+      mTextColor(std::move(other.mTextColor)) {
+  mId = std::move(other.mId);
+  mElement = std::move(other.mElement);
   other.mElement = val::null();
   other.mIsEnabled = false;
   other.mIsVisible = false;
@@ -226,16 +224,6 @@ void WebButton::MountToLayout(WebLayout& parent, Alignment align) {
   parent.AddElement(this, align);
 }
 
-/// @brief Removes this button from its current DOM parent.
-void WebButton::Unmount() {
-  if (mElement.isNull()) return;
-
-  val parent = mElement["parentNode"];
-  if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", mElement);
-  }
-}
-
 /// @brief Synchronizes the DOM element with the current model state.
 void WebButton::SyncFromModel() {
   if (mElement.isNull()) return;
@@ -255,12 +243,6 @@ void WebButton::SyncFromModel() {
 
   mElement["style"].set("display",
       std::string(mIsVisible ? "" : "none"));
-}
-
-/// @brief Returns the unique DOM id assigned to this button's element.
-/// @return Const reference to the id string.
-const std::string& WebButton::Id() const {
-  return mId;
 }
 
 /// @brief Forwards the JS click event to Click(); called by the C trampoline.
@@ -311,7 +293,7 @@ void WebButton::Draw(WebCanvas& canvas) {
     // Approximate vertical center: baseline ~70% down the rect.
     float tx = mCanvasX + w * 0.5f - static_cast<float>(mLabel.size()) * fontSize * 0.3f;
     float ty = mCanvasY + h * 0.7f;
-    canvas.DrawText(tx, ty, mLabel, textColor, fontSize);
+    canvas.DrawText(tx, ty, mLabel, textColor, fontSize, "");
   }
 }
 

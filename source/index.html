@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebInterface Demo</title>
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: #f0f0f0;
+        }
+        #root {
+          width: 900px;
+          height: 600px;
+          border: 1px solid #ccc;
+          position: relative;
+        }
+        #web-canvas {
+          width: 900px;
+          height: 600px;
+          display: block;
+        }
+        #pause-menu {
+          position: absolute;
+          width: 600px;
+          height: 450px;
+          left: 150px;
+          top: 75px;
+          display: none;
+          border-radius: 20px;
+          background-color: #023c0ccf;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <canvas id="web-canvas"></canvas>
+        <div id="pause-menu"></div>
+    </div>
+    <script src="Group18_main.js"></script>
+</body>
+</html>

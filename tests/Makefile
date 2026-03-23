@@ -104,8 +104,8 @@ clean:
 #   cd build/web_tests && python3 -m http.server 8000
 #   Then visit http://localhost:8000/<TestName>.html
 
-EMCC       ?= em++
-EM_CXXFLAGS = --bind -std=c++23 -s WASM=1 -s ASSERTIONS=1 -DCATCH_CONFIG_MAIN
+EMCC       ?= ../third-party/emsdk/upstream/emscripten/em++
+EM_CXXFLAGS = --bind -std=c++23 -s WASM=1 -s ASSERTIONS=1 -DCATCH_CONFIG_MAIN -gsource-map
 
 WEB_TEST_OUT = $(BUILD_DIR)/web_tests
 WEB_SRC      = $(SRC_DIR)/Interfaces/WebUI
@@ -140,6 +140,7 @@ web_test:
 		-o $(WEB_TEST_OUT)/WebButtonTest.html
 	$(EMCC) $(EM_CXXFLAGS) -I$(SRC_DIR) -I$(CATCH_INC) \
 		$(WEB_TEST)/WebCanvasTest.cpp \
+		$(WEB_SRC)/WebLayout/WebLayout.cpp \
 		$(WEB_CANVAS_CPP) \
 		$(WEB_CANVAS_JS) \
 		-o $(WEB_TEST_OUT)/WebCanvasTest.html

@@ -176,15 +176,8 @@ public:
   /// @param align  Alignment within the parent container.
   void MountToLayout(WebLayout& parent, Alignment align = Alignment::None) override;
 
-  /// @brief Removes this textbox from its current DOM parent.
-  void Unmount() override;
-
   /// @brief Synchronizes the DOM element with the current model state.
   void SyncFromModel() override;
-
-  /// @brief Returns the unique DOM id assigned to this textbox.
-  /// @return Const reference to the id string.
-  const std::string& Id() const override;
 
   // -------- ICanvasElement overrides --------
 
@@ -234,10 +227,6 @@ private:
   // Optional background color; if not set, background is transparent
   std::optional<std::string> mBackgroundColor = std::nullopt;
 
-  // DOM element representing this textbox; null until mounted
-  emscripten::val mElement{emscripten::val::null()};
-
-  std::string mId;                        ///< Unique DOM id for this textbox's root element.
   Alignment mAlign{Alignment::None};      ///< Alignment within parent layout.
 
   float mCanvasX = 0.0f;  ///< Canvas draw position x (pixels).

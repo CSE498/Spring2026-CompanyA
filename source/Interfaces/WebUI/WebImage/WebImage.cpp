@@ -78,18 +78,9 @@ std::string WebImage::ToPx(int value) {
 
 // ----- Private helpers -----
 
-/// Removes the element from its parent DOM node if currently attached.
-void WebImage::RemoveFromDom() {
-  if (mElement.isNull()) return;
-  val parent = mElement["parentNode"];
-  if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", mElement);
-  }
-}
-
 /// Removes element from DOM, deregisters from the event registry, and nulls the element.
 void WebImage::CleanupElement() {
-  RemoveFromDom();
+  Unmount();
   if (mRegistryId >= 0) {
     UnregisterImage(mRegistryId);
     mRegistryId = -1;
@@ -102,8 +93,7 @@ void WebImage::CleanupElement() {
 /// Constructs a WebImage, creates the <img> DOM element, and attaches event listeners.
 WebImage::WebImage(const std::string& src, const std::string& alt_text)
     : mSrc(src),
-      mAltText(alt_text),
-      mElement(val::null()) {
+      mAltText(alt_text) {
   mId = "webimage-" + std::to_string(mNextIdCounter++);
   mRegistryId = RegisterImage(this);
 
@@ -112,7 +102,6 @@ WebImage::WebImage(const std::string& src, const std::string& alt_text)
   mElement.set("id", mId);
   mElement.set("src", mSrc);
   mElement.set("alt", mAltText);
-  doc["body"].call<void>("appendChild", mElement);
 
   AttachListeners();
 }
@@ -136,9 +125,9 @@ WebImage::WebImage(WebImage&& other) noexcept
       mPlaceholderColor(std::move(other.mPlaceholderColor)),
       mOnLoadCallback(std::move(other.mOnLoadCallback)),
       mOnErrorCallback(std::move(other.mOnErrorCallback)),
-      mElement(other.mElement),
-      mId(std::move(other.mId)),
       mRegistryId(other.mRegistryId) {
+  mId = std::move(other.mId);
+  mElement = std::move(other.mElement);
   other.mElement = val::null();
   other.mRegistryId = -1;
   other.mWidth = 0;
@@ -347,11 +336,6 @@ void WebImage::MountToLayout(WebLayout& parent, Alignment align) {
   parent.AddElement(this, align);
 }
 
-/// Removes this image from its parent DOM node.
-void WebImage::Unmount() {
-  RemoveFromDom();
-}
-
 /// Re-applies all tracked properties to the underlying DOM element.
 void WebImage::SyncFromModel() {
   if (mElement.isNull()) return;
@@ -369,11 +353,6 @@ void WebImage::SyncFromModel() {
   mElement["style"].set("opacity", std::to_string(mOpacity));
   mElement["style"].set("display",
       std::string(mIsVisible ? "" : "none"));
-}
-
-/// Returns this element's unique DOM id.
-const std::string& WebImage::Id() const {
-  return mId;
 }
 
 // ----- ICanvasElement Interface -----
