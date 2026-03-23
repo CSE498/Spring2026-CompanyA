@@ -1,29 +1,72 @@
-## Build and Test
+# Build and Test
 
-  ### Build the native program
-  ```bash
-  make
+## Configure and Build
 
-  This builds the default native target.
+From the project root, run:
 
-  ### Run the native test suite
+```bash
+cmake -S . -B build
+````
 
-  make test
+This generates a new `build` folder.
 
-  This builds and runs all native tests.
+Then build the project with either:
 
-  ### Build the WebUI tests
+```bash
+cd build
+make
+```
 
-  make web_test
+or, from the project root:
 
-  This builds the WebUI test artifacts and requires Emscripten (em++) to be installed and active in your environment.
+```bash
+cmake --build build
+```
 
-  ### Build everything
+## Running the `simple` Executable
 
-  make all
+After building, go to `source` and run:
 
-  This builds the native program and runs the native tests.
+```bash
+./simple
+```
 
-  ### Clean build artifacts
+## Running Non-Web Tests
 
-  make clean
+After building, go to `tests/build` and run:
+
+```bash
+./run_tests
+```
+
+## Running Web Tests
+
+### Prerequisites
+
+1. Install and activate the Emscripten SDK:
+
+```bash
+emsdk install latest
+emsdk activate latest
+```
+
+2. Source the environment:
+
+```bash
+source emsdk_env.sh
+```
+
+### Serve the Web Test Files
+
+After building, serve the generated HTML files and open them in a browser:
+
+```bash
+cd tests/build/web_tests
+python3 -m http.server 8000
+```
+
+Then visit:
+
+```text
+http://localhost:8000/<TestName>.html
+```
