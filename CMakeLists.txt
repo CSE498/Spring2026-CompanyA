@@ -56,6 +56,7 @@ function(companya_collect_native_sources out_var)
     file(GLOB_RECURSE native_sources CONFIGURE_DEPENDS "${COMPANYA_SOURCE_DIR}/*.cpp")
     list(FILTER native_sources EXCLUDE REGEX "/Interfaces/WebUI/")
     list(REMOVE_ITEM native_sources "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
+    list(REMOVE_ITEM native_sources "${COMPANYA_SOURCE_DIR}/GameView_main.cpp")
     list(SORT native_sources)
     set(${out_var} "${native_sources}" PARENT_SCOPE)
 endfunction()
@@ -198,6 +199,13 @@ add_executable(simple "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
 target_link_libraries(simple PRIVATE companya_native)
 set_target_properties(simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
+)
+
+add_executable(gameview "${COMPANYA_SOURCE_DIR}/GameView_Main.cpp")
+target_link_libraries(gameview PRIVATE companya_native ${COMPANYA_SDL_LIBRARIES})
+target_include_directories(gameview PRIVATE "${COMPANYA_SDL_INCLUDE_DIR}")  # <-- add this
+set_target_properties(gameview PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
 )
 
 file(GLOB_RECURSE COMPANYA_NATIVE_TEST_FILES CONFIGURE_DEPENDS "${COMPANYA_TEST_DIR}/*.cpp")
