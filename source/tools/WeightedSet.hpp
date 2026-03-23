@@ -11,7 +11,7 @@
 #pragma once
 
 #include <cassert>
-#include <stdexcept>
+#include <expected>
 #include <vector>
 #include <unordered_map>
 
@@ -68,12 +68,12 @@ namespace cse498 {
 		 *
 		 * @throws std::invalid_argument if weight is negative or id already exists.
 		 */
-		void Insert(const T& id, double weight){
+		std::expected<void, std::string> Insert(const T& id, double weight){
 			if (weight < 0.0) {
-				throw std::invalid_argument("cse498::WeightedSet::Insert(): weight must be non-negative");
+				return std::unexpected("cse498::WeightedSet::Insert(): weight must be non-negative");
 			}
 			if (item_idx.contains(id)) {
-				throw std::invalid_argument("cse498::WeightedSet::Insert(): duplicate item");
+				return std::unexpected("cse498::WeightedSet::Insert(): duplicate item");
 			}
 
 			FixTinyNum(weight);
@@ -86,6 +86,8 @@ namespace cse498 {
 			++set_size;
 
 			FixSum(idx, weight);
+
+			return {};
 		}
 
 		/**
@@ -96,13 +98,12 @@ namespace cse498 {
 		 *
 		 * @throws std::invalid_argument if weight is negative or item does not exist.
 		 */
-		void Update(const T& id, double weight) {
+		std::expected<void, std::string> Update(const T& id, double weight) {
 			if (weight < 0.0) {
-				throw std::invalid_argument("cse498::WeightedSet::Update(): weight must be non-negative");
+				return std::unexpected("cse498::WeightedSet::Update(): weight must be non-negative");
 			}
-
 			if (!item_idx.contains(id)) {
-				throw std::invalid_argument("cse498::WeightedSet::Update(): item to update does not exist");
+				return std::unexpected("cse498::WeightedSet::Update(): item to update does not exist");
 			}
 
 			FixTinyNum(weight);
@@ -111,6 +112,8 @@ namespace cse498 {
 			double change = weight - weights[idx];
 			weights[idx] = weight;
 			FixSum(idx, change);
+
+			return {};
 		}
 
 		/**
@@ -128,12 +131,12 @@ namespace cse498 {
 		 * @throws std::runtime_error if the set is empty.
 		 * @throws std::invalid_argument if num is outside the valid range.
 		 */
-		T Sample(double num) const {
+		std::expected<T, std::string> Sample(double num) const {
 			if (sum_tree.empty() || sum_tree[0] <= WEIGHTED_SET_TOL){
-				throw std::runtime_error("cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
+				return std::unexpected("cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
 			}
 			if (num < 0 || num > sum_tree[0] + WEIGHTED_SET_TOL) {
-				throw std::invalid_argument("cse498::WeightedSet::Sample(): Sample number invalid");
+				return std::unexpected("cse498::WeightedSet::Sample(): Sample number invalid");
 			}
 
 			//lower and upper endpoints of the full range of values. Ex; [0.0, 5.1]
