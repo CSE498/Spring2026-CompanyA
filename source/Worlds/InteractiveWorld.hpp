@@ -2,12 +2,16 @@
 
 #include "../core/WorldBase.hpp"
 #include "../core/InteractiveWorld/Building.hpp"
+#include "../Worlds/InteractiveWorldInventory.hpp"
 
 namespace cse498
 {
 	class InteractiveWorld : public WorldBase
 	{
 	protected:
+
+		InteractiveWorldInventory m_inventory;
+
 	    enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
 
 	    size_t floor_id; ///< Easy access to floor CellType ID.
@@ -41,6 +45,10 @@ namespace cse498
 	    }
 
 	    ~InteractiveWorld() = default;
+
+		InteractiveWorldInventory& GetInventory() {
+			return m_inventory;
+		}
 
 	    int DoAction(AgentBase & agent, size_t action_id) override {
 		    // Determine where the agent is trying to move.
