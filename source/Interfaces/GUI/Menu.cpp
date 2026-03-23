@@ -35,10 +35,8 @@ void Menu::add_option(const std::string& label, std::function<void()> callback) 
   }
 
   MenuOption option;
-  option.label = label;
-  option.callback = callback;
 
-  options.push_back(option);
+  options.push_back({label, callback});
 
   // if first option, automatically selected
   if (options.size() == 1) {
@@ -138,12 +136,11 @@ void Menu::select_option(size_t index) {
 /**
  * Executes callback function of the currently selected option
  */
-void Menu::activate_selected() {
-  if (selected_index < 0 || selected_index >= static_cast<int>(options.size())) {
+void Menu::activate_selected() const {
+  if (!selected_index.has_value() || *selected_index >= options.size()) {
     throw std::runtime_error("No option selected");
   }
-
-  options[*selected_index].callback();
+  options.at(*selected_index).callback();
 }
 
 /**
@@ -155,7 +152,7 @@ std::string Menu::get_option_label(size_t index) const {
     throw std::out_of_range("Menu option index out of range");
   }
 
-  return options[index].label;
+  return options.at(index).label;
 }
 
 /**
@@ -198,6 +195,15 @@ void Menu::handle_input(InputCode input_code) {
   }
 }
 
+
+/**
+ * Renders to menu options to the screen at the specified postion
+ * @param renderer SDL_Renderer used to draw the menu
+ * @param x The x coordinate of the top left corner of the menu
+ * @param y The y coordinate of the top left corner of the menu
+ * @param width The width of the menu area (unused for now)
+ * @param height The height of the menu area, calculates spacing between options
+ */
 void Menu::draw(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  width, int height) {
   // Return silently if menu is empty - nothing to draw
   if (is_empty()) {
