@@ -202,4 +202,16 @@ void Deserialize(ActionLog& log, const std::string& data) {
     }
 }
 
+bool ActionLog::IsEntityStuck(int entityId, int windowSize) const {
+    return cse498::IsEntityStuck(*this, entityId, windowSize);
+}
+
+std::string ActionLog::Serialize() const {
+    return cse498::Serialize(*this);
+}
+
+void ActionLog::Deserialize(const std::string& data) {
+    cse498::Deserialize(*this, data);
+}
+
 }
