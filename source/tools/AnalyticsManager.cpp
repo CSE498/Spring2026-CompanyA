@@ -8,6 +8,9 @@ namespace cse498
         mHealthLog.Clear();
         mEnemiesTrackedLog.Clear();
         mDamageDealtLog.Clear();
+
+        mSuccessfulMovesLog.Clear();
+        mBlockedMovesLog.Clear();
     }
 
     void AnalyticsManager::LogHealth(double health)
@@ -38,6 +41,26 @@ namespace cse498
     const DataLog& AnalyticsManager::GetDamageDealtLog() const
     {
         return mDamageDealtLog;
+    }
+
+    void AnalyticsManager::LogSuccessfulMove(double value)
+    {
+        mSuccessfulMovesLog.Add(value);
+    }
+
+    void AnalyticsManager::LogBlockedMove(double value)
+    {
+        mBlockedMovesLog.Add(value);
+    }
+
+    const DataLog& AnalyticsManager::GetSuccessfulMovesLog() const
+    {
+        return mSuccessfulMovesLog;
+    }
+
+    const DataLog& AnalyticsManager::GetBlockedMovesLog() const
+    {
+        return mBlockedMovesLog;
     }
 
 }
