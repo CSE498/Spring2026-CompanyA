@@ -61,7 +61,7 @@ namespace cse498 {
       wall_bottom_id = main_grid.AddCellType("wall_bottom", "Bottom wall.", 'B');
       wall_corner_id = main_grid.AddCellType("wall_corner", "Corner wall.", 'C');
 
-      // layout
+      // layout TODO temp layout
       // Corners:        C
       // Border walls:   U (top), B (bottom), L (left), R (right)
       // Plain grass:    .

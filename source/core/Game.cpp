@@ -281,7 +281,23 @@ namespace cse498 {
     mMainMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
-  void Game::RenderOverworld() { RenderWorld(*mOverworldGrid, mCamX, mCamY); }
+  // Z-layer ordering. Put here for future reference of probable Game draw logic
+  void Game::RenderOverworld() {
+    // Layer 0 — tiles (bottom)
+    RenderWorld(*mOverworldGrid, mCamX, mCamY);
+
+    // Layer 1 — items/objects on the ground
+    // RenderItems();
+
+    // Layer 2 — agents/NPCs
+    // RenderAgents();
+
+    // Layer 3 — player (always on top of world entities)
+    // mPlayer->Draw(...);
+
+    // Layer 4 — UI/HUD (health bar, etc.)
+    // RenderHUD();
+  }
   void Game::RenderDungeon()   { RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
 
   void Game::RenderWorld(ImageGrid& grid, int camX, int camY) {
