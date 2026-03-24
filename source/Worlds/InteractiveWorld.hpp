@@ -2,6 +2,7 @@
 #include "../core/WorldBase.hpp"
 #include "../core/InteractiveWorld/Building.hpp"
 #include "../core/InteractiveWorld/InteractiveWorldInventory.hpp"
+#include "../core/InteractiveWorld/NPC.hpp"
 #include "../core/InteractiveWorld/ResourceProducer.hpp"
 #include <memory>
 #include <vector>
@@ -30,6 +31,7 @@ namespace cse498
 	    }
 
 	private:
+	    std::vector<std::shared_ptr<NPC>> m_npcs{};
 	    std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
 	    /**
 	     * Update world logic
@@ -122,6 +124,15 @@ namespace cse498
 	    void AddProducer(std::shared_ptr<ResourceProducer> producer)
 	    {
 		    m_producers.push_back(producer);
+	    }
+
+	    /**
+	     * Add NPC to the world
+	     * @param npc NPC to add
+	     */
+	    void AddNPC(std::shared_ptr<NPC> npc)
+	    {
+		    m_npcs.push_back(npc);
 	    }
 	};
 };

@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <expected>
+#include <optional>
 #include <string>
 #include <vector>
 

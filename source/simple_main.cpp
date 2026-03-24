@@ -11,6 +11,7 @@
 #include "Worlds/InteractiveWorld.hpp"
 #include "core/InteractiveWorld/InteractiveWorldInventory.hpp"
 #include "core/InteractiveWorld/Building.hpp"
+#include "core/InteractiveWorld/NPC.hpp"
 #include "core/InteractiveWorld/ResourceProducer.hpp"
 
 #include <string>
@@ -34,6 +35,10 @@ int main()
     std::shared_ptr<Building> lumberYard = std::make_shared<Building>("Lumber Yard");
     std::shared_ptr<Building> quarry = std::make_shared<Building>("Quarry");
     std::shared_ptr<Building> mine = std::make_shared<Building>("Ore Mine");
+    // NPCs
+    std::shared_ptr<NPC> lumberjack = std::make_shared<NPC>(lumberYard);
+    std::shared_ptr<NPC> mason = std::make_shared<NPC>(quarry);
+    std::shared_ptr<NPC> miner = std::make_shared<NPC>(mine);
     // Resource Producers
     std::shared_ptr<ResourceProducer> woodProducer =
 	std::make_shared<ResourceProducer>(lumberYard, world->GetInventory(), ItemType::Wood, 15.0);
@@ -47,6 +52,9 @@ int main()
     world->AddProducer(woodProducer);
     world->AddProducer(stoneProducer);
     world->AddProducer(metalProducer);
+    world->AddNPC(lumberjack);
+    world->AddNPC(mason);
+    world->AddNPC(miner);
 
     world->Run();
 }
