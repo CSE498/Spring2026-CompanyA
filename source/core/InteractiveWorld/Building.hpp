@@ -36,6 +36,7 @@ public:
 private:
     std::string m_name{};                      // Name of the building
     int m_level{};                             // The current level of the building
+    float m_rateModifier = 1.0;
     std::vector<BuildingUpgrade> m_upgrades{}; // The upgrade cost per level
 
     /**
@@ -115,6 +116,16 @@ public:
      * @param newName new name of the building
      */
     void SetName(std::string newName) { m_name = newName; }
+    /**
+     * Set the rate modifier
+     * @param rate rate to set to
+     */
+    void SetRateModifier(float rate) { m_rateModifier = rate; }
+    /**
+     * Get the rate modifier
+     * @return rate modifier
+     */
+    float GetRateModifier() { return m_rateModifier; }
     /**
      * Get the name of the building
      * @return name of the building

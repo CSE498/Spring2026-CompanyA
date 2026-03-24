@@ -1,8 +1,12 @@
 #pragma once
-
 #include "../core/WorldBase.hpp"
 #include "../core/InteractiveWorld/Building.hpp"
 #include "../core/InteractiveWorld/InteractiveWorldInventory.hpp"
+#include "../core/InteractiveWorld/ResourceProducer.hpp"
+#include <memory>
+#include <vector>
+#include <iostream>
+
 
 namespace cse498
 {
@@ -23,6 +27,45 @@ namespace cse498
 		    agent.AddAction("down", MOVE_DOWN);
 		    agent.AddAction("left", MOVE_LEFT);
 		    agent.AddAction("right", MOVE_RIGHT);
+	    }
+
+	private:
+	    std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
+	    /**
+	     * Update world logic
+	     */
+	    void UpdateWorld() override
+	    {
+		for (auto producer : m_producers)
+		{
+			producer->Update();
+		}
+
+		PrintInventory();
+	    }
+
+	    // Temporary Debug
+	    std::string ItemTypeToString(const ItemType& itemType)
+	    {
+		    if (itemType == ItemType::Wood)
+			    return "Wood";
+		    else if (itemType == ItemType::Stone)
+			    return "Stone";
+		    else if (itemType == ItemType::Metal)
+			    return "Metal";
+		    return "";
+	    }
+
+	    // Temporary Debug
+	    void PrintInventory()
+	    {
+		    std::string inv{};
+
+		    inv += std::to_string(m_inventory.GetAmount(ItemType::Wood)) + " " + ItemTypeToString(ItemType::Wood) + " | ";
+		    inv += std::to_string(m_inventory.GetAmount(ItemType::Stone)) + " " + ItemTypeToString(ItemType::Stone) + " | ";
+		    inv += std::to_string(m_inventory.GetAmount(ItemType::Metal)) + " " + ItemTypeToString(ItemType::Metal);
+
+		    std::cout << inv << std::endl;
 	    }
 
 	public:
@@ -70,6 +113,15 @@ namespace cse498
 		    agent.SetLocation(new_position);
 
 		    return true;
+	    }
+
+	    /**
+	     * Add producer to the world
+	     * @param producer producer to add
+	     */
+	    void AddProducer(std::shared_ptr<ResourceProducer> producer)
+	    {
+		    m_producers.push_back(producer);
 	    }
 	};
 };

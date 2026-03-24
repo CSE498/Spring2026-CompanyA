@@ -10,12 +10,17 @@
 #include "Worlds/MazeWorld.hpp"
 #include "Worlds/InteractiveWorld.hpp"
 #include "core/InteractiveWorld/InteractiveWorldInventory.hpp"
+#include "core/InteractiveWorld/Building.hpp"
+#include "core/InteractiveWorld/ResourceProducer.hpp"
+
+#include <string>
+
 
 using namespace cse498;
 
 int main()
 {
-    std::shared_ptr<InteractiveWorld> world = std::make_unique<InteractiveWorld>();
+    std::shared_ptr<InteractiveWorld> world = std::make_shared<InteractiveWorld>();
 
     world->GetInventory().AddItem(ItemType::Wood, 10);
     world->GetInventory().AddItem(ItemType::Stone, 5);
@@ -24,6 +29,24 @@ int main()
     world->AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7,7});
     world->AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8,8});
     world->AddAgent<TrashInterface>("Interface").SetSymbol('@').SetLocation(WorldPosition{1,1});
+
+    // Buildings
+    std::shared_ptr<Building> lumberYard = std::make_shared<Building>("Lumber Yard");
+    std::shared_ptr<Building> quarry = std::make_shared<Building>("Quarry");
+    std::shared_ptr<Building> mine = std::make_shared<Building>("Ore Mine");
+    // Resource Producers
+    std::shared_ptr<ResourceProducer> woodProducer =
+	std::make_shared<ResourceProducer>(lumberYard, world->GetInventory(), ItemType::Wood, 15.0);
+
+    std::shared_ptr<ResourceProducer> stoneProducer =
+        std::make_shared<ResourceProducer>(quarry, world->GetInventory(), ItemType::Stone, 10.0);
+
+    std::shared_ptr<ResourceProducer> metalProducer =
+        std::make_shared<ResourceProducer>(mine, world->GetInventory(), ItemType::Metal, 5.0);
+
+    world->AddProducer(woodProducer);
+    world->AddProducer(stoneProducer);
+    world->AddProducer(metalProducer);
 
     world->Run();
 }

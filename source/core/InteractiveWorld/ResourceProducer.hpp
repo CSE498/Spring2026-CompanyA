@@ -4,8 +4,14 @@
 
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
+#include "../../Worlds/InteractiveWorld.hpp"
+#include "InteractiveWorldInventory.hpp"
 
 using namespace cse498;
+
+namespace cse498 {
+	class InteractiveWorld;
+}
 
 /**
  * Produces a single kind of resource over time. Rate of production is modified by a Building object
@@ -16,19 +22,20 @@ public:
 	/**
 	 * Construct the ResourceProducer
 	 * @param buildingPtr pointer to the building modifying the output rate
-	 * @param inv         pointer to the world inventory
+	 * @param inv       pointer to the world
 	 * @param itemType    type of item being produced by this producer
 	 * @param startRate   base rate of production with no upgrades
 	 */
 	ResourceProducer(std::shared_ptr<Building> buildingPtr,
-			 std::shared_ptr<InteractiveWorldInventory> inv,
+			 InteractiveWorldInventory& inv,
 			 ItemType itemType,
 			 float startRate)
+			 : m_inventory(inv)
 	{
 		m_lastTime = std::chrono::steady_clock::now();
 		m_outputType = itemType;
 		m_baseRate = startRate;
-		SetWorldInventory(inv);
+
 		SetBuilding(buildingPtr);
 	}
 	/**
@@ -60,23 +67,21 @@ public:
 	 */
 	void Update()
 	{
-		// Clock current time for delta time
-	        auto now = std::chrono::steady_clock::now();
-	        std::chrono::duration<float> dt = now - m_lastTime;
-	        m_lastTime = now;
-		// Produce items
-	        m_accumulator += m_rate * dt.count();
-		// If there is a whole item in the accumulator then add it to the world inventory
-	        int whole = (int)m_accumulator;
-	        if(whole > 0)
-	        {
-			world->GetInventory().AddItem(m_outputType, whole);
-		        m_accumulator -= whole;
-	        }
+		auto now = std::chrono::steady_clock::now();
+		std::chrono::duration<float> dt = now - m_lastTime;
+		m_lastTime = now;
+
+		m_accumulator += m_rate * dt.count();
+		int whole = static_cast<int>(m_accumulator);
+		if (whole > 0)
+		{
+			m_inventory.AddItem(m_outputType, whole);
+			m_accumulator -= whole;
+		}
 	}
 
 private:
-    std::shared_ptr<InteractiveWorld> m_world;            // World
+    InteractiveWorldInventory& m_inventory;        // World Inventory
     std::shared_ptr<Building> m_building;                 // Building modifying the output rate
     float m_baseRate{};                                   // Base production rate
     float m_rate{};                                       // Current Production Rate
@@ -96,11 +101,11 @@ private:
     }
 
     /**
-     * Set the world inventory
-     * @param inv pointer to world inventory
+     * Set the world
+     * @param world pointer to world
      */
-    void SetWorld(std::shared_ptr<InteractiveWorld> world)
+    void SetWorldInventory(InteractiveWorldInventory& inv)
     {
-	    m_world = world;
+	    m_inventory = inv;
     }
 };
