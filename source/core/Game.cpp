@@ -5,7 +5,9 @@
 
 #include "Game.hpp"
 #include <SDL2/SDL.h>
-
+#include <filesystem>
+#include <iostream>
+#include <algorithm>
 namespace cse498 {
 
   // -----------------------------------------------------------------------
@@ -36,30 +38,32 @@ namespace cse498 {
     mImageManager = std::make_unique<ImageManager>(renderer);
 
     // Grass variants
-    mImageManager->LoadImage("grass",         "assets/tiles/grass.png");
-    mImageManager->LoadImage("grass_flowers", "assets/tiles/grass_flowers.png");
-    mImageManager->LoadImage("grass_bones",   "assets/tiles/grass_bones.png");
-    mImageManager->LoadImage("grass_mud",     "assets/tiles/grass_mud.png");
-    mImageManager->LoadImage("grass_rock",    "assets/tiles/grass_rock.png");
+    mImageManager->LoadImage("grass",         "source/assets/tiles/grass.png");
+    mImageManager->LoadImage("grass_flowers", "source/assets/tiles/grass_flowers.png");
+    mImageManager->LoadImage("grass_bones",   "source/assets/tiles/grass_bones.png");
+    mImageManager->LoadImage("grass_mud",     "source/assets/tiles/grass_mud.png");
+    mImageManager->LoadImage("grass_rock",    "source/assets/tiles/grass_rock.png");
 
     // Structure
-    mImageManager->LoadImage("entrance",      "assets/tiles/grass_left_entrance.png");
+    mImageManager->LoadImage("entrance",      "source/assets/tiles/grass_left_entrance.png");
 
     // Border walls
-    mImageManager->LoadImage("wall_left",     "assets/tiles/grass_wall_left.png");
-    mImageManager->LoadImage("wall_right",    "assets/tiles/grass_wall_right.png");
-    mImageManager->LoadImage("wall_top",      "assets/tiles/grass_wall_up.png");
-    mImageManager->LoadImage("wall_bottom",   "assets/tiles/grass_wall_bottom.png");
-    mImageManager->LoadImage("wall_corner",   "assets/tiles/grass_wall_up.png");
+    mImageManager->LoadImage("wall_left",     "source/assets/tiles/grass_wall_left.png");
+    mImageManager->LoadImage("wall_right",    "source/assets/tiles/grass_wall_right.png");
+    mImageManager->LoadImage("wall_top",      "source/assets/tiles/grass_wall_up.png");
+    mImageManager->LoadImage("wall_bottom",   "source/assets/tiles/grass_wall_bottom.png");
+    mImageManager->LoadImage("wall_corner",   "source/assets/tiles/grass_wall_up.png");
 
     // Mobs
-    mImageManager->LoadImage("skeleton", "Assets/Mobs/skeleton.png");
+    mImageManager->LoadImage("skeleton", "source/assets/Mobs/skeleton.png");
 
     // Dungeon tile images
-    mImageManager->LoadImage("wall",  "assets/tiles/grass.png");
-    mImageManager->LoadImage("floor", "assets/tiles/stone.png");
-    mImageManager->LoadImage("dot",   "assets/tiles/stone.png");
-
+    mImageManager->LoadImage("wall",  "source/assets/tiles/grass.png");
+    mImageManager->LoadImage("floor", "source/assets/tiles/stone.png");
+    mImageManager->LoadImage("dot",   "source/assets/tiles/stone.png");
+    
+    // Player
+    mImageManager->LoadImage("player", "source/assets/player/player.png");
 
     // World Setups
     SetupOverworld();
@@ -280,7 +284,7 @@ namespace cse498 {
       mTurnTaken = false;
     }
   }
-  void Game::UpdateDungeon()   { UpdateWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
+  void Game::UpdateDungeon() { }
 
   void Game::UpdateWorld(ImageGrid& grid, int& camX, int& camY) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
@@ -318,7 +322,7 @@ namespace cse498 {
   // -----------------------------------------------------------------------
 
   void Game::RenderMainMenu() {
-    SDL_Renderer* renderer = mGameView->GetRenderer();
+
     int w = mGameView->GetWidth();
     int h = mGameView->GetHeight();
 
@@ -330,6 +334,7 @@ namespace cse498 {
     int title_x = (w - mTitleText.GetWidth()) / 2;
     mTitleText.Draw(title_x, menu_y - 80);
 
+    SDL_Renderer* renderer = mGameView->GetRenderer();
     mMainMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
@@ -355,13 +360,34 @@ namespace cse498 {
       mImageManager->DrawImage(mOverWorld->GetAgentSpriteName(), screen_x, screen_y, tw, th);
     }
 
-    // Layer 3 — player (always on top of world entities)
-    // mPlayer->Draw(...);
+    // Layer 3 — dummy player
+
+    int player_screen_x = (mPlayerX - mCamX) * tw;
+    int player_screen_y = (mPlayerY - mCamY) * th;
+
+    mImageManager->DrawImage(
+        "player",
+        player_screen_x,
+        player_screen_y,
+        tw,
+        th
+    );
 
     // Layer 4 — UI/HUD (health bar, etc.)
     // RenderHUD();
   }
-  void Game::RenderDungeon()   { RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
+
+  void Game::RenderDungeon() {
+    RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY);
+
+    int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+    int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+    
+    int player_screen_x = (mDungeonPlayerX - mDungeonCamX) * tw;
+    int player_screen_y = (mDungeonPlayerY - mDungeonCamY) * th;
+
+    mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
+}
 
   void Game::RenderWorld(ImageGrid& grid, int camX, int camY) {
     grid.DrawViewport(
@@ -401,21 +427,54 @@ namespace cse498 {
   }
 
   void Game::ProcessPlayerMove(SDL_Keycode key) {
-    int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
-    int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+    if (mState == GameState::OVERWORLD) {
+      int max_x = static_cast<int>(mOverworldGrid->GetWidth()) - 1;
+      int max_y = static_cast<int>(mOverworldGrid->GetHeight()) - 1;
 
-    int tiles_x = mGameView->GetWidth()  / tw;
-    int tiles_y = mGameView->GetHeight() / th;
+      switch (key) {
+        case SDLK_w: mPlayerY = std::max(0, mPlayerY - 1); break;
+        case SDLK_s: mPlayerY = std::min(max_y, mPlayerY + 1); break;
+        case SDLK_a: mPlayerX = std::max(0, mPlayerX - 1); break;
+        case SDLK_d: mPlayerX = std::min(max_x, mPlayerX + 1); break;
+        default: break;
+      }
 
-    int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth())  - tiles_x);
-    int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
+      int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+      int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
-    switch (key) {
-    case SDLK_w: mCamY = std::max(0, mCamY - 1);          break;
-    case SDLK_s: mCamY = std::min(max_cam_y, mCamY + 1);  break;
-    case SDLK_a: mCamX = std::max(0, mCamX - 1);          break;
-    case SDLK_d: mCamX = std::min(max_cam_x, mCamX + 1);  break;
-    default: break;
+      int tiles_x = mGameView->GetWidth() / tw;
+      int tiles_y = mGameView->GetHeight() / th;
+
+      int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - tiles_x);
+      int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
+
+      mCamX = std::clamp(mPlayerX - tiles_x / 2, 0, max_cam_x);
+      mCamY = std::clamp(mPlayerY - tiles_y / 2, 0, max_cam_y);
+    }
+
+    else if (mState == GameState::DUNGEON) {
+      int max_x = static_cast<int>(mDungeonGrid->GetWidth()) - 1;
+      int max_y = static_cast<int>(mDungeonGrid->GetHeight()) - 1;
+
+      switch (key) {
+        case SDLK_w: mDungeonPlayerY = std::max(0, mDungeonPlayerY - 1); break;
+        case SDLK_s: mDungeonPlayerY = std::min(max_y, mDungeonPlayerY + 1); break;
+        case SDLK_a: mDungeonPlayerX = std::max(0, mDungeonPlayerX - 1); break;
+        case SDLK_d: mDungeonPlayerX = std::min(max_x, mDungeonPlayerX + 1); break;
+        default: break;
+      }
+
+      int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+      int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+
+      int tiles_x = mGameView->GetWidth() / tw;
+      int tiles_y = mGameView->GetHeight() / th;
+
+      int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - tiles_x);
+      int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - tiles_y);
+
+      mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
+      mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
     }
 
     mTurnTaken = true;

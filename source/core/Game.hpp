@@ -49,12 +49,16 @@ namespace cse498 {
     std::unique_ptr<DungeonWorld> mDungeonWorld;
     int mCamX = 0; ///< Camera position in tile coordinates
     int mCamY = 0;
+    int mPlayerX = 1; ///< Dummy player position in overworld tile coordinates
+    int mPlayerY = 1;
 
     // Dungeon
     std::unique_ptr<ImageGrid> mDungeonGrid;
     int mDungeonCamX = 0; ///< Dungeon camera position in tile coordinates
     int mDungeonCamY = 0;
-
+    int mDungeonPlayerX = 1; ///< Dummy player position in dungeon tile coordinates
+    int mDungeonPlayerY = 1;
+    
     bool mRunning = false;
     bool mTurnTaken = false; ///< Set to true when player takes an action, consumed by UpdateOverworld
 
