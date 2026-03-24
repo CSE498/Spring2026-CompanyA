@@ -2,7 +2,7 @@
 
 #include "../core/WorldBase.hpp"
 #include "../core/InteractiveWorld/Building.hpp"
-#include "../Worlds/InteractiveWorldInventory.hpp"
+#include "../core/InteractiveWorld/InteractiveWorldInventory.hpp"
 
 namespace cse498
 {

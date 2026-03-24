@@ -2,7 +2,7 @@
 
 #include <map>
 #include <cassert>
-#include "../core/InteractiveWorld/Building.hpp"
+#include "Building.hpp"
 
 
 namespace cse498 {
