@@ -74,15 +74,13 @@ TEST_CASE("Test Insert", "[core]"){
 		cse498::WeightedSet<std::string> wSet;
 		MakeSmallTree(wSet);
 		
-		REQUIRE_THROWS_AS (
-        wSet.Insert("E", -3.5),
-        std::invalid_argument
-   		);
+		auto result = wSet.Insert("E", -3.5);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Insert(): weight must be non-negative");
 
-		REQUIRE_THROWS_AS (
-        wSet.Insert("A", 5.0),
-        std::invalid_argument
-   		);
+		result = wSet.Insert("A", 5.0);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Insert(): duplicate item");
 	}
 }
 
@@ -165,16 +163,14 @@ TEST_CASE("Test Update", "[core]"){
 	SECTION ("Bad Updates") {
 		cse498::WeightedSet<std::string> wSet;
 		MakeSmallTree(wSet);
-		
-		REQUIRE_THROWS_AS (
-        wSet.Update("A", -3.5),
-        std::invalid_argument
-   		);
 
-		REQUIRE_THROWS_AS (
-        wSet.Update("E", 5.0),
-        std::invalid_argument
-   		);
+		auto result = wSet.Update("A", -3.5);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Update(): weight must be non-negative");
+
+		result = wSet.Update("E", 5.0);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Update(): item to update does not exist");
 	}
 }
 
@@ -249,15 +245,13 @@ TEST_CASE("Test Sample", "[core]"){
 		cse498::WeightedSet<std::string> wSet;
 		MakeSmallTree(wSet);
 
-		REQUIRE_THROWS_AS (
-        wSet.Sample(-7.0),
-        std::invalid_argument
-   		);
+		auto result = wSet.Sample(-7.0);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Sample number invalid");
 
-		REQUIRE_THROWS_AS (
-        wSet.Sample(20.0),
-        std::invalid_argument
-   		);
+		result = wSet.Sample(20.0);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Sample number invalid");
 
 		//leftmost leaf
 		wSet.Update("D", 0.0);
@@ -279,10 +273,9 @@ TEST_CASE("Test Sample", "[core]"){
 
 		//All 0
 		wSet.Update("C", 0.0);
-		REQUIRE_THROWS_AS (
-        wSet.Sample(0.0),
-        std::runtime_error
-   		);
+		result = wSet.Sample(0.0);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
 
 		wSet.Update("D", 7.0);
 		wSet.Update("B", 3.0);
@@ -293,20 +286,18 @@ TEST_CASE("Test Sample", "[core]"){
 		CHECK(wSet.Sample(7.0) == "D");
 		CHECK(wSet.Sample(7.0 + 3.0) == "B");
 		CHECK(wSet.Sample(7.0 + 2.0 + 3.0) == "A");
-		REQUIRE_THROWS_AS (
-        wSet.Sample(7.0 + 2.0 + 3.0 + 5.0),
-        std::invalid_argument
-   		);
+		result = wSet.Sample(7.0 + 2.0 + 3.0 + 5.0);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Sample number invalid");
 
 		//Right side + root
 		wSet.Update("A", 0.0);
 		CHECK(wSet.Sample(0.0) == "D");
 		CHECK(wSet.Sample(7.0) == "D");
 		CHECK(wSet.Sample(7.0 + 3.0) == "B");
-		REQUIRE_THROWS_AS (
-        wSet.Sample(7.0 + 2.0 + 3.0),
-        std::invalid_argument
-   		);
+		result = wSet.Sample(7.0 + 2.0 + 3.0);
+		REQUIRE_FALSE(result.has_value());
+		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Sample number invalid");
 	}
 
 	SECTION("Weight Zero In Larger Tree"){
@@ -376,46 +367,3 @@ TEST_CASE("Test Sample", "[core]"){
 		CHECK(wSet.Sample(65.5) == 1);
 	}
 }
-
-// TEST_CASE("Sample is O(log n)", "[core]")
-// {
-//     constexpr int N = 1000; //Reapeats
-
-//     // Smaller tree
-//     cse498::WeightedSet<int> small;
-//     MakeSetSizeTree(small, 100000); // 100k items
-
-//     double total_small = small.GetItemSum(1);
-//     std::mt19937_64 rng1(42);
-//     std::uniform_real_distribution<double> dist_small(0.0, total_small);
-
-//     auto start1 = std::chrono::high_resolution_clock::now();
-//     for (int i = 0; i < N; i++) {
-//         small.Sample(dist_small(rng1));
-//     }
-//     auto end1 = std::chrono::high_resolution_clock::now();
-//     double t_small =
-//         std::chrono::duration<double, std::milli>(end1 - start1).count();
-
-//     // Double sized tree 
-//     cse498::WeightedSet<int> large;
-//     MakeSetSizeTree(large, 200000); //200k items
-
-//     double total_large = large.GetItemSum(1);
-//     std::mt19937_64 rng2(42);
-//     std::uniform_real_distribution<double> dist_large(0.0, total_large);
-
-//     auto start2 = std::chrono::high_resolution_clock::now();
-//     for (int i = 0; i < N; i++) {
-//         large.Sample(dist_large(rng2));
-//     }
-//     auto end2 = std::chrono::high_resolution_clock::now();
-//     double t_large =
-//         std::chrono::duration<double, std::milli>(end2 - start2).count();
-
-//     double ratio = t_large / t_small;
-
-//     // 1 + (Log 2 / log n) ~ 1.06 (Base 2)
-//     // If linear then ratio would be about 2
-// 	CHECK(ratio < 1.5);  //Account for some noise
-// }

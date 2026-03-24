@@ -1,5 +1,0 @@
----
-triple:          'arm64-apple-darwin'
-binary-path:     '.libs/libSDL2_ttf-2.0.0.dylib'
-relocations:     []
-...

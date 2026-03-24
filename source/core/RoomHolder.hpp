@@ -10,11 +10,11 @@
 
  #include <vector>
  #include <string>
- #include <stdexcept>
  #include <cmath>
  #include <fstream>
  #include <iostream>
  #include <cassert>
+ #include <iostream>
  #include "../tools/Random.hpp"
 #include "../tools/WeightedSet.hpp"
 
@@ -70,15 +70,19 @@ namespace cse498 {
 
             auto width_midpoint = std::ceil(GetRoomWidth() / 2);
             auto height_midpoint = std::ceil(GetRoomHeight() / 2);
-            
 
             return std::make_pair(width_midpoint, height_midpoint);
         }
 
         [[nodiscard]] std::string GenerateFilePath() { 
 			auto room_select = mRng.GetValue(0.0, mRoomPool.GetTotalWeight());
-			std::string file_path = mRoomPool.Sample(room_select);
+			
+			auto sample_result = mRoomPool.Sample(room_select);
+			assert(sample_result.has_value());
+
+			std::string file_path = sample_result.value();
             assert(file_path != "");
+
             return file_path;
         }
 
