@@ -1,20 +1,20 @@
 /**
- * @file Stopwatch.cpp
+ * @file Timer.cpp
  * @author Nathan Charters
  */
 
-#include "Stopwatch.hpp"
+#include "Timer.hpp"
 
 // The elapsed time is calculated internally in nanoseconds.
 // This variable allows for simple conversion in methods that return a value in seconds.
 constexpr double NS_TO_S_CONVERSION = 1000000000.0;
 
 /**
- * Stopwatch constructor.
- * @param name The name of the Stopwatch.
- * @param startRunning Whether the Stopwatch should start running. Defaults to true.
+ * Timer constructor.
+ * @param name The name of the Timer.
+ * @param startRunning Whether the Timer should start running. Defaults to true.
  */
-cse498::Stopwatch::Stopwatch(std::string name, bool startRunning)
+cse498::Timer::Timer(std::string name, bool startRunning)
 {
     mName = name;
     mRunning = startRunning;
@@ -23,10 +23,10 @@ cse498::Stopwatch::Stopwatch(std::string name, bool startRunning)
 }
 
 /**
- * Start the Stopwatch.
- * If the Stopwatch is already running, it won't do anything.
+ * Start the Timer.
+ * If the Timer is already running, it won't do anything.
  */
-void cse498::Stopwatch::start()
+void cse498::Timer::start()
 {
     if (!mRunning)
     {
@@ -37,10 +37,10 @@ void cse498::Stopwatch::start()
 }
 
 /**
- * Stop the Stopwatch and update the elapsed time and current lap time.
- * If the Stopwatch is already stopped, it won't do anything.
+ * Stop the Timer and update the elapsed time and current lap time.
+ * If the Timer is already stopped, it won't do anything.
  */
-void cse498::Stopwatch::stop()
+void cse498::Timer::stop()
 {
     if (mRunning)
     {
@@ -51,9 +51,9 @@ void cse498::Stopwatch::stop()
 }
 
 /**
- * Reset the Stopwatch, turning it off, setting its elapsed time back to 0, and resetting the laps.
+ * Reset the Timer, turning it off, setting its elapsed time back to 0, and resetting the laps.
  */
-void cse498::Stopwatch::reset()
+void cse498::Timer::reset()
 {
     mRunning = false;
     mElapsed = std::chrono::duration<double>::zero();
@@ -62,10 +62,10 @@ void cse498::Stopwatch::reset()
 }
 
 /**
- * Restart the Stopwatch, resetting its elapsed time back to 0 and resetting the laps,
+ * Restart the Timer, resetting its elapsed time back to 0 and resetting the laps,
  * but starting it up immediately.
  */
-void cse498::Stopwatch::restart()
+void cse498::Timer::restart()
 {
     mElapsed = std::chrono::duration<double>::zero();
     mLaps.clear();
@@ -76,9 +76,9 @@ void cse498::Stopwatch::restart()
 }
 
 /**
- * Lap the Stopwatch, stopping the previous lap and immediately starting a new one.
+ * Lap the Timer, stopping the previous lap and immediately starting a new one.
  */
-void cse498::Stopwatch::lap()
+void cse498::Timer::lap()
 {
     mLaps.at(mLaps.size() - 1) += (std::chrono::steady_clock::now() - mLapStart).count() / NS_TO_S_CONVERSION;
     mLaps.push_back(0.0);
@@ -86,10 +86,10 @@ void cse498::Stopwatch::lap()
 }
 
 /**
- * Gets and calculates the total time (in seconds) that the Stopwatch has run for.
- * @return Total run time of Stopwatch (seconds).
+ * Gets and calculates the total time (in seconds) that the Timer has run for.
+ * @return Total run time of Timer (seconds).
  */
-double cse498::Stopwatch::elapsed() const
+double cse498::Timer::elapsed() const
 {
     if (mRunning)
     {
@@ -100,20 +100,20 @@ double cse498::Stopwatch::elapsed() const
 }
 
 /**
- * Checks whether the Stopwatch is currently running.
- * @return Whether the Stopwatch is running or not.
+ * Checks whether the Timer is currently running.
+ * @return Whether the Timer is running or not.
  */
-bool cse498::Stopwatch::isRunning() const
+bool cse498::Timer::isRunning() const
 {
     return mRunning;
 }
 
 /**
- * Returns the vector containing the lap times for the Stopwatch.
- * If the Stopwatch is running, add the elapsed time into the current lap time to get an accurate lap time,
+ * Returns the vector containing the lap times for the Timer.
+ * If the Timer is running, add the elapsed time into the current lap time to get an accurate lap time,
  * and adjust the starting point as necessary for future calculations.
  */
-std::vector<double> cse498::Stopwatch::getLaps()
+std::vector<double> cse498::Timer::getLaps()
 {
     if (mRunning)
     {
@@ -128,7 +128,7 @@ std::vector<double> cse498::Stopwatch::getLaps()
  * This method should only be used for testing purposes, and has no use outside of making sure elapsed() works properly.
  * @param seconds The amount of time to advance by.
  */
-void cse498::Stopwatch::advanceTime(double seconds)
+void cse498::Timer::advanceTime(double seconds)
 {
     if (mRunning)
     {

@@ -1,12 +1,12 @@
 /**
- * @file Stopwatch.hpp
+ * @file Timer.hpp
  * @author Nathan Charters
  *
- * A class representing a Stopwatch object.
+ * A class representing a Timer object.
  */
 
-#ifndef STOPWATCH_H
-#define STOPWATCH_H
+#ifndef TIMER_H
+#define TIMER_H
 
 #include <chrono>
 #include <string>
@@ -15,14 +15,14 @@
 namespace cse498
 {
     /**
-     * A class representing a Stopwatch object.
+     * A class representing a Timer object.
      *
-     * A Stopwatch keeps track of a single timing instance, and can be started, stopped, reset, and restarted.
+     * A Timer keeps track of a single timing instance, and can be started, stopped, reset, and restarted.
      */
-    class Stopwatch
+    class Timer
     {
     public:
-        Stopwatch(std::string name, bool startRunning = true);
+        Timer(std::string name, bool startRunning = true);
 
         void start();
         void stop();
@@ -38,16 +38,16 @@ namespace cse498
         void advanceTime(double seconds);
 
     private:
-        // The name of the Stopwatch.
+        // The name of the Timer.
         std::string mName;
 
-        // The starting time point of the Stopwatch.
+        // The starting time point of the Timer.
         std::chrono::time_point<std::chrono::steady_clock> mStart;
 
-        // The total elapsed time of the Stopwatch. Initialized to 0.
+        // The total elapsed time of the Timer. Initialized to 0.
         std::chrono::duration<double, std::nano> mElapsed{std::chrono::duration<double>::zero()};
 
-        // A boolean representing whether the Stopwatch is running or not.
+        // A boolean representing whether the Timer is running or not.
         bool mRunning;
 
         // The starting time point of the current lap.
@@ -58,4 +58,4 @@ namespace cse498
     };
 }
 
-#endif // STOPWATCH_H
+#endif // TIMER_H
