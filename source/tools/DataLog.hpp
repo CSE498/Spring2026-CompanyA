@@ -90,10 +90,10 @@ namespace cse498{
 
 
     private:
-        std::vector<DataSample> data_values;
+        std::vector<DataSample> mDataValues;
 
         //Stopwatch to measure elapsed time since datalog was constructed
-        Stopwatch stopwatch{"DataLog"};
+        Stopwatch mStopwatch{"DataLog"};
 
     }; 
 }

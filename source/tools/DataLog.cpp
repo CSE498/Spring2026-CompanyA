@@ -27,15 +27,15 @@ Adds a new data value and the function associates a timestamp with the data
 void DataLog::Add(double value){
     DataSample sample;
     sample.value = value;
-    sample.timestamp = stopwatch.elapsed();
-    data_values.push_back(sample);
+    sample.timestamp = mStopwatch.elapsed();
+    mDataValues.push_back(sample);
 }
 
 /*
-Function returns a reference to the collection of data samples in the format (data_value, timestamp)
+Function returns a reference to the collection of data samples
 */
 const std::vector<DataLog::DataSample>& DataLog::DataSamples() const{
-    return data_values;
+    return mDataValues;
 }
 
 /*
@@ -43,14 +43,14 @@ Function clears all samples from the data log
 Timestamp is not reset
 */
 void DataLog::Clear(){
-    data_values.clear();
+    mDataValues.clear();
 }
 
 /*
 Function returns the number of samples stored in the data log
 */
 std::size_t DataLog::Count() const{
-    return data_values.size();
+    return mDataValues.size();
 }
 
 /*
@@ -58,11 +58,11 @@ Function returns the smallest value in the data log
 */
 std::optional<double> DataLog::Min() const{
 
-    if(data_values.empty()){
+    if(mDataValues.empty()){
         return std::nullopt;
     }
 
-    auto min = std::min_element(data_values.begin(), data_values.end(), [](const DataSample& left, const DataSample& right) {
+    auto min = std::min_element(mDataValues.begin(), mDataValues.end(), [](const DataSample& left, const DataSample& right) {
         return left.value < right.value;
     });
 
@@ -73,11 +73,11 @@ std::optional<double> DataLog::Min() const{
 Function returns the largest value in the data log
 */
 std::optional<double> DataLog::Max() const{
-    if(data_values.empty()){
+    if(mDataValues.empty()){
         return std::nullopt;
     }
 
-    auto max = std::max_element(data_values.begin(), data_values.end(), [](const DataSample& left, const DataSample& right) {
+    auto max = std::max_element(mDataValues.begin(), mDataValues.end(), [](const DataSample& left, const DataSample& right) {
         return left.value < right.value;
     });
 
@@ -89,15 +89,15 @@ Function returns the average of the values in the data log
 */
 std::optional<double> DataLog::Mean() const{
 
-    if(data_values.empty()){
+    if(mDataValues.empty()){
         return std::nullopt;
     }
 
-    auto sum = std::accumulate(data_values.begin(), data_values.end(), 0.0, [](double total, const DataSample& val) {
+    auto sum = std::accumulate(mDataValues.begin(), mDataValues.end(), 0.0, [](double total, const DataSample& val) {
         return total + val.value;
     });
 
-    double num_size = static_cast<double>(data_values.size());
+    double num_size = static_cast<double>(mDataValues.size());
 
     return sum / num_size;
 }
@@ -106,14 +106,14 @@ std::optional<double> DataLog::Mean() const{
 Function returns the median of the values in the data log
 */
 std::optional<double> DataLog::Median() const{
-    if(data_values.empty()){
+    if(mDataValues.empty()){
         return std::nullopt;
     }
 
     //Get values from the data log to sort them to find the median
     std::vector<double> stored_data;
 
-    for(const auto& val : data_values){
+    for(const auto& val : mDataValues){
         stored_data.push_back(val.value);
     }
 
@@ -138,14 +138,14 @@ Function returns the total time that the values in datalog were under a specific
 */
 double DataLog::TimeUnderThreshold(double threshold) const{
     //2 samples needed for an interval
-    if(data_values.size() < 2){
+    if(mDataValues.size() < 2){
         return 0.0;
     }
 
     double total_time = 0.0;
-    for(std::size_t i = 0; i + 1 < data_values.size(); ++i){
-        const auto& current_sample = data_values[i];
-        const auto& next_sample = data_values[i + 1];
+    for(std::size_t i = 0; i + 1 < mDataValues.size(); ++i){
+        const auto& current_sample = mDataValues[i];
+        const auto& next_sample = mDataValues[i + 1];
         
         //duration that the current value held
         const double time_diff = next_sample.timestamp - current_sample.timestamp;
@@ -164,14 +164,14 @@ Function returns the total time that the values in datalog were over a specific 
 */
 double DataLog::TimeOverThreshold(double threshold) const{
     //2 samples needed for an interval
-    if(data_values.size() < 2){
+    if(mDataValues.size() < 2){
         return 0.0;
     }
 
     double total_time = 0.0;
-    for(std::size_t i = 0; i + 1 < data_values.size(); ++i){
-        const auto& current_sample = data_values[i];
-        const auto& next_sample = data_values[i + 1];
+    for(std::size_t i = 0; i + 1 < mDataValues.size(); ++i){
+        const auto& current_sample = mDataValues[i];
+        const auto& next_sample = mDataValues[i + 1];
         
         //duration that the current value held
         const double time_diff = next_sample.timestamp - current_sample.timestamp;
@@ -189,7 +189,7 @@ double DataLog::TimeOverThreshold(double threshold) const{
 Helper function whose purpose is to advance the stopwatch for timestamp testing purposes without manually waiting
 */
 void DataLog::advanceTimeForTesting(double seconds){
-    stopwatch.advanceTime(seconds);
+    mStopwatch.advanceTime(seconds);
 }
 
 
