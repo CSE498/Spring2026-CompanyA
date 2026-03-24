@@ -15,6 +15,9 @@ namespace cse498 {
   bool Game::Initialize() {
     if (!mGameView->Initialize()) return false;
 
+    std::cout << "Working directory: "
+              << std::filesystem::current_path() << std::endl;
+
     SDL_Renderer* renderer = mGameView->GetRenderer();
 
     // Title text
@@ -52,14 +55,19 @@ namespace cse498 {
     // Mobs
     mImageManager->LoadImage("skeleton", "Assets/Mobs/skeleton.png");
 
-    // Dungeon
-    mImageManager->LoadImage("stone",         "assets/tiles/stone.png");
+    // Dungeon tile images
+    mImageManager->LoadImage("wall",  "assets/tiles/grass.png");
+    mImageManager->LoadImage("floor", "assets/tiles/stone.png");
+    mImageManager->LoadImage("dot",   "assets/tiles/stone.png");
 
+
+    // World Setups
     SetupOverworld();
+    SetupDungeon();
 
     // Set up dungeon world — 50x50 tile world, rendered at 64x64 per tile
-    mDungeonGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
-    mDungeonGrid->Fill("stone");
+    //    mDungeonGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
+    //    mDungeonGrid->Fill("stone");
 
     SetupMainMenu();
     SetupPauseMenu();
@@ -82,6 +90,26 @@ namespace cse498 {
         WorldPosition pos(x, y);
         const std::string & cell_name = grid.GetCellTypeName(grid[pos]);
         mOverworldGrid->SetCell(x, y, cell_name);
+      }
+    }
+  }
+
+
+  void Game::SetupDungeon() {
+    mDungeonWorld = std::make_unique<DungeonWorld>();
+
+    const WorldGrid & grid = mDungeonWorld->GetGrid();
+    size_t world_w = grid.GetWidth();
+    size_t world_h = grid.GetHeight();
+
+    mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+
+    // Map every cell type name to its matching image name
+    for (size_t y = 0; y < world_h; ++y) {
+      for (size_t x = 0; x < world_w; ++x) {
+        WorldPosition pos(x, y);
+        const std::string & cell_name = grid.GetCellTypeName(grid[pos]);
+        mDungeonGrid->SetCell(x, y, cell_name);
       }
     }
   }

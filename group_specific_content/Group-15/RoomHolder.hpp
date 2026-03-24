@@ -15,7 +15,7 @@
  #include <fstream>
  #include <iostream>
  #include <cassert>
- #include "../tools/Random.hpp"
+ #include "../../source/tools/Random.hpp"
 
 
 namespace cse498 {
@@ -24,7 +24,8 @@ namespace cse498 {
 
     protected:
         std::vector<std::string> current_room;
-        std::string mFilePath = "../source/core/rooms/Dungeon_";
+        //std::string mFilePath = "../source/core/rooms/Dungeon_";
+        std::string mFilePath = "source/assets/rooms/Dungeon_";
 
         cse498::Random mRng;
 

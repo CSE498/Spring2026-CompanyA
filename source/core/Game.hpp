@@ -15,6 +15,7 @@
 #include "../Interfaces/GUI/ImageManager.hpp"
 #include "../Interfaces/GUI/ImageGrid.hpp"
 #include "OverWorld.hpp"
+#include "DungeonWorld.hpp"
 
 namespace cse498 {
 
@@ -45,6 +46,7 @@ namespace cse498 {
     std::unique_ptr<ImageManager> mImageManager;
     std::unique_ptr<ImageGrid>    mOverworldGrid;
     std::unique_ptr<OverWorld>    mOverWorld;
+    std::unique_ptr<DungeonWorld> mDungeonWorld;
     int mCamX = 0; ///< Camera position in tile coordinates
     int mCamY = 0;
 
@@ -80,6 +82,7 @@ namespace cse498 {
     void SetupMainMenu();
     void SetupPauseMenu();
     void SetupOverworld();
+    void SetupDungeon();
     void TransitionTo(GameState new_state);
     void Pause();
     void Resume();

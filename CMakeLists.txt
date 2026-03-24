@@ -203,7 +203,7 @@ set_target_properties(simple PROPERTIES
 
 add_executable(gameview "${COMPANYA_SOURCE_DIR}/GameView_Main.cpp")
 target_link_libraries(gameview PRIVATE companya_native ${COMPANYA_SDL_LIBRARIES})
-target_include_directories(gameview PRIVATE "${COMPANYA_SDL_INCLUDE_DIR}")  # <-- add this
+target_include_directories(gameview PRIVATE "${COMPANYA_SDL_INCLUDE_DIR}")
 set_target_properties(gameview PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
 )
