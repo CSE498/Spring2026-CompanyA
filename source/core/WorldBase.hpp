@@ -15,7 +15,7 @@
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
-#include "../Agents/PlayerAgent.h"
+#include "../Agents/PlayerAgent.hpp"
 
 namespace cse498 {
 

@@ -1,5 +1,5 @@
 /**
- * @file Enemy.h
+ * @file Enemy.hpp
  * @author Logan Rimarcik
  *
  * Classifies an enemy agent. This can be a whole suite of possible enemies depending on features created in the

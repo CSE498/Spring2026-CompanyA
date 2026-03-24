@@ -3,7 +3,7 @@
  * @author lrima
  */
 
-#include "PlayerAgent.h"
+#include "PlayerAgent.hpp"
 
 
 namespace cse498

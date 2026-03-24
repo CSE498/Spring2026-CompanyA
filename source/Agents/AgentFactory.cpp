@@ -3,7 +3,7 @@
  * @author lrima
  */
 
-#include "AgentFactory.h"
+#include "AgentFactory.hpp"
 #include "../core/AgentBase.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
 #include "../core/WorldBase.hpp"

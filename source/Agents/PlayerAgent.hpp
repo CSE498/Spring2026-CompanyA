@@ -1,5 +1,5 @@
 /**
- * @file PlayerAgent.h
+ * @file PlayerAgent.hpp
  * @author Logan Rimarcik
  *
  * TODO: Unsure who is responsible for this file. Temporary placeholder for now

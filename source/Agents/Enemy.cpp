@@ -3,7 +3,7 @@
  * @author lrima
  */
 
-#include "Enemy.h"
+#include "Enemy.hpp"
 
 namespace cse498
 {

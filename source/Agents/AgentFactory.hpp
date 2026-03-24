@@ -11,7 +11,7 @@
 #include <memory>
 #include <string>
 
-#include "Enemy.h"
+#include "Enemy.hpp"
 #include "../core/WorldPosition.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
 
