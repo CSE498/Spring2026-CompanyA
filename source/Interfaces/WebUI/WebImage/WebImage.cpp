@@ -76,6 +76,12 @@ bool EnsureElementAvailable(const val& element,
   return false;
 }
 
+const auto InvokeIfSet = [](const std::function<void()>& callback) {
+  if (callback) {
+    callback();
+  }
+};
+
 }  // anonymous namespace
 
 namespace cse498 {
@@ -240,13 +246,16 @@ void WebImage::SetSize(int width_px, int height_px) {
   mWidth = width_px;
   mHeight = height_px;
   if (!mElement.isNull()) {
-    if (width_px > 0) {
-      mElement["style"].set("width", ToPx(width_px));
-    }
-    if (height_px > 0) {
-      mElement["style"].set("height", ToPx(height_px));
-    }
-    mElement["style"].set("objectFit", std::string("fill"));
+    val style = mElement["style"];
+    const auto apply_dimension = [&](const char* property, int value) {
+      if (value > 0) {
+        style.set(property, ToPx(value));
+      }
+    };
+
+    apply_dimension("width", width_px);
+    apply_dimension("height", height_px);
+    style.set("objectFit", std::string("fill"));
   }
 }
 
@@ -257,10 +266,14 @@ void WebImage::Resize(int width_px, int height_px, bool maintain_aspect_ratio) {
   mWidth = width_px;
   mHeight = height_px;
   if (!mElement.isNull()) {
-    mElement["style"].set("width", ToPx(width_px));
-    mElement["style"].set("height", ToPx(height_px));
-    mElement["style"].set("objectFit",
-        std::string(maintain_aspect_ratio ? "contain" : "fill"));
+    val style = mElement["style"];
+    const auto set_style = [&](const char* property, const std::string& value) {
+      style.set(property, value);
+    };
+
+    set_style("width", ToPx(width_px));
+    set_style("height", ToPx(height_px));
+    set_style("objectFit", maintain_aspect_ratio ? "contain" : "fill");
   }
 }
 
@@ -363,17 +376,20 @@ void WebImage::SyncFromModel() {
 
   mElement.set("src", mSrc);
   mElement.set("alt", mAltText);
+  val style = mElement["style"];
+  const auto set_style = [&](const char* property, const std::string& value) {
+    style.set(property, value);
+  };
+  const auto apply_dimension = [&](const char* property, int value) {
+    if (value > 0) {
+      set_style(property, ToPx(value));
+    }
+  };
 
-  if (mWidth > 0) {
-    mElement["style"].set("width", ToPx(mWidth));
-  }
-  if (mHeight > 0) {
-    mElement["style"].set("height", ToPx(mHeight));
-  }
-
-  mElement["style"].set("opacity", std::to_string(mOpacity));
-  mElement["style"].set("display",
-      std::string(mIsVisible ? "" : "none"));
+  apply_dimension("width", mWidth);
+  apply_dimension("height", mHeight);
+  set_style("opacity", std::to_string(mOpacity));
+  set_style("display", mIsVisible ? "" : "none");
 }
 
 // ----- ICanvasElement Interface -----
@@ -396,8 +412,14 @@ float WebImage::CanvasH() const { return mCanvasH; }
 /// rectangle is drawn as a placeholder instead.
 void WebImage::Draw(WebCanvas& canvas) {
   if (mHasError && mErrorMode == ImageErrorMode::BlankRect) {
-    float w = (mCanvasW > 0) ? mCanvasW : static_cast<float>(mWidth > 0 ? mWidth : 100);
-    float h = (mCanvasH > 0) ? mCanvasH : static_cast<float>(mHeight > 0 ? mHeight : 100);
+    const auto resolve_draw_size = [](float canvas_size, int dom_size) {
+      return canvas_size > 0.0f
+          ? canvas_size
+          : static_cast<float>(dom_size > 0 ? dom_size : kDefaultPlaceholderPx);
+    };
+
+    float w = resolve_draw_size(mCanvasW, mWidth);
+    float h = resolve_draw_size(mCanvasH, mHeight);
     canvas.DrawRect(mCanvasX, mCanvasY, w, h, mPlaceholderColor);
     return;
   }
@@ -410,9 +432,7 @@ void WebImage::Draw(WebCanvas& canvas) {
 void WebImage::HandleLoad() {
   mIsLoaded = true;
   mHasError = false;
-  if (mOnLoadCallback) {
-    mOnLoadCallback();
-  }
+  InvokeIfSet(mOnLoadCallback);
 }
 
 /// Called when the image fails to load; applies placeholder if configured and fires the error callback.
@@ -426,9 +446,7 @@ void WebImage::HandleError() {
     ApplyPlaceholder();
   }
 
-  if (mOnErrorCallback) {
-    mOnErrorCallback();
-  }
+  InvokeIfSet(mOnErrorCallback);
 }
 
 // ----- Private Helpers -----
@@ -458,19 +476,17 @@ void WebImage::ApplyPlaceholder() {
   mElement.set("src", std::string(""));
 
   val style = mElement["style"];
-  style.set("backgroundColor", mPlaceholderColor);
-  style.set("display", std::string("inline-block"));
+  const auto set_style = [&](const char* property, const std::string& value) {
+    style.set(property, value);
+  };
+  const auto apply_placeholder_dimension = [&](const char* property, int value) {
+    set_style(property, ToPx(value > 0 ? value : kDefaultPlaceholderPx));
+  };
 
-  if (mWidth > 0) {
-    style.set("width", ToPx(mWidth));
-  } else {
-    style.set("width", ToPx(kDefaultPlaceholderPx));
-  }
-  if (mHeight > 0) {
-    style.set("height", ToPx(mHeight));
-  } else {
-    style.set("height", ToPx(kDefaultPlaceholderPx));
-  }
+  set_style("backgroundColor", mPlaceholderColor);
+  set_style("display", "inline-block");
+  apply_placeholder_dimension("width", mWidth);
+  apply_placeholder_dimension("height", mHeight);
 }
 
 }  // namespace cse498
