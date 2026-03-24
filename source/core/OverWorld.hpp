@@ -10,6 +10,7 @@
 #include <cassert>
 
 #include "../core/WorldBase.hpp"
+#include "../Agents/PacingAgent.hpp"
 
 namespace cse498 {
 
@@ -33,6 +34,8 @@ namespace cse498 {
     size_t wall_top_id;      ///< Top wall    'U'
     size_t wall_bottom_id;   ///< Bottom wall 'B'
     size_t wall_corner_id;   ///< Corner      'C'
+
+    std::string mAgentSpriteName; ///< Sprite name for rendering agents
 
     /// Provide agents with movement actions
     void ConfigAgent(AgentBase & agent) override {
@@ -145,6 +148,22 @@ namespace cse498 {
       agent.SetLocation(new_pos);
       return true;
     }
+
+    /// Add a pacing agent to the overworld at the given position
+    void AddPacingAgent(const std::string & sprite_name, size_t x, size_t y, bool horizontal = true) {
+      mAgentSpriteName = sprite_name;
+      PacingAgent & agent = AddAgent<PacingAgent>("Skeleton");
+      if (horizontal) {
+        agent.SetHorizontal();
+      }
+      else {
+        agent.SetVertical();
+      }
+
+      agent.SetLocation(WorldPosition(x, y));
+    }
+
+    [[nodiscard]] const std::string & GetAgentSpriteName() const { return mAgentSpriteName; }
   };
 
 } // namespace cse498

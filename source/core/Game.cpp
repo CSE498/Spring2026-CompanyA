@@ -49,6 +49,9 @@ namespace cse498 {
     mImageManager->LoadImage("wall_bottom",   "assets/tiles/grass_wall_bottom.png");
     mImageManager->LoadImage("wall_corner",   "assets/tiles/grass_wall_up.png");
 
+    // Mobs
+    mImageManager->LoadImage("skeleton", "Assets/Mobs/skeleton.png");
+
     // Dungeon
     mImageManager->LoadImage("stone",         "assets/tiles/stone.png");
 
@@ -65,6 +68,7 @@ namespace cse498 {
 
   void Game::SetupOverworld() {
     mOverWorld = std::make_unique<OverWorld>();
+    mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
 
     const WorldGrid & grid = mOverWorld->GetGrid();
     size_t world_w = grid.GetWidth();
@@ -172,31 +176,46 @@ namespace cse498 {
         switch (event.key.keysym.sym) {
 
           // Navigation in menus
-          case SDLK_UP:
-            if (mState == GameState::MAIN_MENU) mMainMenu.select_previous();
-            if (mState == GameState::PAUSED)    mPauseMenu.select_previous();
-            break;
-          case SDLK_DOWN:
-            if (mState == GameState::MAIN_MENU) mMainMenu.select_next();
-            if (mState == GameState::PAUSED)    mPauseMenu.select_next();
-            break;
-          case SDLK_RETURN:
-            if (mState == GameState::MAIN_MENU) mMainMenu.activate_selected();
-            if (mState == GameState::PAUSED)    mPauseMenu.activate_selected();
-            break;
+        case SDLK_UP:
+          if (mState == GameState::MAIN_MENU) mMainMenu.select_previous();
+          if (mState == GameState::PAUSED)    mPauseMenu.select_previous();
+          break;
+        case SDLK_DOWN:
+          if (mState == GameState::MAIN_MENU) mMainMenu.select_next();
+          if (mState == GameState::PAUSED)    mPauseMenu.select_next();
+          break;
+        case SDLK_RETURN:
+          if (mState == GameState::MAIN_MENU) mMainMenu.activate_selected();
+          if (mState == GameState::PAUSED)    mPauseMenu.activate_selected();
+          break;
+
+          // Player movement — one turn per keypress with 150ms cooldown
+        case SDLK_w:
+        case SDLK_s:
+        case SDLK_a:
+        case SDLK_d:
+          if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON) {
+            static Uint32 last_move_time = 0;
+            Uint32 now = SDL_GetTicks();
+            if (now - last_move_time >= 150) {
+              ProcessPlayerMove(event.key.keysym.sym);
+              last_move_time = now;
+            }
+          }
+          break;
 
           // Pause / resume
-          case SDLK_ESCAPE:
-            if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON) {
-              Pause();
-            } else if (mState == GameState::PAUSED) {
-              Resume();
-            } else if (mState == GameState::SETTINGS) {
-              Resume();
-            }
-            break;
+        case SDLK_ESCAPE:
+          if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON) {
+            Pause();
+          } else if (mState == GameState::PAUSED) {
+            Resume();
+          } else if (mState == GameState::SETTINGS) {
+            Resume();
+          }
+          break;
 
-          default: break;
+        default: break;
         }
       }
     }
@@ -227,7 +246,12 @@ namespace cse498 {
 
   void Game::UpdateMainMenu() { }
 
-  void Game::UpdateOverworld() { UpdateWorld(*mOverworldGrid, mCamX, mCamY); }
+  void Game::UpdateOverworld() {
+    if (mTurnTaken) {
+      mOverWorld->RunAgents();
+      mTurnTaken = false;
+    }
+  }
   void Game::UpdateDungeon()   { UpdateWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
 
   void Game::UpdateWorld(ImageGrid& grid, int& camX, int& camY) {
@@ -290,7 +314,18 @@ namespace cse498 {
     // RenderItems();
 
     // Layer 2 — agents/NPCs
-    // RenderAgents();
+    int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+    int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+
+    for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+      const AgentBase & agent = mOverWorld->GetAgent(i);
+      const WorldPosition & pos = agent.GetLocation().AsWorldPosition();
+
+      int screen_x = (static_cast<int>(pos.CellX()) - mCamX) * tw;
+      int screen_y = (static_cast<int>(pos.CellY()) - mCamY) * th;
+
+      mImageManager->DrawImage(mOverWorld->GetAgentSpriteName(), screen_x, screen_y, tw, th);
+    }
 
     // Layer 3 — player (always on top of world entities)
     // mPlayer->Draw(...);
@@ -335,6 +370,27 @@ namespace cse498 {
 
   void Game::RenderSettings() {
     // TODO: render settings screen
+  }
+
+  void Game::ProcessPlayerMove(SDL_Keycode key) {
+    int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+    int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+
+    int tiles_x = mGameView->GetWidth()  / tw;
+    int tiles_y = mGameView->GetHeight() / th;
+
+    int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth())  - tiles_x);
+    int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
+
+    switch (key) {
+    case SDLK_w: mCamY = std::max(0, mCamY - 1);          break;
+    case SDLK_s: mCamY = std::min(max_cam_y, mCamY + 1);  break;
+    case SDLK_a: mCamX = std::max(0, mCamX - 1);          break;
+    case SDLK_d: mCamX = std::min(max_cam_x, mCamX + 1);  break;
+    default: break;
+    }
+
+    mTurnTaken = true;
   }
 
 } // namespace cse498

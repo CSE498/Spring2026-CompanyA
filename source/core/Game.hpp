@@ -54,6 +54,7 @@ namespace cse498 {
     int mDungeonCamY = 0;
 
     bool mRunning = false;
+    bool mTurnTaken = false; ///< Set to true when player takes an action, consumed by UpdateOverworld
 
     // -- Per-state update and render --
     void HandleEvents();
@@ -69,6 +70,8 @@ namespace cse498 {
     void RenderDungeon();
     void RenderPaused();
     void RenderSettings();
+
+    void ProcessPlayerMove(SDL_Keycode key);
 
     void UpdateWorld(ImageGrid& grid, int& camX, int& camY);
     void RenderWorld(ImageGrid& grid, int camX, int camY);
