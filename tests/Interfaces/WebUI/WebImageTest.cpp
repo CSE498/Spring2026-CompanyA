@@ -10,9 +10,45 @@
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../../source/Interfaces/WebUI/WebImage/WebImage.hpp"
+#include "../../../source/Interfaces/WebUI/WebUtils.hpp"
+#include "./SharedWebContext.hpp"
+#include <emscripten/val.h>
 #include <string>
 
 using namespace cse498;
+using emscripten::val;
+
+extern "C" {
+void WebImage_handleLoad(int registry_id);
+void WebImage_handleError(int registry_id);
+int WebImage_registryContains(int registry_id);
+}
+
+namespace cse498 {
+struct WebImageTestAccessor {
+  static int RegistryId(const WebImage& img) { return img.mRegistryId; }
+};
+}  // namespace cse498
+
+static constexpr const char* kValidImageSrc =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+static val GetWindow() {
+  return val::global("window");
+}
+
+static std::string GetComputedStyleStr(val element, const std::string& prop) {
+  val style = GetWindow().call<val>("getComputedStyle", element);
+  return style.call<val>("getPropertyValue", prop).as<std::string>();
+}
+
+static std::string GetAttributeStr(val element, const std::string& attribute) {
+  val attr = element.call<val>("getAttribute", attribute);
+  if (attr.isNull() || attr.isUndefined()) {
+    return "";
+  }
+  return attr.as<std::string>();
+}
 
 // ---------- Helpers ----------
 
@@ -588,6 +624,123 @@ void test_multiple_source_changes() {
   PASS();
 }
 
+// ========================================================
+// Test 36: Registry routes load events to moved-to object
+// ========================================================
+void test_registry_load_event_after_move_constructor() {
+  TEST("Registry routes load events to moved-to object after move construction");
+  WebImage original("move-load.png");
+  const int registry_id = WebImageTestAccessor::RegistryId(original);
+
+  REQUIRE_MSG(WebImage_registryContains(registry_id) == 1,
+      "original registry id should be registered before move");
+  REQUIRE_MSG(original.IsLoaded() == false, "original should start unloaded");
+
+  WebImage moved(std::move(original));
+
+  CHECK_MSG(WebImageTestAccessor::RegistryId(original) == -1,
+      "moved-from image should release its registry id");
+  CHECK_MSG(WebImageTestAccessor::RegistryId(moved) == registry_id,
+      "moved-to image should keep the original registry id");
+
+  WebImage_handleLoad(registry_id);
+
+  CHECK_MSG(moved.IsLoaded() == true,
+      "load event should update the moved-to image");
+  CHECK_MSG(moved.HasError() == false,
+      "moved-to image should not report an error after load");
+  CHECK_MSG(original.IsLoaded() == false,
+      "moved-from image should not receive the load event");
+  CHECK_MSG(original.HasError() == false,
+      "moved-from image should remain error-free");
+  PASS();
+}
+
+// ========================================================
+// Test 37: Registry routes error events to move-assigned object
+// ========================================================
+void test_registry_error_event_after_move_assignment() {
+  TEST("Registry routes error events to moved-to object after move assignment");
+  WebImage src("move-error-src.png");
+  WebImage dest("move-error-dest.png");
+
+  const int src_registry_id = WebImageTestAccessor::RegistryId(src);
+  const int dest_registry_id = WebImageTestAccessor::RegistryId(dest);
+
+  REQUIRE_MSG(WebImage_registryContains(src_registry_id) == 1,
+      "source registry id should be registered before move assignment");
+  REQUIRE_MSG(WebImage_registryContains(dest_registry_id) == 1,
+      "destination registry id should be registered before move assignment");
+
+  dest = std::move(src);
+
+  CHECK_MSG(WebImageTestAccessor::RegistryId(src) == -1,
+      "moved-from source should release its registry id");
+  CHECK_MSG(WebImageTestAccessor::RegistryId(dest) == src_registry_id,
+      "destination should adopt the source registry id");
+  CHECK_MSG(WebImage_registryContains(dest_registry_id) == 0,
+      "destination's old registry id should be unregistered");
+
+  WebImage_handleError(src_registry_id);
+
+  CHECK_MSG(dest.HasError() == true,
+      "error event should update the move-assigned destination");
+  CHECK_MSG(dest.IsLoaded() == false,
+      "destination should remain unloaded after error");
+  CHECK_MSG(src.HasError() == false,
+      "moved-from source should not receive the error event");
+  CHECK_MSG(src.IsLoaded() == false,
+      "moved-from source should remain unloaded");
+  PASS();
+}
+
+// ========================================================
+// Test 38: Destructor unregisters registry id after move construction
+// ========================================================
+void test_registry_unregistered_after_moved_image_destruction() {
+  TEST("Destructor unregisters transferred registry id after move construction");
+  int transferred_registry_id = -1;
+
+  {
+    WebImage original("destroy-moved.png");
+    transferred_registry_id = WebImageTestAccessor::RegistryId(original);
+    REQUIRE_MSG(WebImage_registryContains(transferred_registry_id) == 1,
+        "original registry id should be registered");
+
+    WebImage moved(std::move(original));
+    CHECK_MSG(WebImageTestAccessor::RegistryId(moved) == transferred_registry_id,
+        "moved image should keep the transferred registry id");
+    CHECK_MSG(WebImage_registryContains(transferred_registry_id) == 1,
+        "transferred registry id should remain registered while moved image is alive");
+  }
+
+  REQUIRE_MSG(transferred_registry_id >= 0,
+      "test should capture a valid transferred registry id");
+  CHECK_MSG(WebImage_registryContains(transferred_registry_id) == 0,
+      "destroying the moved-to image should unregister its registry id");
+  PASS();
+}
+
+// ========================================================
+// Test 39: Destructor unregisters registry id for a non-moved image
+// ========================================================
+void test_registry_unregistered_after_plain_destruction() {
+  TEST("Destructor unregisters registry id for a non-moved image");
+  int registry_id = -1;
+
+  {
+    WebImage img("destroy-plain.png");
+    registry_id = WebImageTestAccessor::RegistryId(img);
+    REQUIRE_MSG(WebImage_registryContains(registry_id) == 1,
+        "plain image registry id should be registered while alive");
+  }
+
+  REQUIRE_MSG(registry_id >= 0, "test should capture a valid registry id");
+  CHECK_MSG(WebImage_registryContains(registry_id) == 0,
+      "destroying the image should unregister its registry id");
+  PASS();
+}
+
 // ==================== TEST_CASE Registration ====================
 
 // -- Construction --
@@ -648,5 +801,180 @@ TEST_CASE("Resize after SetSize overwrites dimensions", "[WebImage]") { test_set
 TEST_CASE("Error callback with placeholder", "[WebImage]") { test_error_callback_with_placeholder(); }
 TEST_CASE("draw stub no crash", "[WebImage]") { test_draw_no_crash(); }
 TEST_CASE("Multiple SetSource calls", "[WebImage]") { test_multiple_source_changes(); }
+TEST_CASE("Registry load event follows move constructor", "[WebImage][registry]") {
+  test_registry_load_event_after_move_constructor();
+}
+TEST_CASE("Registry error event follows move assignment", "[WebImage][registry]") {
+  test_registry_error_event_after_move_assignment();
+}
+TEST_CASE("Registry id is unregistered after moved image destruction", "[WebImage][registry]") {
+  test_registry_unregistered_after_moved_image_destruction();
+}
+TEST_CASE("Registry id is unregistered after plain destruction", "[WebImage][registry]") {
+  test_registry_unregistered_after_plain_destruction();
+}
+
+TEST_CASE_METHOD(SharedWebContext, "SetSource updates DOM src and clears placeholder styling",
+                 "[WebImage][dom]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc, "preview");
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.SetPlaceholderColor("rgb(255, 0, 0)");
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()), "image should be mounted into the DOM");
+
+  img.HandleError();
+  REQUIRE_MSG(GetAttributeStr(el, "src").empty(), "placeholder should clear the src attribute");
+  REQUIRE_MSG(GetCSSProperty(el, "background-color") == "rgb(255, 0, 0)",
+      "placeholder background should be visible before SetSource");
+
+  img.SetSource("new.png");
+  CHECK_MSG(GetAttributeStr(el, "src") == "new.png", "SetSource should update the DOM src attribute");
+  CHECK_MSG(GetCSSProperty(el, "background-color").empty(),
+      "SetSource should clear placeholder background styling");
+}
+
+TEST_CASE_METHOD(SharedWebContext, "SetSize zero leaves DOM width and height unset",
+                 "[WebImage][dom][style]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()), "image should be mounted into the DOM");
+
+  img.SetSize(0, 0);
+  CHECK_MSG(GetCSSProperty(el, "width").empty(), "zero width should not set an inline DOM width");
+  CHECK_MSG(GetCSSProperty(el, "height").empty(), "zero height should not set an inline DOM height");
+}
+
+TEST_CASE_METHOD(SharedWebContext, "BlankRect mode applies placeholder rectangle in DOM",
+                 "[WebImage][dom][error]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.SetSize(200, 100);
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.SetPlaceholderColor("rgb(255, 0, 0)");
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()), "image should be mounted into the DOM");
+
+  img.HandleError();
+  CHECK_MSG(GetAttributeStr(el, "src").empty(), "BlankRect mode should clear the DOM src attribute");
+  CHECK_MSG(GetCSSProperty(el, "display") == "inline-block",
+      "BlankRect mode should display the placeholder rectangle");
+  CHECK_MSG(GetCSSProperty(el, "width") == "200px", "placeholder width should match the configured size");
+  CHECK_MSG(GetCSSProperty(el, "height") == "100px", "placeholder height should match the configured size");
+  CHECK_MSG(GetComputedStyleStr(el, "background-color") == "rgb(255, 0, 0)",
+      "placeholder background color should be visible in the DOM");
+}
+
+TEST_CASE_METHOD(SharedWebContext, "SetErrorMode changes DOM placeholder behavior",
+                 "[WebImage][dom][error]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.SetSize(150, 90);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()), "image should be mounted into the DOM");
+
+  img.SetErrorMode(ImageErrorMode::NoOp);
+  img.HandleError();
+  CHECK_MSG(!GetAttributeStr(el, "src").empty(), "NoOp mode should leave the DOM src intact");
+  CHECK_MSG(GetCSSProperty(el, "background-color").empty(),
+      "NoOp mode should not apply placeholder background styling");
+  CHECK_MSG(GetCSSProperty(el, "display").empty(),
+      "NoOp mode should not force inline-block placeholder display");
+
+  img.SetSource(kValidImageSrc);
+  img.SetPlaceholderColor("rgb(0, 255, 0)");
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.HandleError();
+  CHECK_MSG(GetAttributeStr(el, "src").empty(), "BlankRect mode should clear the DOM src");
+  CHECK_MSG(GetCSSProperty(el, "display") == "inline-block",
+      "BlankRect mode should switch the element to the placeholder display");
+  CHECK_MSG(GetComputedStyleStr(el, "background-color") == "rgb(0, 255, 0)",
+      "BlankRect mode should expose the placeholder color in the DOM");
+}
+
+TEST_CASE_METHOD(SharedWebContext, "SetPlaceholderColor changes placeholder color in DOM",
+                 "[WebImage][dom][error]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.SetSize(120, 80);
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()), "image should be mounted into the DOM");
+
+  img.SetPlaceholderColor("rgb(12, 34, 56)");
+  img.HandleError();
+  REQUIRE_MSG(GetComputedStyleStr(el, "background-color") == "rgb(12, 34, 56)",
+      "first placeholder color should appear in the DOM");
+
+  img.SetSource(kValidImageSrc);
+  img.SetPlaceholderColor("rgb(90, 80, 70)");
+  img.HandleError();
+  CHECK_MSG(GetComputedStyleStr(el, "background-color") == "rgb(90, 80, 70)",
+      "updated placeholder color should replace the previous DOM color");
+}
+
+TEST_CASE_METHOD(SharedWebContext, "SyncFromModel restores DOM attributes and styles",
+                 "[WebImage][dom]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc, "alt text");
+  img.SetSize(300, 200);
+  img.SetOpacity(0.8);
+  img.Hide();
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()), "image should be mounted into the DOM");
+
+  el.set("src", std::string("manual.png"));
+  el.set("alt", std::string("manual alt"));
+  el["style"].set("width", std::string("10px"));
+  el["style"].set("height", std::string("20px"));
+  el["style"].set("opacity", std::string("0.1"));
+  el["style"].set("display", std::string("block"));
+
+  REQUIRE_MSG(GetAttributeStr(el, "src") == "manual.png", "manual src mutation should stick before repair");
+  REQUIRE_MSG(GetAttributeStr(el, "alt") == "manual alt", "manual alt mutation should stick before repair");
+  REQUIRE_MSG(GetCSSProperty(el, "width") == "10px", "manual width mutation should stick before repair");
+  REQUIRE_MSG(GetCSSProperty(el, "height") == "20px", "manual height mutation should stick before repair");
+
+  img.SyncFromModel();
+
+  CHECK_MSG(GetAttributeStr(el, "src") == kValidImageSrc, "SyncFromModel should restore the DOM src");
+  CHECK_MSG(GetAttributeStr(el, "alt") == "alt text", "SyncFromModel should restore the DOM alt text");
+  CHECK_MSG(GetCSSProperty(el, "width") == "300px", "SyncFromModel should restore the DOM width");
+  CHECK_MSG(GetCSSProperty(el, "height") == "200px", "SyncFromModel should restore the DOM height");
+  CHECK_MSG(GetCSSProperty(el, "display") == "none", "SyncFromModel should restore hidden display state");
+  CHECK_MSG(GetCSSProperty(el, "opacity").rfind("0.8", 0) == 0,
+      "SyncFromModel should restore the DOM opacity");
+}
 
 #endif // __EMSCRIPTEN__

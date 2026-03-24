@@ -56,6 +56,26 @@ cse498::WebImage* LookupImage(int id) {
   return it != sImageRegistry.end() ? it->second : nullptr;
 }
 
+/// @brief Returns true when the DOM element is usable; otherwise logs a warning.
+/// @param element DOM handle to validate.
+/// @param id      Logical WebImage id used in the warning.
+/// @param action  Description of the skipped action.
+/// @return True if the DOM element is neither null nor undefined.
+bool EnsureElementAvailable(const val& element,
+                            const std::string& id,
+                            const char* action) {
+  if (!element.isNull() && !element.isUndefined()) {
+    return true;
+  }
+
+  const std::string resolved_id = id.empty() ? "<uninitialized>" : id;
+  cse498::GetConsole().call<void>(
+      "warn",
+      std::string("WebImage '") + resolved_id
+          + "' skipped " + action + " because its DOM element is unavailable.");
+  return false;
+}
+
 }  // anonymous namespace
 
 namespace cse498 {
@@ -90,7 +110,8 @@ void WebImage::CleanupElement() {
 
 // ----- Construction / Destruction -----
 
-/// Constructs a WebImage, creates the <img> DOM element, and attaches event listeners.
+/// Constructs a detached WebImage, creates the <img> DOM element, and attaches
+/// event listeners without mounting the element into the document body.
 WebImage::WebImage(const std::string& src, const std::string& alt_text)
     : mSrc(src),
       mAltText(alt_text) {
@@ -338,7 +359,7 @@ void WebImage::MountToLayout(WebLayout& parent, Alignment align) {
 
 /// Re-applies all tracked properties to the underlying DOM element.
 void WebImage::SyncFromModel() {
-  if (mElement.isNull()) return;
+  if (!EnsureElementAvailable(mElement, mId, "SyncFromModel")) return;
 
   mElement.set("src", mSrc);
   mElement.set("alt", mAltText);
@@ -414,7 +435,7 @@ void WebImage::HandleError() {
 
 /// Attaches JS load/error event listeners that forward to HandleLoad/HandleError via registry ID.
 void WebImage::AttachListeners() {
-  if (mElement.isNull()) return;
+  if (!EnsureElementAvailable(mElement, mId, "AttachListeners")) return;
 
   int regId = mRegistryId;
 
@@ -432,7 +453,7 @@ void WebImage::AttachListeners() {
 
 /// Replaces the broken image with a colored rectangle of the configured placeholder color.
 void WebImage::ApplyPlaceholder() {
-  if (mElement.isNull()) return;
+  if (!EnsureElementAvailable(mElement, mId, "ApplyPlaceholder")) return;
 
   mElement.set("src", std::string(""));
 
@@ -474,5 +495,13 @@ extern "C" {
     if (img) {
       img->HandleError();
     }
+  }
+
+  /// @brief Testing hook that reports whether a registry id is still registered.
+  /// @param registry_id Integer id to look up in the image registry.
+  /// @return 1 if the registry id maps to a live image; otherwise 0.
+  EMSCRIPTEN_KEEPALIVE
+  int WebImage_registryContains(int registry_id) {
+    return LookupImage(registry_id) != nullptr ? 1 : 0;
   }
 }

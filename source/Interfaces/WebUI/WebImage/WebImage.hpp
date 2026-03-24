@@ -38,7 +38,9 @@ enum class ImageErrorMode {
  */
 class WebImage : public IDomElement, public ICanvasElement {
  public:
-  /// Construct a WebImage with a source URL/path and optional alt text.
+  /// Construct a detached WebImage with a source URL/path and optional alt text.
+  /// The underlying DOM element is created but not mounted; callers should
+  /// attach it through WebLayout when they want it to appear in the document.
   explicit WebImage(const std::string& src,
                     const std::string& alt_text = "");
   ~WebImage();
@@ -152,6 +154,8 @@ class WebImage : public IDomElement, public ICanvasElement {
   void HandleError();
 
  private:
+  friend struct WebImageTestAccessor;
+
   std::string mSrc;                         ///< Image source URL or asset path.
   std::string mAltText;                     ///< Alternative text for accessibility.
   int mWidth = 0;                           ///< Display width in pixels (0 = browser default).
