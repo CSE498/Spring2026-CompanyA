@@ -25,6 +25,13 @@ set(COMPANYA_SOURCE_DIR "${PROJECT_SOURCE_DIR}/source")
 set(COMPANYA_TEST_DIR "${PROJECT_SOURCE_DIR}/tests")
 set(COMPANYA_THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third-party")
 
+set(COMPANYA_FONT_DIR
+    "${COMPANYA_SOURCE_DIR}/Interfaces/GUI/fonts"
+)
+set(COMPANYA_IMAGE_DIR
+    "${COMPANYA_TEST_DIR}/Interfaces/GUI/images"
+)
+
 function(companya_read_brew_prefix formula out_var)
     set(${out_var} "" PARENT_SCOPE)
     find_program(COMPANYA_BREW_EXECUTABLE brew)
@@ -180,6 +187,11 @@ target_include_directories(companya_native
     PRIVATE
         "${COMPANYA_SDL_INCLUDE_DIR}"
 )
+target_compile_definitions(companya_native
+    PUBLIC
+        DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
+        TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
+)
 companya_apply_native_profile(companya_native)
 
 add_executable(simple "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
@@ -202,6 +214,11 @@ target_include_directories(run_tests PRIVATE
     "${COMPANYA_SOURCE_DIR}"
     "${COMPANYA_THIRD_PARTY_DIR}/Catch/single_include"
     "${COMPANYA_SDL_INCLUDE_DIR}"
+)
+target_compile_definitions(run_tests
+    PRIVATE
+        DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
+        TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
 )
 target_compile_options(run_tests PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-O2 -g -Wall -Wextra -Wpedantic -Werror>
