@@ -24,17 +24,17 @@ namespace cse498 {
 
     protected:
         std::vector<std::string> current_room; //Holds the currently selected/stored room
-        std::string mFilePath = "../source/core/rooms/Dungeon_"; //File path used to access the directory of different .txt rooms
-        std::string mImagePath = "../assets/";  //File path location for images
+        std::string m_file_path = "../source/core/rooms/Dungeon_"; //File path used to access the directory of different .txt rooms
+        std::string m_image_path = "../assets/";  //File path location for images
 
-        cse498::Random mRng; //Random 
-		cse498::WeightedSet<std::string> mRoomPool;
+        cse498::Random m_rng; //Random
+		cse498::WeightedSet<std::string> m_room_pool;
 
     public:
 
         RoomHolder(const cse498::WeightedSet<std::string>& room_pool) 
-			: mRng(),
-			  mRoomPool(room_pool)
+			: m_rng(),
+			  m_room_pool(room_pool)
 		{}
 
         /// @brief 
@@ -75,9 +75,9 @@ namespace cse498 {
         }
 
         [[nodiscard]] std::string GenerateFilePath() { 
-			auto room_select = mRng.GetValue(0.0, mRoomPool.GetTotalWeight());
+			auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight());
 			
-			auto sample_result = mRoomPool.Sample(room_select);
+			auto sample_result = m_room_pool.Sample(room_select);
 			assert(sample_result.has_value());
 
 			std::string file_path = sample_result.value();
@@ -93,7 +93,7 @@ namespace cse498 {
             if (!tile_c) {}
 
             int level = 1; // TODO: Add a counter for number of levels generated
-            std::string file_path = mImagePath;
+            std::string file_path = m_image_path;
 
             // World objects (floor tiles, walls, doors, barriers, ect.)
             if (tile_c == '&' || tile_c == '^' || tile_c == '<' || tile_c == '>' || tile_c == '$'
@@ -122,7 +122,7 @@ namespace cse498 {
                     }
 
                     // Variant floor tiles
-                    file_path += std::to_string(mRng.GetValue(2,5));
+                    file_path += std::to_string(m_rng.GetValue(2,5));
                     file_path += ".png";
                     return file_path;
                 }
@@ -170,7 +170,7 @@ namespace cse498 {
             else if (tile_c == 'm') {
                 file_path += "agents/monsters/agent_monster_";
 
-                int monster = mRng.GetValue(1,2);
+                int monster = m_rng.GetValue(1,2);
                 if (monster == 1) {
                     file_path += "goblin.png";
                 }
@@ -189,8 +189,8 @@ namespace cse498 {
         /// @return 
         std::vector<std::string> LoadRoom() {
             std::string selected_pool = GenerateFilePath();
-            std::ifstream file(mFilePath + selected_pool); // this will open one of the rooms
-            std::cout << mFilePath + selected_pool << std::endl;
+            std::ifstream file(m_file_path + selected_pool); // this will open one of the rooms
+            std::cout << m_file_path + selected_pool << std::endl;
 
             assert(file.is_open());
 

@@ -30,29 +30,29 @@ namespace cse498 {
 
     class WorldGen {
     protected:
-        BSP mBSP; // BSP_Tree that contains information on the grid and it's dimensions
+        BSP m_bsp; // BSP_Tree that contains information on the grid and it's dimensions
         //RoomHolder mRoomHolder;
-        std::vector<std::string> mGrid; //Grid we're rasterizing information from mBSP_Tree to
-        std::vector<LinkedRooms> mConnectedRooms; //The x-y coord pairs of two rooms used for connecting the room pair
-        Random mRng;
-        int mOffsetX; //x offset of room placement
-        int mOffsetY; //y offset of room placement
+        std::vector<std::string> m_grid; //Grid we're rasterizing information from mBSP_Tree to
+        std::vector<LinkedRooms> m_connected_rooms; //The x-y coord pairs of two rooms used for connecting the room pair
+        Random m_rng;
+        int m_offset_x; //x offset of room placement
+        int m_offset_y; //y offset of room placement
             
     public: 
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
         WorldGen(const cse498::WeightedSet<std::string>& room_pool) 
-            : mBSP(room_pool), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
+            : m_bsp(room_pool), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
               //mRoomHolder(room_pool), 
-              mGrid(mBSP.GetHeight(), std::string(mBSP.GetWidth(), '#')) 
+              m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'))
             {}
         
 
         /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room 
         ///relationship is created through PostOrderRoomConnect()
         void CreateDungeon() { 
-            auto& tree = mBSP.GetBSPTree();
-            for (const auto& node : mBSP.GetLeafNodes()) {
+            auto& tree = m_bsp.GetBSPTree();
+            for (const auto& node : m_bsp.GetLeafNodes()) {
                 RasterizeGrid(node); //Populates grid with initial, unconnected rooms 
             }
             PostOrderRoomConnect(tree[0]); //populates connection between rooms for linking
@@ -65,19 +65,19 @@ namespace cse498 {
         /// @brief Grabs the Dungeon map vector grid for loading the information in WorldGrid
         /// @return 
         [[nodiscard]] std::vector<std::string> GetDungeon() const { 
-            return mGrid;
+            return m_grid;
         }
 
         /// @brief Grabs the Generated BSP Tree in order to extract room information to extract onto the grid
         /// @return 
         [[nodiscard]] BSP GetBSP() const {
-            return mBSP;
+            return m_bsp;
         }
 
         /// @brief Grabs the vector of BSPNodes that have relations have a relationship with each other 
         /// @return vector of LinkedRoom Struct
         [[nodiscard]] std::vector<LinkedRooms> GetConnectedRooms() const { 
-            return mConnectedRooms;
+            return m_connected_rooms;
         }
 
     private:
@@ -97,17 +97,17 @@ namespace cse498 {
 
             for(int y = 0; y < room_height; ++y) {
                 int grid_y = base_y + y; // Grid's current location (y-axis)
-                assert(grid_y >= 0 && grid_y < (int)mGrid.size());
+                assert(grid_y >= 0 && grid_y < (int)m_grid.size());
 
                 for (int x = 0; x < room_width; ++x) { 
                     int grid_x = base_x + x;
                     
-                    assert(grid_x >= 0 && grid_x < (int)mGrid[0].size());
+                    assert(grid_x >= 0 && grid_x < (int)m_grid[0].size());
                     char c = node.vector_room[y][x];
 
                     //if (c == '#') continue; //Skips the outer outline of the room 
 
-                    mGrid[grid_y][grid_x] = c;
+                    m_grid[grid_y][grid_x] = c;
                 }
 
             }
@@ -126,7 +126,7 @@ namespace cse498 {
 
         /// @brief Parses through the list of Room Nodes (BSPNodes) that hava relation with each other and connects those
         void TunnelConnectDungeon() {
-            for(auto &i : mConnectedRooms) { 
+            for(auto &i : m_connected_rooms) {
                 ConnectTunnel(i);
             }
         }
@@ -160,7 +160,7 @@ namespace cse498 {
                 if (negative_y) y_point = y1_value - y;
                 else y_point = y1_value + y;
 
-                auto &y_char = mGrid[y_point][x1_value];
+                auto &y_char = m_grid[y_point][x1_value];
                 auto it = std::ranges::find(wall_set, y_char);
 
                 if (y_char == '#' || it != wall_set.end()) {
@@ -173,7 +173,7 @@ namespace cse498 {
                 if(negative_x)  x_point = x1_value -x;
                 else x_point = x1_value + x;
                 
-                auto &x_char = mGrid[y2_value][x_point];
+                auto &x_char = m_grid[y2_value][x_point];
                 auto it = std::ranges::find(wall_set, x_char);
 
                 if (x_char == '#' || it != wall_set.end()) x_char = ' ';
@@ -191,13 +191,13 @@ namespace cse498 {
                 return (Point{node.x + pair.x, node.y + pair.y});
             }
 
-            Point left = PostOrderRoomConnect(mBSP.GetBSPTree()[node.left_child]);
-            Point right = PostOrderRoomConnect(mBSP.GetBSPTree()[node.right_child]);
+            Point left = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.left_child]);
+            Point right = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.right_child]);
             
 
-            mConnectedRooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
+            m_connected_rooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
 
-            auto gamble = mRng.GetValue(0,1); //Determines which node is returned
+            auto gamble = m_rng.GetValue(0,1); //Determines which node is returned
 
             //sends a node upwards, allowing connectivity between nodes for linking 
             if (gamble == 0) {

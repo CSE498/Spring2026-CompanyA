@@ -25,15 +25,15 @@ namespace cse498 {
     enum class Orientation { NORTH, SOUTH, EAST, WEST }; // enum states for direction
 
   private:
-    Orientation dir = Orientation::NORTH; // Sets default value to NORTH
+    Orientation m_dir = Orientation::NORTH; // Sets default value to NORTH
 
   public:
 
     using WorldPosition::WorldPosition;
 
-    [[nodiscard]] Orientation Dir() const {return dir;} // Returns the current facing direction
+    [[nodiscard]] Orientation Dir() const {return m_dir;} // Returns the current facing direction
 
-    void SetDir(Orientation new_dir) {dir = new_dir;} // Sets a new facing direction
+    void SetDir(Orientation new_dir) {m_dir = new_dir;} // Sets a new facing direction
 
     // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
     [[nodiscard]] bool IsColliding(const WorldPosition& other) const

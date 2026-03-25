@@ -143,3 +143,92 @@ TEST_CASE("Test CellDistance", "[core]") {
         CHECK(pos1.CellDistance(pos2) == 44);
     }
 }
+
+TEST_CASE("Test Offset", "[core]") {
+
+    SECTION("Positive offset") {
+        cse498::WorldGridPosition pos(5.0, 10.0);
+        cse498::WorldGridPosition result = pos.Offset(2.0, 3.0);
+        CHECK(result.X() == 7.0);
+        CHECK(result.Y() == 13.0);
+    }
+
+    SECTION("Negative offset") {
+        cse498::WorldGridPosition pos(5.0, 10.0);
+        cse498::WorldGridPosition result = pos.Offset(-2.0, -3.0);
+        CHECK(result.X() == 3.0);
+        CHECK(result.Y() == 7.0);
+    }
+
+    SECTION("Zero offset returns same position") {
+        cse498::WorldGridPosition pos(5.0, 10.0);
+        cse498::WorldGridPosition result = pos.Offset(0.0, 0.0);
+        CHECK(result.X() == 5.0);
+        CHECK(result.Y() == 10.0);
+    }
+
+
+    SECTION("Fractional offset") {
+        cse498::WorldGridPosition pos(1.0, 1.0);
+        cse498::WorldGridPosition result = pos.Offset(0.5, 0.5);
+        CHECK(result.X() == 1.5);
+        CHECK(result.Y() == 1.5);
+    }
+}
+
+TEST_CASE("Test CellDistance edge cases", "[core]") {
+
+    SECTION("Diagonal distance") {
+        cse498::WorldGridPosition pos1(0.0, 0.0);
+        cse498::WorldGridPosition pos2(3.0, 4.0);
+        CHECK(pos1.CellDistance(pos2) == 7);
+    }
+
+    SECTION("Distance is symmetric") {
+        cse498::WorldGridPosition pos1(2.0, 5.0);
+        cse498::WorldGridPosition pos2(8.0, 1.0);
+        CHECK(pos1.CellDistance(pos2) == pos2.CellDistance(pos1));
+    }
+
+    SECTION("Distance from origin") {
+        cse498::WorldGridPosition pos1(0.0, 0.0);
+        cse498::WorldGridPosition pos2(10.0, 10.0);
+        CHECK(pos1.CellDistance(pos2) == 20);
+    }
+}
+
+TEST_CASE("Test IsAdjacentCell edge cases", "[core]") {
+
+    SECTION("Two cells apart horizontally is not adjacent") {
+        cse498::WorldGridPosition pos1(5.0, 10.0);
+        cse498::WorldGridPosition pos2(7.0, 10.0);
+        CHECK(pos1.IsAdjacentCell(pos2) == false);
+    }
+
+    SECTION("Two cells apart vertically is not adjacent") {
+        cse498::WorldGridPosition pos1(5.0, 10.0);
+        cse498::WorldGridPosition pos2(5.0, 12.0);
+        CHECK(pos1.IsAdjacentCell(pos2) == false);
+    }
+
+    SECTION("Adjacency is symmetric") {
+        cse498::WorldGridPosition pos1(5.0, 10.0);
+        cse498::WorldGridPosition pos2(6.0, 10.0);
+        CHECK(pos1.IsAdjacentCell(pos2) == pos2.IsAdjacentCell(pos1));
+    }
+}
+
+TEST_CASE("Test IsColliding edge cases", "[core]") {
+
+    SECTION("Collision is symmetric") {
+        cse498::WorldGridPosition pos1(5.0, 10.0);
+        cse498::WorldGridPosition pos2(5.5, 10.5);
+        CHECK(pos1.IsColliding(pos2) == pos2.IsColliding(pos1));
+    }
+
+    SECTION("Position at cell boundary does not collide with next cell") {
+        cse498::WorldGridPosition pos1(5.0, 10.0);
+        cse498::WorldGridPosition pos2(6.0, 10.0);
+        CHECK(pos1.IsColliding(pos2) == false);
+    }
+}
