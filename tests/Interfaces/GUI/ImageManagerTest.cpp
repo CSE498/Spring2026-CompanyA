@@ -65,7 +65,7 @@ TEST_CASE("Load and get images", "[ImageManager]")
     SDLMock mock;
     ImageManager manager(mock.renderer);
 
-    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
 
     // load image & confirm existence
     REQUIRE_NOTHROW(manager.load_image("test_img", testImage));
@@ -81,7 +81,7 @@ TEST_CASE("Duplicate images", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // load image
-    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
     manager.load_image("test_img", testImage);
 
     // check for error when trying to load same image again
@@ -121,7 +121,7 @@ TEST_CASE("Valid file in draw_image", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // load image
-    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
     manager.load_image("test_img", testImage);
 
     // confirm it returns true
@@ -134,7 +134,7 @@ TEST_CASE("Loading empty strings", "[ImageManager]")
     SDLMock mock;
     ImageManager manager(mock.renderer);
 
-    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
 
     // check for invalid_argument on empty name
     REQUIRE_THROWS_AS(
@@ -156,7 +156,7 @@ TEST_CASE("Extreme coordinates in draw_image", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // load image
-    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
     manager.load_image("test_img", testImage);
 
     // Smoke tests for extreme coordinates to ensure SDL doesn't crash

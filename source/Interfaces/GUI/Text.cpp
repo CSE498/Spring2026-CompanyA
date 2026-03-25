@@ -12,8 +12,8 @@
 
 using namespace cse498;
 
-//default font path
-const std::string Text::DEFAULT_FONT = DEFAULT_FONT_PATH; // defined through CMake
+//defualt font path
+const std::string Text::DEFAULT_FONT = "../source/Interfaces/GUI/fonts/OpenSans-Regular.ttf";
 const Color Text::DEFAULT_COLOR{255, 255, 255, 255};
 
 /**

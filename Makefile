@@ -1,8 +1,8 @@
 # Top-level Makefile (repo root)
 #
-# Delegates compatibility targets to:
-#   source/   (CMake-backed program builds)
-#   tests/    (CMake-backed native and WebUI tests)
+# Delegates builds to:
+#   source/   (program executables)
+#   tests/    (Catch2 unit tests)
 #
 # Common usage:
 #   make                # build default program(s)
@@ -18,8 +18,8 @@
 #   make test-build
 #   make test-list
 
-# The Make targets below are compatibility shims. Compilation and test
-# orchestration now live in the root CMake project.
+# AI Disclaimer: Used ChatGPT to create the 'make install' target in order to
+# download the SDL library for both macOS & Linux users.
 
 .PHONY: default all build test clean debug opt quick grumpy \
         src-% test-% help web_test
@@ -68,12 +68,12 @@ web_test:
 
 help:
 	@echo "Top-level targets:"
-	@echo "  make / make build      Build program(s) via CMake"
-	@echo "  make test              Build + run unit tests via CMake"
+	@echo "  make / make build      Build program(s) in source/"
+	@echo "  make test              Build + run unit tests in tests/"
 	@echo "  make web_test          Build WebUI tests with em++ (requires Emscripten)"
 	@echo "  make all               Build program(s) + run tests"
-	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode"
-	@echo "  make clean             Clean source/, tests/, and build/cmake/"
+	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode (source/)"
+	@echo "  make clean             Clean source/ and tests/"
 	@echo
 	@echo "Forwarding targets:"
 	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"

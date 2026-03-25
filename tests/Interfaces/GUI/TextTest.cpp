@@ -174,7 +174,7 @@ TEST_CASE("Invalid font path fallback", "[Text]")
     REQUIRE_NOTHROW(text.SetFont("nonexistent/path/to/font.ttf"));
 
     // Should have fallen back to default font
-    CHECK(text.GetFont() == DEFAULT_FONT_PATH);
+    CHECK(text.GetFont() == "../source/Interfaces/GUI/fonts/OpenSans-Regular.ttf");
 }
 
 TEST_CASE("Renderer can be set after construction", "[Text]")
@@ -566,7 +566,7 @@ TEST_CASE("SetFont throws exception for non-existent font after fallback", "[Tex
     REQUIRE_NOTHROW(text.SetFont("nonexistent_font.ttf"));
 
     // Should have fallen back
-    CHECK(text.GetFont() == DEFAULT_FONT_PATH);
+    CHECK(text.GetFont() == "../source/Interfaces/GUI/fonts/OpenSans-Regular.ttf");
 }
 
 TEST_CASE("Multiple Draw calls work correctly", "[Text]")

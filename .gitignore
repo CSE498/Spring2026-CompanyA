@@ -47,8 +47,9 @@
 
 third-party/sdl-build/
 third-party/SDL2/
-/build/
-/compile_commands.json
 
 /source/simple
 /tests/build/run_tests
+
+# Group 15 needs to fix this created file
+tests/DataFileManagerTest.csv
