@@ -153,6 +153,67 @@ namespace cse498
 
                 return FeatureVector(std::move(result));
             }
+
+            /// Apply a unary function to each element in-place.
+            /// @tparam Func  Callable taking T and returning T.
+            /// @param func   The function to apply.
+            /// @return Reference to this vector for chaining.
+            template <typename Func>
+            FeatureVector& transform(Func && func)
+            {
+                for (auto& v : values_)
+                {
+                    v = func(v);
+                }
+                return *this;
+            }
+
+            /// Create a new vector by applying a unary function to each element.
+            /// @tparam Func  Callable taking T and returning T.
+            /// @param func   The function to apply.
+            /// @return A new FeatureVector with transformed values.
+            template <typename Func>
+            [[nodiscard]] FeatureVector map(Func && func) const
+            {
+                std::vector<T> result(values_.size());
+                for (std::size_t i = 0; i < values_.size(); ++i)
+                {
+                    result[i] = func(values_[i]);
+                }
+                return FeatureVector(std::move(result));
+            }
+
+            /// Reduce the vector to a single value using a binary function.
+            /// @tparam Func  Callable taking (T, T) and returning T.
+            /// @param init   Initial accumulator value.
+            /// @param func   The binary function to apply.
+            /// @return The reduced value.
+            template <typename Func>
+            [[nodiscard]] T reduce(T init, Func && func) const
+            {
+                for (const auto& v : values_)
+                {
+                    init = func(init, v);
+                }
+                return init;
+            }
+
+            /// Apply a binary function element-wise with another vector.
+            /// @tparam Func  Callable taking (T, T) and returning T.
+            /// @param other  The other vector.
+            /// @param func   The binary function to apply.
+            /// @return A new FeatureVector with the results.
+            template <typename Func>
+            [[nodiscard]] FeatureVector apply(const FeatureVector& other, Func && func) const
+            {
+                assert(values_.size() == other.values_.size());
+                std::vector<T> result(values_.size());
+                for (std::size_t i = 0; i < values_.size(); ++i)
+                {
+                    result[i] = func(values_[i], other.values_[i]);
+                }
+                return FeatureVector(std::move(result));
+            }
     };
 
 } // namespace cse498
