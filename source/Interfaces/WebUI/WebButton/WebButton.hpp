@@ -31,6 +31,17 @@ namespace cse498 {
  */
 class WebButton : public IDomElement, public ICanvasElement {
  public:
+  static constexpr int kDefaultSize = 0;
+  static constexpr float kDefaultCanvasWidth = 80.0f;
+  static constexpr float kDefaultCanvasHeight = 30.0f;
+  static constexpr float kDefaultFontSize = 14.0f;
+  static constexpr float kLabelVerticalCenter = 0.7f;
+  static constexpr float kLabelHorizontalFactor = 0.3f;
+  static constexpr const char* kIdPrefix = "webbutton-";
+  static constexpr const char* kDefaultBgColor = "#4a90d9";
+  static constexpr const char* kDisabledBgColor = "#aaaaaa";
+  static constexpr const char* kDefaultTextColor = "#ffffff";
+
   /// @brief Creates a button with the given label, appended to the document body.
   /// @param label Display text for the button.
   explicit WebButton(const std::string& label = "");
@@ -60,6 +71,17 @@ class WebButton : public IDomElement, public ICanvasElement {
   /// @brief Sets the click handler; callback must not be null.
   /// @param callback Callable invoked when the button is clicked while enabled.
   void SetCallback(std::function<void()> callback);
+
+  /// @brief Sets the click handler from any callable type without
+  ///        std::function overhead. The callable must be invocable
+  ///        with no arguments and return void.
+  /// @tparam F Callable type (lambda, functor, function pointer).
+  /// @param callable The callable to store as the click handler.
+  template <typename F>
+    requires std::invocable<F>
+  void SetCallback(F&& callable) {
+    mCallback = std::function<void()>(std::forward<F>(callable));
+  }
 
   /// @brief Fires the click callback if the button is enabled and a callback is set.
   void Click();
@@ -131,23 +153,27 @@ class WebButton : public IDomElement, public ICanvasElement {
   void Draw(WebCanvas& canvas) override;
 
  private:
-  std::string mLabel;                   ///< Current button label text.
-  std::function<void()> mCallback;      ///< Click callback; may be empty.
-  bool mIsEnabled = true;               ///< Whether the button responds to clicks.
-  bool mIsVisible = true;               ///< Whether the button is visible.
-  int mWidth = 0;                       ///< Width in pixels (0 = browser default).
-  int mHeight = 0;                      ///< Height in pixels (0 = browser default).
-  std::string mBgColor;                 ///< Background color CSS string.
-  std::string mTextColor;               ///< Text color CSS string.
+  std::string mLabel;
+  std::function<void()> mCallback;
+  bool mIsEnabled = true;
+  bool mIsVisible = true;
+  int mWidth = kDefaultSize;
+  int mHeight = kDefaultSize;
+  std::string mBgColor;
+  std::string mTextColor;
 
-  float mCanvasX = 0.0f;   ///< Canvas draw position x (pixels).
-  float mCanvasY = 0.0f;   ///< Canvas draw position y (pixels).
-  float mCanvasW = -1.0f;  ///< Canvas draw width (-1 = use mWidth).
-  float mCanvasH = -1.0f;  ///< Canvas draw height (-1 = use mHeight).
+  float mCanvasX = 0.0f;
+  float mCanvasY = 0.0f;
+  float mCanvasW = -1.0f;
+  float mCanvasH = -1.0f;
 
-  static int mNextIdCounter;            ///< Counter for generating unique DOM ids.
+  static int mNextIdCounter;
 
-  /// @brief Attaches the JS click event listener to the DOM element.
   void AttachClickListener();
+
+  /// @brief Applies a CSS style property to the DOM element if it exists.
+  /// @param property CSS property name.
+  /// @param value CSS property value.
+  void ApplyStyle(const std::string& property, const std::string& value);
 };
 }
