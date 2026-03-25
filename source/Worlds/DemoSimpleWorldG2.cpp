@@ -176,7 +176,8 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     farmer.SetSymbol('F');
     farmer.SetLocation(Location(WorldPosition{4, 2}));
 
-    auto &enemy = AddAgent<Enemy>("Enemy");
+    // just for demonstration of another method for creation
+    auto &enemy = AddAgent(std::make_unique<Enemy>(GetNextAgentId(), "Enemy", *this));
     enemy.SetSymbol('S');
     enemy.SetMaxHealth(45.0);
     enemy.SetHealth(45.0);
