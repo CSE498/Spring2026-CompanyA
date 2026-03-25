@@ -714,3 +714,152 @@ TEST_CASE("PathGenerator::IsPathClear basic scenarios", "[path]") {
     }
 
 }
+
+TEST_CASE("PathGenerator directional stepping - minimal but complete coverage", "[NextDirectional]")
+{
+    // =========================
+    // NextCardinalToward
+    // =========================
+
+    {
+        // Degenerate case: no movement
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, 0.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == to);
+    }
+
+    {
+        // Pure axis (X)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(5.0, 0.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(1.0, 0.0));
+    }
+
+    {
+        // Pure axis (Y, negative)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, -3.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(0.0, -1.0));
+    }
+
+    {
+        // X-dominant diagonal → X step
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(4.0, 1.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(1.0, 0.0));
+    }
+
+    {
+        // Y-dominant diagonal → Y step
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(1.0, 4.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(0.0, 1.0));
+    }
+
+    {
+        // Tie case (|dx| == |dy|) → MUST choose X (>= branch)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(-2.0, -2.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(-1.0, 0.0));
+    }
+
+    {
+        // Floating-point asymmetry (very small dx vs large dy)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(1e-12, 10.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(0.0, 1.0));
+    }
+
+    {
+        // Non-origin position, mixed signs
+        WorldPosition from(10.5, -2.5);
+        WorldPosition to(7.5, 5.5); // dx=-3, dy=8 → Y dominant
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(10.5, -1.5));
+    }
+
+    // =========================
+    // Next8DirectionToward
+    // =========================
+
+    {
+        // Degenerate case
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, 0.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == to);
+    }
+
+    {
+        // Pure X still works
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(-6.0, 0.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(-1.0, 0.0));
+    }
+
+    {
+        // True diagonal (+,+)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(3.0, 7.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(1.0, 1.0));
+    }
+
+    {
+        // Mixed signs (+,-)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(2.0, -9.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(1.0, -1.0));
+    }
+
+    {
+        // dx extremely small but nonzero → still produces ±1
+        // This verifies your sign extraction behavior explicitly
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(1e-15, -5.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(1.0, -1.0));
+    }
+
+    {
+        // dx exactly zero → must not introduce diagonal artifact
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, 8.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(0.0, 1.0));
+    }
+
+    {
+        // Non-origin + asymmetric magnitudes (no prioritization)
+        WorldPosition from(-3.0, 4.0);
+        WorldPosition to(100.0, 3.0); // dx large +, dy small -
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(-2, 3));
+    }
+}
+
+

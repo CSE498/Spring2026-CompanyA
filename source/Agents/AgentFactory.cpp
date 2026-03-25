@@ -9,11 +9,16 @@
 #include "../core/WorldBase.hpp"
 #include "../tools/PathGenerator.hpp"
 #include "../tools/PathVector.hpp"
+#include "Worlds/DemoSimpleWorldG2Actions.hpp"
 #include <cmath>
+
+#include "MovementTypes.hpp"
 
 using cse498::BehaviorTrees::TreeBuilder;
 using cse498::BehaviorTrees::ExecutionContext;
 using cse498::BehaviorTrees::Node;
+namespace DemoAct = cse498::DemoSimpleWorldG2Actions;
+
 
 namespace cse498
 {
@@ -128,7 +133,7 @@ std::unique_ptr<Node> AgentFactory::CreatePatrolTree(AgentBase* agent)
 {
     return TreeBuilder::Act("Walk Back And Forth", [agent](ExecutionContext& ctx) {
         if (!agent) return Node::Status::Failure;
-        std::string dir = ctx.mBlackboard.Get<std::string>("patrol_direction", "left");
+        auto dir = ctx.mBlackboard.Get<std::string>("patrol_direction", "left");
         size_t actionId;
         if (dir == "left") {
             actionId = agent->GetActionID("left");
@@ -150,6 +155,35 @@ std::unique_ptr<Enemy> AgentFactory::CreatePatrolAgent(WorldBase& world, const W
     patrol->AddAction("left", 1).AddAction("right", 2);
     patrol->SetBehaviorTree(CreatePatrolTree(patrol.get()));
     return patrol;
+}
+
+
+std::unique_ptr<Node> AgentFactory::CreateEnemyFollowPlayerTree(Enemy *enemy,
+    const WorldBase &world,
+    std::size_t targetAgentIndex)
+{
+    auto chase = TreeBuilder::Act(
+        "ChaseOneStepTowardTarget",
+        [enemy, &world, targetAgentIndex](ExecutionContext &ctx) {
+            if (enemy == nullptr || !enemy->IsAlive()) {
+                ctx.mBlackboard.Set<std::size_t>("selected_action", DemoAct::REMAIN_STILL);
+                return Node::Status::Failure;
+            }
+            const WorldPosition epos = enemy->GetLocation().AsWorldPosition();
+            const WorldPosition ppos = world.GetAgent(targetAgentIndex).GetLocation().AsWorldPosition();
+            if (IsAdjacentForCombat(epos, ppos)) {
+                ctx.mBlackboard.Set<std::size_t>("selected_action", DemoAct::INTERACT);
+                return Node::Status::Success;
+            }
+            const WorldPosition next = PathGenerator::NextCardinalToward(epos, ppos);
+            const double dx = next.X() - epos.X();
+            const double dy = next.Y() - epos.Y();
+            const std::size_t aid = MovementTypes::DeltaToMoveAction(dx, dy);
+            ctx.mBlackboard.Set<std::size_t>("selected_action", aid);
+            return Node::Status::Success;
+        });
+    return chase;
+
 }
 
 std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const std::string & name, WorldBase & world)

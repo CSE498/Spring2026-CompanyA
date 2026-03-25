@@ -334,6 +334,8 @@ public:
      * @return true if path is clear
      */
     static bool IsPathClear(const WorldPosition& start, const PathVector& path, const PathRequest& request);
+    static constexpr WorldPosition NextCardinalToward(const WorldPosition &from, const WorldPosition &to);
+    static constexpr WorldPosition Next8DirectionToward(const WorldPosition &from, const WorldPosition &to);
 
 };
 
@@ -470,6 +472,41 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
     // Not possible to reach the goal.
     return {};
 }
+
+constexpr WorldPosition PathGenerator::NextCardinalToward(const WorldPosition& from, const WorldPosition& to)
+{
+    const double dx = to.X() - from.X();
+    const double dy = to.Y() - from.Y();
+    if (dx == 0.0 && dy == 0.0) {
+        return from;
+    }
+    if (std::abs(dx) >= std::abs(dy)) {
+        const double step_x = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
+        return from.GetOffset(step_x, 0.0);
+    }
+    const double step_y = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
+    return from.GetOffset(0.0, step_y);
+}
+
+constexpr WorldPosition PathGenerator::Next8DirectionToward(const WorldPosition& from, const WorldPosition& to)
+{
+    const double dx = to.X() - from.X();
+    const double dy = to.Y() - from.Y();
+
+    if (dx == 0.0 && dy == 0.0) {
+        return from;
+    }
+
+    const double step_x = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
+    const double step_y = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
+
+    return from.GetOffset(step_x, step_y);
+}
+
+
+
+
+
 }
 
 #endif //SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHGENERATOR_H

@@ -23,7 +23,7 @@ namespace cse498 {
   private:
     double x = 0.0;
     double y = 0.0;
-    static constexpr double eps = 1e-9; /// epsilon
+    static constexpr double EPS = 1e-9; /// epsilon
     /// chops off endings of doubles and converts to ints to make more consistent/comparable doubles
 
   public:
@@ -58,7 +58,7 @@ namespace cse498 {
     auto operator<=>(const WorldPosition &) const = default;
     /// Positions on the map are the same if this is true in essence
     auto operator==(const WorldPosition & other) const {
-        return Quantize(x) == Quantize(other.x) && Quantize(y) == Quantize(other.y);
+        return std::abs(x - other.x) < EPS && std::abs(y - other.y) < EPS;
     }
 
     WorldPosition & Set(double in_x, double in_y) {
@@ -78,7 +78,7 @@ namespace cse498 {
     [[nodiscard]] WorldPosition Down()  const { return {x, y+1.0}; }
     [[nodiscard]] WorldPosition Left()  const { return {x-1.0, y}; }
     [[nodiscard]] WorldPosition Right() const { return {x+1.0, y}; }
-    static std::int64_t Quantize(double val ) { return static_cast<std::int64_t>(std::llround(val / eps)); }
+    static std::int64_t Quantize(double val ) { return static_cast<std::int64_t>(std::llround(val / EPS)); }
     /**
      * uses CellX() and CellY() for positioning since this is used for determining locations of world positions
      * in the map based on GIVEN code. TODO: Change CellX() CellY() to round() since this will feel more natural

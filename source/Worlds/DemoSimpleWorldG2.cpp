@@ -1,5 +1,5 @@
 /**
- * Group 2 demo world implementation. Enemy chase logic lives in EnemyFollowPlayerTree.cpp.
+ * Group 2 demo world implementation. Enemy chase logic is defined in AgentFactory
  */
 #include "DemoSimpleWorldG2.hpp"
 
@@ -9,10 +9,10 @@
 #include <vector>
 
 #include "../Agents/Enemy.hpp"
-#include "../Agents/EnemyFollowPlayerTree.hpp"
 #include "../Agents/FarmingAgent.hpp"
 #include "../Agents/PlayerAgent.hpp"
 #include "../tools/DamageCalculator.hpp"
+#include "Agents/AgentFactory.hpp"
 
 namespace cse498 {
 
@@ -84,7 +84,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
             }
             interacted = true;
             if (i == kFarmerIdx) {
-                auto &farmer = static_cast<FarmingAgent &>(other);
+                auto &farmer = dynamic_cast<FarmingAgent &>(other);
                 std::cout << "Farmer: ";
                 if (farmer.IsAvailableForTrade()) {
                     std::cout << "Welcome! I've got crops and seeds today.\n";
@@ -180,7 +180,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     enemy.SetHealth(45.0);
     enemy.SetLocation(Location(WorldPosition{8, 3}));
     mEnemyCombat = CombatStats{9.0, 2.0};
-    enemy.SetBehaviorTree(CreateEnemyFollowPlayerTree(&enemy, *this, kPlayerIdx));
+    enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, kPlayerIdx));
 }
 
 int DemoSimpleWorldG2::DoAction(AgentBase &agent, size_t action_id) {
