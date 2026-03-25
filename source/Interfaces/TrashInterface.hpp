@@ -65,6 +65,8 @@ namespace cse498 {
       : InterfaceBase(id, name, world) { }
     ~TrashInterface() = default; // Already virtual from Entity
 
+    void RenderFrame() override {}
+
     // -- AgentBase overrides --
 
     bool Initialize() override {
