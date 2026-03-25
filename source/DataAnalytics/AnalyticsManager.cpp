@@ -1,3 +1,11 @@
+/**
+ *
+ * @note Status: PROPOSAL
+ *
+ * The goal of this class is to act as a container to store all the DataLogs and ActionLogs for the project.
+ * This class will be called by the game to log data and actions which will be used by the StatsTracker class.
+ **/
+
 #include "AnalyticsManager.hpp"
 
 namespace cse498
@@ -8,9 +16,6 @@ namespace cse498
         mHealthLog.Clear();
         mEnemiesTrackedLog.Clear();
         mDamageDealtLog.Clear();
-
-        // mSuccessfulMovesLog.Clear();
-        // mBlockedMovesLog.Clear();
     }
 
     void AnalyticsManager::LogHealth(double health)
@@ -42,25 +47,4 @@ namespace cse498
     {
         return mDamageDealtLog;
     }
-
-    // void AnalyticsManager::LogSuccessfulMove(double value)
-    // {
-    //     mSuccessfulMovesLog.Add(value);
-    // }
-
-    // void AnalyticsManager::LogBlockedMove(double value)
-    // {
-    //     mBlockedMovesLog.Add(value);
-    // }
-
-    // const DataLog& AnalyticsManager::GetSuccessfulMovesLog() const
-    // {
-    //     return mSuccessfulMovesLog;
-    // }
-
-    // const DataLog& AnalyticsManager::GetBlockedMovesLog() const
-    // {
-    //     return mBlockedMovesLog;
-    // }
-
 }

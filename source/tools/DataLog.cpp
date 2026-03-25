@@ -4,7 +4,6 @@
  * @note Status: PROPOSAL
  *
  * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
- * Samples are stored in the format of (Value, timestamp/seconds since start)
  * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
  * Used AI to help in developing the Min, Max, Mean, and Threshold functions.
  **/
@@ -92,7 +91,7 @@ namespace cse498
     }
 
     /*
-    Function returns the average of the values in the data log
+    Function returns the average of the data values in the data log
     */
     std::optional<double> DataLog::Mean() const
     {
