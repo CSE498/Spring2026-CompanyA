@@ -54,6 +54,11 @@ namespace cse498 {
             return out;
         }
 
+        // ============================================================
+        // Arya made changes here (lines 57-132), please review
+        // Added: ForEach, Filter, AnyOf, AllOf, NoneOf, RemoveIf
+        // ============================================================
+
         /// Apply a function to each tag.
         /// @tparam Func  Callable taking const std::string&.
         /// @param func   The function to apply.

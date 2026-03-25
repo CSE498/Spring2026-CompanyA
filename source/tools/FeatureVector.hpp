@@ -154,6 +154,11 @@ namespace cse498
                 return FeatureVector(std::move(result));
             }
 
+            // ============================================================
+            // Arya made changes here (lines 157-216), please review
+            // Added: transform, map, reduce, apply - lambda-based methods
+            // ============================================================
+
             /// Apply a unary function to each element in-place.
             /// @tparam Func  Callable taking T and returning T.
             /// @param func   The function to apply.
