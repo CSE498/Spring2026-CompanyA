@@ -83,43 +83,43 @@ namespace cse498 {
   }
 
   void Game::SetupMainMenu() {
-    mMainMenu.Clear();
+    mMainMenu.clear();
 
-    mMainMenu.AddOption("New Game", [this]() {
+    mMainMenu.add_option("New Game", [this]() {
       TransitionTo(GameState::OVERWORLD);
     });
 
-    mMainMenu.AddOption("Settings", [this]() {
+    mMainMenu.add_option("Settings", [this]() {
       TransitionTo(GameState::SETTINGS);
     });
 
-    mMainMenu.AddOption("Quit", [this]() {
+    mMainMenu.add_option("Quit", [this]() {
       Quit();
     });
   }
 
   void Game::SetupPauseMenu() {
-    mPauseMenu.Clear();
+    mPauseMenu.clear();
 
-    mPauseMenu.AddOption("Resume", [this]() {
+    mPauseMenu.add_option("Resume", [this]() {
       Resume();
     });
 
-    mPauseMenu.AddOption("Go to Dungeon World", [this]() {
+    mPauseMenu.add_option("Go to Dungeon World", [this]() {
       TransitionTo(GameState::DUNGEON);
       mPreviousState = GameState::DUNGEON;
     });
 
-    mPauseMenu.AddOption("Go to Overworld", [this]() {
+    mPauseMenu.add_option("Go to Overworld", [this]() {
       TransitionTo(GameState::OVERWORLD);
       mPreviousState = GameState::OVERWORLD;
     });
 
-    mPauseMenu.AddOption("Settings", [this]() {
+    mPauseMenu.add_option("Settings", [this]() {
       TransitionTo(GameState::SETTINGS);
     });
 
-    mPauseMenu.AddOption("Quit to Main Menu", [this]() {
+    mPauseMenu.add_option("Quit to Main Menu", [this]() {
       TransitionTo(GameState::MAIN_MENU);
     });
   }
@@ -173,16 +173,16 @@ namespace cse498 {
 
           // Navigation in menus
           case SDLK_UP:
-            if (mState == GameState::MAIN_MENU) mMainMenu.SelectPrevious();
-            if (mState == GameState::PAUSED)    mPauseMenu.SelectPrevious();
+            if (mState == GameState::MAIN_MENU) mMainMenu.select_previous();
+            if (mState == GameState::PAUSED)    mPauseMenu.select_previous();
             break;
           case SDLK_DOWN:
-            if (mState == GameState::MAIN_MENU) mMainMenu.SelectNext();
-            if (mState == GameState::PAUSED)    mPauseMenu.SelectNext();
+            if (mState == GameState::MAIN_MENU) mMainMenu.select_next();
+            if (mState == GameState::PAUSED)    mPauseMenu.select_next();
             break;
           case SDLK_RETURN:
-            if (mState == GameState::MAIN_MENU) mMainMenu.ActivateSelected();
-            if (mState == GameState::PAUSED)    mPauseMenu.ActivateSelected();
+            if (mState == GameState::MAIN_MENU) mMainMenu.activate_selected();
+            if (mState == GameState::PAUSED)    mPauseMenu.activate_selected();
             break;
 
           // Pause / resume
@@ -214,7 +214,7 @@ namespace cse498 {
   void Game::Pause() {
     mPreviousState = mState;
     mState = GameState::PAUSED;
-    mPauseMenu.SelectOption(0); // Always start pause menu on "Resume"
+    mPauseMenu.select_option(0); // Always start pause menu on "Resume"
   }
 
   void Game::Resume() {
@@ -271,14 +271,14 @@ namespace cse498 {
     int h = mGameView->GetHeight();
 
     int menu_w = w / 4;
-    int menu_h = static_cast<int>(mMainMenu.GetOptionCount()) * 50;
+    int menu_h = static_cast<int>(mMainMenu.get_option_count()) * 50;
     int menu_x = (w - menu_w) / 2;
     int menu_y = (h - menu_h) / 2;
 
     int title_x = (w - mTitleText.GetWidth()) / 2;
     mTitleText.Draw(title_x, menu_y - 80);
 
-    mMainMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
+    mMainMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
   // Z-layer ordering. Put here for future reference of probable Game draw logic
@@ -327,10 +327,10 @@ namespace cse498 {
 
     // Pause menu centered
     int menu_w = w / 4;
-    int menu_h = static_cast<int>(mPauseMenu.GetOptionCount()) * 50;
+    int menu_h = static_cast<int>(mPauseMenu.get_option_count()) * 50;
     int menu_x = (w - menu_w) / 2;
     int menu_y = pause_y + mPauseText.GetHeight() + (h / 30);
-    mPauseMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
+    mPauseMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
   void Game::RenderSettings() {
