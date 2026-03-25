@@ -16,6 +16,7 @@
 #include <functional>
 #include <emscripten/val.h>
 
+#include "../../../tools/Color.hpp"
 #include "../internal/IDomElement.hpp"
 #include "../internal/ICanvasElement.hpp"
 
@@ -165,7 +166,8 @@ class WebImage : public IDomElement, public ICanvasElement {
   bool mIsLoaded = false;                   ///< True after the image finishes loading.
   bool mHasError = false;                   ///< True if the image source failed to load.
   ImageErrorMode mErrorMode = ImageErrorMode::BlankRect;  ///< Error handling strategy.
-  std::string mPlaceholderColor = "#CCCCCC";  ///< Color used for the BlankRect placeholder.
+  std::string mPlaceholderColor = Color::FromRGB255(204, 204, 204).ToHex();
+                                               ///< Color used for the BlankRect placeholder.
   std::function<void()> mOnLoadCallback;    ///< Callback invoked on successful load.
   std::function<void()> mOnErrorCallback;   ///< Callback invoked on load failure.
   int mRegistryId = -1;                     ///< Registry id for JS event forwarding.

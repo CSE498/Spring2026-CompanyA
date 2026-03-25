@@ -38,9 +38,6 @@ class WebButton : public IDomElement, public ICanvasElement {
   static constexpr float kLabelVerticalCenter = 0.7f;
   static constexpr float kLabelHorizontalFactor = 0.3f;
   static constexpr const char* kIdPrefix = "webbutton-";
-  static constexpr const char* kDefaultBgColor = "#4a90d9";
-  static constexpr const char* kDisabledBgColor = "#aaaaaa";
-  static constexpr const char* kDefaultTextColor = "#ffffff";
 
   /// @brief Creates a button with the given label, appended to the document body.
   /// @param label Display text for the button.

@@ -5,11 +5,19 @@
 #include "../WebCanvas/WebCanvas.hpp"
 #include "../WebButton/WebButton.hpp"
 #include "../WebTextbox/WebTextbox.hpp"
+#include "../../../tools/Color.hpp"
 #include "../../../core/WorldBase.hpp"
 
 #include <sstream>
 
 using namespace cse498;
+
+namespace {
+constexpr std::string_view kDimGray = "#cccccc";
+constexpr std::string_view kCanvasBg = "#0c1017";
+static_assert(cse498::Color::FromHex(kDimGray).has_value());
+static_assert(cse498::Color::FromHex(kCanvasBg).has_value());
+}
 
 WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase & world) : InterfaceBase(id, name, world) {
   // Create root layout hooking into "root" div
@@ -20,7 +28,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   // Create canvas
   mElements.emplace_back(std::make_unique<WebCanvas>("web-canvas"));
   mCanvas = static_cast<WebCanvas*>(mElements.back().get());
-  mCanvas->SetBackgroundColor("#0c1017");
+  mCanvas->SetBackgroundColor(std::string(kCanvasBg));
   mRoot->AddElement(mCanvas);
 
   // Create world textbox
@@ -28,7 +36,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   mWorldTextbox = worldTextPtr.get();
   mWorldTextbox->SetCanvasPosition(300.0f, 150.0f);
   mWorldTextbox->SetFontSize(20);
-  mWorldTextbox->SetColor("#ccc");
+  mWorldTextbox->SetColor(std::string(kDimGray));
   mWorldTextbox->SetFontFamily("monospace");
   mCanvas->AddElement(std::move(worldTextPtr));
 
@@ -37,7 +45,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   mPointsTextbox = pointsTextPtr.get();
   mPointsTextbox->SetCanvasPosition(10.0f, 50.0f);
   mPointsTextbox->SetFontSize(24);
-  mPointsTextbox->SetColor("#ccc");
+  mPointsTextbox->SetColor(std::string(kDimGray));
   mCanvas->AddElement(std::move(pointsTextPtr));
 
   // Create pause menu layout
@@ -55,7 +63,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
   titlePtr->SetAlignment(WebTextbox::TextAlign::Center);
   titlePtr->SetFontSize(50.0f);
-  titlePtr->SetColor("#ccc");
+  titlePtr->SetColor(std::string(kDimGray));
   titlePtr->MountToLayout(*mPauseMenu);
 
   // Create description textbox
@@ -63,7 +71,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
   descPtr->SetAlignment(WebTextbox::TextAlign::Center);
   descPtr->SetFontSize(24.0f);
-  descPtr->SetColor("#ccc");
+  descPtr->SetColor(std::string(kDimGray));
   descPtr->MountToLayout(*mPauseMenu);
 
   RenderFrame();

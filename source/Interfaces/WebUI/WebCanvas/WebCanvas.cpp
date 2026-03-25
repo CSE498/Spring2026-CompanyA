@@ -10,6 +10,7 @@
  */
 
 #include "WebCanvas.hpp"
+#include "../../../tools/Color.hpp"
 
 #include <utility>
 #include <algorithm>  // std::stable_sort
@@ -193,7 +194,13 @@ void WebCanvas::DrawCircle(float centerX, float centerY, float radius,
 void WebCanvas::DrawPoint(float x, float y, float radius, const std::string& fillColor)
 {
     // Treat point as a filled circle with no stroke.
-    DrawCircle(x, y, radius, /*stroke*/ "#000000", /*lineWidth*/ 0.0f, fillColor);
+    DrawCircle(
+        x,
+        y,
+        radius,
+        /*stroke*/ Color::FromRGB255(0, 0, 0).ToHex(),
+        /*lineWidth*/ 0.0f,
+        fillColor);
 }
 
 /// @brief Draws a polygon defined by an ordered list of vertices.

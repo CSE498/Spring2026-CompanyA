@@ -11,6 +11,7 @@
 #include "WebButton.hpp"
 #include "../WebCanvas/WebCanvas.hpp"
 #include "../WebLayout/WebLayout.hpp"
+#include "../../../tools/Color.hpp"
 #include <cassert>
 #include <emscripten.h>
 
@@ -19,6 +20,15 @@ using emscripten::val;
 namespace cse498 {
 
 int WebButton::mNextIdCounter = 1;
+
+namespace {
+constexpr std::string_view kDefaultBgColorHex = "#4a90d9";
+constexpr std::string_view kDisabledBgColorHex = "#aaaaaa";
+constexpr std::string_view kDefaultTextColorHex = "#ffffff";
+static_assert(cse498::Color::FromHex(kDefaultBgColorHex).has_value());
+static_assert(cse498::Color::FromHex(kDisabledBgColorHex).has_value());
+static_assert(cse498::Color::FromHex(kDefaultTextColorHex).has_value());
+}
 
 /// @brief Converts an integer pixel value to a CSS pixel string (e.g., "42px").
 /// @param value Pixel value to convert.
@@ -278,14 +288,14 @@ void WebButton::Draw(WebCanvas& canvas) {
       : static_cast<float>(mHeight > 0 ? mHeight : kDefaultCanvasHeight);
 
   std::string bg = mIsEnabled
-      ? (mBgColor.empty() ? std::string(kDefaultBgColor) : mBgColor)
-      : std::string(kDisabledBgColor);
+      ? (mBgColor.empty() ? std::string(kDefaultBgColorHex) : mBgColor)
+      : std::string(kDisabledBgColorHex);
 
   canvas.DrawRect(mCanvasX, mCanvasY, w, h, bg);
 
   if (!mLabel.empty()) {
     std::string textCol = mTextColor.empty()
-        ? std::string(kDefaultTextColor) : mTextColor;
+        ? std::string(kDefaultTextColorHex) : mTextColor;
     float tx = mCanvasX + w * 0.5f
         - static_cast<float>(mLabel.size()) * kDefaultFontSize * kLabelHorizontalFactor;
     float ty = mCanvasY + h * kLabelVerticalCenter;
