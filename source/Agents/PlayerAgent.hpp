@@ -1,5 +1,5 @@
 /**
- * @file PlayerAgent.h
+ * @file PlayerAgent.hpp
  * @brief Human-controlled player (text input / interface agent).
  */
 
@@ -20,6 +20,7 @@ public:
 
     [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
 
+    [[nodiscard]] Inventory & GetInventory() { return mInventory; }
 
 };
 

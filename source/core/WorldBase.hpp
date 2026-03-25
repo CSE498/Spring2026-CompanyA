@@ -83,10 +83,8 @@ namespace cse498 {
       return *agent_set[id];
     }
 
-    // TODO: update this so we have player information
-    /// temporary function because we have yet to know how/where main player is stored. We need to know where player
-    /// is so we ask this question for the world to know.
-    [[nodiscard]] WorldPosition getPlayerPosition() const { return mPlayer.GetLocation().AsWorldPosition(); }
+    [[nodiscard]] PlayerAgent & GetPlayer() { return mPlayer; }
+    [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayer.GetLocation().AsWorldPosition(); }
 
     /// Return an editable version of the current grid for this world (main_grid by default) 
     virtual WorldGrid & GetGrid() { return main_grid; }

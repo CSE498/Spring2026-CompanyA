@@ -34,7 +34,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
     // Condition: is the player currently within this enemy's attack range?
     attackSeq->AddChild(TreeBuilder::Act("Player in Range", [enemy, &world](ExecutionContext&)
     {
-        if (enemy && IsInRange(*enemy, world.getPlayerPosition(), world.GetGrid()))
+        if (enemy && IsInRange(*enemy, world.GetPlayerPosition(), world.GetGrid()))
             return Node::Status::Success;
         return Node::Status::Failure;
     }));
@@ -56,7 +56,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
             return Node::Status::Failure;
 
         const WorldPosition enemyPos = enemy->GetLocation().AsWorldPosition();
-        const WorldPosition playerPos = world.getPlayerPosition();
+        const WorldPosition playerPos = world.GetPlayerPosition();
 
         // Build a simple pathfinding request for this enemy on the world's main grid.
         const WorldGrid &grid = world.GetGrid();
