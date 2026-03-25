@@ -9,7 +9,6 @@
 #include "../../source/tools/PathGenerator.hpp"
 #include "../../source/core/WorldBase.hpp"
 #include "../../source/core/WorldGrid.hpp"
-#include "../../source/Agents/AgentAbility.hpp"
 #include "../../source/tools/WorldPath.hpp"
 
 using cse498::WorldPath;
@@ -230,11 +229,11 @@ TEST_CASE("No Constructor", "[PathGenerator, Constructor]")
 TEST_CASE("Shortest Path Generation -- Simple cases for functionality", "[ShorestPath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({},  world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({},  world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({},  world3.GetGrid());
 
     // Initial Tests to ensure things are working ok -- semi-complex
     auto path = PathGenerator::FindShortestPath({0, 0}, {1, 1}, request2);
@@ -310,9 +309,9 @@ TEST_CASE("Shortest Path Generation -- Simple cases for functionality", "[Shores
 TEST_CASE("Shortest Path Generation -- Edge Cases", "[ShortestPath]")
 {
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
 
     // 0 to 0
     auto none2none = PathGenerator::FindShortestPath({1, 1}, {1, 1}, request1);
@@ -341,7 +340,7 @@ TEST_CASE("Shortest Path Generation -- Obstacles", "[ShortestPath]")
 {
     cse498::TestWorld2 world2;
     std::unordered_set<WorldPosition> tiles_to_avoid = {{1, 2}};
-    PathRequest request2_1(tiles_to_avoid, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2_1(tiles_to_avoid, world2.GetGrid());
 
     auto trapped = PathGenerator::FindShortestPath({1, 1}, {1, 5}, request2_1);
     CHECK(!trapped);
@@ -357,13 +356,13 @@ TEST_CASE("Shortest Path Generation -- Obstacles", "[ShortestPath]")
 TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world;
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     // Couple of quick simple tests to ensure it is working in general when pressed into a wall and in free space
     // Edge cases are not tested thoroughly because I could be here for a fortnight.
@@ -406,7 +405,7 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
     CHECK(WorldPathApprox(WorldPath(circ2_exp_path_to), circ2_exp.value().mPathToCircle));
 
     cse498::CircleWorld2 circle_world2;
-    PathRequest circle_request2({}, cse498::AgentAbility(), circle_world2.GetGrid());
+    PathRequest circle_request2({}, circle_world2.GetGrid());
 
     // Generation with center on wall
     // FOREWARNING: Looking at this in desmos can be confusing it can look like "Why did it take that path??"
@@ -459,11 +458,11 @@ TEST_CASE("Circular Path Generation -- Edge Cases", "[CirclePath]")
 TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
 
     // Straight line vertical test
     auto man_simple1 = PathGenerator::FindManhattanPath({1, 1}, {1, 5}, request2);
@@ -502,11 +501,11 @@ TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
 TEST_CASE("Manhattan Path Generation -- Edge Cases", "[ManhattanPath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
 
     auto man_p1 = PathGenerator::FindManhattanPath({1, 1}, {1, 1}, request1);
     std::vector<WorldPosition> man_p1_ans = {{1, 1}};
@@ -519,13 +518,13 @@ TEST_CASE("Manhattan Path Generation -- Edge Cases", "[ManhattanPath]")
 TEST_CASE("Rectangular Loop Generation -- Simple Cases", "[RectangularLoop]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world;
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     auto rectangle1 = PathGenerator::FindRectangularLoopPath({1, 1}, {2.5, 5}, {5.5, 1}, circle_request);
     std::vector<WorldPosition> rectangle1_path_to = {{1, 1}, {2, 1}, {2.5, 1}};
@@ -559,13 +558,13 @@ TEST_CASE("Rectangular Loop Generation -- Edge Cases", "[RectangularLoop]")
 TEST_CASE("Path Generation - Doubles testing", "[group2]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world; // x=[1-18] y=[1,8]
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     // Initial Tests to ensure things are working ok -- semi-complex
     //  (1,1) --> (9, 1)
@@ -614,13 +613,13 @@ TEST_CASE("Path Generation - Doubles testing", "[group2]")
 TEST_CASE("Path Generation ALL - testing paths outside of bounds")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world; // x=[1-18] y=[1,8]
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     // 1. Shortest Path
     auto path1 = PathGenerator::FindShortestPath({0.5, 1.3}, {9.32, -3.35}, request2);
@@ -649,7 +648,7 @@ TEST_CASE("IsPathClear", "[utility]")
 }
 TEST_CASE("PathGenerator::IsPathClear basic scenarios", "[path]") {
     cse498::TestWorldUtility1 world;
-    PathRequest request({}, cse498::AgentAbility(), world.GetGrid());
+    PathRequest request({}, world.GetGrid());
 
     // Straight horizontal path (clear)
     {

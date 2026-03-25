@@ -44,7 +44,6 @@
 namespace cse498
 {
 struct CirclePath;
-class AgentAbility;
 struct PathRequest;
 struct ANode;
 enum class PathFlag
@@ -352,7 +351,6 @@ struct PathRequest
 public:
     /// the points known to complete a path between and ensure valid
     std::unordered_set<WorldPosition> mAvoidTiles;
-    const AgentAbility &mAbility;
     const WorldGrid &mWorldGrid;
     const double mMaxSearchDistance;
 
@@ -366,9 +364,8 @@ public:
      *                            only applicable when `finding` some path through A*
      */
     PathRequest(std::unordered_set<WorldPosition> avoidTiles,
-                const AgentAbility &ability,
                 const WorldGrid &worldGrid,
-                const double maxSearchDistance = 0) : mAvoidTiles(std::move(avoidTiles)), mAbility(ability),
+                const double maxSearchDistance = 0) : mAvoidTiles(std::move(avoidTiles)),
                                                mWorldGrid(worldGrid), mMaxSearchDistance(maxSearchDistance)
     {
     }

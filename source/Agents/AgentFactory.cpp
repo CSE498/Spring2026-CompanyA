@@ -35,7 +35,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
     // Condition: is the player currently within this enemy's attack range?
     attackSeq->AddChild(TreeBuilder::Act("Player in Range", [enemy, &world](ExecutionContext&)
     {
-        if (enemy && IsInRange(*enemy, world.getPlayerPosition(), world.GetGrid()))
+        if (enemy && IsInRange(*enemy, world.GetPlayerPosition(), world.GetGrid()))
             return Node::Status::Success;
         return Node::Status::Failure;
     }));
@@ -57,11 +57,11 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
             return Node::Status::Failure;
 
         const WorldPosition enemyPos = enemy->GetLocation().AsWorldPosition();
-        const WorldPosition playerPos = world.getPlayerPosition();
+        const WorldPosition playerPos = world.GetPlayerPosition();
 
         // Build a simple pathfinding request for this enemy on the world's main grid.
         const WorldGrid &grid = world.GetGrid();
-        PathRequest request({}, AgentAbility(), grid);
+        PathRequest request({},  grid);
 
         auto pathOpt = PathGenerator::FindShortestPath(enemyPos, playerPos, request);
         if (!pathOpt)
@@ -189,7 +189,7 @@ bool AgentFactory::IsInRange(const Enemy &enemy, const WorldPosition &entityPosi
     const WorldPosition& p1 = enemy.GetLocation().AsWorldPosition();
     const WorldPosition& p2 = entityPosition;
 
-    if (PathGenerator::IsPathClear(p1, p2 - p1, {{}, AgentAbility(), grid}))
+    if (PathGenerator::IsPathClear(p1, p2 - p1, {{}, grid}))
     {
         // then we are pretty much good. Just check Euclidean Distance is less than range with respect to the player
         // hitbox. TODO: update once hitbox information is more well-defined
