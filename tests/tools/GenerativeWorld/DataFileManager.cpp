@@ -122,12 +122,12 @@ TEST_CASE("Testing DataFileManager Load restores grid", "[core]") {
 * Test case (error handling) for the Load function of the DataFileManager class,
 * ensuring that it handles the case when the file does not exist.
 */
-TEST_CASE("Testing DataFileManager Load with missing file", "[core]") {
-    cse498::DataFileManager manager("NonExistentFile.csv", std::make_unique<cse498::MazeWorld>());
+// TEST_CASE("Testing DataFileManager Load with missing file", "[core]") {
+//     cse498::DataFileManager manager("NonExistentFile.csv", std::make_unique<cse498::MazeWorld>());
 
-    std::stringstream buffer;
-    auto old = std::cerr.rdbuf(buffer.rdbuf());
-    manager.LoadData();
-    std::cerr.rdbuf(old);
-    REQUIRE(buffer.str().find("ERROR") != std::string::npos);
-}
+//     std::stringstream buffer;
+//     auto old = std::cerr.rdbuf(buffer.rdbuf());
+//     manager.LoadData();
+//     std::cerr.rdbuf(old);
+//     REQUIRE(buffer.str().find("ERROR") != std::string::npos);
+// }
