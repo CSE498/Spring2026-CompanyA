@@ -27,7 +27,9 @@ namespace cse498 {
   class WorldBase {
     private:
       /// current agent ID for this world. (reserve 0? could be nice..? Player?)
-      size_t mAgentIdIndex = 1;
+      /// Note this also fixed a potential bug -- It used to be defined by size of agent_size but that changes
+      /// up and down which gives multiple duplicate ids to multiple agents..
+      size_t mAgentIdIndex = 0;
 
     protected:
     /// NOTE: derived worlds may choose to have more than one grid.
@@ -36,7 +38,7 @@ namespace cse498 {
     item_set_t item_set;    ///< Vector of pointers to non-agent entities (ItemBase)
     agent_set_t agent_set;  ///< Vector of pointers to agent entities (AgentBase)
     /// The main player stored separately from the agents and has id = 0
-    PlayerAgent mPlayer;
+    PlayerAgent* mPlayer;
 
     bool run_over = false;  ///< Are we finished executing and now shutting down?
 
@@ -48,7 +50,13 @@ namespace cse498 {
 
 
   public:
-    WorldBase() : mPlayer(0, "guy1", *this) {}
+    WorldBase()
+    {
+      auto player = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+      AddAgent(std::move(player));
+      mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+      assert(mPlayer);
+    }
     virtual ~WorldBase() = default;
 
     // -- Accessors --
@@ -83,17 +91,19 @@ namespace cse498 {
       return *agent_set[id];
     }
 
-    [[nodiscard]] PlayerAgent & GetPlayer() { return mPlayer; }
-    [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayer.GetLocation().AsWorldPosition(); }
+    [[nodiscard]] PlayerAgent* GetPlayer() { return mPlayer; }
+    /// TODO: I'm not sure whether to check player == nullptr or not. It is technically possible to delete player agent
+    /// But this will cause other issues. so we can assume he always exists?
+    [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayer->GetLocation().AsWorldPosition(); }
 
     /// Return an editable version of the current grid for this world (main_grid by default) 
     virtual WorldGrid & GetGrid() { return main_grid; }
 
     /// Return the current grid for this world (main_grid by default) 
-    virtual const WorldGrid & GetGrid() const { return main_grid; }
+    [[nodiscard]] virtual const WorldGrid & GetGrid() const { return main_grid; }
 
     /// Determine if the run has ended.
-    virtual bool IsRunOver() const { return run_over; }
+    [[nodiscard]] virtual bool IsRunOver() const { return run_over; }
 
     size_t GetNextAgentId() { return mAgentIdIndex++; }
 
@@ -105,7 +115,7 @@ namespace cse498 {
     /// @return A reference to the newly created agent
     template <typename AGENT_T>
     AGENT_T & AddAgent(std::string agent_name="None") {
-      auto agent_ptr = std::make_unique<AGENT_T>(mAgentIdIndex++, agent_name, *this);
+      auto agent_ptr = std::make_unique<AGENT_T>(GetNextAgentId(), agent_name, *this);
       return AddAgent(std::move(agent_ptr));
     }
 
@@ -118,9 +128,9 @@ namespace cse498 {
     template<typename AGENT_T>
     AGENT_T & AddAgent(std::unique_ptr<AGENT_T> agent)
     {
-      assert(agent); // ensure pointer isn't null.
       static_assert(std::is_base_of_v<AgentBase, AGENT_T> == true);
-
+      if (!agent)
+        agent = std::make_unique<AGENT_T>(GetNextAgentId(), "None", *this);
       AGENT_T & agent_ref = *agent;
       ConfigAgent(*agent);
       if (agent->Initialize() == false) {

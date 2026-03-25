@@ -29,8 +29,9 @@ TEST_CASE("Main Player", "[Inventory]")
 {
     // Ensure that it is accessible and there is a way to access it
     cse498::MockWorldBase world;
-    auto& player = world.GetPlayer();
-    auto& inv = player.GetInventory();
+    auto* player = world.GetPlayer(); // shoudln't ever be null
+    CHECK(player);
+    auto& inv = player->GetInventory();
     CHECK(inv.GetHand() == nullptr);
 
 

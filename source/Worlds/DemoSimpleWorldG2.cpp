@@ -163,11 +163,13 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
         "############",
     });
 
-    auto &player = AddAgent<PlayerAgent>("Player");
-    player.SetSymbol('@');
-    player.SetMaxHealth(100.0);
-    player.SetHealth(100.0);
-    player.SetLocation(Location(WorldPosition{2, 2}));
+
+    auto* player = GetPlayer();
+    DemoSimpleWorldG2::ConfigAgent(*player);
+    player->SetSymbol('@');
+    player->SetMaxHealth(100.0);
+    player->SetHealth(100.0);
+    player->SetLocation(Location(WorldPosition{2, 2}));
     mPlayerCombat = CombatStats{14.0, 5.0};
 
     auto &farmer = AddAgent<FarmingAgent>("Farmer");
@@ -211,13 +213,15 @@ void DemoSimpleWorldG2::Run() {
     run_over = false;
     while (!run_over) {
         PrintWorldState();
-        AgentBase &player = GetAgent(kPlayerIdx);
-        if (!player.IsAlive()) {
+        PlayerAgent* player = GetPlayer();
+        if (player == nullptr) return;
+
+        if (!player->IsAlive()) {
             break;
         }
-        const size_t action_id = player.SelectAction(main_grid);
-        const int result = DoAction(player, action_id);
-        player.SetActionResult(result);
+        const size_t action_id = player->SelectAction(main_grid);
+        const int result = DoAction(*player, action_id);
+        player->SetActionResult(result);
         if (run_over) {
             break;
         }
