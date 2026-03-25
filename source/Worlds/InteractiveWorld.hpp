@@ -118,7 +118,7 @@ namespace cse498
 				    for (const auto & neighbor : neighbors) {
 					    for (auto & npc : m_npcs) {
 						    if (npc->GetPosition() == neighbor) {
-							    npc->Interact();
+							    npc->AttemptUpgrade(m_inventory);
 						    }
 					    }
 				    }
@@ -129,6 +129,25 @@ namespace cse498
 		    // Don't let the agent move off the world or into a wall.
 		    if (!main_grid.IsValid(new_position)) { return false; }
 		    if (main_grid[new_position] == wall_id) { return false; }
+		    // Check Neighbors
+		    std::array<WorldPosition, 4> neighbors = {
+		        cur_position.Up(),
+		        cur_position.Down(),
+		        cur_position.Left(),
+		        cur_position.Right()
+		    };
+
+		    // Open NPC ui for player only
+		    if (dynamic_cast<InterfaceBase*>(&agent)) {
+			    for (const auto & neighbor : neighbors) {
+				    for (auto & npc : m_npcs) {
+					    if (npc->GetPosition() == neighbor) {
+						    npc->Interact();
+					    }
+				    }
+			    }
+		    }
+
 		    // Don't walk on NPCs
 		    for (const auto & npc : m_npcs) {
 			    if (npc->GetPosition() == new_position) { return false; }

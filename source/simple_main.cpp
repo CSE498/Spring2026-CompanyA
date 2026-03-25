@@ -33,21 +33,30 @@ int main()
 
     // Buildings
     std::shared_ptr<Building> lumberYard = std::make_shared<Building>("Lumber Yard");
+    lumberYard->AddUpgrade(ItemType::Wood, 15);  // Level 1 -> 15 Wood
+    lumberYard->AddUpgrade(ItemType::Wood, 50);  // Level 2 -> 50 Wood
+    lumberYard->AddUpgrade(ItemType::Stone, 50); // Level 3 -> 50 Stone
     std::shared_ptr<Building> quarry = std::make_shared<Building>("Quarry");
+    quarry->AddUpgrade(ItemType::Wood, 50);      // Level 1 -> 50 Wood
+    quarry->AddUpgrade(ItemType::Stone, 50);     // Level 2 -> 50 Stone
+    quarry->AddUpgrade(ItemType::Metal, 35);     // Level 3 -> 35 Metal
     std::shared_ptr<Building> mine = std::make_shared<Building>("Ore Mine");
+    mine->AddUpgrade(ItemType::Stone, 100);      // Level 1 -> 100 Stone
+    mine->AddUpgrade(ItemType::Metal, 50);       // Level 2 -> 50 Metal
+    mine->AddUpgrade(ItemType::Metal, 100);      // Level 3 -> 100 Metal
     // NPCs
     std::shared_ptr<NPC> lumberjack = std::make_shared<NPC>(lumberYard);
     std::shared_ptr<NPC> mason = std::make_shared<NPC>(quarry);
     std::shared_ptr<NPC> miner = std::make_shared<NPC>(mine);
     // Resource Producers
     std::shared_ptr<ResourceProducer> woodProducer =
-	std::make_shared<ResourceProducer>(lumberYard, world->GetInventory(), ItemType::Wood, 15.0);
+	std::make_shared<ResourceProducer>(lumberYard, world->GetInventory(), ItemType::Wood, 2);
 
     std::shared_ptr<ResourceProducer> stoneProducer =
-        std::make_shared<ResourceProducer>(quarry, world->GetInventory(), ItemType::Stone, 10.0);
+        std::make_shared<ResourceProducer>(quarry, world->GetInventory(), ItemType::Stone, 1);
 
     std::shared_ptr<ResourceProducer> metalProducer =
-        std::make_shared<ResourceProducer>(mine, world->GetInventory(), ItemType::Metal, 5.0);
+        std::make_shared<ResourceProducer>(mine, world->GetInventory(), ItemType::Metal, 0.5);
 
     world->AddProducer(woodProducer);
     world->AddProducer(stoneProducer);
