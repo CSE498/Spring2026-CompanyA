@@ -28,18 +28,45 @@ class AnalyticsManager{
 
 
     public:
+        /*
+        Default constructor for the AnalyticsManager
+        */
         AnalyticsManager() = default;
 
+        /*
+        Resets all the logs
+        */
         void Reset();
 
-        //Functions to log data into a specific DataLog
+        //Temporary DataLogs for the game(can be changed based on what we want to track)
+        /*
+        Adds a new health value to the health log 
+        */
         void LogHealth(double health);
+
+        /*
+        Adds a new enemy count value to the enemies tracked log
+        */
         void LogEnemiesTracked(double count_enemies);
+
+        /*
+        Adds a new damage dealt value to the damage dealt log
+        */
         void LogDamageDealt(double damage);
 
-        //Returns const reference of the logs to be used by StatsTracker
+        /*
+        Returns a const reference to the health log
+        */
         const DataLog& GetHealthLog() const;
+
+        /*
+        Returns a const reference to the enemies tracked log
+        */
         const DataLog& GetEnemiesTrackedLog() const;
+
+        /*
+        Returns a const reference to the damage dealt log
+        */
         const DataLog& GetDamageDealtLog() const;
 
         //Functionality for ActionLog will be added below
