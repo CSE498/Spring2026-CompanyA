@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "ActionLog.hpp"
+#include "../tools/ActionLog.hpp"
 #include "AnalyticsManager.hpp"
-#include "DataLog.hpp"
+#include "../tools/DataLog.hpp"
 
 #include <cstddef>
 #include <optional>

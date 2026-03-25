@@ -109,7 +109,8 @@ namespace cse498
         * @param category The built-in category for the message.
         * @param message The text to log.
         */
-        void Log(
+        void Log
+        (
             LogLevel level = LogLevel::Info,
             LogCategory category = LogCategory::System,
             std::string_view message = ""
@@ -120,7 +121,8 @@ namespace cse498
         * @param category The category name to show in the output.
         * @param message The text to log.
         */
-        void Log(
+        void Log
+        (
             LogLevel level,
             std::string_view category,
             std::string_view message
@@ -197,7 +199,8 @@ namespace cse498
         long long ElapsedMilliseconds() const;
 
         // Builds the single standard line format used by all sinks and file output.
-        std::string FormatLine(
+        std::string FormatLine
+        (
             LogLevel level,
             std::string_view category,
             std::string_view message,
