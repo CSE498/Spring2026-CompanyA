@@ -31,7 +31,11 @@ public:
 
   Menu();
 
-
+  /**
+    * add new option to menu
+    * label The display text for option
+    * callback Function to call when option is chosen
+ */
   void add_option(const std::string& label, std::function<void()> callback);
 
   bool remove_option(const std::string& label);
@@ -55,7 +59,7 @@ public:
   void select_option(size_t index);
 
   // activates selected options, triggers its callback
-  void activate_selected() const;
+  void activate_selected();
 
   // gets the label of an option by index
   // index The option's index
