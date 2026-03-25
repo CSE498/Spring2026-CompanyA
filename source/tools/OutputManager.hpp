@@ -12,7 +12,6 @@
 
 #include "Timer.hpp"
 
-#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <functional>
@@ -99,7 +98,7 @@ namespace cse498
         */
         bool TimestampsEnabled() const;
 
-        /*@brief Resets the stopwatch used for timestamped log output.
+        /*@brief Resets the timer used for timestamped log output.
         * @details
         * After calling this, future timestamped log lines start again near 0 ms.
         */
@@ -183,7 +182,7 @@ namespace cse498
         mutable std::mutex m_mutex;
         LogLevel m_min{LogLevel::Info};
         bool m_timestamps{false};
-        Timer m_stopwatch;
+        Timer m_timer;
         std::vector<SinkEntry> m_sinks;
 
         bool m_csvEnabled{false};
@@ -194,7 +193,7 @@ namespace cse498
         // Internal helper that assumes the caller already holds the mutex.
         bool ShouldLogUnlocked(LogLevel level) const;
 
-        // Elapsed time is measured by the shared Stopwatch class relative to construction.
+        // Elapsed time is measured by the shared Timer class relative to construction.
         long long ElapsedMilliseconds() const;
 
         // Builds the single standard line format used by all sinks and file output.
