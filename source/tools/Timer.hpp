@@ -9,6 +9,8 @@
 #define TIMER_H
 
 #include <chrono>
+#include <cmath>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -27,14 +29,12 @@ public:
   void stop();
   void reset();
   void restart();
-
   void lap();
-
   double elapsed() const;
   bool isRunning() const;
   std::vector<double> getLaps();
-
   void advanceTime(double seconds);
+  std::string toString(bool withLaps) const;
 
 private:
   // The name of the Timer.

@@ -180,3 +180,27 @@ TEST_CASE("Timer Lap Method", "[Timer]") {
   REQUIRE(Timer.getLaps().at(0) == Approx(0.45).margin(0.01));
   REQUIRE(Timer.getLaps().at(1) == Approx(0.63).margin(0.01));
 }
+
+TEST_CASE("Timer String Method", "[Timer]") {
+  cse498::Timer timer("Test", false);
+  REQUIRE(timer.toString(false) == "Test [STOPPED]: 00:00.000");
+
+  timer.start();
+  timer.advanceTime(5.27);
+  REQUIRE(timer.toString(false) == "Test [RUNNING]: 00:05.270");
+  REQUIRE(timer.toString(true) ==
+          "Test [RUNNING]: 00:05.270\n  Lap 1: 00:05.270");
+
+  timer.advanceTime(75.0);
+  timer.stop();
+  REQUIRE(timer.toString(false) == "Test [STOPPED]: 01:20.270");
+
+  timer.lap();
+  REQUIRE(timer.toString(true) ==
+          "Test [STOPPED]: 01:20.270\n  Lap 1: 01:20.270\n  Lap 2: 00:00.000");
+
+  timer.start();
+  timer.advanceTime(3.82);
+  REQUIRE(timer.toString(true) ==
+          "Test [RUNNING]: 01:24.090\n  Lap 1: 01:20.270\n  Lap 2: 00:03.820");
+}

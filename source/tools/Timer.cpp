@@ -132,3 +132,26 @@ void cse498::Timer::advanceTime(double seconds) {
         std::chrono::duration<double>(seconds).count();
   }
 }
+
+/**
+ * Returns a string containing the state of the timer in xx:xx.xxx format
+ * (minutes, seconds, milliseconds)
+ * @param withLaps Should the string include lap information or not
+ */
+std::string cse498::Timer::toString(bool withLaps) const {
+  double time = elapsed();
+  std::ostringstream oss;
+  oss << mName << " [" << (mRunning ? "RUNNING" : "STOPPED")
+      << "]: " << std::setfill('0') << std::setw(2)
+      << static_cast<int>(time / 60) << ":" << std::setw(6) << std::fixed
+      << std::setprecision(3) << std::fmod(time, 60.0);
+
+  if (withLaps) {
+    for (auto [i, lapTime] : std::ranges::views::enumerate(mLaps)) {
+      oss << "\n  Lap " << (i + 1) << ": " << std::setfill('0') << std::setw(2)
+          << static_cast<int>(lapTime / 60) << ":" << std::setw(6) << std::fixed
+          << std::setprecision(3) << std::fmod(lapTime, 60.0);
+    }
+  }
+  return oss.str();
+}
