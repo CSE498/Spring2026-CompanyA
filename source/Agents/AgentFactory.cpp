@@ -7,7 +7,7 @@
 #include "../core/AgentBase.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
 #include "../core/WorldBase.hpp"
-#include "../tools/AgentAbility.hpp"
+#include "AgentAbility.hpp"
 #include "../tools/PathGenerator.hpp"
 #include "../tools/PathVector.hpp"
 #include <cmath>

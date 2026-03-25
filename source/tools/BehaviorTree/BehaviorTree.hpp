@@ -43,8 +43,8 @@ public:
     // Returns defaultValue if key not found or type mismatch.
     template<typename T>
     T Get(const std::string& key, const T& defaultValue = T{}) const {
-        auto it = data.find(key);
-        if (it != data.end()) {
+        auto it = mData.find(key);
+        if (it != mData.end()) {
             const T* p = std::any_cast<T>(&it->second);
             if (p)
                 return *p;

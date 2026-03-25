@@ -8,10 +8,10 @@
 #include <string>
 #include <vector>
 
-#include "../Agents/Enemy.h"
+#include "../Agents/Enemy.hpp"
 #include "../Agents/EnemyFollowPlayerTree.hpp"
-#include "../Agents/FarmingAgent.h"
-#include "../Agents/PlayerAgent.h"
+#include "../Agents/FarmingAgent.hpp"
+#include "../Agents/PlayerAgent.hpp"
 #include "../tools/DamageCalculator.hpp"
 
 namespace cse498 {

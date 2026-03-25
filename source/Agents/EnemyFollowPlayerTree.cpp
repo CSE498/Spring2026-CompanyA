@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "Enemy.h"
+#include "Enemy.hpp"
 #include "../core/WorldBase.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
 #include "../Worlds/DemoSimpleWorldG2Actions.hpp"
@@ -14,7 +14,7 @@ namespace {
 namespace BT = ::cse498::BehaviorTrees;
 namespace DemoAct = ::cse498::DemoSimpleWorldG2Actions;
 
-/// One cardinal step toward `target` (matches DemoSimpleWorldG2 move actions, not diagonal).
+/// One cardinal step toward `target`
 [[nodiscard]] WorldPosition NextCardinalToward(WorldPosition from, WorldPosition target) {
     const double dx = target.X() - from.X();
     const double dy = target.Y() - from.Y();
@@ -29,7 +29,7 @@ namespace DemoAct = ::cse498::DemoSimpleWorldG2Actions;
     return from.GetOffset(0.0, step_y);
 }
 
-/// Same adjacency rule as DemoSimpleWorldG2::HandleInteraction (Chebyshev ≤ 1, different cells).
+
 [[nodiscard]] bool IsAdjacentForCombat(WorldPosition a, WorldPosition b) {
     const double dx = std::abs(a.X() - b.X());
     const double dy = std::abs(a.Y() - b.Y());
