@@ -17,17 +17,31 @@
 
 namespace cse498 {
 
+	/**
+	 * @class WeightedSet
+	 * @brief Stores items with weights and supports efficient weighted sampling.
+	 *
+	 * This class maintains a collection of items of type `T`, each with a non-negative weight.
+	 * It allows insertion, weight updates, and sampling proportional to weights.
+	 *
+	 * Internally, it uses a vector-based binary sum tree for O(log n) updates and sampling,
+	 * along with a unordered map for fast item lookup.
+	 *
+	 * @tparam T Type of stored items
+	 */
 	template <typename T>
 	class WeightedSet {
 		private:
+
+		// Small tolerance used to handle floating-point precision errors in weight comparisons
 		static constexpr double WEIGHTED_SET_TOL = 1e-12;
 
 		//Storage should be relatively small assuming T will be a string or int (probable for ids)
-		std::unordered_map<T, size_t> item_idx{};
-		std::vector<T> items{};
-		std::vector<double> weights{};
-		std::vector<double> sum_tree{}; 
-		std::size_t set_size = 0;
+		std::unordered_map<T, size_t> m_item_idx{};
+		std::vector<T> m_items{};
+		std::vector<double> m_weights{};
+		std::vector<double> m_sum_tree{}; 
+		std::size_t m_set_size = 0;
 
 		/**
 		 * Propagates a weight change up the implicit tree.
@@ -37,14 +51,14 @@ namespace cse498 {
 		 */
 		void FixSum(size_t idx, double w_change) {
 			while (idx > 0){
-				sum_tree[idx] += w_change;
+				m_sum_tree[idx] += w_change;
 				idx = (idx - 1) / 2; //Travel up parents
 			}
-			sum_tree[0] += w_change; //Fix the root
+			m_sum_tree[0] += w_change; //Fix the root
 		}
 
 		/**
-		 * Normalizes very small weights to zero.
+		 * Changes all very small weights to be zero.
 		 * 
 		 * @param weight Weight value to normalize (modified in place).
 		 */
@@ -72,18 +86,19 @@ namespace cse498 {
 			if (weight < 0.0) {
 				return std::unexpected("cse498::WeightedSet::Insert(): weight must be non-negative");
 			}
-			if (item_idx.contains(id)) {
+			if (m_item_idx.contains(id)) {
 				return std::unexpected("cse498::WeightedSet::Insert(): duplicate item");
 			}
 
+			//Treat numbers below tolerance as 0
 			FixTinyNum(weight);
 
-			size_t idx = set_size;
-			item_idx[id] = idx;
-			items.push_back(id);
-			weights.push_back(weight);
-			sum_tree.push_back(0.0);
-			++set_size;
+			size_t idx = m_set_size;
+			m_item_idx[id] = idx;
+			m_items.push_back(id);
+			m_weights.push_back(weight);
+			m_sum_tree.push_back(0.0);
+			++m_set_size;
 
 			FixSum(idx, weight);
 
@@ -102,15 +117,16 @@ namespace cse498 {
 			if (weight < 0.0) {
 				return std::unexpected("cse498::WeightedSet::Update(): weight must be non-negative");
 			}
-			if (!item_idx.contains(id)) {
+			if (!m_item_idx.contains(id)) {
 				return std::unexpected("cse498::WeightedSet::Update(): item to update does not exist");
 			}
 
+			//Treat numbers below tolerance as 0
 			FixTinyNum(weight);
 
-			size_t idx = item_idx[id];
-			double change = weight - weights[idx];
-			weights[idx] = weight;
+			size_t idx = m_item_idx[id];
+			double change = weight - m_weights[idx];
+			m_weights[idx] = weight;
 			FixSum(idx, change);
 
 			return {};
@@ -128,20 +144,20 @@ namespace cse498 {
 		 *
 		 * @return The sampled item.
 		 *
-		 * @throws std::runtime_error if the set is empty.
-		 * @throws std::invalid_argument if num is outside the valid range.
+		 * @note The set can not be empty.
+		 * @note num is inside  the valid range [0, total_weight].
 		 */
 		std::expected<T, std::string> Sample(double num) const {
-			if (sum_tree.empty() || sum_tree[0] <= WEIGHTED_SET_TOL){
+			if (m_sum_tree.empty() || m_sum_tree[0] <= WEIGHTED_SET_TOL){
 				return std::unexpected("cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
 			}
-			if (num < 0 || num > sum_tree[0] + WEIGHTED_SET_TOL) {
+			if (num < 0 || num > m_sum_tree[0] + WEIGHTED_SET_TOL) {
 				return std::unexpected("cse498::WeightedSet::Sample(): Sample number invalid");
 			}
 
 			//lower and upper endpoints of the full range of values. Ex; [0.0, 5.1]
 			double outer_lo = 0.0; //lower value in outer interval
-			double outer_up = sum_tree[0]; //upper value in outer interval
+			double outer_up = m_sum_tree[0]; //upper value in outer interval
 			size_t idx = 0;
 
 			while(true){
@@ -150,15 +166,15 @@ namespace cse498 {
 				size_t left_idx = 2*idx + 1;
     			size_t right_idx = 2*idx + 2;
 
-				double left_sum = (left_idx < set_size) ? sum_tree[left_idx] : 0.0;
+				double left_sum = (left_idx < m_set_size) ? m_sum_tree[left_idx] : 0.0;
 
 				//interval of "node" at current index 
 				double inner_lo = outer_lo + left_sum; //Lower value in node's interval
-				double inner_up = inner_lo + weights[idx]; //Upper value in node's interval
+				double inner_up = inner_lo + m_weights[idx]; //Upper value in node's interval
 
 				//Case 1: number in the left subtree interval
 				if (num <= inner_lo + WEIGHTED_SET_TOL 
-					&& left_idx < set_size
+					&& left_idx < m_set_size
 					&& left_sum > WEIGHTED_SET_TOL) {
 
 					outer_up = inner_lo;
@@ -169,26 +185,26 @@ namespace cse498 {
 				//Case 2: num in current inner inverval (a, b]
 				if (num > inner_lo - WEIGHTED_SET_TOL 
 					&& num <= inner_up + WEIGHTED_SET_TOL 
-					&& weights[idx] > WEIGHTED_SET_TOL) {
+					&& m_weights[idx] > WEIGHTED_SET_TOL) {
 						
 					break; //Found corresponding item
 				}
 
 				//Case 3: number in the right subtree interval
-				if (right_idx >= set_size) { //for safety - this shouldnt run (Case 1 should have)
-					assert(right_idx < set_size); 
+				if (right_idx >= m_set_size) { //for safety - this shouldnt run (Case 1 should have)
+					assert(right_idx < m_set_size); 
 					break; //return this node since there is no left or right
 				}
 				outer_lo = inner_up;
 				idx = right_idx;
 			}
-			return items[idx];
+			return m_items[idx];
 		}
 
-		size_t GetSize() const { return set_size; }
-		double GetItemSum(const T& item) const { return sum_tree.at(item_idx.at(item)); }
-		double GetWeight(const T& item) const { return weights.at(item_idx.at(item)); }
-		double GetTotalWeight() const { return sum_tree.at(0); }
+		size_t GetSize() const { return m_set_size; }
+		double GetItemSum(const T& item) const { return m_sum_tree.at(m_item_idx.at(item)); }
+		double GetWeight(const T& item) const { return m_weights.at(m_item_idx.at(item)); }
+		double GetTotalWeight() const { return m_sum_tree.at(0); }
 	};
 
 } // End of namespace cse498

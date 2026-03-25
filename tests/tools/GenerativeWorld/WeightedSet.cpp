@@ -5,16 +5,45 @@
 
 #include <string>
 #include <random>
-#include <chrono>
 
-void MakeSmallTree(cse498::WeightedSet<std::string>& wSet) {
+/**
+ * Tolerance used for floating-point comparisons in tests.
+ *
+ * This value (1e-12) is chosen to allow for small rounding errors that occur
+ * when using double precision arithmetic, while still being strict enough
+ * to detect meaningful inaccuracies in calculations.
+ */
+static constexpr double TOL = 1e-12;
+
+/**
+ * Constructs a small WeightedSet with simple integer weights.
+ *
+ * The weights (2, 3, 5, 7) are intentionally small and distinct so that:
+ * - The total weight (17) is easy to compute manually.
+ * - The cumulative intervals can be verified by hand when testing sampling.
+ */
+cse498::WeightedSet<std::string> MakeSmallTree() {
+	cse498::WeightedSet<std::string> wSet;
 	wSet.Insert("A", 2.0);
 	wSet.Insert("B", 3.0);
 	wSet.Insert("C", 5.0);
 	wSet.Insert("D", 7.0);
+	return wSet;
 }
 
-void MakeLargerTree(cse498::WeightedSet<int>& wSet) {
+/**
+ * Constructs a larger WeightedSet with a variety of weights.
+ *
+ * The weights are chosen to test multiple edge cases:
+ * - Zero weight (item 4) to ensure it is never sampled.
+ * - Decimal weights to test floating-point handling.
+ * - A mix of small and large values to test traversal correctness.
+ *
+ * The total weight is exactly 100.0, which makes it easy to reason about
+ * sampling ranges as percentages of the total.
+ */
+cse498::WeightedSet<int> MakeLargerTree() {
+	cse498::WeightedSet<int> wSet;
 	wSet.Insert(1, 11.0);	
 	wSet.Insert(2, 2.0);
 	wSet.Insert(3, 2.0);
@@ -25,28 +54,50 @@ void MakeLargerTree(cse498::WeightedSet<int>& wSet) {
 	wSet.Insert(8, 1.0);
 	wSet.Insert(9, 25.0);
 	wSet.Insert(10, 23.0);
+	return wSet;
 }
 
-void MakeDecimalTree(cse498::WeightedSet<char>& wSet) {
+/**
+ * Constructs a WeightedSet with high-precision decimal weights.
+ *
+ * The values are intentionally chosen to:
+ * - Be very close to whole numbers (e.g., 5.0 ± tiny epsilon)
+ * - Introduce floating-point rounding behavior in the WeightedSet implementation
+ *
+ * Because floating-point arithmetic is not exact, comparisons in the tests
+ * use Approx(...).margin(TOL) to allow for small numerical differences.
+ *
+ * This ensures that the WeightedSet correctly handles precision-sensitive values.
+ */
+cse498::WeightedSet<char> MakeDecimalTree() {
+	cse498::WeightedSet<char> wSet;
 	wSet.Insert('a', 2.000000000000001);
 	wSet.Insert('b', 3.023344563390414);
 	wSet.Insert('c', 4.999999999999999);
 	wSet.Insert('d', 7.003450023394053);
+	return wSet;
 }
 
-void MakeTinyTree(cse498::WeightedSet<int>& wSet) {
-	wSet.Insert(1, 1e-12); //Tolerance
+/**
+ * Constructs a WeightedSet with extremely small weights.
+ *
+ * The values are chosen to test behavior near floating-point limits:
+ * - TOL (1e-12) represents the threshold used in the implementation
+ * - Values like 1e-15 are smaller than tolerance and may be treated as zero
+ * - Values like 1e-9 are small but still meaningful
+ *
+ * This ensures correct handling of:
+ * - near-zero weights
+ * - tolerance-based comparisons
+ * - numerical stability in sampling
+ */
+cse498::WeightedSet<int> MakeTinyTree() {
+	cse498::WeightedSet<int> wSet;
+	wSet.Insert(1, TOL);
 	wSet.Insert(2, 1e-15);
 	wSet.Insert(3, 0.000000009);
 	wSet.Insert(4, 0.000000010);
-}
-
-void MakeSetSizeTree(cse498::WeightedSet<int>& wSet, int n) {
-    std::mt19937_64 rng(12345);
-    std::uniform_real_distribution<double> dist(0.1, 10.0);
-	for (int i = 1; i <= n; i++) {
-		 wSet.Insert(i, dist(rng));   // every item gets equal weight
-    }
+	return wSet;
 }
 
 TEST_CASE("Test WeightedSet Constructor", "[core]")
@@ -59,20 +110,17 @@ TEST_CASE("Test WeightedSet Constructor", "[core]")
 TEST_CASE("Test Insert", "[core]"){
 	
 	SECTION("Small Tree") {
-		cse498::WeightedSet<std::string> wSet;
-		MakeSmallTree(wSet);
+		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 		CHECK(wSet.GetSize() == 4);
 	}
 
 	SECTION("Larger Tree"){
-		cse498::WeightedSet<int> wSet;
-		MakeLargerTree(wSet);
+		cse498::WeightedSet<int> wSet = MakeLargerTree();
 		CHECK(wSet.GetSize() == 10);
 	}
 	
 	SECTION("Bad Inserts") {
-		cse498::WeightedSet<std::string> wSet;
-		MakeSmallTree(wSet);
+		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 		
 		auto result = wSet.Insert("E", -3.5);
 		REQUIRE_FALSE(result.has_value());
@@ -86,8 +134,7 @@ TEST_CASE("Test Insert", "[core]"){
 
 TEST_CASE("Test Sums", "[core]"){
 	SECTION("Small Tree") {
-		cse498::WeightedSet<std::string> wSet;
-		MakeSmallTree(wSet);
+		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 		CHECK(wSet.GetItemSum("A") == Approx(17.0)); // A = weight (2.0) + left sum (10.0) + right sum (5.0)
 		CHECK(wSet.GetItemSum("B") == Approx(10.0)); //B = weight (3.0) + Left sum (7.0) + right sum (0.0)
 		CHECK(wSet.GetItemSum("C") == Approx(5.0)); //C is a leaf, sum = weight (5.0)
@@ -95,8 +142,7 @@ TEST_CASE("Test Sums", "[core]"){
 	}
 
 	SECTION("Larger Tree"){
-		cse498::WeightedSet<int> wSet;
-		MakeLargerTree(wSet);
+		cse498::WeightedSet<int> wSet = MakeLargerTree();
 
 		CHECK(wSet.GetItemSum(1) == Approx(100.0));
 		CHECK(wSet.GetItemSum(2) == Approx(56.5));
@@ -111,32 +157,29 @@ TEST_CASE("Test Sums", "[core]"){
 	}
 
 	SECTION("Decimal tree"){
-		cse498::WeightedSet<char> wSet;
-		MakeDecimalTree(wSet);
+		cse498::WeightedSet<char> wSet = MakeDecimalTree();
 
 		CHECK(wSet.GetItemSum('a') == Approx(2.000000000001 + 3.023344563390414 
-			+ 7.003450023394053 + 4.999999999999999).margin(1e-12));
-		CHECK(wSet.GetItemSum('b') == Approx(3.023344563390414 + 7.003450023394053).margin(1e-12));
-		CHECK(wSet.GetItemSum('c') == Approx(4.999999999999999).margin(1e-12));
-		CHECK(wSet.GetItemSum('d') == Approx(7.003450023394053).margin(1e-12));
+			+ 7.003450023394053 + 4.999999999999999).margin(TOL));
+		CHECK(wSet.GetItemSum('b') == Approx(3.023344563390414 + 7.003450023394053).margin(TOL));
+		CHECK(wSet.GetItemSum('c') == Approx(4.999999999999999).margin(TOL));
+		CHECK(wSet.GetItemSum('d') == Approx(7.003450023394053).margin(TOL));
 	}
 
 	SECTION ("Tiny Tree"){
-		cse498::WeightedSet<int> wSet;
-		MakeTinyTree(wSet);
+		cse498::WeightedSet<int> wSet = MakeTinyTree();
 
-		CHECK(wSet.GetItemSum(1) == Approx(0.000000010 + 0.000000009).margin(1e-12));
-		CHECK(wSet.GetItemSum(2) == Approx(0.000000010).margin(1e-12));
-		CHECK(wSet.GetItemSum(3) == Approx(0.000000009).margin(1e-12));
-		CHECK(wSet.GetItemSum(4) == Approx(0.000000010).margin(1e-12));
+		CHECK(wSet.GetItemSum(1) == Approx(0.000000010 + 0.000000009).margin(TOL));
+		CHECK(wSet.GetItemSum(2) == Approx(0.000000010).margin(TOL));
+		CHECK(wSet.GetItemSum(3) == Approx(0.000000009).margin(TOL));
+		CHECK(wSet.GetItemSum(4) == Approx(0.000000010).margin(TOL));
 	}
 }
 
 TEST_CASE("Test Update", "[core]"){
 	
 	SECTION("Small Tree"){
-		cse498::WeightedSet<std::string> wSet;
-		MakeSmallTree(wSet);
+		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 
 		wSet.Update("D", 10.4561);
 		CHECK(wSet.GetWeight("D") == Approx(10.4561));
@@ -161,8 +204,7 @@ TEST_CASE("Test Update", "[core]"){
 	}
 
 	SECTION ("Bad Updates") {
-		cse498::WeightedSet<std::string> wSet;
-		MakeSmallTree(wSet);
+		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 
 		auto result = wSet.Update("A", -3.5);
 		REQUIRE_FALSE(result.has_value());
@@ -176,8 +218,7 @@ TEST_CASE("Test Update", "[core]"){
 
 TEST_CASE("Test Sample", "[core]"){
 	SECTION("Small tree"){
-		cse498::WeightedSet<std::string> wSet;
-		MakeSmallTree(wSet);
+		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 
 		CHECK(wSet.Sample(0.0) == "D");
 		CHECK(wSet.Sample(7.0) == "D"); //D in [0.0, 7.0]
@@ -191,8 +232,7 @@ TEST_CASE("Test Sample", "[core]"){
 	}
 
 	SECTION("Larger Tree"){
-		cse498::WeightedSet<int> wSet;
-		MakeLargerTree(wSet); 
+		cse498::WeightedSet<int> wSet = MakeLargerTree(); 
 
 		CHECK(wSet.Sample(0.0) == 8);
 		CHECK(wSet.Sample(1.0) == 8);
@@ -215,8 +255,7 @@ TEST_CASE("Test Sample", "[core]"){
 	}
 
 	SECTION("Decimal Tree"){
-		cse498::WeightedSet<char> wSet;
-		MakeDecimalTree(wSet);
+		cse498::WeightedSet<char> wSet = MakeDecimalTree();
 
 		CHECK(wSet.Sample(0.0) == 'd');
 		CHECK(wSet.Sample(7.003450023394053) == 'd');
@@ -232,8 +271,7 @@ TEST_CASE("Test Sample", "[core]"){
 	}
 
 	SECTION("Tiny Tree"){
-		cse498::WeightedSet<int> wSet;
-		MakeTinyTree(wSet);
+		cse498::WeightedSet<int> wSet = MakeTinyTree();
 
 		CHECK(wSet.Sample(0.0) == 4);
 		CHECK(wSet.Sample(0.000000010) == 4);
@@ -242,8 +280,7 @@ TEST_CASE("Test Sample", "[core]"){
 	}
 
 	SECTION("Weight Zero In Small tree"){
-		cse498::WeightedSet<std::string> wSet;
-		MakeSmallTree(wSet);
+		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 
 		auto result = wSet.Sample(-7.0);
 		REQUIRE_FALSE(result.has_value());
@@ -301,8 +338,7 @@ TEST_CASE("Test Sample", "[core]"){
 	}
 
 	SECTION("Weight Zero In Larger Tree"){
-		cse498::WeightedSet<int> wSet;
-		MakeLargerTree(wSet);
+		cse498::WeightedSet<int> wSet = MakeLargerTree();
 
 		//Remove 4th row leaf nodes
 		wSet.Update(8, 0.0);
