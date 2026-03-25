@@ -13,10 +13,10 @@
 using namespace cse498;
 
 namespace {
-constexpr std::string_view kDimGray = "#cccccc";
-constexpr std::string_view kCanvasBg = "#0c1017";
-static_assert(cse498::Color::FromHex(kDimGray).has_value());
-static_assert(cse498::Color::FromHex(kCanvasBg).has_value());
+constexpr cse498::Color kDimGray = cse498::Color::FromRGB255(0xcc, 0xcc, 0xcc);
+constexpr cse498::Color kCanvasBg = cse498::Color::FromRGB255(0x0c, 0x10, 0x17);
+static_assert(kDimGray.R() == 0xcc && kDimGray.G() == 0xcc && kDimGray.B() == 0xcc);
+static_assert(kCanvasBg.R() == 0x0c && kCanvasBg.G() == 0x10 && kCanvasBg.B() == 0x17);
 }
 
 WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase & world) : InterfaceBase(id, name, world) {
@@ -28,7 +28,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   // Create canvas
   mElements.emplace_back(std::make_unique<WebCanvas>("web-canvas"));
   mCanvas = static_cast<WebCanvas*>(mElements.back().get());
-  mCanvas->SetBackgroundColor(std::string(kCanvasBg));
+  mCanvas->SetBackgroundColor(kCanvasBg.ToHex());
   mRoot->AddElement(mCanvas);
 
   // Create world textbox
@@ -36,7 +36,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   mWorldTextbox = worldTextPtr.get();
   mWorldTextbox->SetCanvasPosition(300.0f, 150.0f);
   mWorldTextbox->SetFontSize(20);
-  mWorldTextbox->SetColor(std::string(kDimGray));
+  mWorldTextbox->SetColor(kDimGray.ToHex());
   mWorldTextbox->SetFontFamily("monospace");
   mCanvas->AddElement(std::move(worldTextPtr));
 
@@ -45,7 +45,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   mPointsTextbox = pointsTextPtr.get();
   mPointsTextbox->SetCanvasPosition(10.0f, 50.0f);
   mPointsTextbox->SetFontSize(24);
-  mPointsTextbox->SetColor(std::string(kDimGray));
+  mPointsTextbox->SetColor(kDimGray.ToHex());
   mCanvas->AddElement(std::move(pointsTextPtr));
 
   // Create pause menu layout
@@ -63,7 +63,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
   titlePtr->SetAlignment(WebTextbox::TextAlign::Center);
   titlePtr->SetFontSize(50.0f);
-  titlePtr->SetColor(std::string(kDimGray));
+  titlePtr->SetColor(kDimGray.ToHex());
   titlePtr->MountToLayout(*mPauseMenu);
 
   // Create description textbox
@@ -71,7 +71,7 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
   descPtr->SetAlignment(WebTextbox::TextAlign::Center);
   descPtr->SetFontSize(24.0f);
-  descPtr->SetColor(std::string(kDimGray));
+  descPtr->SetColor(kDimGray.ToHex());
   descPtr->MountToLayout(*mPauseMenu);
 
   RenderFrame();
