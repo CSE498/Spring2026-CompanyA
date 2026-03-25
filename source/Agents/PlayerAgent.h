@@ -1,30 +1,22 @@
 /**
  * @file PlayerAgent.h
- * @author Logan Rimarcik
- *
- * TODO: Unsure who is responsible for this file. Temporary placeholder for now
+ * @brief Human-controlled player (text input / interface agent).
  */
 
 #ifndef CSE498COMPA_PLAYERAGENT_H
 #define CSE498COMPA_PLAYERAGENT_H
-#include "../core/AgentBase.hpp"
 
-namespace cse498
-{
+#include "../core/InterfaceBase.hpp"
 
-class PlayerAgent : public AgentBase
-{
-private:
+namespace cse498 {
 
+class PlayerAgent : public InterfaceBase {
 public:
-    PlayerAgent(const std::string & name, const WorldBase & world) : AgentBase(0, name, world) {}
+    PlayerAgent(size_t id, const std::string &name, const WorldBase &world);
 
-    // TODO: fill out the function -- 8 directional movements.
-    [[nodiscard]] size_t SelectAction([[maybe_unused]] const WorldGrid &grid) override { return 0; }
+    [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
 };
 
 }
 
-
-
-#endif //CSE498COMPA_PLAYERAGENT_H
+#endif // CSE498COMPA_PLAYERAGENT_H

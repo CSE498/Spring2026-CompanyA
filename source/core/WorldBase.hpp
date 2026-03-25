@@ -48,7 +48,7 @@ namespace cse498 {
 
 
   public:
-    WorldBase() : mPlayer("guy1", *this) {}
+    WorldBase() : mPlayer(0, "guy1", *this) {}
     virtual ~WorldBase() = default;
 
     // -- Accessors --

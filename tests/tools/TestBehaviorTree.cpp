@@ -140,8 +140,8 @@ TEST_CASE("Action: Can access and modify blackboard", "[Action]")
     ExecutionContext ctx(bb);
 
     Action action("Counter", [](ExecutionContext& ctx) {
-        int value = ctx.blackboard.Get<int>("counter", 0);
-        ctx.blackboard.Set<int>("counter", value + 1);
+        int value = ctx.mBlackboard.Get<int>("counter", 0);
+        ctx.mBlackboard.Set<int>("counter", value + 1);
         return Node::Status::Success;
     });
 
@@ -178,7 +178,7 @@ TEST_CASE("Action: Conditional status based on blackboard", "[Action]")
     bb.Set<bool>("flag", false);
 
     Action action("Conditional", [](ExecutionContext& ctx) {
-        return ctx.blackboard.Get<bool>("flag", false)
+        return ctx.mBlackboard.Get<bool>("flag", false)
             ? Node::Status::Success
             : Node::Status::Failure;
     });
@@ -251,12 +251,12 @@ TEST_CASE("Selector: Short-circuits on first success", "[Selector]")
     Selector sel("ShortCircuitSelector");
     sel.AddChild(std::make_unique<Action>("Success",
         [](ExecutionContext& ctx) {
-            ctx.blackboard.Set<int>("visited", ctx.blackboard.Get<int>("visited", 0) + 1);
+            ctx.mBlackboard.Set<int>("visited", ctx.mBlackboard.Get<int>("visited", 0) + 1);
             return Node::Status::Success;
         }));
     sel.AddChild(std::make_unique<Action>("ShouldNotRun",
         [](ExecutionContext& ctx) {
-            ctx.blackboard.Set<int>("visited", ctx.blackboard.Get<int>("visited", 0) + 10);
+            ctx.mBlackboard.Set<int>("visited", ctx.mBlackboard.Get<int>("visited", 0) + 10);
             return Node::Status::Success;
         }));
 
@@ -378,12 +378,12 @@ TEST_CASE("Sequence: Short-circuits on first failure", "[Sequence]")
     Sequence seq("ShortCircuitSequence");
     seq.AddChild(std::make_unique<Action>("Fail",
         [](ExecutionContext& ctx) {
-            ctx.blackboard.Set<int>("visited", ctx.blackboard.Get<int>("visited", 0) + 1);
+            ctx.mBlackboard.Set<int>("visited", ctx.mBlackboard.Get<int>("visited", 0) + 1);
             return Node::Status::Failure;
         }));
     seq.AddChild(std::make_unique<Action>("ShouldNotRun",
         [](ExecutionContext& ctx) {
-            ctx.blackboard.Set<int>("visited", ctx.blackboard.Get<int>("visited", 0) + 10);
+            ctx.mBlackboard.Set<int>("visited", ctx.mBlackboard.Get<int>("visited", 0) + 10);
             return Node::Status::Success;
         }));
 
@@ -556,8 +556,8 @@ TEST_CASE("ContinuallyRepeat: Child action is called repeatedly", "[ContinuallyR
 
     ContinuallyRepeat repeat("CountingRepeat");
     repeat.SetChild(std::make_unique<Action>("Counter", [](ExecutionContext& ctx) {
-        int value = ctx.blackboard.Get<int>("counter", 0);
-        ctx.blackboard.Set<int>("counter", value + 1);
+        int value = ctx.mBlackboard.Get<int>("counter", 0);
+        ctx.mBlackboard.Set<int>("counter", value + 1);
         return Node::Status::Success;
     }));
 
@@ -677,21 +677,21 @@ TEST_CASE("Integration: Selector with Sequences as children", "[Integration]")
 
     auto shootSeq = TreeBuilder::Seq("ShootSequence");
     shootSeq->AddChild(TreeBuilder::Act("CheckAmmo", [](ExecutionContext& ctx) {
-        return ctx.blackboard.Get<bool>("hasAmmo", false)
+        return ctx.mBlackboard.Get<bool>("hasAmmo", false)
             ? Node::Status::Success : Node::Status::Failure;
     }));
     shootSeq->AddChild(TreeBuilder::Act("Shoot", [](ExecutionContext& ctx) {
-        ctx.blackboard.Set<bool>("shot", true);
+        ctx.mBlackboard.Set<bool>("shot", true);
         return Node::Status::Success;
     }));
 
     auto meleeSeq = TreeBuilder::Seq("MeleeSequence");
     meleeSeq->AddChild(TreeBuilder::Act("CheckMelee", [](ExecutionContext& ctx) {
-        return ctx.blackboard.Get<bool>("canMelee", false)
+        return ctx.mBlackboard.Get<bool>("canMelee", false)
             ? Node::Status::Success : Node::Status::Failure;
     }));
     meleeSeq->AddChild(TreeBuilder::Act("Melee", [](ExecutionContext& ctx) {
-        ctx.blackboard.Set<bool>("meleed", true);
+        ctx.mBlackboard.Set<bool>("meleed", true);
         return Node::Status::Success;
     }));
 
@@ -713,13 +713,13 @@ TEST_CASE("Integration: Invert used as condition guard in Sequence", "[Integrati
 
     auto inv = TreeBuilder::Inv("NotDead");
     inv->SetChild(TreeBuilder::Act("IsDead", [](ExecutionContext& ctx) {
-        return ctx.blackboard.Get<bool>("isDead", false)
+        return ctx.mBlackboard.Get<bool>("isDead", false)
             ? Node::Status::Success : Node::Status::Failure;
     }));
 
     seq->AddChild(std::move(inv));
     seq->AddChild(TreeBuilder::Act("Act", [](ExecutionContext& ctx) {
-        ctx.blackboard.Set<bool>("acted", true);
+        ctx.mBlackboard.Set<bool>("acted", true);
         return Node::Status::Success;
     }));
 
@@ -742,8 +742,8 @@ TEST_CASE("Integration: ContinuallyRepeat wrapping a Sequence", "[Integration]")
 
     auto seq = TreeBuilder::Seq("InnerSeq");
     seq->AddChild(TreeBuilder::Act("Increment", [](ExecutionContext& ctx) {
-        int v = ctx.blackboard.Get<int>("ticks", 0);
-        ctx.blackboard.Set<int>("ticks", v + 1);
+        int v = ctx.mBlackboard.Get<int>("ticks", 0);
+        ctx.mBlackboard.Set<int>("ticks", v + 1);
         return Node::Status::Success;
     }));
 
@@ -774,7 +774,7 @@ TEST_CASE("Integration: Deep nested tree executes correctly", "[Integration]")
 
     outerSeq->AddChild(std::move(innerSel));
     outerSeq->AddChild(TreeBuilder::Act("FinalAct", [](ExecutionContext& ctx) {
-        ctx.blackboard.Set<bool>("done", true);
+        ctx.mBlackboard.Set<bool>("done", true);
         return Node::Status::Success;
     }));
 

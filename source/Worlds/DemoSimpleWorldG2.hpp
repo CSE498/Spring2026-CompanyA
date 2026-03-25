@@ -1,0 +1,39 @@
+/**
+ * @brief Group 2 demo world: text map, player + farmer + enemy.
+ */
+
+#pragma once
+
+#include "DemoSimpleWorldG2Actions.hpp"
+#include "../core/WorldBase.hpp"
+#include "../tools/CombatStats.hpp"
+
+namespace cse498 {
+
+class DemoSimpleWorldG2 : public WorldBase {
+private:
+    size_t mFloorId = 0;
+    size_t mWallId = 0;
+
+    static constexpr size_t kPlayerIdx = 0;
+    static constexpr size_t kFarmerIdx = 1;
+    static constexpr size_t kEnemyIdx = 2;
+
+    CombatStats mPlayerCombat{};
+    CombatStats mEnemyCombat{};
+
+    [[nodiscard]] bool IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const;
+    void PrintWorldState() const;
+    bool MoveAgentBy(AgentBase &agent, double dx, double dy);
+    int HandleInteraction(AgentBase &actor);
+
+protected:
+    void ConfigAgent(AgentBase &agent) override;
+
+public:
+    DemoSimpleWorldG2();
+    int DoAction(AgentBase &agent, size_t action_id) override;
+    void Run() override;
+};
+
+} // namespace cse498

@@ -113,7 +113,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
         if (action_id == 0)
             return Node::Status::Failure;
 
-        ctx.blackboard.Set<size_t>("selected_action", action_id);
+        ctx.mBlackboard.Set<size_t>("selected_action", action_id);
         return Node::Status::Success;
     });
 
@@ -129,17 +129,17 @@ std::unique_ptr<Node> AgentFactory::CreatePatrolTree(AgentBase* agent)
 {
     return TreeBuilder::Act("Walk Back And Forth", [agent](ExecutionContext& ctx) {
         if (!agent) return Node::Status::Failure;
-        std::string dir = ctx.blackboard.Get<std::string>("patrol_direction", "left");
+        std::string dir = ctx.mBlackboard.Get<std::string>("patrol_direction", "left");
         size_t actionId;
         if (dir == "left") {
             actionId = agent->GetActionID("left");
-            ctx.blackboard.Set<std::string>("patrol_direction", "right");
+            ctx.mBlackboard.Set<std::string>("patrol_direction", "right");
         } else {
             actionId = agent->GetActionID("right");
-            ctx.blackboard.Set<std::string>("patrol_direction", "left");
+            ctx.mBlackboard.Set<std::string>("patrol_direction", "left");
         }
         if (actionId != 0)
-            ctx.blackboard.Set<size_t>("selected_action", actionId);
+            ctx.mBlackboard.Set<size_t>("selected_action", actionId);
         return Node::Status::Running;
     });
 }

@@ -36,15 +36,15 @@ public:
     // Store a typed value under a key.
     template<typename T>
     void Set(const std::string& key, const T& value) {
-        data[key] = value;
+        mData[key] = value;
     }
 
     // Retrieve a typed value.
     // Returns defaultValue if key not found or type mismatch.
     template<typename T>
     T Get(const std::string& key, const T& defaultValue = T{}) const {
-        auto it = data.find(key);
-        if (it != data.end()) {
+        auto it = mData.find(key);
+        if (it != mData.end()) {
             try {
                 return std::any_cast<T>(it->second);
             } catch (...) {
@@ -60,7 +60,7 @@ public:
     std::vector<std::string> GetKeys() const;
 
 private:
-    std::unordered_map<std::string, std::any> data;
+    std::unordered_map<std::string, std::any> mData;
 };
 
 // ============================================================
@@ -70,7 +70,7 @@ private:
 // Runtime context passed into every node Tick().
 // Currently only exposes the Blackboard but is extensible.
 struct ExecutionContext {
-    Blackboard& blackboard;
+    Blackboard& mBlackboard;
     explicit ExecutionContext(Blackboard& bb);
 };
 
@@ -116,8 +116,8 @@ public:
     const std::vector<std::unique_ptr<Node>>& GetChildren() const;
 
 protected:
-    std::vector<std::unique_ptr<Node>> children;
-    size_t currentChild = 0;  // Tracks active child during execution
+    std::vector<std::unique_ptr<Node>> mChildren;
+    size_t mCurrentChild = 0;  // Tracks active child during execution
 };
 
 // ============================================================
@@ -133,7 +133,7 @@ public:
     const std::unique_ptr<Node>& GetChild() const;
 
 protected:
-    std::unique_ptr<Node> child;
+    std::unique_ptr<Node> mChild;
 };
 
 // ============================================================
@@ -154,8 +154,8 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
-    ActionFunc action;
+    std::string mName;
+    ActionFunc mAction;
 };
 
 // ============================================================
@@ -174,7 +174,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // Sequence:
@@ -189,7 +189,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // ============================================================
@@ -208,7 +208,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // ContinuallyRepeat:
@@ -223,7 +223,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // ============================================================

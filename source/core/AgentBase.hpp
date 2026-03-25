@@ -23,14 +23,14 @@ namespace cse498 {
   class AgentBase : public Entity {
   protected:
     /// A map of names to IDs for each available action (ActionMap)
-    std::unordered_map<std::string, size_t> action_map;
+    std::unordered_map<std::string, size_t> mActionMap;
 
     /// Action results are a 0 for failure); Success is any non-zero value,
     /// which may provide more info about the type of success.
-    int action_result = 1;
+    int mActionResult = 1;
 
     // TODO: I would guess this will become some struct with a URI reference to image & other metadata
-    char symbol = '*';
+    char mSymbol = '*';
 
     /// Health and alive state for takeDamage / isAlive / onDeath
     double mHealth = 100.0;
@@ -104,8 +104,8 @@ namespace cse498 {
 
     // Accessors
 
-    [[nodiscard]] char GetSymbol() const { return symbol; }
-    AgentBase & SetSymbol(char in) { symbol = in; return *this; }
+    [[nodiscard]] char GetSymbol() const { return mSymbol; }
+    AgentBase & SetSymbol(char in) { mSymbol = in; return *this; }
 
     // -- World Interactions --
 
@@ -120,18 +120,18 @@ namespace cse498 {
 
     /// Test if agent already has a specified action.
     [[nodiscard]] bool HasAction(const std::string & action_name) const {
-      return action_map.count(action_name);
+      return mActionMap.count(action_name);
     }
 
     /// Return an action ID *if* that action exists, otherwise return zero.
     [[nodiscard]] size_t GetActionID(const std::string & action_name) const {
-      auto it = action_map.find(action_name);
-      if (it == action_map.end()) return 0;
+      auto it = mActionMap.find(action_name);
+      if (it == mActionMap.end()) return 0;
       return it->second;
     }
 
     /// Retrieve the result of the most recent action.
-    [[nodiscard]] int GetActionResult() const { return action_result; }
+    [[nodiscard]] int GetActionResult() const { return mActionResult; }
 
     //////////////////////////////////////////////////////////////////////////
     //
@@ -147,7 +147,7 @@ namespace cse498 {
     /// Provide info about an action that this agent can take.
     virtual AgentBase & AddAction(const std::string & action_name, size_t action_id) {
       assert(!HasAction(action_name)); // Cannot add existing action name.
-      action_map[action_name] = action_id;
+      mActionMap[action_name] = action_id;
       return *this;
     }
 
@@ -163,7 +163,7 @@ namespace cse498 {
     }
 
     /// Provide the result of this agent's most recent action.
-    void SetActionResult(int result) { action_result = result; }
+    void SetActionResult(int result) { mActionResult = result; }
 
     /// @brief Send a notification to this agent
     /// @param message Contents of the notification

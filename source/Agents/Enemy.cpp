@@ -15,12 +15,10 @@ size_t Enemy::SelectAction(const WorldGrid &grid)
     if (!mBehaviorRoot)
         return 0;
 
-    BehaviorTrees::Blackboard blackboard;
-    BehaviorTrees::ExecutionContext ctx(blackboard);
-
+    BehaviorTrees::ExecutionContext ctx(mBlackboard);
     mBehaviorRoot->Tick(ctx);
 
-    return blackboard.Get<size_t>("selected_action", 0);
+    return mBlackboard.Get<size_t>("selected_action", 0);
 }
 
 }
