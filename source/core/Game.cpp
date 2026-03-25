@@ -153,43 +153,43 @@ namespace cse498 {
   }
 
   void Game::SetupMainMenu() {
-    mMainMenu.clear();
+    mMainMenu.Clear();
 
-    mMainMenu.add_option("New Game", [this]() {
+    mMainMenu.AddOption("New Game", [this]() {
       TransitionTo(GameState::OVERWORLD);
     });
 
-    mMainMenu.add_option("Settings", [this]() {
+    mMainMenu.AddOption("Settings", [this]() {
       TransitionTo(GameState::SETTINGS);
     });
 
-    mMainMenu.add_option("Quit", [this]() {
+    mMainMenu.AddOption("Quit", [this]() {
       Quit();
     });
   }
 
   void Game::SetupPauseMenu() {
-    mPauseMenu.clear();
+    mPauseMenu.Clear();
 
-    mPauseMenu.add_option("Resume", [this]() {
+    mPauseMenu.AddOption("Resume", [this]() {
       Resume();
     });
 
-    mPauseMenu.add_option("Go to Dungeon World", [this]() {
+    mPauseMenu.AddOption("Go to Dungeon World", [this]() {
       TransitionTo(GameState::DUNGEON);
       mPreviousState = GameState::DUNGEON;
     });
 
-    mPauseMenu.add_option("Go to Overworld", [this]() {
+    mPauseMenu.AddOption("Go to Overworld", [this]() {
       TransitionTo(GameState::OVERWORLD);
       mPreviousState = GameState::OVERWORLD;
     });
 
-    mPauseMenu.add_option("Settings", [this]() {
+    mPauseMenu.AddOption("Settings", [this]() {
       TransitionTo(GameState::SETTINGS);
     });
 
-    mPauseMenu.add_option("Quit to Main Menu", [this]() {
+    mPauseMenu.AddOption("Quit to Main Menu", [this]() {
       TransitionTo(GameState::MAIN_MENU);
     });
   }
@@ -243,16 +243,16 @@ namespace cse498 {
 
           // Navigation in menus
         case SDLK_UP:
-          if (mState == GameState::MAIN_MENU) mMainMenu.select_previous();
-          if (mState == GameState::PAUSED)    mPauseMenu.select_previous();
+          if (mState == GameState::MAIN_MENU) mMainMenu.SelectPrevious();
+          if (mState == GameState::PAUSED)    mPauseMenu.SelectPrevious();
           break;
         case SDLK_DOWN:
-          if (mState == GameState::MAIN_MENU) mMainMenu.select_next();
-          if (mState == GameState::PAUSED)    mPauseMenu.select_next();
+          if (mState == GameState::MAIN_MENU) mMainMenu.SelectNext();
+          if (mState == GameState::PAUSED)    mPauseMenu.SelectNext();
           break;
         case SDLK_RETURN:
-          if (mState == GameState::MAIN_MENU) mMainMenu.activate_selected();
-          if (mState == GameState::PAUSED)    mPauseMenu.activate_selected();
+          if (mState == GameState::MAIN_MENU) mMainMenu.ActivateSelected();
+          if (mState == GameState::PAUSED)    mPauseMenu.ActivateSelected();
           break;
 
           // Player movement — one turn per keypress with 150ms cooldown
@@ -299,7 +299,7 @@ namespace cse498 {
   void Game::Pause() {
     mPreviousState = mState;
     mState = GameState::PAUSED;
-    mPauseMenu.select_option(0); // Always start pause menu on "Resume"
+    mPauseMenu.SelectOption(0); // Always start pause menu on "Resume"
   }
 
   void Game::Resume() {
@@ -361,7 +361,7 @@ namespace cse498 {
     int h = mGameView->GetHeight();
 
     int menu_w = w / 4;
-    int menu_h = static_cast<int>(mMainMenu.get_option_count()) * 50;
+    int menu_h = static_cast<int>(mMainMenu.GetOptionCount()) * 50;
     int menu_x = (w - menu_w) / 2;
     int menu_y = (h - menu_h) / 2;
 
@@ -369,7 +369,7 @@ namespace cse498 {
     mTitleText.Draw(title_x, menu_y - 80);
 
     SDL_Renderer* renderer = mGameView->GetRenderer();
-    mMainMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
+    mMainMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
   // Z-layer ordering. Put here for future reference of probable Game draw logic
@@ -450,10 +450,10 @@ namespace cse498 {
 
     // Pause menu centered
     int menu_w = w / 4;
-    int menu_h = static_cast<int>(mPauseMenu.get_option_count()) * 50;
+    int menu_h = static_cast<int>(mPauseMenu.GetOptionCount()) * 50;
     int menu_x = (w - menu_w) / 2;
     int menu_y = pause_y + mPauseText.GetHeight() + (h / 30);
-    mPauseMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
+    mPauseMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
   void Game::RenderSettings() {
