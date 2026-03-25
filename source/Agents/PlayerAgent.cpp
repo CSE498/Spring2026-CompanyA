@@ -2,7 +2,7 @@
  * @file PlayerAgent.cpp
  */
 
-#include "PlayerAgent.h"
+#include "PlayerAgent.hpp"
 
 #include <iostream>
 
