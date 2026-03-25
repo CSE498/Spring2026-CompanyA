@@ -5,7 +5,9 @@
 
 #include "Game.hpp"
 #include <SDL2/SDL.h>
-
+#include <filesystem>
+#include <iostream>
+#include <algorithm>
 namespace cse498 {
 
   // -----------------------------------------------------------------------
@@ -14,6 +16,9 @@ namespace cse498 {
 
   bool Game::Initialize() {
     if (!mGameView->Initialize()) return false;
+
+    std::cout << "Working directory: "
+              << std::filesystem::current_path() << std::endl;
 
     SDL_Renderer* renderer = mGameView->GetRenderer();
 
@@ -33,30 +38,40 @@ namespace cse498 {
     mImageManager = std::make_unique<ImageManager>(renderer);
 
     // Grass variants
-    mImageManager->LoadImage("grass",         "assets/tiles/grass.png");
-    mImageManager->LoadImage("grass_flowers", "assets/tiles/grass_flowers.png");
-    mImageManager->LoadImage("grass_bones",   "assets/tiles/grass_bones.png");
-    mImageManager->LoadImage("grass_mud",     "assets/tiles/grass_mud.png");
-    mImageManager->LoadImage("grass_rock",    "assets/tiles/grass_rock.png");
+    mImageManager->LoadImage("grass",         "source/assets/tiles/grass.png");
+    mImageManager->LoadImage("grass_flowers", "source/assets/tiles/grass_flowers.png");
+    mImageManager->LoadImage("grass_bones",   "source/assets/tiles/grass_bones.png");
+    mImageManager->LoadImage("grass_mud",     "source/assets/tiles/grass_mud.png");
+    mImageManager->LoadImage("grass_rock",    "source/assets/tiles/grass_rock.png");
 
     // Structure
-    mImageManager->LoadImage("entrance",      "assets/tiles/grass_left_entrance.png");
+    mImageManager->LoadImage("entrance",      "source/assets/tiles/grass_left_entrance.png");
 
     // Border walls
-    mImageManager->LoadImage("wall_left",     "assets/tiles/grass_wall_left.png");
-    mImageManager->LoadImage("wall_right",    "assets/tiles/grass_wall_right.png");
-    mImageManager->LoadImage("wall_top",      "assets/tiles/grass_wall_up.png");
-    mImageManager->LoadImage("wall_bottom",   "assets/tiles/grass_wall_bottom.png");
-    mImageManager->LoadImage("wall_corner",   "assets/tiles/grass_wall_up.png");
+    mImageManager->LoadImage("wall_left",     "source/assets/tiles/grass_wall_left.png");
+    mImageManager->LoadImage("wall_right",    "source/assets/tiles/grass_wall_right.png");
+    mImageManager->LoadImage("wall_top",      "source/assets/tiles/grass_wall_up.png");
+    mImageManager->LoadImage("wall_bottom",   "source/assets/tiles/grass_wall_bottom.png");
+    mImageManager->LoadImage("wall_corner",   "source/assets/tiles/grass_wall_up.png");
 
-    // Dungeon
-    mImageManager->LoadImage("stone",         "assets/tiles/stone.png");
+    // Mobs
+    mImageManager->LoadImage("skeleton", "source/assets/Mobs/skeleton.png");
 
+    // Dungeon tile images
+    mImageManager->LoadImage("wall",  "source/assets/tiles/grass.png");
+    mImageManager->LoadImage("floor", "source/assets/tiles/stone.png");
+    mImageManager->LoadImage("dot",   "source/assets/tiles/stone.png");
+    
+    // Player
+    mImageManager->LoadImage("player", "source/assets/player/player.png");
+
+    // World Setups
     SetupOverworld();
+    SetupDungeon();
 
     // Set up dungeon world — 50x50 tile world, rendered at 64x64 per tile
-    mDungeonGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
-    mDungeonGrid->Fill("stone");
+    //    mDungeonGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
+    //    mDungeonGrid->Fill("stone");
 
     SetupMainMenu();
     SetupPauseMenu();
@@ -65,6 +80,7 @@ namespace cse498 {
 
   void Game::SetupOverworld() {
     mOverWorld = std::make_unique<OverWorld>();
+    mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
 
     const WorldGrid & grid = mOverWorld->GetGrid();
     size_t world_w = grid.GetWidth();
@@ -78,6 +94,26 @@ namespace cse498 {
         WorldPosition pos(x, y);
         const std::string & cell_name = grid.GetCellTypeName(grid[pos]);
         mOverworldGrid->SetCell(x, y, cell_name);
+      }
+    }
+  }
+
+
+  void Game::SetupDungeon() {
+    mDungeonWorld = std::make_unique<DungeonWorld>();
+
+    const WorldGrid & grid = mDungeonWorld->GetGrid();
+    size_t world_w = grid.GetWidth();
+    size_t world_h = grid.GetHeight();
+
+    mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+
+    // Map every cell type name to its matching image name
+    for (size_t y = 0; y < world_h; ++y) {
+      for (size_t x = 0; x < world_w; ++x) {
+        WorldPosition pos(x, y);
+        const std::string & cell_name = grid.GetCellTypeName(grid[pos]);
+        mDungeonGrid->SetCell(x, y, cell_name);
       }
     }
   }
@@ -172,31 +208,46 @@ namespace cse498 {
         switch (event.key.keysym.sym) {
 
           // Navigation in menus
-          case SDLK_UP:
-            if (mState == GameState::MAIN_MENU) mMainMenu.select_previous();
-            if (mState == GameState::PAUSED)    mPauseMenu.select_previous();
-            break;
-          case SDLK_DOWN:
-            if (mState == GameState::MAIN_MENU) mMainMenu.select_next();
-            if (mState == GameState::PAUSED)    mPauseMenu.select_next();
-            break;
-          case SDLK_RETURN:
-            if (mState == GameState::MAIN_MENU) mMainMenu.activate_selected();
-            if (mState == GameState::PAUSED)    mPauseMenu.activate_selected();
-            break;
+        case SDLK_UP:
+          if (mState == GameState::MAIN_MENU) mMainMenu.select_previous();
+          if (mState == GameState::PAUSED)    mPauseMenu.select_previous();
+          break;
+        case SDLK_DOWN:
+          if (mState == GameState::MAIN_MENU) mMainMenu.select_next();
+          if (mState == GameState::PAUSED)    mPauseMenu.select_next();
+          break;
+        case SDLK_RETURN:
+          if (mState == GameState::MAIN_MENU) mMainMenu.activate_selected();
+          if (mState == GameState::PAUSED)    mPauseMenu.activate_selected();
+          break;
+
+          // Player movement — one turn per keypress with 150ms cooldown
+        case SDLK_w:
+        case SDLK_s:
+        case SDLK_a:
+        case SDLK_d:
+          if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON) {
+            static Uint32 last_move_time = 0;
+            Uint32 now = SDL_GetTicks();
+            if (now - last_move_time >= 150) {
+              ProcessPlayerMove(event.key.keysym.sym);
+              last_move_time = now;
+            }
+          }
+          break;
 
           // Pause / resume
-          case SDLK_ESCAPE:
-            if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON) {
-              Pause();
-            } else if (mState == GameState::PAUSED) {
-              Resume();
-            } else if (mState == GameState::SETTINGS) {
-              Resume();
-            }
-            break;
+        case SDLK_ESCAPE:
+          if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON) {
+            Pause();
+          } else if (mState == GameState::PAUSED) {
+            Resume();
+          } else if (mState == GameState::SETTINGS) {
+            Resume();
+          }
+          break;
 
-          default: break;
+        default: break;
         }
       }
     }
@@ -227,8 +278,13 @@ namespace cse498 {
 
   void Game::UpdateMainMenu() { }
 
-  void Game::UpdateOverworld() { UpdateWorld(*mOverworldGrid, mCamX, mCamY); }
-  void Game::UpdateDungeon()   { UpdateWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
+  void Game::UpdateOverworld() {
+    if (mTurnTaken) {
+      mOverWorld->RunAgents();
+      mTurnTaken = false;
+    }
+  }
+  void Game::UpdateDungeon() { }
 
   void Game::UpdateWorld(ImageGrid& grid, int& camX, int& camY) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
@@ -266,7 +322,7 @@ namespace cse498 {
   // -----------------------------------------------------------------------
 
   void Game::RenderMainMenu() {
-    SDL_Renderer* renderer = mGameView->GetRenderer();
+
     int w = mGameView->GetWidth();
     int h = mGameView->GetHeight();
 
@@ -278,6 +334,7 @@ namespace cse498 {
     int title_x = (w - mTitleText.GetWidth()) / 2;
     mTitleText.Draw(title_x, menu_y - 80);
 
+    SDL_Renderer* renderer = mGameView->GetRenderer();
     mMainMenu.draw(renderer, menu_x, menu_y, menu_w, menu_h);
   }
 
@@ -290,15 +347,47 @@ namespace cse498 {
     // RenderItems();
 
     // Layer 2 — agents/NPCs
-    // RenderAgents();
+    int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+    int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
-    // Layer 3 — player (always on top of world entities)
-    // mPlayer->Draw(...);
+    for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+      const AgentBase & agent = mOverWorld->GetAgent(i);
+      const WorldPosition & pos = agent.GetLocation().AsWorldPosition();
+
+      int screen_x = (static_cast<int>(pos.CellX()) - mCamX) * tw;
+      int screen_y = (static_cast<int>(pos.CellY()) - mCamY) * th;
+
+      mImageManager->DrawImage(mOverWorld->GetAgentSpriteName(), screen_x, screen_y, tw, th);
+    }
+
+    // Layer 3 — dummy player
+
+    int player_screen_x = (mPlayerX - mCamX) * tw;
+    int player_screen_y = (mPlayerY - mCamY) * th;
+
+    mImageManager->DrawImage(
+        "player",
+        player_screen_x,
+        player_screen_y,
+        tw,
+        th
+    );
 
     // Layer 4 — UI/HUD (health bar, etc.)
     // RenderHUD();
   }
-  void Game::RenderDungeon()   { RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY); }
+
+  void Game::RenderDungeon() {
+    RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY);
+
+    int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+    int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+    
+    int player_screen_x = (mDungeonPlayerX - mDungeonCamX) * tw;
+    int player_screen_y = (mDungeonPlayerY - mDungeonCamY) * th;
+
+    mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
+}
 
   void Game::RenderWorld(ImageGrid& grid, int camX, int camY) {
     grid.DrawViewport(
@@ -335,6 +424,60 @@ namespace cse498 {
 
   void Game::RenderSettings() {
     // TODO: render settings screen
+  }
+
+  void Game::ProcessPlayerMove(SDL_Keycode key) {
+    if (mState == GameState::OVERWORLD) {
+      int max_x = static_cast<int>(mOverworldGrid->GetWidth()) - 1;
+      int max_y = static_cast<int>(mOverworldGrid->GetHeight()) - 1;
+
+      switch (key) {
+        case SDLK_w: mPlayerY = std::max(0, mPlayerY - 1); break;
+        case SDLK_s: mPlayerY = std::min(max_y, mPlayerY + 1); break;
+        case SDLK_a: mPlayerX = std::max(0, mPlayerX - 1); break;
+        case SDLK_d: mPlayerX = std::min(max_x, mPlayerX + 1); break;
+        default: break;
+      }
+
+      int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+      int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+
+      int tiles_x = mGameView->GetWidth() / tw;
+      int tiles_y = mGameView->GetHeight() / th;
+
+      int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - tiles_x);
+      int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
+
+      mCamX = std::clamp(mPlayerX - tiles_x / 2, 0, max_cam_x);
+      mCamY = std::clamp(mPlayerY - tiles_y / 2, 0, max_cam_y);
+    }
+
+    else if (mState == GameState::DUNGEON) {
+      int max_x = static_cast<int>(mDungeonGrid->GetWidth()) - 1;
+      int max_y = static_cast<int>(mDungeonGrid->GetHeight()) - 1;
+
+      switch (key) {
+        case SDLK_w: mDungeonPlayerY = std::max(0, mDungeonPlayerY - 1); break;
+        case SDLK_s: mDungeonPlayerY = std::min(max_y, mDungeonPlayerY + 1); break;
+        case SDLK_a: mDungeonPlayerX = std::max(0, mDungeonPlayerX - 1); break;
+        case SDLK_d: mDungeonPlayerX = std::min(max_x, mDungeonPlayerX + 1); break;
+        default: break;
+      }
+
+      int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+      int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+
+      int tiles_x = mGameView->GetWidth() / tw;
+      int tiles_y = mGameView->GetHeight() / th;
+
+      int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - tiles_x);
+      int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - tiles_y);
+
+      mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
+      mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
+    }
+
+    mTurnTaken = true;
   }
 
 } // namespace cse498

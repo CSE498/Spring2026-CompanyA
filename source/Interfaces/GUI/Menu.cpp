@@ -18,26 +18,30 @@ using namespace cse498;
  * Constructor
  * creates empty menu
  */
-Menu::Menu() : mSelectedIndex(std::nullopt) {}
+Menu::Menu() : selected_index(std::nullopt) {}
 
 /**
-*  Adds a new menu option with its assoicated action
+ * Adds a new menu option with its assoicated action
  * @param label what the user sees (e.g. "start game")
  * @param callback what happens when activates
- * @return
  */
-bool Menu::AddOption(const std::string& label, std::function<void()> callback) {
-  if (label.empty() || !callback) {
-    return false;
+void Menu::add_option(const std::string& label, std::function<void()> callback) {
+  if (label.empty()) {
+    throw std::invalid_argument("Menu option label cannot be empty");
   }
 
-  mOptions.push_back({label, callback});
-
-  if (mOptions.size() == 1) {
-    mSelectedIndex = 0;
+  if (!callback) {
+    throw std::invalid_argument("Menu option callback cannot be null");
   }
 
-  return true;
+  MenuOption option;
+
+  options.push_back({label, callback});
+
+  // if first option, automatically selected
+  if (options.size() == 1) {
+    selected_index = 0;
+  }
 }
 
 /**
@@ -45,17 +49,17 @@ bool Menu::AddOption(const std::string& label, std::function<void()> callback) {
  * @param label text to match
  * @return true if found and removed, false otherwise 
  */
-bool Menu::RemoveOption(const std::string& label) {
-  for(size_t i = 0; i < mOptions.size(); i++){
-    if (mOptions[i].label == label) {
-      mOptions.erase(mOptions.begin() + static_cast<int>(i));
+bool Menu::remove_option(const std::string& label) {
+  for(size_t i = 0; i < options.size(); i++){
+    if (options[i].label == label) {
+      options.erase(options.begin() + static_cast<int>(i));
 
-      if (mOptions.empty()) {
-        mSelectedIndex = std::nullopt;
+      if (options.empty()) {
+        selected_index = std::nullopt;
       }
 
-      else if (mSelectedIndex.has_value() && *mSelectedIndex >= mOptions.size()) {  // ADD *
-        mSelectedIndex = mOptions.size() - 1;
+      else if (selected_index.has_value() && *selected_index >= options.size()) {  // ADD *
+        selected_index = options.size() - 1;
       }
 
       return true;
@@ -68,51 +72,51 @@ bool Menu::RemoveOption(const std::string& label) {
 /**
  * @return returns total number of options currently in the menu 
  */
-size_t Menu::GetOptionCount() const {
-  return mOptions.size();
+size_t Menu::get_option_count() const {
+  return options.size();
 }
 
 /** 
  * @return returns index of the currently selected option or -1 if no option is selected
  */
-std::optional<size_t> Menu::GetSelectedIndex() const {
-  return mSelectedIndex;
+std::optional<size_t> Menu::get_selected_index() const {
+  return selected_index;
 }
 
 /**
  * Moves the selection dwon to the next option, wrapping around to first option if current at last
  */
-void Menu::SelectNext() {
-  if(mOptions.empty())
+void Menu::select_next() {
+  if(options.empty())
       return;
 
-  if (!mSelectedIndex.has_value())
+  if (!selected_index.has_value())
   {
-    mSelectedIndex = 0;
+    selected_index = 0;
   }
   else
   {
-    mSelectedIndex = (*mSelectedIndex + 1) % mOptions.size();
+    selected_index = (*selected_index + 1) % options.size();
   }
 }
 
 /**
  * Moves selection up to prev. option, wrapping around to the last option if currently at the first
  */
-void Menu::SelectPrevious() {
-  if (mOptions.empty())
+void Menu::select_previous() {
+  if (options.empty())
     return;
 
-  if (!mSelectedIndex.has_value()) {
-    mSelectedIndex = mOptions.size() - 1;
+  if (!selected_index.has_value()) {
+    selected_index = options.size() - 1;
   }
 
-  else if (*mSelectedIndex == 0) {  // ADD *
-    mSelectedIndex = mOptions.size() - 1;
+  else if (*selected_index == 0) {  // ADD *
+    selected_index = options.size() - 1;
   }
 
   else {
-    mSelectedIndex = *mSelectedIndex - 1;  // ADD *
+    selected_index = *selected_index - 1;  // ADD *
   }
 
 }
@@ -120,105 +124,75 @@ void Menu::SelectPrevious() {
 /**
  * Sets selections to the option at the specified index
  * @param index 0-based position in the menu
- * @return false if the selected index is larger than size
  */
-bool Menu::SelectOption(size_t index) {
-  if (index >= mOptions.size()) {
-    return false;
+void Menu::select_option(size_t index) {
+  if (index >= options.size()) {
+    throw std::out_of_range("Menu option index out of range");
   }
 
-  mSelectedIndex = index;
-  return true;
+  selected_index = static_cast<int>(index);
 }
 
 /**
  * Executes callback function of the currently selected option
  */
-bool Menu::ActivateSelected() const {
-  if (!mSelectedIndex.has_value() || *mSelectedIndex >= mOptions.size()) {
-    return false;
+void Menu::activate_selected() const {
+  if (!selected_index.has_value() || *selected_index >= options.size()) {
+    throw std::runtime_error("No option selected");
   }
-  mOptions.at(*mSelectedIndex).callback();
-  return true;
+  options.at(*selected_index).callback();
 }
 
 /**
  * @param index Position of the chosen option
  * @return label of the option at specific index
  */
-std::optional <std::string> Menu::GetOptionLabel(size_t index) const {
-  if (index >= mOptions.size()) {
-    return std::nullopt;
+std::string Menu::get_option_label(size_t index) const {
+  if (index >= options.size()) {
+    throw std::out_of_range("Menu option index out of range");
   }
 
-  return mOptions.at(index).label;
+  return options.at(index).label;
 }
 
 /**
  * @return true if menu has no options, false otherwise
  */
-bool Menu::IsEmpty() const noexcept {
-  return mOptions.empty();
+bool Menu::is_empty() const noexcept {
+  return options.empty();
 }
 
 /**
- * Removes all options from the menu and resets the selection
+ * Removes all options from the menu and resets the selection to -1 ( when nothing is selected)
  */
-void Menu::Clear() {
-  mOptions.clear();
-  mSelectedIndex = std::nullopt;
+void Menu::clear() {
+  options.clear();
+  selected_index = std::nullopt;
 }
 
 /**
- * Handles menu responses to input codes
- * @param input_code input code values
+ * Handles user inputted keyboard option
+ * @param input_code values for keyboard functions
  */
-void Menu::HandleInput(InputCode input_code) {
+void Menu::handle_input(InputCode input_code) {
   switch(input_code) {
 
     case InputCode::up:
-        SelectPrevious();
+        select_previous();
         break;
 
     case InputCode::down:
-          SelectNext();
+          select_next();
           break;
 
 
     case InputCode::enter:
-      if (!IsEmpty()) {
-        ActivateSelected();
+      if (!is_empty()) {
+        activate_selected();
     }
 
       break;
   }
-}
-
-/**
- * Function that takes an actual SDL keyboard event and translates it into InputCode
- * @param key_event SDL releated up/down/enter functionality
- */
-void Menu::HandleSDLInput(const SDL_KeyboardEvent& key_event)
-{
-  switch(key_event.keysym.sym)
-  {
-
-    case SDLK_UP:
-      HandleInput(InputCode::up);
-      break;
-
-    case SDLK_DOWN:
-      HandleInput(InputCode::down);
-      break;
-
-    case SDLK_RETURN:
-      HandleInput(InputCode::enter);
-      break;
-
-    default:
-      break;
-  }
-
 }
 
 
@@ -230,10 +204,9 @@ void Menu::HandleSDLInput(const SDL_KeyboardEvent& key_event)
  * @param width The width of the menu area (unused for now)
  * @param height The height of the menu area, calculates spacing between options
  */
-void Menu::DrawMenu(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  width, int height,
-  const MenuStyle& style) {
+void Menu::draw(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  width, int height) {
   // Return silently if menu is empty - nothing to draw
-  if (IsEmpty()) {
+  if (is_empty()) {
     return;
   }
 
@@ -244,36 +217,33 @@ void Menu::DrawMenu(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  
 
   // Create Text object for rendering
   Text menuText(renderer);
-  menuText.SetSize(style.font_size);  // Font size for menu options
+  menuText.SetSize(18);  // Font size for menu options
 
   // Calculate spacing between options
-  int option_count = static_cast<int>(GetOptionCount());
+  int option_count = static_cast<int>(get_option_count());
   int spacing = (option_count > 1) ? height / option_count : height;
 
   // Draw each menu option
   int current_y = y;
 
-  for (size_t i = 0; i < GetOptionCount(); i++) {
+  for (size_t i = 0; i < get_option_count(); i++) {
     // Set content
-    menuText.SetContent(GetOptionLabel(i).value());
+    menuText.SetContent(get_option_label(i));
 
     // Check if this option is selected
     bool is_selected = false;
-    if (mSelectedIndex.has_value() && *mSelectedIndex == i) {
+    if (selected_index.has_value() && *selected_index == i) {
       is_selected = true;
     }
 
     // Set color based on selection
     if (is_selected) {
-
       // Yellow for selected option
-      menuText.SetColor(style.selected_color);
-      menuText.SetBold(style.bold_selected);
-    }
-
-    else {
+      menuText.SetColor(255, 255, 0, 255);
+      menuText.SetBold(true);
+    } else {
       // White for unselected options
-      menuText.SetColor(style.unselected_color);
+      menuText.SetColor(255, 255, 255, 255);
       menuText.SetBold(false);
     }
 
