@@ -51,4 +51,5 @@ third-party/SDL2/
 /compile_commands.json
 
 /source/simple
+/source/gameview
 /tests/build/run_tests
