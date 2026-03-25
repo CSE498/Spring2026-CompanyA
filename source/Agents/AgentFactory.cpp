@@ -7,7 +7,6 @@
 #include "../core/AgentBase.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
 #include "../core/WorldBase.hpp"
-#include "../tools/AgentAbility.hpp"
 #include "../tools/PathGenerator.hpp"
 #include "../tools/PathVector.hpp"
 #include <cmath>
@@ -61,7 +60,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
 
         // Build a simple pathfinding request for this enemy on the world's main grid.
         const WorldGrid &grid = world.GetGrid();
-        PathRequest request({}, AgentAbility(), grid);
+        PathRequest request({},  grid);
 
         auto pathOpt = PathGenerator::FindShortestPath(enemyPos, playerPos, request);
         if (!pathOpt)
@@ -189,7 +188,7 @@ bool AgentFactory::IsInRange(const Enemy &enemy, const WorldPosition &entityPosi
     const WorldPosition& p1 = enemy.GetLocation().AsWorldPosition();
     const WorldPosition& p2 = entityPosition;
 
-    if (PathGenerator::IsPathClear(p1, p2 - p1, {{}, AgentAbility(), grid}))
+    if (PathGenerator::IsPathClear(p1, p2 - p1, {{}, grid}))
     {
         // then we are pretty much good. Just check Euclidean Distance is less than range with respect to the player
         // hitbox. TODO: update once hitbox information is more well-defined

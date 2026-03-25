@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "Enemy.h"
+#include "Enemy.hpp"
 #include "../core/WorldBase.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
 #include "../Worlds/DemoSimpleWorldG2Actions.hpp"
