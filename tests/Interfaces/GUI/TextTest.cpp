@@ -42,10 +42,16 @@ public:
  }
 };
 
-TEST_CASE("Text Constructor", "[Text]")
+TEST_CASE("Text Constructor initializes usable object", "[Text]")
 {
- SDLMock mock;
- REQUIRE_NOTHROW(Text(mock.renderer));
+    SDLMock mock;
+    Text text(mock.renderer);
+
+    text.SetContent("Test");
+
+    CHECK(text.GetWidth() > 0);
+    CHECK(text.GetHeight() > 0);
+    CHECK(text.Draw(0,0));
 }
 
 TEST_CASE("Text Content", "[Text]")
@@ -85,7 +91,7 @@ TEST_CASE("Empty content rendering", "[Text]")
 
     // Empty content should not throw when drawing
     text.SetContent("");
-    REQUIRE_NOTHROW(text.Draw(0, 0));
+    CHECK(text.Draw(0, 0));
 
     // Empty content should have zero dimensions
     CHECK(text.GetWidth() == 0);
@@ -169,11 +175,9 @@ TEST_CASE("Invalid font path fallback", "[Text]")
 {
     SDLMock mock;
     Text text(mock.renderer);
+    text.SetFont("nonexistent_font.ttf");
 
-    // Try to load invalid font - should fall back to default
-    REQUIRE_NOTHROW(text.SetFont("nonexistent/path/to/font.ttf"));
-
-    // Should have fallen back to default font
+    // Use the macro so it matches whatever CMake injected
     CHECK(text.GetFont() == DEFAULT_FONT_PATH);
 }
 
@@ -295,7 +299,7 @@ TEST_CASE("Draw throws exception without renderer", "[Text]")
     text.SetContent("Test");
 
     // Should throw when trying to draw
-    REQUIRE_THROWS_AS(text.Draw(0, 0), std::runtime_error);
+    CHECK_FALSE(text.Draw(0, 0));
 }
 
 TEST_CASE("GetDimensions is more efficient than separate calls", "[Text]")
@@ -484,9 +488,9 @@ TEST_CASE("Draw succeeds with valid content and renderer", "[Text]")
     text.SetContent("Hello World");
 
     // Should not throw when drawing valid text
-    REQUIRE_NOTHROW(text.Draw(10, 10));
-    REQUIRE_NOTHROW(text.Draw(0, 0));
-    REQUIRE_NOTHROW(text.Draw(100, 200));
+    CHECK(text.Draw(10, 10));
+    CHECK(text.Draw(0, 0));
+    CHECK(text.Draw(100, 200));
 }
 
 TEST_CASE("Draw succeeds with styled text", "[Text]")
@@ -501,7 +505,7 @@ TEST_CASE("Draw succeeds with styled text", "[Text]")
     text.SetColor(255, 100, 50);
 
     // Should handle styled text without errors
-    REQUIRE_NOTHROW(text.Draw(50, 50));
+    CHECK(text.Draw(50, 50));
 }
 
 TEST_CASE("SetSize with extremely large size", "[Text]")
@@ -520,22 +524,11 @@ TEST_CASE("SetSize with extremely large size", "[Text]")
     CHECK(text.GetHeight() > 0);
 }
 
-TEST_CASE("Draw throws exception when renderer is null", "[Text]")
-{
-    Text text;  // No renderer
+TEST_CASE("Draw returns false when renderer is null", "[Text]") {
+    Text text;
     text.SetContent("Test");
 
-    // Should throw runtime_error
-    REQUIRE_THROWS_AS(text.Draw(0, 0), std::runtime_error);
-
-    // Check exception message contains useful info
-    try {
-        text.Draw(0, 0);
-        FAIL("Should have thrown exception");
-    } catch (const std::runtime_error& e) {
-        std::string msg = e.what();
-        CHECK(msg.find("renderer") != std::string::npos);
-    }
+    CHECK_FALSE(text.Draw(0, 0));
 }
 
 TEST_CASE("Draw throws exception when font is not loaded", "[Text]")
@@ -557,15 +550,16 @@ TEST_CASE("Draw throws exception when font is not loaded", "[Text]")
     }
 }
 
-TEST_CASE("SetFont throws exception for non-existent font after fallback", "[Text]")
-{
+TEST_CASE("SetFont falls back to default for invalid font", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
-    // This should fall back to default font (doesn't throw)
-    REQUIRE_NOTHROW(text.SetFont("nonexistent_font.ttf"));
+    bool result = text.SetFont("nonexistent_font.ttf");
 
-    // Should have fallen back
+    // Should succeed via fallback
+    CHECK(result == true);
+
+    // Should now be using default font
     CHECK(text.GetFont() == DEFAULT_FONT_PATH);
 }
 
@@ -577,9 +571,9 @@ TEST_CASE("Multiple Draw calls work correctly", "[Text]")
     text.SetContent("Multiple Draws");
 
     // Should be able to draw multiple times
-    REQUIRE_NOTHROW(text.Draw(10, 10));
-    REQUIRE_NOTHROW(text.Draw(20, 20));
-    REQUIRE_NOTHROW(text.Draw(30, 30));
+    CHECK(text.Draw(10, 10));
+    CHECK(text.Draw(20, 20));
+    CHECK(text.Draw(30, 30));
 }
 
 TEST_CASE("Changing content between draws works", "[Text]")
@@ -588,13 +582,13 @@ TEST_CASE("Changing content between draws works", "[Text]")
     Text text(mock.renderer);
 
     text.SetContent("First");
-    REQUIRE_NOTHROW(text.Draw(0, 0));
+    CHECK(text.Draw(0, 0));
 
     text.SetContent("Second");
-    REQUIRE_NOTHROW(text.Draw(0, 0));
+    CHECK(text.Draw(0, 0));
 
     text.SetContent("Third");
-    REQUIRE_NOTHROW(text.Draw(0, 0));
+    CHECK(text.Draw(0, 0));
 }
 
 TEST_CASE("Very long text content", "[Text]")
@@ -609,7 +603,7 @@ TEST_CASE("Very long text content", "[Text]")
     // Should handle without crashing
     CHECK(text.GetWidth() > 0);
     CHECK(text.GetHeight() > 0);
-    REQUIRE_NOTHROW(text.Draw(0, 0));
+    CHECK(text.Draw(0, 0));
 }
 
 TEST_CASE("Special characters in text", "[Text]")
@@ -621,7 +615,7 @@ TEST_CASE("Special characters in text", "[Text]")
 
     // Should handle special characters
     CHECK(text.GetWidth() > 0);
-    REQUIRE_NOTHROW(text.Draw(0, 0));
+    CHECK(text.Draw(0, 0));
 }
 
 TEST_CASE("Toggling styles multiple times", "[Text]")
@@ -644,6 +638,5 @@ TEST_CASE("Toggling styles multiple times", "[Text]")
     CHECK(text.IsItalic() == true);
 
     // Should still work
-    REQUIRE_NOTHROW(text.Draw(0, 0));
+    CHECK(text.Draw(0, 0));
 }
-
