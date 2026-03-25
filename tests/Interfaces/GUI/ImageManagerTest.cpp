@@ -70,7 +70,8 @@ TEST_CASE("Load and get images", "[ImageManager]")
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
 
     // load image & confirm existence
-    REQUIRE_NOTHROW(manager.LoadImage("test_img", testImage));
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
     CHECK(manager.HasImage("test_img") == true);
     CHECK(manager.GetTexture("test_img") != nullptr);
 }
@@ -87,10 +88,9 @@ TEST_CASE("Duplicate images", "[ImageManager]")
     manager.LoadImage("test_img", testImage);
 
     // check for error when trying to load same image again
-    REQUIRE_THROWS_AS(
-        manager.LoadImage("test_img", testImage),
-        std::runtime_error
-    );
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE_FALSE(result);
+    CHECK(result.error() == "Duplicate image name: test_img");
 }
 
 TEST_CASE("Loading invalid file", "[ImageManager]")
@@ -100,10 +100,9 @@ TEST_CASE("Loading invalid file", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // check for error when trying to load a non-existence image file
-    REQUIRE_THROWS_AS(
-        manager.LoadImage("invalid", "invalid.png"),
-        std::runtime_error
-    );
+    auto result = manager.LoadImage("invalid", "invalid.png");
+    REQUIRE_FALSE(result);
+    CHECK_FALSE(result.error().empty());
 }
 
 TEST_CASE("Invalid file in draw_image", "[ImageManager]")
@@ -124,7 +123,8 @@ TEST_CASE("Valid file in draw_image", "[ImageManager]")
 
     // load image
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
-    manager.LoadImage("test_img", testImage);
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
 
     // confirm it returns true
     CHECK(manager.DrawImage("test_img", 10, 10) == true);
@@ -138,7 +138,8 @@ TEST_CASE("DrawImage overload with scaling", "[ImageManager]")
 
     // load image
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
-    manager.LoadImage("test_img", testImage);
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
 
     // confirm scaled overload returns true
     CHECK(manager.DrawImage("test_img", 0, 0, 50, 50) == true);
@@ -155,17 +156,15 @@ TEST_CASE("Loading empty strings", "[ImageManager]")
 
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
 
-    // check for invalid_argument on empty name
-    REQUIRE_THROWS_AS(
-        manager.LoadImage("", testImage),
-        std::invalid_argument
-    );
+    // check for error on empty name
+    auto result1 = manager.LoadImage("", testImage);
+    REQUIRE_FALSE(result1);
+    CHECK(result1.error() == "Image name or file path can't be empty.");
 
-    // check for invalid_argument on empty path
-    REQUIRE_THROWS_AS(
-        manager.LoadImage("test_img", ""),
-        std::invalid_argument
-    );
+    // check for error on empty path
+    auto result2 = manager.LoadImage("test_img", "");
+    REQUIRE_FALSE(result2);
+    CHECK(result2.error() == "Image name or file path can't be empty.");
 }
 
 TEST_CASE("Extreme coordinates in draw_image", "[ImageManager]")
@@ -176,7 +175,8 @@ TEST_CASE("Extreme coordinates in draw_image", "[ImageManager]")
 
     // load image
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
-    manager.LoadImage("test_img", testImage);
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
 
     // Smoke tests for extreme coordinates to ensure SDL doesn't crash
     CHECK(manager.DrawImage("test_img", -9999, -9999) == true);
@@ -191,7 +191,8 @@ TEST_CASE("DrawImage renders pixels to the screen", "[ImageManager]")
 
     // load image
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
-    manager.LoadImage("test_img", testImage);
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
 
     // clear to a bright green color
     SDL_SetRenderDrawColor(mock.renderer, 0, 255, 0, 255);

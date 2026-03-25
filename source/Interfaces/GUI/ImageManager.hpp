@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <expected>
 
 namespace cse498 {
 
@@ -66,7 +67,7 @@ namespace cse498 {
         ImageManager& operator=(ImageManager&&) = default;
 
         // class functions
-        void LoadImage(const std::string& name, const std::string& file_path);
+        std::expected<void, std::string> LoadImage(const std::string& name, const std::string& file_path);
         bool HasImage(const std::string& name) const;
 
         /// draw image at (x, y) at its native size

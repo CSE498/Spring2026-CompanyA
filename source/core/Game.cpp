@@ -57,33 +57,43 @@ namespace cse498 {
     // Set up image manager and load all tile assets
     mImageManager = std::make_unique<ImageManager>(renderer);
 
+    // Helper lambda to load and propagate errors
+    auto LoadCheck = [&](const std::string& name, const std::string& path) -> bool {
+        auto result = mImageManager->LoadImage(name, path);
+        if (!result) {
+            std::cerr << "LoadImage failed: " << result.error() << std::endl;
+            return false;
+        }
+        return true;
+    };
+
     // Grass variants
-    mImageManager->LoadImage("grass",         "source/assets/tiles/grass.png");
-    mImageManager->LoadImage("grass_flowers", "source/assets/tiles/grass_flowers.png");
-    mImageManager->LoadImage("grass_bones",   "source/assets/tiles/grass_bones.png");
-    mImageManager->LoadImage("grass_mud",     "source/assets/tiles/grass_mud.png");
-    mImageManager->LoadImage("grass_rock",    "source/assets/tiles/grass_rock.png");
+    if (!LoadCheck("grass",         "source/assets/tiles/grass.png"))        return false;
+    if (!LoadCheck("grass_flowers", "source/assets/tiles/grass_flowers.png")) return false;
+    if (!LoadCheck("grass_bones",   "source/assets/tiles/grass_bones.png"))   return false;
+    if (!LoadCheck("grass_mud",     "source/assets/tiles/grass_mud.png"))     return false;
+    if (!LoadCheck("grass_rock",    "source/assets/tiles/grass_rock.png"))    return false;
 
     // Structure
-    mImageManager->LoadImage("entrance",      "source/assets/tiles/grass_left_entrance.png");
+    if (!LoadCheck("entrance",      "source/assets/tiles/grass_left_entrance.png")) return false;
 
     // Border walls
-    mImageManager->LoadImage("wall_left",     "source/assets/tiles/grass_wall_left.png");
-    mImageManager->LoadImage("wall_right",    "source/assets/tiles/grass_wall_right.png");
-    mImageManager->LoadImage("wall_top",      "source/assets/tiles/grass_wall_up.png");
-    mImageManager->LoadImage("wall_bottom",   "source/assets/tiles/grass_wall_bottom.png");
-    mImageManager->LoadImage("wall_corner",   "source/assets/tiles/grass_wall_up.png");
+    if (!LoadCheck("wall_left",     "source/assets/tiles/grass_wall_left.png"))   return false;
+    if (!LoadCheck("wall_right",    "source/assets/tiles/grass_wall_right.png"))  return false;
+    if (!LoadCheck("wall_top",      "source/assets/tiles/grass_wall_up.png"))     return false;
+    if (!LoadCheck("wall_bottom",   "source/assets/tiles/grass_wall_bottom.png")) return false;
+    if (!LoadCheck("wall_corner",   "source/assets/tiles/grass_wall_up.png"))     return false;
 
     // Mobs
-    mImageManager->LoadImage("skeleton", "source/assets/Mobs/skeleton.png");
+    if (!LoadCheck("skeleton", "source/assets/Mobs/skeleton.png")) return false;
 
     // Dungeon tile images
-    mImageManager->LoadImage("wall",  "source/assets/tiles/grass.png");
-    mImageManager->LoadImage("floor", "source/assets/tiles/stone.png");
-    mImageManager->LoadImage("dot",   "source/assets/tiles/stone.png");
+    if (!LoadCheck("wall",  "source/assets/tiles/grass.png")) return false;
+    if (!LoadCheck("floor", "source/assets/tiles/stone.png")) return false;
+    if (!LoadCheck("dot",   "source/assets/tiles/stone.png")) return false;
     
     // Player
-    mImageManager->LoadImage("player", "source/assets/player/player.png");
+    if (!LoadCheck("player", "source/assets/player/player.png")) return false;
 
     // World Setups
     SetupOverworld();

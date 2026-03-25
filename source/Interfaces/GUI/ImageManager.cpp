@@ -2,15 +2,16 @@
  * @file ImageManager.cpp
  * @author Sitara Baxendale
  *
- * AI Disclaimer: Used ChatGPT to check overall class correctness. It helped me
- * handle my memory in a safer manner & suggested to throw error messages
- * in the LoadImage class.
+ * AI Disclaimer: Used ChatGPT to check overall class correctness. It helped convert the code into using
+ * std::expected rather than exceptions: https://chatgpt.com/share/69c405cb-c2f8-8329-b34a-e387ea631bbd
+ *
  */
 
 #include "ImageManager.hpp"
 
 #include <cassert>
 #include <stdexcept>
+#include <expected>
 
 namespace cse498
 {
@@ -29,20 +30,23 @@ namespace cse498
      * Loads images & stores them with a name
      * @param name unique name of the image
      * @param file_path path to the image file
+     * @return std::expected<void, std::string> empty on success, error message on failure
      */
-    void ImageManager::LoadImage(const std::string& name,
-                                  const std::string& file_path)
+    std::expected<void, std::string> ImageManager::LoadImage(const std::string& name,
+                                                             const std::string& file_path)
     {
         // empty string checks
         if (name.empty() || file_path.empty())
         {
-            throw std::invalid_argument("Image name or file path can't be empty.");
+            // NOTE: your IDE might show a red underline for "std::unexpected" from not being up to date w/ C++23
+            // it compiles and runs in the gameview executable and tests!
+            return std::unexpected("Image name or file path can't be empty.");
         }
 
         // avoids duplications/overwrites
         if (HasImage(name))
         {
-            throw std::runtime_error("Duplicate image name: " + name);
+            return std::unexpected("Duplicate image name: " + name);
         }
 
         // load the file into memory as a surface (freed automatically via custom deleter)
@@ -51,9 +55,7 @@ namespace cse498
         if (!surface)
         {
             // if surface could not be created, throw error
-            throw std::runtime_error(
-                "Failed to load image: " + file_path + " (" + IMG_GetError() + ")"
-            );
+            return std::unexpected("Failed to load image: " + file_path + " (" + IMG_GetError() + ")");
         }
 
         // convert surface to a texture (freed automatically via custom deleter)
@@ -63,13 +65,14 @@ namespace cse498
         // if surface couldn't be converted, throw error
         if (!texture)
         {
-            throw std::runtime_error(
-                "Failed to create texture: " + std::string(SDL_GetError())
-            );
+            return std::unexpected("Failed to create texture: " + std::string(SDL_GetError()));
         }
 
         // add texture to map
         mTextures[name] = std::move(texture);
+
+        // successful
+        return {};
     }
 
     /**
