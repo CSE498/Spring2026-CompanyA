@@ -11,10 +11,6 @@
 
 using namespace cse498;
 
-#ifndef DEFAULT_FONT_PATH
-    #define DEFAULT_FONT_PATH "source/Interfaces/GUI/fonts/OpenSans-Regular.ttf"
-#endif
-
 const std::string Text::DEFAULT_FONT = DEFAULT_FONT_PATH;
 /**
  * Constructor
