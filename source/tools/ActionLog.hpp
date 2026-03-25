@@ -12,6 +12,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include "WorldPosition.hpp"
 
 namespace cse498 {
 
@@ -20,10 +21,8 @@ struct Action {
     int         EntityId;       // ID of the agent
     std::string ActionType;     // Descriptive label
     double      Timestamp;      // Simulation time when the action occurred
-    double      X;              // Position before action
-    double      Y;              // Position before action
-    double      NewX;           // Position after action
-    double      NewY;           // Position after action
+    WorldPosition Position;     // Position before action
+    WorldPosition NewPosition;  // Position after action
     int         SequenceNumber; // Action index
 };
 
@@ -47,7 +46,7 @@ public:
      * @param newY         Entity's position after the action
      */
     void LogAction(int entityId, const std::string& actionType,
-                   double x, double y, double newX, double newY);
+               WorldPosition position, WorldPosition newPosition);
 
     /**
      * Advances the simulation clock used to timestamp future actions.
@@ -67,8 +66,19 @@ public:
     /// Returns the total number of recorded actions.
     int GetActionCount() const;
 
+    /// Returns the ID of the entity with the most logged actions, or nullopt if empty.
+    std::optional<int> GetMostActiveEntity() const;
+
+    /// Returns the number of actions whose timestamps fall within [startTime, endTime].
+    int GetActionCountInRange(double startTime, double endTime) const;
+
     /// Clears all actions and resets sequence counter (CurrentTime is preserved).
     void Clear();
+
+    /// add comments for params later gotta fix nahum issues first
+    bool IsEntityStuck(int entityId, int windowSize = 5) const;
+    std::string Serialize() const;
+    void Deserialize(const std::string& data);
 
 protected:
     std::vector<Action> Actions;

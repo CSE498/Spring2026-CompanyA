@@ -17,26 +17,34 @@
 // }
 
 // Build a log with known timestamps via UpdateTime(), and known action types/agents.
-static std::shared_ptr<cse498::ActionLog> MakeSampleLog() {
+static std::shared_ptr<cse498::ActionLog> MakeSampleLog()
+{
     std::shared_ptr<cse498::ActionLog> log = std::make_shared<cse498::ActionLog>();
 
+    auto position1 = cse498::WorldPosition(0.0, 0.0);
+    auto position2 = cse498::WorldPosition(1.0, 1.0);
+    auto position3 = cse498::WorldPosition(2.0, 2.0);
+    auto position4 = cse498::WorldPosition(3.0, 3.0);
+    auto position5 = cse498::WorldPosition(4.0, 4.0);
+
     log->UpdateTime(0.0);
-    log->LogAction(1, "move",   0.0, 0.0, 1.0, 1.0); // (x,y,new_x,new_y)
+    log->LogAction(1, "move", position1, position2); // (x,y,new_x,new_y)
 
     log->UpdateTime(1.0);
-    log->LogAction(2, "attack", 1.0, 1.0, 1.0, 1.0);
+    log->LogAction(2, "attack", position2, position2);
 
     log->UpdateTime(2.0);
-    log->LogAction(1, "move",   2.0, 2.0, 3.0, 3.0);
+    log->LogAction(1, "move", position3, position4);
 
     log->UpdateTime(3.0);
-    log->LogAction(2, "move",   3.0, 3.0, 4.0, 4.0);
+    log->LogAction(2, "move", position4, position5);
 
     return log;
 }
 
 // Tests for ReplayDriver
-TEST_CASE("ReplayDriver: IsActionLogSet()", "[ReplayDriver]") {
+TEST_CASE("ReplayDriver: IsActionLogSet()", "[ReplayDriver]")
+{
     cse498::ReplayDriver driver;
     CHECK(driver.IsActionLogSet() == false);
 
@@ -45,8 +53,9 @@ TEST_CASE("ReplayDriver: IsActionLogSet()", "[ReplayDriver]") {
     CHECK(driver.IsActionLogSet() == true);
 }
 
-//Empty replays to csv
-TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[ReplayDriver]") {
+// Empty replays to csv
+TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[ReplayDriver]")
+{
     cse498::ReplayDriver driver;
     CHECK(driver.SaveReplayToFile("should_not_write.csv") == false);
 }

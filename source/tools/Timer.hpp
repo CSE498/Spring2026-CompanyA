@@ -2,45 +2,59 @@
  * @file Timer.hpp
  * @author Nathan Charters
  *
- * A Timer class that can be used to measure precise time intervals.
+ * A class representing a Timer object.
  */
 
 #ifndef TIMER_H
 #define TIMER_H
 
 #include <chrono>
-#include <unordered_map>
 #include <string>
+#include <vector>
 
 namespace cse498
 {
-
-    // A struct to hold timer information. Includes the starting time point, a boolean for
-    // whether the timer is running, and the total accumulated duration for the timer.
-    struct TimerInfo
-    {
-        std::chrono::time_point<std::chrono::steady_clock> startTime;
-        bool isRunning;
-        std::chrono::duration<double, std::nano> accumulatedDuration;
-    };
-
+    /**
+     * A class representing a Timer object.
+     *
+     * A Timer keeps track of a single timing instance, and can be started, stopped, reset, and restarted.
+     */
     class Timer
     {
     public:
-        Timer();
-        ~Timer() = default;
-        void start(std::string timerName);
-        void stop(std::string timerName);
-        void restart(std::string timerName);
-        double getTime(std::string timerName);
+        Timer(std::string name, bool startRunning = true);
 
-        /**
-         * Returns whether the timer with the provided name is currently running. If the timer doesn't exist, returns false.
-         */
-        bool isRunning(const std::string &timerName) const;
+        void start();
+        void stop();
+        void reset();
+        void restart();
+
+        void lap();
+
+        double elapsed() const;
+        bool isRunning() const;
+        std::vector<double> getLaps();
+
+        void advanceTime(double seconds);
 
     private:
-        std::unordered_map<std::string, TimerInfo> mTimers = {};
+        // The name of the Timer.
+        std::string mName;
+
+        // The starting time point of the Timer.
+        std::chrono::time_point<std::chrono::steady_clock> mStart;
+
+        // The total elapsed time of the Timer. Initialized to 0.
+        std::chrono::duration<double, std::nano> mElapsed{std::chrono::duration<double>::zero()};
+
+        // A boolean representing whether the Timer is running or not.
+        bool mRunning;
+
+        // The starting time point of the current lap.
+        std::chrono::time_point<std::chrono::steady_clock> mLapStart;
+
+        // A vector that holds the time (in seconds) of each lap.
+        std::vector<double> mLaps{0.0};
     };
 }
 
