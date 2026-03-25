@@ -195,8 +195,13 @@ target_compile_definitions(companya_native
 companya_apply_native_profile(companya_native)
 
 add_executable(simple "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
+add_executable(group1 "${COMPANYA_SOURCE_DIR}/Group1_main.cpp")
 target_link_libraries(simple PRIVATE companya_native)
+target_link_libraries(group1 PRIVATE companya_native)
 set_target_properties(simple PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
+)
+set_target_properties(group1 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
 )
 

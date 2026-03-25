@@ -8,28 +8,22 @@
 #include "Agents/PacingAgent.hpp"
 #include "Interfaces/TrashInterface.hpp"
 #include "Worlds/MazeWorld.hpp"
-#include "Agents/LearningExplorerAgent.hpp"
-#include "Interfaces/AIDebugInterface.hpp"
 
 using namespace cse498;
 
-int main()
-{
+int main() {
   MazeWorld world;
-
-  auto & explorer = world.AddAgent<LearningExplorerAgent>("Explorer");
-  explorer.SetSymbol('E').SetLocation(WorldPosition{6,1});
-
-  world.AddAgent<PacingAgent>("Guard 1")
-       .SetHorizontal()
-       .SetSymbol('G')
-       .SetLocation(WorldPosition{7,7});
-
-  auto & observer = world.AddAgent<AIDebugInterface>("Observer");
-
-  observer.SetSymbol('O');
-  observer.SetLocation(WorldPosition{1,1});
-  observer.SetMonitoredAgent(explorer.GetID());
+  world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
+  world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
+  world.AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(
+      WorldPosition{7, 7});
+  world.AddAgent<PacingAgent>("Guard 2")
+      .SetHorizontal()
+      .ToggleDirection()
+      .SetLocation(WorldPosition{8, 8});
+  world.AddAgent<TrashInterface>("Interface")
+      .SetSymbol('@')
+      .SetLocation(WorldPosition{1, 1});
 
   world.Run();
 }
