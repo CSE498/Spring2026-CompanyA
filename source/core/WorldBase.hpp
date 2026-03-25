@@ -10,10 +10,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
+#include "../Agents/PlayerAgent.hpp"
 
 namespace cse498 {
 
@@ -23,14 +25,21 @@ namespace cse498 {
   using agent_set_t = std::vector<agent_ptr_t>;
 
   class WorldBase {
-  protected:
+    private:
+      /// current agent ID for this world. (reserve 0? could be nice..? Player?)
+      size_t mAgentIdIndex = 1;
+
+    protected:
     /// NOTE: derived worlds may choose to have more than one grid.
     WorldGrid main_grid;                 ///< Main grid for this world
 
     item_set_t item_set;    ///< Vector of pointers to non-agent entities (ItemBase)
     agent_set_t agent_set;  ///< Vector of pointers to agent entities (AgentBase)
+    /// The main player stored separately from the agents and has id = 0
+    PlayerAgent mPlayer;
 
     bool run_over = false;  ///< Are we finished executing and now shutting down?
+
 
 
     /// Helper function that is run whenever a new agent is created.
@@ -39,7 +48,7 @@ namespace cse498 {
 
 
   public:
-    WorldBase() = default;
+    WorldBase() : mPlayer(0, "guy1", *this) {}
     virtual ~WorldBase() = default;
 
     // -- Accessors --
@@ -64,15 +73,20 @@ namespace cse498 {
 
     /// Return a reference to an Agent with a given ID.
     [[nodiscard]] AgentBase & GetAgent(size_t id) {
-      assert(id < agent_set.size());
+      assert(id < mAgentIdIndex);
       return *agent_set[id];
     }
 
     /// Return a CONST reference to an Agent with a given ID.
     [[nodiscard]] const AgentBase & GetAgent(size_t id) const {
-      assert(id < agent_set.size());
+      assert(id < mAgentIdIndex);
       return *agent_set[id];
     }
+
+    // TODO: update this so we have player information
+    /// temporary function because we have yet to know how/where main player is stored. We need to know where player
+    /// is so we ask this question for the world to know.
+    [[nodiscard]] WorldPosition getPlayerPosition() const { return mPlayer.GetLocation().AsWorldPosition(); }
 
     /// Return an editable version of the current grid for this world (main_grid by default) 
     virtual WorldGrid & GetGrid() { return main_grid; }
@@ -83,6 +97,8 @@ namespace cse498 {
     /// Determine if the run has ended.
     virtual bool IsRunOver() const { return run_over; }
 
+    size_t GetNextAgentId() { return mAgentIdIndex++; }
+
     // -- Agent Management --
 
     /// @brief Build a new agent of the specified type
@@ -91,16 +107,30 @@ namespace cse498 {
     /// @return A reference to the newly created agent
     template <typename AGENT_T>
     AGENT_T & AddAgent(std::string agent_name="None") {
-      auto agent_ptr = std::make_unique<AGENT_T>(agent_set.size(), agent_name, *this);
-      AGENT_T & agent_ref = *agent_ptr;
-      ConfigAgent(*agent_ptr);
-      if (agent_ptr->Initialize() == false) {
-        std::cerr << "Failed to initialize agent '" << agent_name << "'." << std::endl;
-      }
-      agent_set.emplace_back(std::move(agent_ptr)); // Move unique ptr for agent into set.
-      return agent_ref;
+      auto agent_ptr = std::make_unique<AGENT_T>(mAgentIdIndex++, agent_name, *this);
+      return AddAgent(std::move(agent_ptr));
     }
 
+    /**
+     * Other build system for agents. Agents that are not defined as classes, create the agent from the factory
+     * and pass it into here to add the agent.
+     * @param agent
+     * @return
+     */
+    template<typename AGENT_T>
+    AGENT_T & AddAgent(std::unique_ptr<AGENT_T> agent)
+    {
+      assert(agent); // ensure pointer isn't null.
+      static_assert(std::is_base_of_v<AgentBase, AGENT_T> == true);
+
+      AGENT_T & agent_ref = *agent;
+      ConfigAgent(*agent);
+      if (agent->Initialize() == false) {
+        std::cerr << "Failed to initialize agent '" << agent->GetName() << "'." << std::endl;
+      }
+      agent_set.emplace_back(std::move(agent));
+      return agent_ref;
+    }
 
     // -- Action Management --
 
@@ -119,6 +149,19 @@ namespace cse498 {
         size_t action_id = agent_ptr->SelectAction(main_grid);
         int result = DoAction(*agent_ptr, action_id);
         agent_ptr->SetActionResult(result);
+      }
+    }
+
+    /// Remove agents that are dead: call OnDestroy() then erase from agent_set.
+    virtual void RemoveDeadAgents() {
+      auto it = agent_set.begin();
+      while (it != agent_set.end()) {
+        if (!(*it)->IsAlive()) {
+          (*it)->OnDestroy();
+          it = agent_set.erase(it);
+        } else {
+          ++it;
+        }
       }
     }
 

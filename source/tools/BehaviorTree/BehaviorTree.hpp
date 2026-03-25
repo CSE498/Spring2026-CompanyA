@@ -36,7 +36,7 @@ public:
     // Store a typed value under a key.
     template<typename T>
     void Set(const std::string& key, const T& value) {
-        data[key] = value;
+        mData[key] = value;
     }
 
     // Retrieve a typed value.
@@ -58,7 +58,7 @@ public:
     std::vector<std::string> GetKeys() const;
 
 private:
-    std::unordered_map<std::string, std::any> data;
+    std::unordered_map<std::string, std::any> mData;
 };
 
 // ============================================================
@@ -68,7 +68,7 @@ private:
 // Runtime context passed into every node Tick().
 // Currently only exposes the Blackboard but is extensible.
 struct ExecutionContext {
-    Blackboard& blackboard;
+    Blackboard& mBlackboard;
     explicit ExecutionContext(Blackboard& bb);
 };
 
@@ -114,8 +114,8 @@ public:
     const std::vector<std::unique_ptr<Node>>& GetChildren() const;
 
 protected:
-    std::vector<std::unique_ptr<Node>> children;
-    size_t currentChild = 0;  // Tracks active child during execution
+    std::vector<std::unique_ptr<Node>> mChildren;
+    size_t mCurrentChild = 0;  // Tracks active child during execution
 };
 
 // ============================================================
@@ -131,7 +131,7 @@ public:
     const std::unique_ptr<Node>& GetChild() const;
 
 protected:
-    std::unique_ptr<Node> child;
+    std::unique_ptr<Node> mChild;
 };
 
 // ============================================================
@@ -152,8 +152,8 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
-    ActionFunc action;
+    std::string mName;
+    ActionFunc mAction;
 };
 
 // ============================================================
@@ -172,7 +172,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // Sequence:
@@ -187,7 +187,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // ============================================================
@@ -206,7 +206,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // ContinuallyRepeat:
@@ -221,7 +221,7 @@ protected:
     Status OnUpdate(ExecutionContext& context) override;
 
 private:
-    std::string name;
+    std::string mName;
 };
 
 // ============================================================
@@ -231,10 +231,40 @@ private:
 // Convenience factory methods for constructing trees.
 class TreeBuilder {
 public:
+    /**
+    * Runs children in order until one fails. Succeeds only if all children succeed.
+    * (Manages Multiple children aka a composite)
+     * @param name - name of node
+     * @return seq
+     */
     static std::unique_ptr<Sequence> Seq(const std::string& name);
+    /**
+     *  Runs children in order until one succeeds. Fails only if all children fail.
+     * (Manages Multiple children aka a composite)
+     * @param name - name of node
+     * @return selector node
+     */
     static std::unique_ptr<Selector> Sel(const std::string& name);
+    /**
+     * Leaf node to execute function on reaching it
+     * @param name
+     * @param func - func taking in execution context (blackboard) and return status: suc, fail, running.
+     * @return
+     */
     static std::unique_ptr<Action> Act(const std::string& name, Action::ActionFunc func);
+    /**
+     * Flips Success ↔ Failure. Running passes through unchanged.
+     * (single node control aka Decorator)
+     * @param name - name of node
+     * @return inversion node.
+     */
     static std::unique_ptr<Invert> Inv(const std::string& name);
+    /**
+     * Continuously executes its child. Always returns Running.
+     * (single node control aka Decorator)
+     * @param name - node name
+     * @return
+     */
     static std::unique_ptr<ContinuallyRepeat> Repeat(const std::string& name);
 };
 

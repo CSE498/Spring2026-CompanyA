@@ -15,6 +15,7 @@
 using cse498::WorldPath;
 using cse498::PathGenerator;
 using cse498::WorldPosition;
+using cse498::PathVector;
 using cse498::PathRequest;
 using std::vector;
 
@@ -177,6 +178,28 @@ public:
     }
     ~CircleWorld2() override = default;
 };
+
+class TestWorldUtility1 : public TestWorldBase
+{
+public:
+    TestWorldUtility1()
+    {
+        // (9,-3), (10,-3), (11,-3), (12,-3), (9,-4), (10,-4), (11,-4), (12,-4)
+        // (15,-6), (16,-6), (17,-6), (18,-6), (15,-7), (16,-7), (17,-7), (18,-7)
+
+        main_grid.Load(std::vector<std::string>{
+            "#########",
+            "#       #",
+            "# ##    #",
+            "#       #",
+            "#########"
+        });
+    }
+    ~TestWorldUtility1() override = default;
+};
+
+
+
 }
 
 /**
@@ -617,4 +640,78 @@ TEST_CASE("Path Generation ALL - testing paths outside of bounds")
     // 4. Manhattan paths
     auto man1 = PathGenerator::FindManhattanPath({1, -1}, {-4, 4}, request1);
     CHECK(!man1);
+}
+
+
+TEST_CASE("IsPathClear", "[utility]")
+{
+
+}
+TEST_CASE("PathGenerator::IsPathClear basic scenarios", "[path]") {
+    cse498::TestWorldUtility1 world;
+    PathRequest request({}, cse498::AgentAbility(), world.GetGrid());
+
+    // Straight horizontal path (clear)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{3, 0}; // move right
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Straight horizontal path (blocked)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{8, 0}; // blocked further right
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Straight vertical path (clear)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{0, 2}; // move downward
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Straight vertical path (blocked)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{0, 3}; // blocked further up
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Diagonal path
+    {
+        WorldPosition start{7, 1}; // down left
+        PathVector path{-2, 2};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Zero-length path
+    {
+        WorldPosition start{1, 1};
+        PathVector path{0, 0};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Zero-length path starting on wall
+    {
+        WorldPosition start{0, 0};
+        PathVector path{0, 0};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Negative movement
+    {
+        WorldPosition start{7, 3}; // goes up left
+        PathVector path{-2, -2};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // down right
+    {
+        WorldPosition start{5, 1};
+        PathVector path{2, 2};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
 }
