@@ -19,9 +19,9 @@ namespace cse498 {
     class Random {
         private:
             // Constants
-            static constexpr int STATE_NUMBER = 4;
-            static constexpr int NUM_BITS = 64;
-            
+            static constexpr int STATE_NUMBER = 4; // The number of states being used to generate values
+            static constexpr int NUM_BITS = 64;    // The number of bits per state
+
             static constexpr int RIGHT_SHIFT1 = 30;
             static constexpr int RIGHT_SHIFT2 = 27;
             static constexpr int RIGHT_SHIFT3 = 31;
@@ -38,7 +38,7 @@ namespace cse498 {
             static constexpr int F_LOWER_41 = 41;
             static constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
 
-            uint64_t m_seed;
+            uint64_t m_seed;  // The seed used for random generation
 
 
             ////////////////////////////////////////////////////////////
@@ -167,6 +167,8 @@ namespace cse498 {
 
 
             /// @brief Templated function to generate and return values
+            /// @param The range of values to generate a number between. min must be <= max.
+            /// @return A random value in range of the specified type
             template <typename T>
             T GetValue(T min, T max) {
                 assert(min <= max);
@@ -187,89 +189,6 @@ namespace cse498 {
                     return static_cast<T>(min + decimal_value * (max-min));
                 }
             }
-            /*/// @brief Generate and return a random int
-            /// @param the minimum and maximum values to be used
-            /// @return a randomly generated int
-            int GetInt(int i_min = 0, int i_max = 100) {
-                // Error handling: i_min must be less than i_max
-                if (i_min > i_max) {
-                    throw std::runtime_error("cse498::Random::GetInt(): i_min must be less than i_max.");
-                }
-                
-                m_CheckRng();
-
-                // generate the bits
-                uint64_t r = m_Xoshiro256pp(m_rng);
-                // make use of the bits useful for a integer
-                int return_i = i_min + static_cast<int>(r % static_cast<uint64_t>(i_max-i_min+1));
-
-                return return_i;
-            }
-
-            /// @brief Generate and return a random double
-            /// @param the minimum and maximum values to be used
-            /// @return a randomly generated double
-            double GetDouble(double d_min = 0.0, double d_max = 100.0){
-                // Error handling: d_min must be less than d_max
-                if (d_min > d_max) {
-                    throw std::runtime_error("cse498::Random::GetDouble(): d_min must be less than d_max.");
-                }
-
-                m_CheckRng();
-
-                // for doubles use the 53 bits
-                double return_d = d_min + (d_max - d_min) * m_DoubleXoshiro(m_rng);
-
-                return return_d;
-            }
-
-            /// @brief Generate and return a random float
-            /// @param the minimum and maximum values to be used
-            /// @return a randomly generated float
-            float GetFloat(float f_min = 0.0f, float f_max = 100.0f) {
-                // Error handling: f_min must be less than f_max
-                if (f_min > f_max) {
-                    throw std::runtime_error("cse498::Random::GetFloat(): f_min must be less than f_max.");
-                }
-
-                m_CheckRng();
-
-                // for floats use the top 23 bits
-                float return_f = f_min + (f_max - f_min) * m_FloatXoshiro(m_rng);
-
-                return return_f;
-            }
-
-            /// @brief Generate and return a random char
-            /// @param the minimum and maximum values to be used
-            /// @return a randomly generated char
-            char GetChar(char c_min = 'A', char c_max = 'Z'){
-                // Error handling: c_min must be less than c_max
-                if (c_min > c_max) {
-                    throw std::runtime_error("cse498::Random::GetChar(): c_min must be less than c_max.");
-                }
-
-                m_CheckRng();
-                
-                // Treat chars as ints
-                uint64_t r = m_Xoshiro256pp(m_rng);
-                char return_c = static_cast<char>(c_min + (r % static_cast<uint64_t>(c_max - c_min + 1)));
-
-                return return_c;
-            }
-
-            /// @brief Generate and return a random bool
-            /// @param the minimum and maximum values to be used
-            /// @return a randomly generated bool
-            bool GetBool(){
-                //Generate between 0 and 1 using an int
-                int i = GetInt(0,1);
-
-                if (i == 0){
-                    return false;
-                }
-                return true;
-            }*/
 
             /// @brief Generates based off of a given probability, and returns a bool
             /// @param the desired probaility of a true value

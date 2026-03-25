@@ -17,16 +17,16 @@ static cse498::WeightedSet<std::string> MakeRoomPool() {
     return rooms;
 }
 
-const u_int64_t SEED_VALUE_ONE = 12345;
-const u_int64_t SEED_VALUE_TWO = 23456;
-const u_int64_t SEED_VALUE_THREE = 34567;
-const u_int64_t SEED_VALUE_FOUR = 45678;
-const u_int64_t SEED_VALUE_FIVE = 56789;
-const u_int64_t SEED_VALUE_SIX = 67890;
-const u_int64_t SEED_VALUE_SEVEN = 1;
-const u_int64_t SEED_VALUE_EIGHT = 1023987435908;
-const u_int64_t SEED_VALUE_NINE = 10923810957;
-const u_int64_t SEED_VALUE_TEN = 10297834198;
+const uint64_t SEED_VALUE_ONE = 12345;
+const uint64_t SEED_VALUE_TWO = 23456;
+const uint64_t SEED_VALUE_THREE = 34567;
+const uint64_t SEED_VALUE_FOUR = 45678;
+const uint64_t SEED_VALUE_FIVE = 56789;
+const uint64_t SEED_VALUE_SIX = 67890;
+const uint64_t SEED_VALUE_SEVEN = 1;
+const uint64_t SEED_VALUE_EIGHT = 1023987435908;
+const uint64_t SEED_VALUE_NINE = 10923810957;
+const uint64_t SEED_VALUE_TEN = 10297834198;
 
 
 TEST_CASE("BSP-Dungeon Constructor", "[core]") { 

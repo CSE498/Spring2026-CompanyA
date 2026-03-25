@@ -196,7 +196,7 @@ namespace cse498 {
             mRng.SetSeed(integer);
         }
 
-        u_int64_t GetRngSeed() { 
+        uint64_t GetRngSeed() { 
             return mRng.GetSeed();
         }
 
