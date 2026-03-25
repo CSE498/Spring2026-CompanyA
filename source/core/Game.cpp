@@ -4,11 +4,31 @@
  */
 
 #include "Game.hpp"
+#include "core/AgentBase.hpp"
 #include <SDL2/SDL.h>
 #include <filesystem>
 #include <iostream>
 #include <algorithm>
 namespace cse498 {
+
+  class StubAgent : public AgentBase {
+  public:
+
+    StubAgent(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {
+      SetSymbol('@'); // represents player on screen
+    }
+
+    size_t SelectAction(const WorldGrid& /*grid*/) override{
+      return 0; // 0 -> remain still
+    }
+
+    void Notify (const std::string& message, const std::string& msg_type = "none") override {
+      std::cout << "[Agent Notification] type= " << msg_type << " message = "
+      << message << std::endl;
+    }
+
+
+  };
 
   // -----------------------------------------------------------------------
   //  Initialization
@@ -72,6 +92,20 @@ namespace cse498 {
     // Set up dungeon world — 50x50 tile world, rendered at 64x64 per tile
     //    mDungeonGrid = std::make_unique<ImageGrid>(50, 50, 64, 64);
     //    mDungeonGrid->Fill("stone");
+
+    // Agent module integration demonstration
+    StubAgent player(1, "Player", *mOverWorld);
+    player.AddAction("up",    1);
+    player.AddAction("down",  2);
+    player.AddAction("left",  3);
+    player.AddAction("right", 4);
+
+    std::cout << "Agent: " << player.GetName()
+              << " (symbol: " << player.GetSymbol() << ")" << std::endl;
+    std::cout << "Movement actions registered: "
+              << (player.HasAction("up") ? "yes" : "no") << std::endl;
+    player.Notify("Welcome to the overworld!", "system");
+
 
     SetupMainMenu();
     SetupPauseMenu();
