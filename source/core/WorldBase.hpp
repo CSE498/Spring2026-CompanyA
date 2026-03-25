@@ -42,6 +42,13 @@ namespace cse498 {
     WorldBase() = default;
     virtual ~WorldBase() = default;
 
+    /**
+     * Returns {position, symbol} pairs for any world-specific entities to render
+     */
+    virtual std::vector<std::pair<WorldPosition, char>> GetOverlaySymbols() const {
+          return {};
+    }
+
     // -- Accessors --
 
     /// Get the total number of NON-agent entities
@@ -74,10 +81,10 @@ namespace cse498 {
       return *agent_set[id];
     }
 
-    /// Return an editable version of the current grid for this world (main_grid by default) 
+    /// Return an editable version of the current grid for this world (main_grid by default)
     virtual WorldGrid & GetGrid() { return main_grid; }
 
-    /// Return the current grid for this world (main_grid by default) 
+    /// Return the current grid for this world (main_grid by default)
     virtual const WorldGrid & GetGrid() const { return main_grid; }
 
     /// Determine if the run has ended.
@@ -143,7 +150,7 @@ namespace cse498 {
     //  from Agents to get more information about their senses and options.
     //
     //////////////////////////////////////////////////////////////////////////
-    
+
     // Provide a vector of IDs for other agents that the input agent is aware of.
     // (If not overridden, return ALL agents.)
     virtual std::vector<size_t> GetKnownAgents([[maybe_unused]] const AgentBase & agent) const {

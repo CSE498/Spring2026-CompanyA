@@ -16,7 +16,7 @@ namespace cse498 {
 
   class TrashInterface : public InterfaceBase {
   protected:
-    bool wait_for_input = true;  ///< Should we pause and wait for the user to hit a key?
+    bool wait_for_input = false;  ///< Should we pause and wait for the user to hit a key?
 
     // -- Helper Functions --
     void DrawGrid(const WorldGrid & grid,
@@ -45,6 +45,11 @@ namespace cse498 {
         const AgentBase & agent = world.GetAgent(agent_id);
         WorldPosition pos = agent.GetLocation().AsWorldPosition();
         symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
+      }
+
+      // Draw NPCs
+      for (const auto & [pos, sym] : world.GetOverlaySymbols()) {
+	      symbol_grid[pos.CellY()][pos.CellX()] = sym;
       }
 
       // Print out the symbol_grid with a box around it.
@@ -92,6 +97,7 @@ namespace cse498 {
         case 'a': case 'A': action_id = GetActionID("left");  break;
         case 's': case 'S': action_id = GetActionID("down");  break;
         case 'd': case 'D': action_id = GetActionID("right"); break;
+	case 'e': case 'E': action_id = GetActionID("interact"); break;
         case 'q': case 'Q': exit(0); // Quit!
       }
 

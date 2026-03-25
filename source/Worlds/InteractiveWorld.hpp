@@ -17,7 +17,7 @@ namespace cse498
 
 		InteractiveWorldInventory m_inventory;
 
-	    enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
+	    enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT};
 
 	    size_t floor_id; ///< Easy access to floor CellType ID.
 	    size_t wall_id;  ///< Easy access to wall CellType ID.
@@ -28,6 +28,7 @@ namespace cse498
 		    agent.AddAction("down", MOVE_DOWN);
 		    agent.AddAction("left", MOVE_LEFT);
 		    agent.AddAction("right", MOVE_RIGHT);
+		    agent.AddAction("interact", INTERACT);
 	    }
 
 	private:
@@ -105,16 +106,50 @@ namespace cse498
 			    case MOVE_DOWN:    new_position = cur_position.Down(); break;
 			    case MOVE_LEFT:    new_position = cur_position.Left(); break;
 			    case MOVE_RIGHT:   new_position = cur_position.Right(); break;
+			    case INTERACT:
+			    {
+				    std::array<WorldPosition, 4> neighbors = {
+				        cur_position.Up(),
+				        cur_position.Down(),
+				        cur_position.Left(),
+				        cur_position.Right()
+				    };
+
+				    for (const auto & neighbor : neighbors) {
+					    for (auto & npc : m_npcs) {
+						    if (npc->GetPosition() == neighbor) {
+							    npc->Interact();
+						    }
+					    }
+				    }
+				    return true;
+			    };
 		    }
 
 		    // Don't let the agent move off the world or into a wall.
 		    if (!main_grid.IsValid(new_position)) { return false; }
 		    if (main_grid[new_position] == wall_id) { return false; }
+		    // Don't walk on NPCs
+		    for (const auto & npc : m_npcs) {
+			    if (npc->GetPosition() == new_position) { return false; }
+		    }
 
 		    // Set the agent to its new position.
 		    agent.SetLocation(new_position);
 
 		    return true;
+	    }
+
+	    /**
+	     * Overlay symbols on screen
+	     * @return
+	     */
+	    std::vector<std::pair<WorldPosition, char>> GetOverlaySymbols() const override {
+		    std::vector<std::pair<WorldPosition, char>> symbols;
+		    for (const auto & npc : m_npcs) {
+			    symbols.emplace_back(npc->GetPosition(), npc->GetSymbol());
+		    }
+		    return symbols;
 	    }
 
 	    /**

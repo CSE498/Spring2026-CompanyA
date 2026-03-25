@@ -10,6 +10,7 @@
 
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
+#include "../WorldGrid.hpp"
 
 #include <cassert>
 #include <expected>
@@ -26,6 +27,10 @@ class NPC {
 private:
   std::shared_ptr<Building>
       m_building{}; ///< Building associated with this NPC.
+
+      WorldPosition m_position{}; // Position of NPC
+
+    char m_symbol = 'N'; // NPC symbol
 
   /// Ensure this NPC references a valid building before use.
   void ValidateBuilding() const {
@@ -48,6 +53,27 @@ public:
    * Trigger NPC interaction for the associated building.
    */
   void Interact() const { ShowUpgradeUI(); }
+
+  /**
+   * Set world position
+   * @param pos new world position
+   */
+  void SetPosition(WorldPosition pos) { m_position = pos; }
+  /**
+   * Get world position
+   * @return world position
+   */
+  WorldPosition GetPosition() const   { return m_position; }
+  /**
+   * Set symbol
+   * @param s new symbol
+   */
+  void SetSymbol(char s) { m_symbol = s; }
+  /**
+   * Get Symbol
+   * @return symbol
+   */
+  char GetSymbol() const { return m_symbol; }
 
   /**
    * Show the building's upgrade information.

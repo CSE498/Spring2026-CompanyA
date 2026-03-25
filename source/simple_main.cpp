@@ -56,5 +56,13 @@ int main()
     world->AddNPC(mason);
     world->AddNPC(miner);
 
+    lumberjack->SetPosition(WorldPosition{2, 1});
+    mason->SetPosition(WorldPosition{5, 3});
+    miner->SetPosition(WorldPosition{8, 5});
+
+    lumberjack->SetSymbol('L');
+    mason->SetSymbol('M');
+    miner->SetSymbol('X');
+
     world->Run();
 }
