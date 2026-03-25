@@ -156,8 +156,7 @@ namespace cse498 {
     /// @return ID of the action to perform; (0 is always "no action")
     /// @note Agents can use World API to query for more info (e.g., items, agents, or cell info)
     /// @note Override for custom logic.
-    [[nodiscard]] virtual size_t SelectAction(const WorldGrid & grid) {
-      (void)grid;
+    [[nodiscard]] virtual size_t SelectAction([[maybe_unused]] const WorldGrid & grid) {
       Tick();
       return mBlackboard.Get<size_t>("selected_action", 0);
     }
