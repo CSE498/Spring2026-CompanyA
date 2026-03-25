@@ -17,7 +17,7 @@ size_t Inventory::AddItem(std::unique_ptr<Item> item, size_t quantity)
 
     // If this fails you tried to add multiple unique items. :
     // multiple unique items need multiple unique ids which isn't possible here.
-    assert(!item->IsUnique() || quantity == 1);
+    assert((!item->IsUnique() || quantity == 1) && "Multiple unique items tried to be inserted");
     // First see if there is a slot that already contains the item
     // Given this isn't a unique item
     if (!item->IsUnique() && mItemMap.contains(item->GetName()))
@@ -38,14 +38,25 @@ size_t Inventory::AddItem(std::unique_ptr<Item> item, size_t quantity)
     // find the next slot available (empty):
 
     // Unique items can only be inserted in new empty slots.
+    auto name = item->GetName();
     for (size_t i = 0; i < INVENTORY_SIZE; ++i)
     {
         size_t index = (i + HOTBAR_SIZE) % INVENTORY_SIZE;
         // if slot is empty
         if (!mInventory.at(index))
         {
-            const auto name = item->GetName();
-            quantity = mInventory.at(index).InsertNew(std::move(item), quantity);
+            if (mInventory.at(index).IsRoom(quantity))
+            {
+                // Ensures this is the last case so we can actually move the pointer now
+                quantity = mInventory.at(index).InsertNew(std::move(item), quantity);
+                mItemMap[name].insert(index);
+                assert(quantity == 0);
+                return 0;
+            }
+            // ELSE:
+            // Make a duplicate unique pointer -- does mess with some ids for non-copyable items but that is ok
+            std::unique_ptr<Item> itemCpy = std::make_unique<Item>(*item);
+            quantity = mInventory.at(index).InsertNew(std::move(itemCpy), quantity);
             // when [] is actually useful to insert if it doesn't exist
             mItemMap[name].insert(index);
             if (quantity == 0)
@@ -127,6 +138,18 @@ size_t Inventory::RemoveUniqueItem(const size_t itemId)
 
 void Inventory::SwapSlots(size_t slotIndex1, size_t slotIndex2)
 {
+    auto slot1Item = mInventory.at(slotIndex1).GetItem();
+    auto slot2Item = mInventory.at(slotIndex2).GetItem();
+    if (slot1Item)
+    {
+        mItemMap.at(slot1Item->GetName()).erase(slotIndex1);
+        mItemMap.at(slot1Item->GetName()).insert(slotIndex2);
+    }
+    if (slot2Item)
+    {
+        mItemMap.at(slot2Item->GetName()).erase(slotIndex2);
+        mItemMap.at(slot2Item->GetName()).insert(slotIndex1);
+    }
     std::swap(mInventory.at(slotIndex1), mInventory.at(slotIndex2));
 }
 void Inventory::ClearInventory()

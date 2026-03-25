@@ -73,13 +73,13 @@ namespace cse498 {
 
     /// Return a reference to an Agent with a given ID.
     [[nodiscard]] AgentBase & GetAgent(size_t id) {
-      assert(id < agent_set.size());
+      assert(id < mAgentIdIndex);
       return *agent_set[id];
     }
 
     /// Return a CONST reference to an Agent with a given ID.
     [[nodiscard]] const AgentBase & GetAgent(size_t id) const {
-      assert(id < agent_set.size());
+      assert(id < mAgentIdIndex);
       return *agent_set[id];
     }
 

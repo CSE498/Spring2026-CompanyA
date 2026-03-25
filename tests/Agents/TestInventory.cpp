@@ -189,6 +189,7 @@ TEST_CASE("Insertion and Deletion", "[inventoryslot]")
 
 TEST_CASE("Swap Slots simple", "[inventory, swap]")
 {
+    // Swapping null item and real item
     Inventory inv;
     CHECK(inv.GetHandSlotIndex() == 0);
     CHECK(inv.GetHand() == nullptr);
@@ -209,7 +210,18 @@ TEST_CASE("Swap Slots simple", "[inventory, swap]")
 TEST_CASE("Inventory Add and Remove", "[add, remove, inventory]")
 {
     Inventory inv;
-    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 3);
+    auto& invView = inv.GetInventory();
+    MockWorldBase world;
+    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 500);
+    inv.AddItem(std::make_unique<RealItem>(1, world), 3);
+    inv.AddItem(std::make_unique<RealUItem>(4, 4, world));
+    inv.SwapSlots(Inventory::HOTBAR_SIZE, 2);
+
+    inv.RemoveItem("TestItem", 5);
+    CHECK(invView.at(Inventory::HOTBAR_SIZE + 1).GetQuantity() == Inventory::MAX_ITEMS_PER_SLOT - 5);
+    inv.RemoveUniqueItem(4);
+    auto result = inv.GetTotal("RealUItem");
+    CHECK(result == 0);
 }
 
 
@@ -258,7 +270,7 @@ TEST_CASE("Inventory Unique Item vs Non-Unique -- MultiItem", "[inventory, item,
     CHECK(invView.at(Inventory::HOTBAR_SIZE).GetQuantity() == 16);
     CHECK(invView.at(Inventory::HOTBAR_SIZE + 1).GetQuantity() == 1);
 
-    auto overflow = inv.AddItem<RealItem>(1000, 0, world);
+    auto overflow = inv.AddItem<RealItem>(200, 0, world);
 
 
     CHECK(invView.at(Inventory::HOTBAR_SIZE).GetQuantity() == Inventory::MAX_ITEMS_PER_SLOT);
@@ -325,7 +337,10 @@ TEST_CASE("Check Asserts, some edge cases", "[none]")
 
 
     // Should hit assert:
-    // inv.AddItem(std::make_unique<RealUItem>(1, 5, world), 5);
+    auto item = std::make_unique<RealUItem>(1, 5, world);
+    CHECK(item->IsUnique());
+
+    // inv.AddItem(std::move(item), 5);
 
 
 

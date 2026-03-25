@@ -18,7 +18,7 @@
 #include <optional>
 #include <array>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <utility>
 #include <memory>
 
@@ -184,6 +184,8 @@ public:
         [[nodiscard]] bool IsEmpty() const {return !mItem;}
         [[nodiscard]] bool IsFull() const {return (mQuantity >= Inventory::MAX_ITEMS_PER_SLOT || (mItem && mItem->IsUnique()));}
         [[nodiscard]] size_t GetQuantity() const {return mQuantity;}
+        [[nodiscard]] bool IsRoom(size_t amount) const { return (mQuantity + amount) <= MAX_ITEMS_PER_SLOT; }
+
         InventorySlot& Decrement()
         {
             mQuantity--;
@@ -256,14 +258,22 @@ public:
      */
     const std::array<InventorySlot, INVENTORY_SIZE>& GetInventory() const { return mInventory; }
 private:
-
     /**
-     * Starts at start index which is defined to start at top left of inventory first by default
-     * Loops through lastly until hotbar to add items
-     * @param itemId - string id of the item to add (searching for a spot for this)
-     * @param startIndex - starting position to begin search. pos 0 = hotbar left, HOTBAR_SIZE = top left inventory
-     * @return - the spot to add an item
+     * Enforces that removal will take place in the backpack first then
+     * the hotbar
      */
+    struct CircularCompare
+    {
+        size_t Transform(size_t x) const
+        {
+            if (x >= HOTBAR_SIZE) return (x - HOTBAR_SIZE);
+            return x + (INVENTORY_SIZE - HOTBAR_SIZE + 1);
+        }
+        bool operator()(size_t a, size_t b) const
+        {
+            return Transform(a) < Transform(b);
+        }
+    };
 
     // I don't care what the size of the inventory is or if we change the structure.
     /// This size includes the hotbar I would presume
@@ -272,7 +282,8 @@ private:
 
     /// This is for constant speed lookup -- a little overkill but nice
     /// key: size_t item_id --> Value: index locations in array
-    std::unordered_map<std::string, std::unordered_set<size_t>> mItemMap;
+    /// Ordered for consistency in removal
+    std::unordered_map<std::string, std::set<size_t, CircularCompare>> mItemMap;
 
     /// this is the selected hotbar slot
     size_t mCurrentHotbarSlot = 0;
