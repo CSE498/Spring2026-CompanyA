@@ -68,32 +68,32 @@ namespace cse498 {
     };
 
     // Grass variants
-    if (!LoadCheck("grass",         "source/assets/tiles/grass.png"))        return false;
-    if (!LoadCheck("grass_flowers", "source/assets/tiles/grass_flowers.png")) return false;
-    if (!LoadCheck("grass_bones",   "source/assets/tiles/grass_bones.png"))   return false;
-    if (!LoadCheck("grass_mud",     "source/assets/tiles/grass_mud.png"))     return false;
-    if (!LoadCheck("grass_rock",    "source/assets/tiles/grass_rock.png"))    return false;
+    if (!LoadCheck("grass",  std::string(ASSETS_DIR) + "tiles/grass.png"))  return false;
+    if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "tiles/grass_flowers.png")) return false;
+    if (!LoadCheck("grass_bones",   std::string(ASSETS_DIR) + "tiles/grass_bones.png"))   return false;
+    if (!LoadCheck("grass_mud",     std::string(ASSETS_DIR) + "tiles/grass_mud.png"))     return false;
+    if (!LoadCheck("grass_rock",    std::string(ASSETS_DIR) + "tiles/grass_rock.png"))    return false;
 
     // Structure
-    if (!LoadCheck("entrance",      "source/assets/tiles/grass_left_entrance.png")) return false;
+    if (!LoadCheck("entrance",      std::string(ASSETS_DIR) + "tiles/grass_left_entrance.png")) return false;
 
     // Border walls
-    if (!LoadCheck("wall_left",     "source/assets/tiles/grass_wall_left.png"))   return false;
-    if (!LoadCheck("wall_right",    "source/assets/tiles/grass_wall_right.png"))  return false;
-    if (!LoadCheck("wall_top",      "source/assets/tiles/grass_wall_up.png"))     return false;
-    if (!LoadCheck("wall_bottom",   "source/assets/tiles/grass_wall_bottom.png")) return false;
-    if (!LoadCheck("wall_corner",   "source/assets/tiles/grass_wall_up.png"))     return false;
+    if (!LoadCheck("wall_left",     std::string(ASSETS_DIR) + "tiles/grass_wall_left.png"))   return false;
+    if (!LoadCheck("wall_right",    std::string(ASSETS_DIR) + "tiles/grass_wall_right.png"))  return false;
+    if (!LoadCheck("wall_top",      std::string(ASSETS_DIR) + "tiles/grass_wall_up.png"))     return false;
+    if (!LoadCheck("wall_bottom",   std::string(ASSETS_DIR) + "tiles/grass_wall_bottom.png")) return false;
+    if (!LoadCheck("wall_corner",   std::string(ASSETS_DIR) + "tiles/grass_wall_up.png"))     return false;
 
     // Mobs
-    if (!LoadCheck("skeleton", "source/assets/Mobs/skeleton.png")) return false;
+    if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png")) return false;
 
     // Dungeon tile images
-    if (!LoadCheck("wall",  "source/assets/tiles/grass.png")) return false;
-    if (!LoadCheck("floor", "source/assets/tiles/stone.png")) return false;
-    if (!LoadCheck("dot",   "source/assets/tiles/stone.png")) return false;
+    if (!LoadCheck("wall",  std::string(ASSETS_DIR) + "tiles/grass.png")) return false;
+    if (!LoadCheck("floor", std::string(ASSETS_DIR) + "tiles/stone.png")) return false;
+    if (!LoadCheck("dot",   std::string(ASSETS_DIR) + "tiles/stone.png")) return false;
     
     // Player
-    if (!LoadCheck("player", "source/assets/player/player.png")) return false;
+    if (!LoadCheck("player", std::string(ASSETS_DIR) + "player/player.png")) return false;
 
     // World Setups
     SetupOverworld();

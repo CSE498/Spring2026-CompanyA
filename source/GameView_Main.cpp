@@ -13,6 +13,7 @@
  *      Text Module Integration (source/Interfaces/GUI/Text.cpp)
  *      Image Grid Integration (source/Interfaces/GUI/ImageGrid.cpp)
  *      Image Manager Integration (source/Interfaces/GUI/ImageManager.cpp)
+ *      Game View Integration (source/Interfaces/GUI/GameView.cpp)
  *      Agent Module Integration via StubAgent (source/core/AgentBase.hpp)
  *      World Module Integration via OverWorld (source/core/OverWorld.hpp)
  *      Full game loop, rendering pipeline, and state management

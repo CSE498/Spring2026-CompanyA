@@ -32,6 +32,10 @@ set(COMPANYA_IMAGE_DIR
     "${COMPANYA_TEST_DIR}/Interfaces/GUI/images"
 )
 
+set(COMPANYA_ASSETS_DIR
+        "${COMPANYA_SOURCE_DIR}/Assets/"
+)
+
 function(companya_read_brew_prefix formula out_var)
     set(${out_var} "" PARENT_SCOPE)
     find_program(COMPANYA_BREW_EXECUTABLE brew)
@@ -191,6 +195,7 @@ target_include_directories(companya_native
 target_compile_definitions(companya_native
     PUBLIC
         DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
+        ASSETS_DIR="${COMPANYA_ASSETS_DIR}"
         TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
 )
 companya_apply_native_profile(companya_native)
@@ -227,6 +232,7 @@ target_compile_definitions(run_tests
     PRIVATE
         DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
         TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
+        ASSETS_DIR="${COMPANYA_ASSETS_DIR}"
 )
 target_compile_options(run_tests PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-O2 -g -Wall -Wextra -Wpedantic -Werror>
