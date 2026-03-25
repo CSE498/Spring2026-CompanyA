@@ -33,10 +33,10 @@ After building, go to `source` and run:
 
 ## Running the `gameview` Executable
 
-After building, go to `source` and run:
+After building, run:
 
 ```bash
-./gameview
+./source/gameview
 ```
 
 ## Running Non-Web Tests
