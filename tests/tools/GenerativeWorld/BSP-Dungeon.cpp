@@ -27,11 +27,12 @@ const uint64_t SEED_VALUE_SEVEN = 1;
 const uint64_t SEED_VALUE_EIGHT = 1023987435908;
 const uint64_t SEED_VALUE_NINE = 10923810957;
 const uint64_t SEED_VALUE_TEN = 10297834198;
+const std::string FILE_PATH = "../../source/core/rooms/Dungeon_";
 
 
 TEST_CASE("BSP-Dungeon Constructor", "[core]") { 
     SECTION("Constructor creates a tree of nodes given default parameters") {
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE);
+        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
         
         //Making sure default parameters are created properly
         CHECK(BSP.GetWidth() == 150);
@@ -44,7 +45,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
     }
 
     SECTION("Testing that RegenerateObjectState() regenerates BSPTree properly") {
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE);
+        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
 
         BSP.ClearState();
 
@@ -61,7 +62,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 
 
     SECTION("Testing Setting and Getting mWidth/mHeight/Iterations parameters") {
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE);
+        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
         ///Checking default parameters
         CHECK(BSP.GetWidth() == 150);
         CHECK(BSP.GetHeight() == 100);
@@ -99,7 +100,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         */
 
         ///Given Default width, height, and iterations
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE);
+        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_ONE);
 
         //Testing with Seed value 12345
@@ -183,8 +184,4 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         CHECK(leaf.size() == 15);
 
     }
-
-
-
-
 }

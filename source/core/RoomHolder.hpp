@@ -24,7 +24,7 @@ namespace cse498 {
 
     protected:
         std::vector<std::string> current_room; //Holds the currently selected/stored room
-        std::string mFilePath = "../source/core/rooms/Dungeon_"; //File path used to access the directory of different .txt rooms
+        std::string mFilePath; //File path used to access the directory of different .txt rooms
         std::string mImagePath = "../assets/";  //File path location for images
 
         cse498::Random mRng; //Random 
@@ -32,8 +32,10 @@ namespace cse498 {
 
     public:
 
-        RoomHolder(const cse498::WeightedSet<std::string>& room_pool) 
-			: mRng(),
+        RoomHolder(const cse498::WeightedSet<std::string>& room_pool,
+				   const std::string& file_path) 
+			: mFilePath(file_path),
+			  mRng(),
 			  mRoomPool(room_pool)
 		{}
 
@@ -190,7 +192,7 @@ namespace cse498 {
         std::vector<std::string> LoadRoom() {
             std::string selected_pool = GenerateFilePath();
             std::ifstream file(mFilePath + selected_pool); // this will open one of the rooms
-            std::cout << mFilePath + selected_pool << std::endl;
+            //std::cout << mFilePath + selected_pool << std::endl;
 
             assert(file.is_open());
 
