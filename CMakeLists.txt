@@ -22,6 +22,7 @@ set(COMPANYA_PROFILE "default" CACHE STRING "Build profile used by compatibility
 set_property(CACHE COMPANYA_PROFILE PROPERTY STRINGS default debug opt quick grumpy)
 
 set(COMPANYA_SOURCE_DIR "${PROJECT_SOURCE_DIR}/source")
+set(COMPANYA_DEMO_DIR "${PROJECT_SOURCE_DIR}/demo")
 set(COMPANYA_TEST_DIR "${PROJECT_SOURCE_DIR}/tests")
 set(COMPANYA_THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third-party")
 
@@ -198,6 +199,12 @@ add_executable(simple "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
 target_link_libraries(simple PRIVATE companya_native)
 set_target_properties(simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
+)
+
+add_executable(Group15_demo "${COMPANYA_DEMO_DIR}/Group15_demo.cpp")
+target_link_libraries(Group15_demo PRIVATE companya_native)
+set_target_properties(Group15_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_DEMO_DIR}"
 )
 
 file(GLOB_RECURSE COMPANYA_NATIVE_TEST_FILES CONFIGURE_DEPENDS "${COMPANYA_TEST_DIR}/*.cpp")

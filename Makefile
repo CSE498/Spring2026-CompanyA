@@ -43,10 +43,15 @@ all: build test
 debug opt quick grumpy:
 	$(MAKE) -C source $@
 
+# Build the Group15 demo
+Group15_demo:
+	cmake --build build --target Group15_demo
+
 # Clean everything
 clean:
 	$(MAKE) -C source clean
 	$(MAKE) -C tests clean
+	$(MAKE) -C demo clean
 
 # Forward anything to source/ by prefixing with src-
 #   make src-simple
