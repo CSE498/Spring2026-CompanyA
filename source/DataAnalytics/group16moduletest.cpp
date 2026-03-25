@@ -1,6 +1,6 @@
 #include "AnalyticsManager.hpp"
-#include "DataLog.hpp"
-#include "ActionLog.hpp"
+#include "../tools/DataLog.hpp"
+// #include "../tools/ActionLog.hpp"
 int main(){
     cse498::AnalyticsManager analytics;
     analytics.LogHealth(100.0);

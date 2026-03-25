@@ -9,8 +9,8 @@ namespace cse498
         mEnemiesTrackedLog.Clear();
         mDamageDealtLog.Clear();
 
-        mSuccessfulMovesLog.Clear();
-        mBlockedMovesLog.Clear();
+        // mSuccessfulMovesLog.Clear();
+        // mBlockedMovesLog.Clear();
     }
 
     void AnalyticsManager::LogHealth(double health)
@@ -43,24 +43,24 @@ namespace cse498
         return mDamageDealtLog;
     }
 
-    void AnalyticsManager::LogSuccessfulMove(double value)
-    {
-        mSuccessfulMovesLog.Add(value);
-    }
+    // void AnalyticsManager::LogSuccessfulMove(double value)
+    // {
+    //     mSuccessfulMovesLog.Add(value);
+    // }
 
-    void AnalyticsManager::LogBlockedMove(double value)
-    {
-        mBlockedMovesLog.Add(value);
-    }
+    // void AnalyticsManager::LogBlockedMove(double value)
+    // {
+    //     mBlockedMovesLog.Add(value);
+    // }
 
-    const DataLog& AnalyticsManager::GetSuccessfulMovesLog() const
-    {
-        return mSuccessfulMovesLog;
-    }
+    // const DataLog& AnalyticsManager::GetSuccessfulMovesLog() const
+    // {
+    //     return mSuccessfulMovesLog;
+    // }
 
-    const DataLog& AnalyticsManager::GetBlockedMovesLog() const
-    {
-        return mBlockedMovesLog;
-    }
+    // const DataLog& AnalyticsManager::GetBlockedMovesLog() const
+    // {
+    //     return mBlockedMovesLog;
+    // }
 
 }

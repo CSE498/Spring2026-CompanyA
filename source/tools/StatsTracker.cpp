@@ -45,15 +45,15 @@ DashboardSnapshot StatsTracker::BuildSnapshot(const AnalyticsManager& analytics)
 {
     DashboardSnapshot snapshot;
 
-    if (auto summary = BuildSeriesSummary("successful_moves", "Successful Moves", analytics.GetSuccessfulMovesLog()); summary.has_value()) 
-    {
-        snapshot.numericStats.push_back(*summary);
-    }
+    // if (auto summary = BuildSeriesSummary("successful_moves", "Successful Moves", analytics.GetSuccessfulMovesLog()); summary.has_value()) 
+    // {
+    //     snapshot.numericStats.push_back(*summary);
+    // }
 
-    if (auto summary = BuildSeriesSummary("blocked_moves", "Blocked Moves", analytics.GetBlockedMovesLog()); summary.has_value()) 
-    {
-        snapshot.numericStats.push_back(*summary);
-    }
+    // if (auto summary = BuildSeriesSummary("blocked_moves", "Blocked Moves", analytics.GetBlockedMovesLog()); summary.has_value()) 
+    // {
+    //     snapshot.numericStats.push_back(*summary);
+    // }
 
     if (auto summary = BuildSeriesSummary("health", "Health", analytics.GetHealthLog()); summary.has_value()) 
     {

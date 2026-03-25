@@ -11,7 +11,7 @@
 #pragma once
 
 #include "ActionLog.hpp"
-#include "AnalyticsManager.hpp"
+#include "../DataAnalytics/AnalyticsManager.hpp"
 #include "DataLog.hpp"
 
 #include <cstddef>
