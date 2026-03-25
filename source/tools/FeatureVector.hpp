@@ -1,225 +1,169 @@
 #pragma once
+
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
 #include <numeric>
-#include <stdexcept>
-#include <vector>
 
-namespace cse498
-{
+namespace cse498 {
 
-    /// A numeric vector supporting common feature-space operations
-    /// such as dot product and normalization.
-    /// @tparam T  The scalar type stored in the vector (e.g. double, float).
-    template <typename T>
-    class FeatureVector
-    {
+// FeatureVector is parameterized by a FeatureEnum that defines the set of
+// features stored in the vector. The enum must:
+//  - Be an enum class
+//  - Start at 0
+//  - Be contiguous (no gaps)
+//  - End with a COUNT value representing the number of features
+//
+// Each enum value corresponds to a fixed index in the vector, ensuring
+// that all FeatureVectors using the same enum share the same layout.
+//
+// Example:
+//
+// enum class AgentFeature {
+//     Health = 0,
+//     Damage,
+//     DistanceToGoal,
+//     NearbyEnemies,
+//     COUNT
+// };
+//
+// Usage:
+//
+// FeatureVector<AgentFeature> fv;
+// fv.set(AgentFeature::Health, 100.0);
+// fv.set(AgentFeature::Damage, 75.0);
+//
+// double health = fv.get(AgentFeature::Health);
 
-        private:
-            std::vector<T> values_;
+template <typename FeatureEnum> class FeatureVector {
 
-        public:
-            /// Construct from an existing std::vector, taking ownership via move.
-            /// @param values  The vector of elements to store.
-            explicit FeatureVector(std::vector<T> values)
-                : values_(std::move(values)) {}
+  static constexpr std::size_t feature_count =
+      static_cast<std::size_t>(FeatureEnum::COUNT);
 
-            /// Construct from a raw pointer and length.
-            /// @param data  Pointer to the first element.
-            /// @param size  Number of elements to copy.
-            FeatureVector(const T* data, std::size_t size)
-                : values_(data, data + size) {}
+  std::array<double, feature_count> values_{};
 
-            /// @return The number of elements in this vector.
-            [[nodiscard]] std::size_t size() const noexcept { return values_.size(); }
+  static constexpr std::size_t to_index(FeatureEnum feature) noexcept {
+    return static_cast<std::size_t>(feature);
+  }
 
-            /// Bounds-checked element access.
-            /// @param index  Position of the element to retrieve.
-            /// @return The value at the given index.
-            /// @throws std::out_of_range if index >= size().
-            [[nodiscard]] T at(std::size_t index) const
-            {
-                if (index >= values_.size())
-                {
-                    throw std::out_of_range("FeatureVector::at index out of range");
-                }
-                return values_[index];
-            }
+public:
+  FeatureVector() = default;
 
-            /// Compute the dot (inner) product of this vector with another.
-            /// Both vectors must have the same size (checked via assert).
-            /// @param other  The vector to dot with.
-            /// @return The scalar dot product.
-            [[nodiscard]] T dot(const FeatureVector& other) const
-            {
-                assert(values_.size() == other.values_.size());
-                return std::inner_product(values_.begin(), values_.end(),
-                                          other.values_.begin(), T{0});
-            }
+  explicit FeatureVector(std::initializer_list<double> init) {
+    assert(init.size() == feature_count &&
+           "FeatureVector: wrong number of initial values");
+    std::size_t i = 0;
+    for (double value : init) {
+      values_[i++] = value;
+    }
+  }
 
-            /// Normalize this vector to unit length (L2 norm).
-            /// If the norm is zero the vector is left unchanged.
-            void normalize()
-            {
-                const T sum_sq = std::inner_product(values_.begin(), values_.end(),
-                                              values_.begin(), T{0});
-                const T norm = std::sqrt(sum_sq);
+  [[nodiscard]] constexpr std::size_t size() const noexcept {
+    return feature_count;
+  }
 
-                if (norm == T{0})
-                {
-                    return;
-                }
+  [[nodiscard]] double get(FeatureEnum feature) const noexcept {
+    assert(to_index(feature) < feature_count &&
+           "FeatureVector::get feature out of range");
+    return values_[to_index(feature)];
+  }
 
-                for (auto& v : values_)
-                {
-                    v /= norm;
-                }
-            }
+  void set(FeatureEnum feature, double value) noexcept {
+    assert(to_index(feature) < feature_count &&
+           "FeatureVector::set feature out of range");
+    values_[to_index(feature)] = value;
+  }
 
-            /// Normalize this vector to unit length then multiply every
-            /// element by scale_val. Returns *this to allow chaining.
-            /// @param scale_val  The scalar to multiply by after normalizing.
-            /// @return A reference to this vector.
-            FeatureVector& scale(double scale_val)
-            {
-                normalize();
+  [[nodiscard]] double at(std::size_t index) const noexcept {
+    assert(index < feature_count && "FeatureVector::at index out of range");
+    return values_[index];
+  }
 
-                for (auto& v : values_)
-                {
-                    v *= static_cast<T>(scale_val);
-                }
+  [[nodiscard]] bool operator==(const FeatureVector &other) const noexcept {
+    return values_ == other.values_;
+  }
 
-                return *this;
-            }
+  [[nodiscard]] bool operator!=(const FeatureVector &other) const noexcept {
+    return !(*this == other);
+  }
 
-            /// Rotate the vector around the axis defined by the two indices i and j.
-            /// @param i  The first index.
-            /// @param j  The second index.
-            /// @param theta  The angle to rotate by.
-            /// @return A reference to this vector.
-            FeatureVector& rotate(std::size_t i, std::size_t j, double theta)
-            {
-                if (i >= values_.size() || j >= values_.size())
-                {
-                    throw std::out_of_range("FeatureVector::rotate indices out of range");
-                }
+  [[nodiscard]] double dot(const FeatureVector &other) const noexcept {
+    return std::inner_product(values_.begin(), values_.end(),
+                              other.values_.begin(), 0.0);
+  }
 
-                T cos_theta = std::cos(theta);
-                T sin_theta = std::sin(theta);
+  [[nodiscard]] double sum() const noexcept {
+    return std::accumulate(values_.begin(), values_.end(), 0.0);
+  }
 
-                T xi = values_[i];
-                T yi = values_[j];
+  [[nodiscard]] FeatureVector
+  operator+(const FeatureVector &other) const noexcept {
+    FeatureVector result;
+    for (std::size_t i = 0; i < feature_count; ++i)
+      result.values_[i] = values_[i] + other.values_[i];
+    return result;
+  }
 
-                values_[i] = cos_theta * xi - sin_theta * yi;
-                values_[j] = sin_theta * xi + cos_theta * yi;
-                return *this;
-            }
-            // FeatureVector operator+(const FeatureVector& other) const
-            // {
-            //     if (values_.size() != other.values_.size())
-            //     {
-            //         throw std::invalid_argument("FeatureVector::operator+ vectors must be the same size");
-            //     }
-            //     return FeatureVector(values_ + other.values_);
-            // }
+  [[nodiscard]] FeatureVector
+  operator-(const FeatureVector &other) const noexcept {
+    FeatureVector result;
+    for (std::size_t i = 0; i < feature_count; ++i)
+      result.values_[i] = values_[i] - other.values_[i];
+    return result;
+  }
 
-            // FeatureVector operator-(const FeatureVector& other) const
-            // {
-            //     if (values_.size() != other.values_.size())
-            //     {
-            //         throw std::invalid_argument("FeatureVector::operator- vectors must be the same size");
-            //     }
-            //     return FeatureVector(values_ - other.values_);
-            // }
+  [[nodiscard]] FeatureVector operator*(double scalar) const noexcept {
+    FeatureVector result;
+    for (std::size_t i = 0; i < feature_count; ++i)
+      result.values_[i] = values_[i] * scalar;
+    return result;
+  }
 
-            /// Compute the Hadamard (element-wise) product of this vector with another.
-            /// Both vectors must have the same size.
-            /// @param other  The vector to multiply element-wise with.
-            /// @return A new FeatureVector containing the element-wise products.
-            /// @throws std::invalid_argument if the vectors differ in size.
-            [[nodiscard]] FeatureVector hadamard(const FeatureVector& other) const
-            {
-                if (values_.size() != other.values_.size())
-                {
-                    throw std::invalid_argument("FeatureVector::hadamard vectors must be the same size");
-                }
+  [[nodiscard]] friend FeatureVector
+  operator*(double scalar, const FeatureVector &v) noexcept {
+    return v * scalar;
+  }
 
-                std::vector<T> result(values_.size());
-                for (std::size_t i = 0; i < values_.size(); ++i)
-                {
-                    result[i] = values_[i] * other.values_[i];
-                }
+  FeatureVector &operator+=(const FeatureVector &other) noexcept {
+    for (std::size_t i = 0; i < feature_count; ++i)
+      values_[i] += other.values_[i];
+    return *this;
+  }
 
-                return FeatureVector(std::move(result));
-            }
+  FeatureVector &operator-=(const FeatureVector &other) noexcept {
+    for (std::size_t i = 0; i < feature_count; ++i)
+      values_[i] -= other.values_[i];
+    return *this;
+  }
 
-            // ============================================================
-            // Arya made changes here (lines 157-216), please review
-            // Added: transform, map, reduce, apply - lambda-based methods
-            // ============================================================
+  FeatureVector &operator*=(double scalar) noexcept {
+    for (double &v : values_)
+      v *= scalar;
+    return *this;
+  }
 
-            /// Apply a unary function to each element in-place.
-            /// @tparam Func  Callable taking T and returning T.
-            /// @param func   The function to apply.
-            /// @return Reference to this vector for chaining.
-            template <typename Func>
-            FeatureVector& transform(Func && func)
-            {
-                for (auto& v : values_)
-                {
-                    v = func(v);
-                }
-                return *this;
-            }
+  void normalize() noexcept {
+    const double mag_sq = dot(*this);
+    if (mag_sq <= 0.0)
+      return;
+    const double mag = std::sqrt(mag_sq);
+    for (double &v : values_)
+      v /= mag;
+  }
 
-            /// Create a new vector by applying a unary function to each element.
-            /// @tparam Func  Callable taking T and returning T.
-            /// @param func   The function to apply.
-            /// @return A new FeatureVector with transformed values.
-            template <typename Func>
-            [[nodiscard]] FeatureVector map(Func && func) const
-            {
-                std::vector<T> result(values_.size());
-                for (std::size_t i = 0; i < values_.size(); ++i)
-                {
-                    result[i] = func(values_[i]);
-                }
-                return FeatureVector(std::move(result));
-            }
+  [[nodiscard]] FeatureVector
+  hadamard(const FeatureVector &other) const noexcept {
+    FeatureVector result;
+    for (std::size_t i = 0; i < feature_count; ++i)
+      result.values_[i] = values_[i] * other.values_[i];
+    return result;
+  }
 
-            /// Reduce the vector to a single value using a binary function.
-            /// @tparam Func  Callable taking (T, T) and returning T.
-            /// @param init   Initial accumulator value.
-            /// @param func   The binary function to apply.
-            /// @return The reduced value.
-            template <typename Func>
-            [[nodiscard]] T reduce(T init, Func && func) const
-            {
-                for (const auto& v : values_)
-                {
-                    init = func(init, v);
-                }
-                return init;
-            }
-
-            /// Apply a binary function element-wise with another vector.
-            /// @tparam Func  Callable taking (T, T) and returning T.
-            /// @param other  The other vector.
-            /// @param func   The binary function to apply.
-            /// @return A new FeatureVector with the results.
-            template <typename Func>
-            [[nodiscard]] FeatureVector apply(const FeatureVector& other, Func && func) const
-            {
-                assert(values_.size() == other.values_.size());
-                std::vector<T> result(values_.size());
-                for (std::size_t i = 0; i < values_.size(); ++i)
-                {
-                    result[i] = func(values_[i], other.values_[i]);
-                }
-                return FeatureVector(std::move(result));
-            }
-    };
+  [[nodiscard]] const std::array<double, feature_count> &data() const noexcept {
+    return values_;
+  }
+};
 
 } // namespace cse498
-
