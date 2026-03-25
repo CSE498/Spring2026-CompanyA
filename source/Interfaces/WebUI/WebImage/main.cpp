@@ -12,6 +12,7 @@
 
 #include "WebImage.hpp"
 #include "../WebLayout/WebLayout.hpp"
+#include "../../../tools/Color.hpp"
 #include <iostream>
 #include <memory>
 
@@ -65,7 +66,7 @@ int main() {
   sImg3 = std::make_unique<WebImage>("invalid://not-a-real-image.png", "Missing Image");
   sImg3->Resize(150, 100);
   sImg3->SetErrorMode(ImageErrorMode::BlankRect);
-  sImg3->SetPlaceholderColor("#FF6B6B");  // Red placeholder
+  sImg3->SetPlaceholderColor(Color::FromRGB255(255, 107, 107).ToHex());  // Red placeholder
   sImg3->SetOnErrorCallback([]() {
     std::cout << "Image 3 error handled: showing red placeholder" << std::endl;
   });

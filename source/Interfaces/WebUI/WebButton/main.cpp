@@ -9,6 +9,7 @@
 
 #include "WebButton.hpp"
 #include "../WebLayout/WebLayout.hpp"
+#include "../../../tools/Color.hpp"
 #include <iostream>
 #include <memory>
 
@@ -37,8 +38,8 @@ int main() {
 
   sBtn1 = std::make_unique<WebButton>("Click Me");
   sBtn1->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-  sBtn1->SetBackgroundColor("#4CAF50");
-  sBtn1->SetTextColor("white");
+  sBtn1->SetBackgroundColor(Color::FromRGB255(76, 175, 80).ToHex());
+  sBtn1->SetTextColor(Color::FromRGB255(255, 255, 255).ToHex());
   sBtn1->SetCallback([]() {
     std::cout << "Button was clicked!" << std::endl;
   });

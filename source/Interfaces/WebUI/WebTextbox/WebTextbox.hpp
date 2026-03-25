@@ -22,6 +22,7 @@
 #include <optional>
 #include <emscripten/val.h>
 
+#include "../../../tools/Color.hpp"
 #include "../WebLayout/WebLayout.hpp"
 
 #include "../internal/IDomElement.hpp"
@@ -215,7 +216,7 @@ private:
   float mFontSizePx{16.0f};               ///< Default font size in pixels.
   float mLineHeightPx{0.0f};              ///< Line height in pixels (0 = normal).
 
-  std::string mColor{"#000000"};          ///< Default text color (black).
+  std::string mColor{Color::FromRGB255(0, 0, 0).ToHex()};  ///< Default text color (black).
   bool mBold{false};                      ///< Bold style flag.
   bool mItalic{false};                    ///< Italic style flag.
   std::string mTextAlign{"left"};         ///< CSS text-align value.

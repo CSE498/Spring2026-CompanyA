@@ -442,7 +442,9 @@ void WebTextbox::ApplyStyles()
   }
   else
   {
-      mElement["style"].set("backgroundColor", std::string("transparent"));
+      mElement["style"].set(
+          "backgroundColor",
+          Color::FromRGBA255(0, 0, 0, 0).ToRgbaString());
   }
   // Visibility
   mElement["style"].set("display", mIsVisible ? "inline-block" : "none");
