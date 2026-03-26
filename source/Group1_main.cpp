@@ -5,6 +5,7 @@
  **/
 
 // Include the modules that we will be using.
+#include "Agents/EnemyAgent.hpp"
 #include "Agents/LearningExplorerAgent.hpp"
 #include "Agents/PacingAgent.hpp"
 #include "Interfaces/AIDebugInterface.hpp"
@@ -23,6 +24,10 @@ int main() {
       .SetHorizontal()
       .SetSymbol('G')
       .SetLocation(WorldPosition{7, 7});
+
+  world.AddAgent<EnemyAgent>("Enemy")
+      .SetSymbol('X')
+      .SetLocation(WorldPosition{10, 8});
 
   auto &observer = world.AddAgent<AIDebugInterface>("Observer");
 

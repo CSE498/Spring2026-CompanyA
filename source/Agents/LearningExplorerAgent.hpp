@@ -11,37 +11,30 @@ namespace cse498 {
 
 class LearningExplorerAgent : public AgentBase {
 private:
-  // Track how many times each action has succeeded or failed.
-  std::unordered_map<size_t, int> action_success_count;
-  std::unordered_map<size_t, int> action_failure_count;
-
-  // Track how often each cell has been visited.
   std::unordered_map<size_t, int> visit_count_by_cell;
 
-  // Remember the last action chosen so we can learn from its result next turn.
   size_t last_action = 0;
-
-  // Used so we do not try to learn from a nonexistent "previous move" on
-  // turn 1.
   bool first_turn = true;
 
-  // Helper: convert a world position into a unique cell index.
+  WorldPosition prev_position{-1, -1};
+  bool has_prev_position = false;
+
   [[nodiscard]] size_t CellIndex(const WorldGrid &grid,
                                  WorldPosition pos) const;
 
-  // Helper: how many times has this cell been visited?
   [[nodiscard]] int GetVisitCount(const WorldGrid &grid,
                                   WorldPosition pos) const;
 
-  // Predict the result of taking a specific movement action.
   [[nodiscard]] WorldPosition PredictMove(WorldPosition pos,
                                           size_t action_id) const;
 
-  // Score an action: higher is better.
-  [[nodiscard]] double ScoreAction(const WorldGrid &grid,
-                                   size_t action_id) const;
+  /// BFS to find the first step toward the nearest unvisited walkable cell.
+  /// Returns current position if every reachable cell has been visited.
+  [[nodiscard]] WorldPosition BFSNextStep(const WorldGrid &grid) const;
 
-  // Update internal learning state based on the previous action result.
+  [[nodiscard]] double ScoreAction(const WorldGrid &grid, size_t action_id,
+                                   const WorldPosition &bfs_target) const;
+
   void UpdateMemory(const WorldGrid &grid);
 
 public:
