@@ -21,24 +21,18 @@ namespace cse498 {
 
  class MemoFunction {
  private:
+
   // Key type so multiple inputs can be used as a cache key
   using Key = std::tuple<I...>;
-
   std::function<R(I...)> mWrappedFunction;
-
-  // Cache to contain function outputs (ordered map for now,
-  // look into using RobinHoodMap)
   std::map<Key, R> mCache;
-
-  // Queue that records order of caching, so when the cache reaches its
-  // limit it will remove the oldest
   std::deque<Key> mQueue;
-
-  // Optional size limit for cache
   std::optional<size_t> mLimit = std::nullopt;
 
-  // Removes oldest items until size limit is no longer exceeded
-  void EvictCache()
+  /**
+   * Removes oldest items until size limit is no longer exceeded
+   */
+  void EvictCache() noexcept
   {
    while (mLimit && CacheSize() > *mLimit)
    {
@@ -49,10 +43,19 @@ namespace cse498 {
   }
 
  public:
-  // Constructor, instantiated as MemoFunction<R, I1, I2, ... , IN> name(function)
-  explicit MemoFunction(std::function<R(I...)> mWrappedFunction) : mWrappedFunction(mWrappedFunction) {}
 
-  // Main memoization function with cache eviction when size limit is reached
+  /**
+   * Constructor, instantiated as MemoFunction<R, I1, I2, ... , IN> name(function)
+   * @param mWrappedFunction The function to be wrapped
+   */
+  explicit MemoFunction(std::function<R(I...)> mWrappedFunction) noexcept
+   : mWrappedFunction(mWrappedFunction) {}
+
+  /**
+   * Main memoization function with cache eviction when size limit is reached
+   * @param inputs The inputs corresponding to the wrapped function
+   * @return The output of the wrapped function
+   */
   R operator()(I... inputs)
   {
    Key key(inputs...);
@@ -68,14 +71,32 @@ namespace cse498 {
    return output;
   }
 
-  [[nodiscard]] size_t CacheSize() const { return mCache.size(); }
+  /**
+   * @return The number of items currently in the cache
+   */
+  [[nodiscard]] size_t CacheSize() const noexcept { return mCache.size(); }
 
-  void CacheClear() { mCache.clear(); mQueue.clear(); }
+  /**
+   * Clears the cache and the queue
+   */
+  void CacheClear() noexcept { mCache.clear(); mQueue.clear(); }
 
-  void SetLimit(size_t limit) { mLimit = limit; EvictCache(); }
+  /**
+   * Sets maximum number of items in cache
+   * @param Limit to be set
+   */
+  void SetLimit(size_t limit) noexcept { mLimit = limit; EvictCache(); }
 
-  void RemoveLimit() { mLimit = std::nullopt; }
+  /**
+   * Removes limit from cache
+   */
+  void RemoveLimit() noexcept { mLimit = std::nullopt; }
 
-  bool IsCached(Key key) const { return mCache.contains(key); }
+  /**
+   * Checks if key is in cache
+   * @param Key to check
+   * @return True if key exists in cache
+   */
+  bool IsCached(const Key& key) const noexcept { return mCache.contains(key); }
  };
 }
