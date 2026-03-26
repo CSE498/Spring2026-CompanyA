@@ -1,3 +1,9 @@
+/**
+ * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
+ * @brief Represents the Interactive World module
+ * @note Status: PROPOSAL
+ **/
+
 #pragma once
 #include "../core/WorldBase.hpp"
 #include "../core/InteractiveWorld/Building.hpp"
@@ -8,14 +14,16 @@
 #include <vector>
 #include <iostream>
 
-
 namespace cse498
 {
+	/**
+	 * World object for the interactive world
+	 */
 	class InteractiveWorld : public WorldBase
 	{
 	protected:
-
-		InteractiveWorldInventory m_inventory;
+	    // World Inventory
+	    InteractiveWorldInventory m_inventory;
 
 	    enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT};
 
@@ -32,7 +40,9 @@ namespace cse498
 	    }
 
 	private:
+	    // NPCs in the scene
 	    std::vector<std::shared_ptr<NPC>> m_npcs{};
+	    // ResourceProducers in the scene
 	    std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
 	    /**
 	     * Update world logic
@@ -46,8 +56,11 @@ namespace cse498
 
 		PrintInventory();
 	    }
-
-	    // Temporary Debug
+	    /**
+	     * Turn item type into string for printing
+	     * @param itemType type of item
+	     * @return String of item
+	     */
 	    std::string ItemTypeToString(const ItemType& itemType)
 	    {
 		    if (itemType == ItemType::Wood)
@@ -59,7 +72,9 @@ namespace cse498
 		    return "";
 	    }
 
-	    // Temporary Debug
+	    /**
+	     * Print the world inventory
+	     */
 	    void PrintInventory()
 	    {
 		    std::string inv{};
@@ -72,6 +87,9 @@ namespace cse498
 	    }
 
 	public:
+	    /**
+	     * Constructor
+	     */
 	    InteractiveWorld()
 	    {
 		    floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
@@ -89,13 +107,23 @@ namespace cse498
 						            "#                     #",
 						            "#######################"} );
 	    }
-
+	    /**
+	     * Destructor
+	     */
 	    ~InteractiveWorld() = default;
 
-		InteractiveWorldInventory& GetInventory() {
-			return m_inventory;
-		}
-
+	    /**
+	     * Get the world inventory object
+	     * @return reference to world inventory
+	     */
+	    InteractiveWorldInventory& GetInventory() {
+		    return m_inventory;
+	    }
+	    /**
+	     * Have agent perform an action
+	     * @param agent Agent to perform action on
+	     * @param action_id type of action to perform
+	     */
 	    int DoAction(AgentBase & agent, size_t action_id) override {
 		    // Determine where the agent is trying to move.
 		    WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
@@ -123,7 +151,7 @@ namespace cse498
 					    }
 				    }
 				    return true;
-			    };
+			    }
 		    }
 
 		    // Don't let the agent move off the world or into a wall.

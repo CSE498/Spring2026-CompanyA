@@ -1,3 +1,9 @@
+/**
+ * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
+ * @brief Represents the production of an ItemType over time
+ * @note Status: PROPOSAL
+ **/
+
 #pragma once
 
 #include <chrono>
@@ -9,6 +15,7 @@
 
 using namespace cse498;
 
+// Forward declarations
 namespace cse498 {
 	class InteractiveWorld;
 }
@@ -81,7 +88,7 @@ public:
 	}
 
 private:
-    InteractiveWorldInventory& m_inventory;        // World Inventory
+    InteractiveWorldInventory& m_inventory;               // World Inventory
     std::shared_ptr<Building> m_building;                 // Building modifying the output rate
     float m_baseRate{};                                   // Base production rate
     float m_rate{};                                       // Current Production Rate
