@@ -414,10 +414,50 @@ if(COMPANYA_EMPP_EXECUTABLE)
         VERBATIM
     )
 
+<<<<<<< HEAD
     add_custom_target(group18_demo
         DEPENDS
             "${COMPANYA_SOURCE_DIR}/Group18_main.js"
     )
+=======
+    add_custom_command(
+        OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/Group18Demo.html"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
+        COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
+            ${COMPANYA_WEB_TEST_COMMON_ARGS}
+            ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
+            "${PROJECT_SOURCE_DIR}/source/Group18_main.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/interface/WebInterface.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/InputManager.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+            --shell-file "${PROJECT_SOURCE_DIR}/source/index.html"
+            -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/Group18Demo.html"
+        DEPENDS
+            "${PROJECT_SOURCE_DIR}/source/Group18_main.cpp"
+            "${PROJECT_SOURCE_DIR}/source/index.html"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/interface/WebInterface.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/interface/WebInterface.hpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.hpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.hpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.hpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.hpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.hpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/InputManager.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/InputManager.hpp"
+        VERBATIM
+)
+>>>>>>> b63c099 (Added demo to CMake and update Build.md to reflect changes)
 
     add_custom_target(web_test
         DEPENDS
@@ -426,6 +466,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
+            "${COMPANYA_WEB_TEST_OUTPUT_DIR}/Group18Demo.html"
     )
 else()
     add_custom_target(group18_demo

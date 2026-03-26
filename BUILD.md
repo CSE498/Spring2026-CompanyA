@@ -56,7 +56,11 @@ emsdk activate latest
 source emsdk_env.sh
 ```
 
-3. Build web_tests
+3. Build if you haven't already
+
+cmake -S . -B build
+
+4. Build web_tests
 
 ```bash
 cmake --build build --target web_test
@@ -64,15 +68,22 @@ cmake --build build --target web_test
 
 ### Serve the Web Test Files
 
-After building, serve the generated HTML files and open them in a browser:
+After building, serve the generated HTML files and open them in a browser.
+This generates the Web UI test HTML files in tests/build/web_tests along
+with the demo.
 
 ```bash
 cd tests/build/web_tests
 python3 -m http.server 8000
 ```
 
-Then visit:
+Then visit to view all of the test + demo:
 
 ```text
-http://localhost:8000/<TestName>.html
+http://localhost:8000/WebTextboxTest.html
+http://localhost:8000/WebImageTest.html
+http://localhost:8000/WebButtonTest.html
+http://localhost:8000/WebCanvasTest.html
+http://localhost:8000/WebLayoutTest.html
+http://localhost:8000/Group18Demo.html
 ```
