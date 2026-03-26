@@ -29,7 +29,7 @@ namespace cse498 {
 
     bool IsInterface() const override { return true; }
 
-    virtual void RenderFrame() = 0;
+    virtual void RenderFrame() {};
 
     virtual bool IsPaused() const { return mPaused; }
 

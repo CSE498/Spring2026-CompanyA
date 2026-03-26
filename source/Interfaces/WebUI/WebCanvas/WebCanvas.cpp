@@ -42,6 +42,8 @@ extern "C" {
     void webcanvas__draw_image(const char* id, const char* imgSrc,
                                float x, float y, float w, float h);
     void webcanvas__init(const char* id);
+    void webcanvas__draw_texture(const char* id, emscripten::EM_VAL bitmapHandle,
+                                int x, int y, double scale);
 }
 #endif
 
@@ -89,7 +91,6 @@ void WebCanvas::Unmount()
 /// @brief No-op placeholder; canvas state is managed via RenderFrame().
 void WebCanvas::SyncFromModel()
 {
-    Clear(mBackgroundColor);
     RenderFrame();
 }
 
@@ -144,7 +145,7 @@ void WebCanvas::RenderFrame()
 void WebCanvas::Clear(const std::string& cssColor)
 {
 #ifdef __EMSCRIPTEN__
-    webcanvas__clear(mId.c_str(), cssColor.c_str());
+    webcanvas__clear(mId.c_str(), cssColor == "" ? mBackgroundColor.c_str() : cssColor.c_str());
 #else
     (void)cssColor;
 #endif
@@ -284,6 +285,15 @@ void WebCanvas::DrawImage(const std::string& imgSrc,
     webcanvas__draw_image(mId.c_str(), imgSrc.c_str(), x, y, w, h);
 #else
     (void)imgSrc; (void)x; (void)y; (void)w; (void)h;
+#endif
+}
+
+void WebCanvas::DrawTexture(emscripten::EM_VAL bitmapHandle, int x, int y, double scale)
+{
+#ifdef __EMSCRIPTEN__
+    webcanvas__draw_texture(mId.c_str(), bitmapHandle, x, y, scale);
+#else
+    (void)bitmap; (void)x; (void)y; (void)scale;
 #endif
 }
 
