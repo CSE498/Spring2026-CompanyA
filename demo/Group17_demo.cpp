@@ -7,6 +7,7 @@
  * Made via reference to Claude Sonnet 4.6
  */
 
+#define SDL_MAIN_HANDLED
 #include "../source/core/Game.hpp"
 #include "../source/Interfaces/GUI/GameView.hpp"
 #include "../source/Interfaces/GUI/ErrorManager.hpp"
