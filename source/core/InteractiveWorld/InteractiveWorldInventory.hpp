@@ -27,6 +27,11 @@ public:
     }
 
     m_items[item] -= amount;
+
+    if (m_items[item] == 0) {
+      m_items.erase(item);
+    }
+
     return true;
   }
 

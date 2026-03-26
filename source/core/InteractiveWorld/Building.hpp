@@ -35,9 +35,9 @@ public:
   };
 
 private:
-  std::string m_name{}; // Name of the building
-  int m_level{};        // The current level of the building
-  float m_rateModifier = 1.0;
+  std::string m_name{};        // Name of the building
+  int m_level{};               // The current level of the building
+  float m_rateModifier = 0.25; // Percent increase as decimal ex: 0.25->25%
   std::vector<BuildingUpgrade> m_upgrades{}; // The upgrade cost per level
 
   /**
