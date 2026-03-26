@@ -414,12 +414,6 @@ if(COMPANYA_EMPP_EXECUTABLE)
         VERBATIM
     )
 
-<<<<<<< HEAD
-    add_custom_target(group18_demo
-        DEPENDS
-            "${COMPANYA_SOURCE_DIR}/Group18_main.js"
-    )
-=======
     add_custom_command(
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/Group18Demo.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
@@ -457,7 +451,6 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/InputManager.hpp"
         VERBATIM
 )
->>>>>>> b63c099 (Added demo to CMake and update Build.md to reflect changes)
 
     add_custom_target(web_test
         DEPENDS
