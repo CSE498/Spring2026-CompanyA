@@ -1,94 +1,87 @@
 /**
- * FunctionSet: A container that holds a collection of functions, all with the
- * exact same signature.
+ * FunctionSet: A container that holds a collection of functions, all with the exact same signature.
  */
 
 #pragma once
 
 #include <algorithm>
 #include <cstdint>
-#include <exception>
 #include <functional>
-#include <string_view>
+#include <ranges>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace cse498 {
 
-template <typename Signature> class FunctionSet;
+  template <typename Signature>
+  class FunctionSet;
 
-template <typename... Args> class FunctionSet<void(Args...)> {
-public:
-  using FunctionID = std::uint64_t;
-  using FunctionType = std::function<void(Args...)>;
+  template <typename... Args>
+  class FunctionSet<void(Args...)> {
+  public:
+    using FunctionID = std::uint64_t;
+    using FunctionType = std::function<void(Args...)>;
 
-  // Add a function and return its ID.
-  FunctionID AddFunction(FunctionType fn) {
-    const FunctionID id = mNextID++;
-    mFunctions.push_back(Entry{id, std::move(fn)});
-    return id;
-  }
+    struct Entry {
+      FunctionID id;
+      FunctionType fn;
+    };
 
-  // Remove a function by ID. Returns false if the ID is not found.
-  bool RemoveFunction(FunctionID id) {
-    const std::size_t old_size = mFunctions.size();
-    mFunctions.erase(
-        std::remove_if(mFunctions.begin(), mFunctions.end(),
-                       [id](const Entry &e) { return e.id == id; }),
-        mFunctions.end());
-    return mFunctions.size() != old_size;
-  }
+    // Add any callable compatible with void(Args...)
+    template <typename F>
+      requires std::is_invocable_r_v<void, F&, Args...>
+    FunctionID AddFunction(F&& fn) {
+      const FunctionID id = mNextID++;
+      mFunctions.push_back(Entry{id, FunctionType(std::forward<F>(fn))});
+      return id;
+    }
 
-  // Remove all functions
-  void Clear() { mFunctions.clear(); }
+    // Remove a function by ID. Returns false if the ID is not found.
+    bool RemoveFunction(FunctionID id) {
+      const std::size_t old_size = mFunctions.size();
+      std::erase_if(mFunctions, [id](const Entry& e) { return e.id == id; });
+      return mFunctions.size() != old_size;
+    }
 
-  // How many functions are stored.
-  std::size_t Size() const { return mFunctions.size(); }
+    // Remove all functions.
+    void Clear() {
+      mFunctions.clear();
+    }
 
-  // Call every stored function using the same arguments, one at a time.
-  // If one throws, catch it and continue calling the rest.
-  void CallAll(Args... args,
-               const std::function<void(FunctionID, std::string_view)>
-                   &on_error = nullptr) const {
-    std::size_t failures = 0;
+    // How many functions are stored.
+    std::size_t Size() const {
+      return mFunctions.size();
+    }
 
-    for (const Entry &entry : mFunctions) {
-      try {
+    bool Empty() const {
+      return mFunctions.empty();
+    }
+
+    // Call every stored function
+    void CallAll(Args... args) const {
+      for (const Entry& entry : mFunctions) {
         entry.fn(args...);
-      } catch (const std::exception &e) {
-        ++failures;
-        if (on_error) {
-          on_error(entry.id, e.what());
-        }
-      } catch (...) {
-        ++failures;
-        if (on_error) {
-          on_error(entry.id, "Function threw non-std exception");
-        }
       }
     }
 
-    mLastCallFailures = failures;
-  }
+    //range access to all entries.
+    auto Entries() {
+      return std::views::all(mFunctions);
+    }
 
-  // Number of functions that threw during the most recent CallAll.
-  std::size_t LastCallFailureCount() const { return mLastCallFailures; }
+    auto Entries() const {
+      return std::views::all(mFunctions);
+    }
 
-  // Number of functions that succeeded during the most recent CallAll.
-  std::size_t LastCallSuccessCount() const {
-    return Size() - mLastCallFailures;
-  }
+    // View of the stored IDs
+    auto IDs() const {
+      return mFunctions | std::views::transform([](const Entry& e) { return e.id; });
+    }
 
-private:
-  struct Entry {
-    FunctionID id;
-    FunctionType fn;
+  private:
+    std::vector<Entry> mFunctions;
+    FunctionID mNextID = 0;
   };
 
-  std::vector<Entry> mFunctions; // stored functions in insertion order
-  FunctionID mNextID = 0;
-
-  mutable std::size_t mLastCallFailures = 0;
-};
-
-} // namespace cse498
+}  // namespace cse498
