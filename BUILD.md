@@ -58,7 +58,9 @@ source emsdk_env.sh
 
 3. Build if you haven't already
 
+```bash
 cmake -S . -B build
+```
 
 4. Build web_tests
 
@@ -85,5 +87,19 @@ http://localhost:8000/WebImageTest.html
 http://localhost:8000/WebButtonTest.html
 http://localhost:8000/WebCanvasTest.html
 http://localhost:8000/WebLayoutTest.html
-http://localhost:8000/Group18Demo.html
 ```
+
+### Build the Demo
+
+From root
+
+```bash
+cmake --build build --target group18_demo
+python3 -m http.server 8000
+```
+
+```text
+http://localhost:8000/source/index.html
+```
+
+
