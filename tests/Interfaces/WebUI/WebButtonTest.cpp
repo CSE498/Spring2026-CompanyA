@@ -1,6 +1,6 @@
 #ifdef __EMSCRIPTEN__
 
-//#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../../source/Interfaces/WebUI/WebButton/WebButton.hpp"
@@ -10,12 +10,17 @@
 using namespace cse498;
 
 class WebLayout {
- public:
-  bool AddElement(const std::string&, Alignment = Alignment::Start) { return true; }
+public:
+  bool AddElement(const std::string &, Alignment = Alignment::Start) {
+    return true;
+  }
 };
 
-#define CHECK_MSG(cond, msg) \
-  do { INFO(msg); CHECK(cond); } while(0)
+#define CHECK_MSG(cond, msg)                                                   \
+  do {                                                                         \
+    INFO(msg);                                                                 \
+    CHECK(cond);                                                               \
+  } while (0)
 
 TEST_CASE("Constructor sets label", "[WebButton]") {
   WebButton btn("Click Me");
@@ -136,7 +141,8 @@ TEST_CASE("Id is unique per instance", "[WebButton]") {
 TEST_CASE("Id has expected prefix", "[WebButton]") {
   WebButton btn("test");
   std::string id = btn.Id();
-  CHECK_MSG(id.rfind("webbutton-", 0) == 0, "id should start with 'webbutton-'");
+  CHECK_MSG(id.rfind("webbutton-", 0) == 0,
+            "id should start with 'webbutton-'");
 }
 
 TEST_CASE("syncFromModel does not crash and preserves state", "[WebButton]") {

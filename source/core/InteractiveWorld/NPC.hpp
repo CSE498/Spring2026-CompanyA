@@ -4,13 +4,14 @@
  * @note Status: PROPOSAL
  **/
 
-/// used codex for doxygen comments, and code structure (checking for UML correctness)
+/// used codex for doxygen comments, and code structure (checking for UML
+/// correctness)
 
 #pragma once
 
+#include "../WorldGrid.hpp"
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
-#include "../WorldGrid.hpp"
 
 #include <cassert>
 #include <expected>
@@ -28,9 +29,9 @@ private:
   std::shared_ptr<Building>
       m_building{}; ///< Building associated with this NPC.
 
-      WorldPosition m_position{}; // Position of NPC
+  WorldPosition m_position{}; // Position of NPC
 
-    char m_symbol = 'N'; // NPC symbol
+  char m_symbol = 'N'; // NPC symbol
 
   /// Ensure this NPC references a valid building before use.
   void ValidateBuilding() const {
@@ -63,7 +64,7 @@ public:
    * Get world position
    * @return world position
    */
-  WorldPosition GetPosition() const   { return m_position; }
+  WorldPosition GetPosition() const { return m_position; }
   /**
    * Set symbol
    * @param s new symbol
@@ -82,8 +83,8 @@ public:
 
     ValidateBuilding();
 
-    std::cout << m_building->GetName() << " - level: "
-              << m_building->GetCurrentLevel();
+    std::cout << m_building->GetName()
+              << " - level: " << m_building->GetCurrentLevel();
 
     if (const auto next_upgrade = m_building->GetNextUpgradeInfo();
         next_upgrade.has_value()) {

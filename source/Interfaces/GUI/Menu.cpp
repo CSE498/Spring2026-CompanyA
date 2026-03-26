@@ -2,14 +2,14 @@
  * @file Menu.cpp
  * @author Anagha Jammalamadaka
  *
-*  AI Disclaimer:
-*  - Verify correctness of callback handling and navigation logic
+ *  AI Disclaimer:
+ *  - Verify correctness of callback handling and navigation logic
  * - Ensure proper exception handling (std::invalid_argument,
  *   std::out_of_range, std::runtime_error)
  * - Debug compilation issues and build system configuration
  * - Explain C++ concepts (std::function, RAII, memory management)
  */
- 
+
 #include "Menu.hpp"
 #include "Text.hpp"
 using namespace cse498;
@@ -25,7 +25,8 @@ Menu::Menu() : selected_index(std::nullopt) {}
  * @param label what the user sees (e.g. "start game")
  * @param callback what happens when activates
  */
-void Menu::add_option(const std::string& label, std::function<void()> callback) {
+void Menu::add_option(const std::string &label,
+                      std::function<void()> callback) {
   if (label.empty()) {
     throw std::invalid_argument("Menu option label cannot be empty");
   }
@@ -49,10 +50,10 @@ void Menu::add_option(const std::string& label, std::function<void()> callback) 
 /**
  * Removes the menu option with the specified label
  * @param label text to match
- * @return true if found and removed, false otherwise 
+ * @return true if found and removed, false otherwise
  */
-bool Menu::remove_option(const std::string& label) {
-  for(size_t i = 0; i < options.size(); i++){
+bool Menu::remove_option(const std::string &label) {
+  for (size_t i = 0; i < options.size(); i++) {
     if (options[i].label == label) {
       options.erase(options.begin() + static_cast<int>(i));
 
@@ -60,50 +61,48 @@ bool Menu::remove_option(const std::string& label) {
         selected_index = std::nullopt;
       }
 
-      else if (selected_index.has_value() && *selected_index >= options.size()) {  // ADD *
+      else if (selected_index.has_value() &&
+               *selected_index >= options.size()) { // ADD *
         selected_index = options.size() - 1;
       }
 
       return true;
     }
-
   }
   return false;
 }
 
 /**
- * @return returns total number of options currently in the menu 
+ * @return returns total number of options currently in the menu
  */
-size_t Menu::get_option_count() const {
-  return options.size();
-}
+size_t Menu::get_option_count() const { return options.size(); }
 
-/** 
- * @return returns index of the currently selected option or -1 if no option is selected
+/**
+ * @return returns index of the currently selected option or -1 if no option is
+ * selected
  */
 std::optional<size_t> Menu::get_selected_index() const {
   return selected_index;
 }
 
 /**
- * Moves the selection dwon to the next option, wrapping around to first option if current at last
+ * Moves the selection dwon to the next option, wrapping around to first option
+ * if current at last
  */
 void Menu::select_next() {
-  if(options.empty())
-      return;
+  if (options.empty())
+    return;
 
-  if (!selected_index.has_value())
-  {
+  if (!selected_index.has_value()) {
     selected_index = 0;
-  }
-  else
-  {
+  } else {
     selected_index = (*selected_index + 1) % options.size();
   }
 }
 
 /**
- * Moves selection up to prev. option, wrapping around to the last option if currently at the first
+ * Moves selection up to prev. option, wrapping around to the last option if
+ * currently at the first
  */
 void Menu::select_previous() {
   if (options.empty())
@@ -113,14 +112,13 @@ void Menu::select_previous() {
     selected_index = options.size() - 1;
   }
 
-  else if (*selected_index == 0) {  // ADD *
+  else if (*selected_index == 0) { // ADD *
     selected_index = options.size() - 1;
   }
 
   else {
-    selected_index = *selected_index - 1;  // ADD *
+    selected_index = *selected_index - 1; // ADD *
   }
-
 }
 
 /**
@@ -139,7 +137,8 @@ void Menu::select_option(size_t index) {
  * Executes callback function of the currently selected option
  */
 void Menu::activate_selected() {
-  if (selected_index < 0 || selected_index >= static_cast<int>(options.size())) {
+  if (selected_index < 0 ||
+      selected_index >= static_cast<int>(options.size())) {
     throw std::runtime_error("No option selected");
   }
 
@@ -161,12 +160,11 @@ std::string Menu::get_option_label(size_t index) const {
 /**
  * @return true if menu has no options, false otherwise
  */
-bool Menu::is_empty() const noexcept {
-  return options.empty();
-}
+bool Menu::is_empty() const noexcept { return options.empty(); }
 
 /**
- * Removes all options from the menu and resets the selection to -1 ( when nothing is selected)
+ * Removes all options from the menu and resets the selection to -1 ( when
+ * nothing is selected)
  */
 void Menu::clear() {
   options.clear();
@@ -178,27 +176,27 @@ void Menu::clear() {
  * @param input_code values for keyboard functions
  */
 void Menu::handle_input(InputCode input_code) {
-  switch(input_code) {
+  switch (input_code) {
 
-    case InputCode::up:
-        select_previous();
-        break;
+  case InputCode::up:
+    select_previous();
+    break;
 
-    case InputCode::down:
-          select_next();
-          break;
+  case InputCode::down:
+    select_next();
+    break;
 
-
-    case InputCode::enter:
-      if (!is_empty()) {
-        activate_selected();
+  case InputCode::enter:
+    if (!is_empty()) {
+      activate_selected();
     }
 
-      break;
+    break;
   }
 }
 
-void Menu::draw(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  width, int height) {
+void Menu::draw(SDL_Renderer *renderer, int x, int y,
+                [[maybe_unused]] int width, int height) {
   // Return silently if menu is empty - nothing to draw
   if (is_empty()) {
     return;
@@ -211,7 +209,7 @@ void Menu::draw(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  widt
 
   // Create Text object for rendering
   Text menuText(renderer);
-  menuText.SetSize(18);  // Font size for menu options
+  menuText.SetSize(18); // Font size for menu options
 
   // Calculate spacing between options
   int option_count = static_cast<int>(get_option_count());

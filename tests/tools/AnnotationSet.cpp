@@ -1,10 +1,10 @@
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/AnnotationSet.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include <set>
 #include <string>
 #include <vector>
 
-static std::set<std::string> AsSet(const std::vector<std::string>& v) {
+static std::set<std::string> AsSet(const std::vector<std::string> &v) {
   return std::set<std::string>(v.begin(), v.end());
 }
 
@@ -12,8 +12,7 @@ static std::set<std::string> AsSet(const std::vector<std::string>& v) {
 //  1) Basics + add/has/remove + ToVector + iteration
 // ====================================================================
 
-TEST_CASE("AnnotationSet basic behavior", "[tools][AnnotationSet]")
-{
+TEST_CASE("AnnotationSet basic behavior", "[tools][AnnotationSet]") {
   cse498::AnnotationSet set(123);
 
   CHECK(set.Owner() == 123);
@@ -43,7 +42,8 @@ TEST_CASE("AnnotationSet basic behavior", "[tools][AnnotationSet]")
 
   // Iteration (order independent)
   std::set<std::string> visited;
-  for (const auto& t : set) visited.insert(t);
+  for (const auto &t : set)
+    visited.insert(t);
   CHECK(visited == std::set<std::string>{"b"});
 }
 
@@ -51,8 +51,8 @@ TEST_CASE("AnnotationSet basic behavior", "[tools][AnnotationSet]")
 //  2) Clear + reuse
 // ====================================================================
 
-TEST_CASE("AnnotationSet Clear removes all tags and can be reused", "[tools][AnnotationSet]")
-{
+TEST_CASE("AnnotationSet Clear removes all tags and can be reused",
+          "[tools][AnnotationSet]") {
   cse498::AnnotationSet set(99);
 
   CHECK(set.AddTag("x"));
@@ -75,8 +75,7 @@ TEST_CASE("AnnotationSet Clear removes all tags and can be reused", "[tools][Ann
 //  3) Small stress sanity
 // ====================================================================
 
-TEST_CASE("AnnotationSet handles many tags sanity", "[tools][AnnotationSet]")
-{
+TEST_CASE("AnnotationSet handles many tags sanity", "[tools][AnnotationSet]") {
   cse498::AnnotationSet set(1);
 
   const int N = 200; // enough to exercise growth, fast to run
@@ -93,7 +92,9 @@ TEST_CASE("AnnotationSet handles many tags sanity", "[tools][AnnotationSet]")
 
   // Verify odds remain, evens gone
   for (int i = 0; i < N; ++i) {
-    if (i % 2 == 0) CHECK_FALSE(set.HasTag("t" + std::to_string(i)));
-    else            CHECK(set.HasTag("t" + std::to_string(i)));
+    if (i % 2 == 0)
+      CHECK_FALSE(set.HasTag("t" + std::to_string(i)));
+    else
+      CHECK(set.HasTag("t" + std::to_string(i)));
   }
 }

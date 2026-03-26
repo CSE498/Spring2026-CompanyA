@@ -2,15 +2,15 @@
  * @file Menu.hpp
  * @author Anagha Jammalamadaka
  */
- 
+
 #ifndef MENU_HPP
 #define MENU_HPP
 
+#include <functional>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <functional>
-#include <stdexcept>
-#include <optional>
 
 #include "Text.hpp"
 
@@ -18,27 +18,25 @@ namespace cse498 {
 
 class Menu {
 private:
-
   struct MenuOption {
     std::string label;
     std::function<void()> callback;
-   };
+  };
 
-   std::vector<MenuOption> options;
-   std::optional<size_t> selected_index; // holds -1 if nothing is chosen
+  std::vector<MenuOption> options;
+  std::optional<size_t> selected_index; // holds -1 if nothing is chosen
 
 public:
-
   Menu();
 
   /**
-    * add new option to menu
-    * label The display text for option
-    * callback Function to call when option is chosen
- */
-  void add_option(const std::string& label, std::function<void()> callback);
+   * add new option to menu
+   * label The display text for option
+   * callback Function to call when option is chosen
+   */
+  void add_option(const std::string &label, std::function<void()> callback);
 
-  bool remove_option(const std::string& label);
+  bool remove_option(const std::string &label);
 
   // get the number of options in th menu
   // return # of options
@@ -74,22 +72,17 @@ public:
   // clear all options from the menu
   void clear();
 
-  enum class InputCode
-  {
-      up = 1,
-      down = 2,
-      enter = 3
-  };
+  enum class InputCode { up = 1, down = 2, enter = 3 };
   // handles keyboard/mouse selection
   // input_code: int representing user input (1 = up, 2 = down, 3 = enter)
   void handle_input(InputCode input_code);
 
   // draw function for menu button
-  void draw(SDL_Renderer* renderer, int x, int y, int width, int height);
+  void draw(SDL_Renderer *renderer, int x, int y, int width, int height);
 
-    ~Menu() = default;
+  ~Menu() = default;
 };
 
-}
+} // namespace cse498
 
-#endif //MENU_HPP
+#endif // MENU_HPP

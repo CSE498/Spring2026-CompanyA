@@ -14,11 +14,12 @@ int WebLayout::mNextIdCounter = 1;
 /// @param v Pixel value (non-negative)
 /// @return CSS string like "10px" or empty string if v < 0
 static std::string px(int v) noexcept {
-  if (v < 0) return std::string();
+  if (v < 0)
+    return std::string();
   return std::to_string(v) + "px";
 }
 
-WebLayout::WebLayout(const std::string& rootId) noexcept {
+WebLayout::WebLayout(const std::string &rootId) noexcept {
   mDocument = val::global("document");
   if (!rootId.empty()) {
     val found = mDocument.call<val>("getElementById", rootId);
@@ -74,10 +75,12 @@ void WebLayout::SetSpacing(int pxv) noexcept {
   mSpacing = pxv;
 }
 
-bool WebLayout::AddElement(IDomElement* elem, Alignment align) noexcept {
-  if (!elem) return false;
-  const ElementID& id = elem->Id();
-  if (id.empty()) return false;
+bool WebLayout::AddElement(IDomElement *elem, Alignment align) noexcept {
+  if (!elem)
+    return false;
+  const ElementID &id = elem->Id();
+  if (id.empty())
+    return false;
 
   val el = mDocument.call<val>("getElementById", id);
   if (el.isNull() || el.isUndefined()) {
@@ -97,15 +100,17 @@ bool WebLayout::AddElement(IDomElement* elem, Alignment align) noexcept {
   return true;
 }
 
-bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
-  if (!elem) return false;
+bool WebLayout::RemoveElement(IDomElement *elem) noexcept {
+  if (!elem)
+    return false;
   auto it = std::find(mChildren.begin(), mChildren.end(), elem);
-  if (it == mChildren.end()) return false;
+  if (it == mChildren.end())
+    return false;
   (*it)->Unmount();
   mChildren.erase(it);
   mParams.erase(elem);
 
-  const ElementID& id = elem->Id();
+  const ElementID &id = elem->Id();
   val el = mDocument.call<val>("getElementById", id);
   if (!el.isNull() && !el.isUndefined()) {
     if (mRoot == el["parentNode"]) {
@@ -115,20 +120,22 @@ bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
   return true;
 }
 
-void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
-  if (!elem) return;
+void WebLayout::SetAlignment(IDomElement *elem, Alignment a) noexcept {
+  if (!elem)
+    return;
   auto it = mParams.find(elem);
-  if (it == mParams.end()) return;
+  if (it == mParams.end())
+    return;
   it->second = a;
 }
 
 // ===== Styling Methods =====
 
-void WebLayout::SetBackgroundColor(const std::string& color) noexcept {
+void WebLayout::SetBackgroundColor(const std::string &color) noexcept {
   mBackgroundColor = color;
 }
 
-void WebLayout::SetBorderColor(const std::string& color) noexcept {
+void WebLayout::SetBorderColor(const std::string &color) noexcept {
   mBorderColor = color;
 }
 
@@ -167,7 +174,7 @@ void WebLayout::SetOpacity(double opacity) noexcept {
   mOpacity = opacity;
 }
 
-void WebLayout::SetBoxShadow(const std::string& shadow) noexcept {
+void WebLayout::SetBoxShadow(const std::string &shadow) noexcept {
   mBoxShadow = shadow;
 }
 
@@ -175,7 +182,7 @@ void WebLayout::ToggleVisibility() noexcept { mIsVisible = !mIsVisible; }
 
 // ===== IDomElement Interface Implementations =====
 
-void WebLayout::MountToLayout(WebLayout& parent, Alignment align) noexcept {
+void WebLayout::MountToLayout(WebLayout &parent, Alignment align) noexcept {
   // register this layout element with parent and ensure DOM parent-child
   // relationship
   parent.AddElement(this, align);
@@ -183,7 +190,8 @@ void WebLayout::MountToLayout(WebLayout& parent, Alignment align) noexcept {
 
 void WebLayout::Unmount() noexcept {
   // destroying nested layouts can cause mRoot to be undefined
-  if (mRoot.isNull() || mRoot.isUndefined()) return;
+  if (mRoot.isNull() || mRoot.isUndefined())
+    return;
   val parent = mRoot["parentNode"];
   if (!parent.isNull() && !parent.isUndefined()) {
     parent.call<void>("removeChild", mRoot);
@@ -195,7 +203,7 @@ void WebLayout::SyncFromModel() noexcept {
   Apply();
 }
 
-void WebLayout::ApplyStyling(val& style) noexcept {
+void WebLayout::ApplyStyling(val &style) noexcept {
   if (!mBackgroundColor.empty()) {
     style.set("backgroundColor", mBackgroundColor);
   }
@@ -229,22 +237,22 @@ void WebLayout::ApplyStyling(val& style) noexcept {
   }
 }
 
-void WebLayout::ApplyLayout(val& style) noexcept {
+void WebLayout::ApplyLayout(val &style) noexcept {
   // Helper lambda to convert Justification to CSS justify-content string.
   auto getJustifyStr = [](Justification j) -> std::string {
     switch (j) {
-      case Justification::Start:
-        return "flex-start";
-      case Justification::Center:
-        return "center";
-      case Justification::End:
-        return "flex-end";
-      case Justification::SpaceBetween:
-        return "space-between";
-      case Justification::SpaceAround:
-        return "space-around";
-      case Justification::SpaceEvenly:
-        return "space-evenly";
+    case Justification::Start:
+      return "flex-start";
+    case Justification::Center:
+      return "center";
+    case Justification::End:
+      return "flex-end";
+    case Justification::SpaceBetween:
+      return "space-between";
+    case Justification::SpaceAround:
+      return "space-around";
+    case Justification::SpaceEvenly:
+      return "space-evenly";
     }
     assert(false && "Unhandled Justification");
   };
@@ -253,62 +261,65 @@ void WebLayout::ApplyLayout(val& style) noexcept {
   // string.
   auto getAlignItemsStr = [](Alignment a) -> std::string {
     switch (a) {
-      case Alignment::Start:
-        return "flex-start";
-      case Alignment::Center:
-        return "center";
-      case Alignment::End:
-        return "flex-end";
-      case Alignment::Stretch:
-        return "stretch";
-      case Alignment::None:
-        return "none";
+    case Alignment::Start:
+      return "flex-start";
+    case Alignment::Center:
+      return "center";
+    case Alignment::End:
+      return "flex-end";
+    case Alignment::Stretch:
+      return "stretch";
+    case Alignment::None:
+      return "none";
     }
     assert(false && "Unhandled Alignment");
   };
 
   switch (mType) {
-    case LayoutType::Free:
-      style.set("position", std::string("relative"));
-      style.set("display",
-                mIsVisible ? std::string("block") : std::string("none"));
-      break;
-    case LayoutType::Horizontal:
-      style.set("display",
-                mIsVisible ? std::string("flex") : std::string("none"));
-      style.set("flexDirection", std::string("row"));
-      style.set("alignItems", getAlignItemsStr(mAlignItems));
-      style.set("justifyContent", getJustifyStr(mJustification));
-      style.set("gap", px(mSpacing));
-      break;
-    case LayoutType::Vertical:
-      style.set("display",
-                mIsVisible ? std::string("flex") : std::string("none"));
-      style.set("flexDirection", std::string("column"));
-      style.set("alignItems", getAlignItemsStr(mAlignItems));
-      style.set("justifyContent", getJustifyStr(mJustification));
-      style.set("gap", px(mSpacing));
-      break;
-    case LayoutType::Grid:
-      style.set("display",
-                mIsVisible ? std::string("grid") : std::string("none"));
-      style.set("alignItems", getAlignItemsStr(mAlignItems));
-      style.set("justifyItems", getJustifyStr(mJustification));
-      style.set("gap", px(mSpacing));
-      break;
+  case LayoutType::Free:
+    style.set("position", std::string("relative"));
+    style.set("display",
+              mIsVisible ? std::string("block") : std::string("none"));
+    break;
+  case LayoutType::Horizontal:
+    style.set("display",
+              mIsVisible ? std::string("flex") : std::string("none"));
+    style.set("flexDirection", std::string("row"));
+    style.set("alignItems", getAlignItemsStr(mAlignItems));
+    style.set("justifyContent", getJustifyStr(mJustification));
+    style.set("gap", px(mSpacing));
+    break;
+  case LayoutType::Vertical:
+    style.set("display",
+              mIsVisible ? std::string("flex") : std::string("none"));
+    style.set("flexDirection", std::string("column"));
+    style.set("alignItems", getAlignItemsStr(mAlignItems));
+    style.set("justifyContent", getJustifyStr(mJustification));
+    style.set("gap", px(mSpacing));
+    break;
+  case LayoutType::Grid:
+    style.set("display",
+              mIsVisible ? std::string("grid") : std::string("none"));
+    style.set("alignItems", getAlignItemsStr(mAlignItems));
+    style.set("justifyItems", getJustifyStr(mJustification));
+    style.set("gap", px(mSpacing));
+    break;
   }
 }
 
 void WebLayout::ApplyChildren() noexcept {
-  for (IDomElement* elem : mChildren) {
-    if (!elem) continue;
-    const ElementID& id = elem->Id();
-    if (id.empty()) continue;
+  for (IDomElement *elem : mChildren) {
+    if (!elem)
+      continue;
+    const ElementID &id = elem->Id();
+    if (id.empty())
+      continue;
 
     elem->SyncFromModel();
 
     val el = mDocument.call<val>("getElementById", id);
-    if (el.isNull() || el.isUndefined()) continue;
+    if (el.isNull() || el.isUndefined())
+      continue;
     val est = el["style"];
 
     // apply alignment only; sizing is handled by element itself
@@ -317,20 +328,20 @@ void WebLayout::ApplyChildren() noexcept {
       Alignment a = it->second;
       std::string alignStr;
       switch (a) {
-        case Alignment::Start:
-          alignStr = "flex-start";
-          break;
-        case Alignment::Center:
-          alignStr = "center";
-          break;
-        case Alignment::End:
-          alignStr = "flex-end";
-          break;
-        case Alignment::Stretch:
-          alignStr = "stretch";
-          break;
-        default:
-          alignStr = "none";
+      case Alignment::Start:
+        alignStr = "flex-start";
+        break;
+      case Alignment::Center:
+        alignStr = "center";
+        break;
+      case Alignment::End:
+        alignStr = "flex-end";
+        break;
+      case Alignment::Stretch:
+        alignStr = "stretch";
+        break;
+      default:
+        alignStr = "none";
       }
       est.set("alignSelf", alignStr);
     }
@@ -365,7 +376,8 @@ void WebLayout::ApplyChildren() noexcept {
 }
 
 void WebLayout::Apply() noexcept {
-  if (!mIsVisible) return;
+  if (!mIsVisible)
+    return;
   val style = mRoot["style"];
   ApplyStyling(style);
   ApplyLayout(style);
@@ -374,13 +386,13 @@ void WebLayout::Apply() noexcept {
 
 void WebLayout::Clear() noexcept {
   // remove children from DOM by unmounting them
-  for (const auto& elem : mChildren) {
+  for (const auto &elem : mChildren) {
     elem->Unmount();
   }
   mChildren.clear();
   mParams.clear();
 }
 
-}  // namespace cse498
+} // namespace cse498
 
 #endif

@@ -1,5 +1,5 @@
-#include "WebButton.hpp"
 #include "../WebLayout/WebLayout.hpp"
+#include "WebButton.hpp"
 #include <iostream>
 #include <memory>
 
@@ -16,9 +16,7 @@ int main() {
   btn1->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
   btn1->SetBackgroundColor("#4CAF50");
   btn1->SetTextColor("white");
-  btn1->SetCallback([]() {
-    std::cout << "Button was clicked!" << std::endl;
-  });
+  btn1->SetCallback([]() { std::cout << "Button was clicked!" << std::endl; });
   btn1->MountToLayout(*layout);
 
   auto btn2 = std::make_unique<WebButton>("Disabled Button");

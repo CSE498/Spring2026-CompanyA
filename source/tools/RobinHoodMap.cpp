@@ -6,12 +6,10 @@
  * RobinHoodMap is a template class, so the full implementation lives in the
  * header.  This file exists to verify that the template instantiates correctly
  * at compile time.
- * 
- * 
- * not completely sure if this is needed, but ill keep it for now. 
+ *
+ *
+ * not completely sure if this is needed, but ill keep it for now.
  **/
-
- 
 
 #include "RobinHoodMap.hpp"
 

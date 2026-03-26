@@ -22,7 +22,8 @@ TEST_CASE("NPC displays building upgrade information",
   npc.ShowUpgradeUI();
   std::cout.rdbuf(originalBuffer);
 
-  CHECK(output.str() == "Farm - level: 0 | next upgrade: 25 Wood for level 1\n");
+  CHECK(output.str() ==
+        "Farm - level: 0 | next upgrade: 25 Wood for level 1\n");
 }
 
 TEST_CASE("NPC upgrades a building and spends inventory resources",

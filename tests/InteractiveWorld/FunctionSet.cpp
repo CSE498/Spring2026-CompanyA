@@ -1,14 +1,13 @@
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/InteractiveWorld/FunctionSet.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include <stdexcept>
-#include <vector>
 #include <string_view>
+#include <vector>
 
 using namespace cse498;
 
-TEST_CASE("Test add, remove, size functions")
-{
+TEST_CASE("Test add, remove, size functions") {
   FunctionSet<void()> fs;
 
   CHECK(fs.Size() == 0);
@@ -28,8 +27,7 @@ TEST_CASE("Test add, remove, size functions")
   CHECK(fs.Size() == 0);
 }
 
-TEST_CASE("Test CallAll to properly call all functions in order")
-{
+TEST_CASE("Test CallAll to properly call all functions in order") {
   FunctionSet<void(int)> fs;
   std::vector<int> out;
 
@@ -46,8 +44,7 @@ TEST_CASE("Test CallAll to properly call all functions in order")
   CHECK(fs.LastCallSuccessCount() == 2);
 }
 
-TEST_CASE("Test CallAll to continue after throw and count failures")
-{
+TEST_CASE("Test CallAll to continue after throw and count failures") {
   FunctionSet<void()> fs;
   int called = 0;
 
@@ -62,8 +59,7 @@ TEST_CASE("Test CallAll to continue after throw and count failures")
   CHECK(fs.LastCallSuccessCount() == 2);
 }
 
-TEST_CASE("Test to ensure Clear removes all functions but does not reuse IDs")
-{
+TEST_CASE("Test to ensure Clear removes all functions but does not reuse IDs") {
   FunctionSet<void()> fs;
 
   auto id0 = fs.AddFunction([] {});
@@ -72,11 +68,10 @@ TEST_CASE("Test to ensure Clear removes all functions but does not reuse IDs")
 
   auto id1 = fs.AddFunction([] {});
   CHECK(id1 != id0);
-  CHECK(id1 > id0);  
+  CHECK(id1 > id0);
 }
 
-TEST_CASE("Removed functions are not called by CallAll")
-{
+TEST_CASE("Removed functions are not called by CallAll") {
   FunctionSet<void()> fs;
   int called = 0;
 
@@ -91,8 +86,7 @@ TEST_CASE("Removed functions are not called by CallAll")
   CHECK(fs.LastCallFailureCount() == 0);
 }
 
-TEST_CASE("CallAll invokes on_error for throwing functions")
-{
+TEST_CASE("CallAll invokes on_error for throwing functions") {
   FunctionSet<void()> fs;
 
   auto id_ok = fs.AddFunction([] {});

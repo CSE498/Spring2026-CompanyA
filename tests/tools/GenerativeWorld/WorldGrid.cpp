@@ -1,16 +1,14 @@
-//#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../../source/tools/WorldGrid.hpp"
 #include "../../../source/core/Location.hpp"
+#include "../../../source/tools/WorldGrid.hpp"
 
 #include <sstream>
 #include <string>
 #include <vector>
 
-
-
-void AddBasicCellTypes(cse498::WorldGrid& grid) {
+void AddBasicCellTypes(cse498::WorldGrid &grid) {
   // ID 0 is "Unknown" reserved by constructor.
   grid.AddCellType("Wall", "Solid wall", '#');
   grid.AddCellType("Floor", "Walkable floor", '.');
@@ -22,7 +20,6 @@ cse498::WorldGrid MakeSmallGrid3x2() {
   AddBasicCellTypes(grid);
   return grid;
 }
-
 
 TEST_CASE("WorldGrid Constructor", "[core]") {
   SECTION("Default constructor yields empty grid, but has Unknown type") {
@@ -45,8 +42,8 @@ TEST_CASE("WorldGrid Constructor", "[core]") {
     CHECK(grid.GetNumCells() == 12);
 
     // All default to 0 initially
-    CHECK(grid[std::pair<size_t,size_t>{0,0}] == 0);
-    CHECK(grid[std::pair<size_t,size_t>{3,2}] == 0);
+    CHECK(grid[std::pair<size_t, size_t>{0, 0}] == 0);
+    CHECK(grid[std::pair<size_t, size_t>{3, 2}] == 0);
   }
 }
 
@@ -67,9 +64,7 @@ TEST_CASE("IsValid Bounds Checking", "[core]") {
     CHECK_FALSE(grid.IsValid(4, 0)); // x out of range
     CHECK_FALSE(grid.IsValid(0, 3)); // y out of range
   }
-
 }
-
 
 TEST_CASE("CellType registration and lookup", "[core]") {
   cse498::WorldGrid grid;
@@ -79,21 +74,21 @@ TEST_CASE("CellType registration and lookup", "[core]") {
   CHECK(grid.GetCellTypeName(0) == "Unknown");
 
   SECTION("AddCellType returns increasing IDs and GetCellTypeName works") {
-    size_t wall_id  = grid.AddCellType("Wall",  "Solid wall", '#');
+    size_t wall_id = grid.AddCellType("Wall", "Solid wall", '#');
     size_t floor_id = grid.AddCellType("Floor", "Walkable floor", '.');
-    size_t door_id  = grid.AddCellType("Door",  "Door", 'D');
+    size_t door_id = grid.AddCellType("Door", "Door", 'D');
 
-    CHECK(wall_id  == 1);
+    CHECK(wall_id == 1);
     CHECK(floor_id == 2);
-    CHECK(door_id  == 3);
+    CHECK(door_id == 3);
 
-    CHECK(grid.GetCellTypeName(wall_id)  == "Wall");
+    CHECK(grid.GetCellTypeName(wall_id) == "Wall");
     CHECK(grid.GetCellTypeName(floor_id) == "Floor");
-    CHECK(grid.GetCellTypeName(door_id)  == "Door");
+    CHECK(grid.GetCellTypeName(door_id) == "Door");
 
-    CHECK(grid.GetCellTypeSymbol(wall_id)  == '#');
+    CHECK(grid.GetCellTypeSymbol(wall_id) == '#');
     CHECK(grid.GetCellTypeSymbol(floor_id) == '.');
-    CHECK(grid.GetCellTypeSymbol(door_id)  == 'D');
+    CHECK(grid.GetCellTypeSymbol(door_id) == 'D');
   }
 
   SECTION("GetCellTypeID returns 0 for unknown names") {
@@ -105,16 +100,16 @@ TEST_CASE("CellType registration and lookup", "[core]") {
 }
 
 TEST_CASE("Indexing and mutation via operator[] with (x,y) pair", "[core]") {
-  using position = std::pair<size_t,size_t>;
+  using position = std::pair<size_t, size_t>;
   cse498::WorldGrid grid = MakeSmallGrid3x2();
 
-  size_t wall_id  = grid.GetCellTypeID("Wall");
+  size_t wall_id = grid.GetCellTypeID("Wall");
   size_t floor_id = grid.GetCellTypeID("Floor");
-  size_t door_id  = grid.GetCellTypeID("Door");
+  size_t door_id = grid.GetCellTypeID("Door");
 
-  REQUIRE(wall_id  != 0);
+  REQUIRE(wall_id != 0);
   REQUIRE(floor_id != 0);
-  REQUIRE(door_id  != 0);
+  REQUIRE(door_id != 0);
 
   SECTION("Setting and getting values using (x,y) pair") {
     // Set up a simple pattern:
@@ -141,10 +136,10 @@ TEST_CASE("Indexing and mutation via operator[] with (x,y) pair", "[core]") {
 TEST_CASE("Indexing and symbol lookup via WorldPosition", "[core]") {
   auto grid = MakeSmallGrid3x2();
 
-  size_t wall_id  = grid.GetCellTypeID("Wall");
+  size_t wall_id = grid.GetCellTypeID("Wall");
   size_t floor_id = grid.GetCellTypeID("Floor");
 
-  REQUIRE(wall_id  != 0);
+  REQUIRE(wall_id != 0);
   REQUIRE(floor_id != 0);
 
   // Construct positions exactly on integer coordinates.
@@ -153,9 +148,8 @@ TEST_CASE("Indexing and symbol lookup via WorldPosition", "[core]") {
   cse498::WorldPosition pos_wall(0.0, 0.0);
   cse498::WorldPosition pos_floor(1.0, 0.0);
 
-  grid[pos_wall]  = wall_id;
+  grid[pos_wall] = wall_id;
   grid[pos_floor] = floor_id;
-
 
   SECTION("IsValid(WorldPosition) respects grid bounds") {
     CHECK(grid.IsValid(pos_wall));
@@ -166,24 +160,26 @@ TEST_CASE("Indexing and symbol lookup via WorldPosition", "[core]") {
   }
 
   SECTION("operator[](WorldPosition) reads underlying cell IDs") {
-    CHECK(grid[pos_wall]  == wall_id);
+    CHECK(grid[pos_wall] == wall_id);
     CHECK(grid[pos_floor] == floor_id);
   }
 
   SECTION("GetSymbol(WorldPosition) returns correct symbol") {
-    CHECK(grid.GetSymbol(pos_wall)  == '#'); // Wall
+    CHECK(grid.GetSymbol(pos_wall) == '#');  // Wall
     CHECK(grid.GetSymbol(pos_floor) == '.'); // Floor
   }
 }
 
-TEST_CASE("Resize preserves overlapping region and fills new cells with default_type", "[core]") {
-  using position = std::pair<size_t,size_t>;
+TEST_CASE(
+    "Resize preserves overlapping region and fills new cells with default_type",
+    "[core]") {
+  using position = std::pair<size_t, size_t>;
   auto grid = MakeSmallGrid3x2();
 
-  size_t wall_id  = grid.GetCellTypeID("Wall");
+  size_t wall_id = grid.GetCellTypeID("Wall");
   size_t floor_id = grid.GetCellTypeID("Floor");
 
-  REQUIRE(wall_id  != 0);
+  REQUIRE(wall_id != 0);
   REQUIRE(floor_id != 0);
 
   // Original 3x2:
@@ -197,11 +193,12 @@ TEST_CASE("Resize preserves overlapping region and fills new cells with default_
   grid[position{1, 1}] = wall_id;
   grid[position{2, 1}] = floor_id;
 
-  SECTION("Resize to larger grid keeps existing cells and sets new ones to default_type") {
+  SECTION("Resize to larger grid keeps existing cells and sets new ones to "
+          "default_type") {
     // Resize to 4x3; default_type = 0 (Unknown)
     grid.Resize(4, 3, 0);
 
-    CHECK(grid.GetWidth()  == 4);
+    CHECK(grid.GetWidth() == 4);
     CHECK(grid.GetHeight() == 3);
     CHECK(grid.GetNumCells() == 12);
 

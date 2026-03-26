@@ -1,28 +1,28 @@
 #ifndef WEBBUTTON_HPP_
 #define WEBBUTTON_HPP_
 
-#include <string>
-#include <functional>
 #include <emscripten/val.h>
+#include <functional>
+#include <string>
 
 #include "../internal/IDomElement.hpp"
 
 namespace cse498 {
 
 class WebButton : public IDomElement {
- public:
+public:
   /// Creates a button with the given label, appended to document body
-  explicit WebButton(const std::string& label = "");
+  explicit WebButton(const std::string &label = "");
   ~WebButton();
 
-  WebButton(const WebButton&) = delete;
-  WebButton& operator=(const WebButton&) = delete;
+  WebButton(const WebButton &) = delete;
+  WebButton &operator=(const WebButton &) = delete;
 
-  WebButton(WebButton&& other) noexcept;
-  WebButton& operator=(WebButton&& other) noexcept;
+  WebButton(WebButton &&other) noexcept;
+  WebButton &operator=(WebButton &&other) noexcept;
 
   /// Sets the button display text
-  void SetLabel(const std::string& text);
+  void SetLabel(const std::string &text);
   std::string GetLabel() const;
 
   /// Sets the click handler; callback must not be null
@@ -36,9 +36,9 @@ class WebButton : public IDomElement {
   int GetHeight() const;
 
   /// Sets background color using any valid CSS color string
-  void SetBackgroundColor(const std::string& color);
+  void SetBackgroundColor(const std::string &color);
   /// Sets text color using any valid CSS color string
-  void SetTextColor(const std::string& color);
+  void SetTextColor(const std::string &color);
 
   void Enable();
   void Disable();
@@ -48,14 +48,15 @@ class WebButton : public IDomElement {
   void Hide();
   bool IsVisible() const;
 
-  void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+  void MountToLayout(WebLayout &parent,
+                     Alignment align = Alignment::Start) override;
   void Unmount() override;
   void SyncFromModel() override;
-  const std::string& Id() const override;
+  const std::string &Id() const override;
 
   void HandleClick();
 
- private:
+private:
   std::string mLabel;
   std::function<void()> mCallback;
   bool mIsEnabled = true;
@@ -71,6 +72,6 @@ class WebButton : public IDomElement {
 
   void AttachClickListener();
 };
-}
+} // namespace cse498
 
 #endif

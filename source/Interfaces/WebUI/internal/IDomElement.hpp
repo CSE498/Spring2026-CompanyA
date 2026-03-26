@@ -19,14 +19,14 @@ class WebLayout;
 /// interface. It provides methods for integration with layout management and
 /// state synchronization.
 class IDomElement {
- public:
+public:
   virtual ~IDomElement() = default;
 
   /// Mounts this element into a parent layout with optional alignment.
   /// @param parent Reference to the parent WebLayout container
   /// @param align Optional alignment parameter for positioning within the
   /// parent
-  virtual void MountToLayout(WebLayout& parent,
+  virtual void MountToLayout(WebLayout &parent,
                              Alignment align = Alignment::None) = 0;
 
   /// Unmounts this element from its current parent layout.
@@ -39,7 +39,7 @@ class IDomElement {
 
   /// Returns the unique identifier of this DOM element.
   /// @return Const reference to the element's unique ID string
-  virtual const std::string& Id() const = 0;
+  virtual const std::string &Id() const = 0;
 
   // ===== Grid Layout Support =====
 
@@ -85,11 +85,11 @@ class IDomElement {
   /// Clears the free position offsets for this element.
   void ClearFreePosition() { mTop = mLeft = -1; }
 
- private:
-  int mGridRow = -1;  ///< Grid row position (-1 = unset)
-  int mGridCol = -1;  ///< Grid column position (-1 = unset)
-  int mTop = -1;      ///< Free layout top offset in pixels (-1 = unset)
-  int mLeft = -1;     ///< Free layout left offset in pixels (-1 = unset)
+private:
+  int mGridRow = -1; ///< Grid row position (-1 = unset)
+  int mGridCol = -1; ///< Grid column position (-1 = unset)
+  int mTop = -1;     ///< Free layout top offset in pixels (-1 = unset)
+  int mLeft = -1;    ///< Free layout left offset in pixels (-1 = unset)
 };
 
-}  // namespace cse498
+} // namespace cse498

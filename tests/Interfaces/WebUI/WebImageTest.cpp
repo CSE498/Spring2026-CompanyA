@@ -10,17 +10,26 @@ using namespace cse498;
 
 // ---------- Helpers ----------
 
-#define TEST(name) \
-  do { INFO(name); } while(0)
+#define TEST(name)                                                             \
+  do {                                                                         \
+    INFO(name);                                                                \
+  } while (0)
 
-#define PASS() \
-  do {} while(0)
+#define PASS()                                                                 \
+  do {                                                                         \
+  } while (0)
 
-#define CHECK_MSG(cond, msg) \
-  do { INFO(msg); CHECK(cond); } while(0)
+#define CHECK_MSG(cond, msg)                                                   \
+  do {                                                                         \
+    INFO(msg);                                                                 \
+    CHECK(cond);                                                               \
+  } while (0)
 
-#define REQUIRE_MSG(cond, msg) \
-  do { INFO(msg); REQUIRE(cond); } while(0)
+#define REQUIRE_MSG(cond, msg)                                                 \
+  do {                                                                         \
+    INFO(msg);                                                                 \
+    REQUIRE(cond);                                                             \
+  } while (0)
 
 // ========================================================
 // Test 1: Constructor — source and alt text set correctly
@@ -30,10 +39,9 @@ void test_constructor() {
   WebImage img("https://example.com/cat.png", "A cat");
 
   REQUIRE_MSG(img.GetSource() == "https://example.com/cat.png",
-        "source mismatch");
-  REQUIRE_MSG(img.GetAltText() == "A cat",
-        "alt text mismatch");
-  CHECK_MSG(img.GetWidth() == 0,  "default width should be 0");
+              "source mismatch");
+  REQUIRE_MSG(img.GetAltText() == "A cat", "alt text mismatch");
+  CHECK_MSG(img.GetWidth() == 0, "default width should be 0");
   CHECK_MSG(img.GetHeight() == 0, "default height should be 0");
   CHECK_MSG(img.GetOpacity() == 1.0, "default opacity should be 1.0");
   CHECK_MSG(img.IsVisible() == true, "default should be visible");
@@ -63,8 +71,10 @@ void test_set_get_source() {
 
   img.SetSource("new.png");
   REQUIRE_MSG(img.GetSource() == "new.png", "source not updated");
-  CHECK_MSG(img.IsLoaded() == false, "is_loaded should be false after SetSource");
-  CHECK_MSG(img.HasError() == false, "has_error should be false after SetSource");
+  CHECK_MSG(img.IsLoaded() == false,
+            "is_loaded should be false after SetSource");
+  CHECK_MSG(img.HasError() == false,
+            "has_error should be false after SetSource");
   PASS();
 }
 
@@ -156,7 +166,7 @@ void test_resize_default_param() {
   TEST("Resize default maintain_aspect_ratio is false");
   WebImage img("img.png");
 
-  img.Resize(500, 400);  // uses default param
+  img.Resize(500, 400); // uses default param
   CHECK_MSG(img.GetWidth() == 500, "width mismatch");
   CHECK_MSG(img.GetHeight() == 400, "height mismatch");
   PASS();
@@ -323,7 +333,8 @@ void test_handle_error_noop() {
 
   img.HandleError();
   REQUIRE_MSG(img.HasError() == true, "should have error");
-  CHECK_MSG(error_called == true, "error callback should be called even in NoOp");
+  CHECK_MSG(error_called == true,
+            "error callback should be called even in NoOp");
   PASS();
 }
 
@@ -367,9 +378,12 @@ void test_id_unique() {
   WebImage img2("b.png");
   WebImage img3("c.png");
 
-  REQUIRE_MSG(img1.Id() != img2.Id(), "img1 and img2 should have different ids");
-  REQUIRE_MSG(img2.Id() != img3.Id(), "img2 and img3 should have different ids");
-  REQUIRE_MSG(img1.Id() != img3.Id(), "img1 and img3 should have different ids");
+  REQUIRE_MSG(img1.Id() != img2.Id(),
+              "img1 and img2 should have different ids");
+  REQUIRE_MSG(img2.Id() != img3.Id(),
+              "img2 and img3 should have different ids");
+  REQUIRE_MSG(img1.Id() != img3.Id(),
+              "img1 and img3 should have different ids");
   PASS();
 }
 
@@ -381,7 +395,8 @@ void test_id_prefix() {
   WebImage img("x.png");
 
   std::string id = img.Id();
-  REQUIRE_MSG(id.substr(0, 9) == "webimage-", "id should start with 'webimage-'");
+  REQUIRE_MSG(id.substr(0, 9) == "webimage-",
+              "id should start with 'webimage-'");
   PASS();
 }
 
@@ -431,8 +446,10 @@ void test_move_constructor() {
 
   CHECK_MSG(original.GetWidth() == 0, "original width should be 0");
   CHECK_MSG(original.GetHeight() == 0, "original height should be 0");
-  CHECK_MSG(original.GetOpacity() == 1.0, "original opacity should reset to 1.0");
-  CHECK_MSG(original.IsVisible() == false, "original visibility should be false");
+  CHECK_MSG(original.GetOpacity() == 1.0,
+            "original opacity should reset to 1.0");
+  CHECK_MSG(original.IsVisible() == false,
+            "original visibility should be false");
   CHECK_MSG(original.IsLoaded() == false, "original loaded should be false");
   CHECK_MSG(original.HasError() == false, "original error should be false");
   PASS();
@@ -543,13 +560,11 @@ void test_error_callback_with_placeholder() {
   img.SetPlaceholderColor("#AABBCC");
 
   bool callback_saw_error = false;
-  img.SetOnErrorCallback([&img, &callback_saw_error]() {
-    callback_saw_error = img.HasError();
-  });
+  img.SetOnErrorCallback(
+      [&img, &callback_saw_error]() { callback_saw_error = img.HasError(); });
 
   img.HandleError();
-  REQUIRE_MSG(callback_saw_error == true,
-        "callback should see has_error=true");
+  REQUIRE_MSG(callback_saw_error == true, "callback should see has_error=true");
   PASS();
 }
 
@@ -585,62 +600,109 @@ void test_multiple_source_changes() {
 // ==================== TEST_CASE Registration ====================
 
 // -- Construction --
-TEST_CASE("Constructor sets source and alt text", "[WebImage]") { test_constructor(); }
-TEST_CASE("Constructor default alt text is empty", "[WebImage]") { test_constructor_default_alt(); }
+TEST_CASE("Constructor sets source and alt text", "[WebImage]") {
+  test_constructor();
+}
+TEST_CASE("Constructor default alt text is empty", "[WebImage]") {
+  test_constructor_default_alt();
+}
 
 // -- Source & metadata setters/getters --
 TEST_CASE("SetSource and GetSource", "[WebImage]") { test_set_get_source(); }
-TEST_CASE("SetSource resets loaded and error state", "[WebImage]") { test_set_source_resets_state(); }
-TEST_CASE("SetAltText and GetAltText", "[WebImage]") { test_set_get_alt_text(); }
+TEST_CASE("SetSource resets loaded and error state", "[WebImage]") {
+  test_set_source_resets_state();
+}
+TEST_CASE("SetAltText and GetAltText", "[WebImage]") {
+  test_set_get_alt_text();
+}
 
 // -- Sizing (SetSize and Resize with various dimensions) --
 TEST_CASE("SetSize sets width and height", "[WebImage]") { test_set_size(); }
-TEST_CASE("SetSize handles zero dimensions", "[WebImage]") { test_set_size_zero(); }
-TEST_CASE("Resize without aspect ratio", "[WebImage]") { test_resize_no_aspect_ratio(); }
-TEST_CASE("Resize with aspect ratio", "[WebImage]") { test_resize_maintain_aspect_ratio(); }
-TEST_CASE("Resize default parameter", "[WebImage]") { test_resize_default_param(); }
+TEST_CASE("SetSize handles zero dimensions", "[WebImage]") {
+  test_set_size_zero();
+}
+TEST_CASE("Resize without aspect ratio", "[WebImage]") {
+  test_resize_no_aspect_ratio();
+}
+TEST_CASE("Resize with aspect ratio", "[WebImage]") {
+  test_resize_maintain_aspect_ratio();
+}
+TEST_CASE("Resize default parameter", "[WebImage]") {
+  test_resize_default_param();
+}
 
 // -- Opacity --
 TEST_CASE("SetOpacity and GetOpacity", "[WebImage]") { test_set_get_opacity(); }
 
 // -- Visibility (Show/Hide toggle) --
 TEST_CASE("Show Hide visibility", "[WebImage]") { test_show_hide_visibility(); }
-TEST_CASE("Visibility toggle multiple times", "[WebImage]") { test_visibility_toggle_multiple(); }
+TEST_CASE("Visibility toggle multiple times", "[WebImage]") {
+  test_visibility_toggle_multiple();
+}
 
-// -- Loading state (tracked via HandleLoad / SetSource; MarkLoaded is private) --
-TEST_CASE("Loading state via HandleLoad and SetSource", "[WebImage]") { test_loaded_state(); }
+// -- Loading state (tracked via HandleLoad / SetSource; MarkLoaded is private)
+// --
+TEST_CASE("Loading state via HandleLoad and SetSource", "[WebImage]") {
+  test_loaded_state();
+}
 TEST_CASE("HasError default false", "[WebImage]") { test_has_error_default(); }
 
 // -- Load/error event handlers and callbacks --
 TEST_CASE("HandleLoad sets state", "[WebImage]") { test_handle_load(); }
-TEST_CASE("HandleLoad invokes callback", "[WebImage]") { test_handle_load_callback(); }
+TEST_CASE("HandleLoad invokes callback", "[WebImage]") {
+  test_handle_load_callback();
+}
 TEST_CASE("HandleError sets state", "[WebImage]") { test_handle_error(); }
-TEST_CASE("HandleError invokes callback", "[WebImage]") { test_handle_error_callback(); }
-TEST_CASE("HandleError with BlankRect mode", "[WebImage]") { test_handle_error_blank_rect(); }
-TEST_CASE("HandleError with NoOp mode", "[WebImage]") { test_handle_error_noop(); }
+TEST_CASE("HandleError invokes callback", "[WebImage]") {
+  test_handle_error_callback();
+}
+TEST_CASE("HandleError with BlankRect mode", "[WebImage]") {
+  test_handle_error_blank_rect();
+}
+TEST_CASE("HandleError with NoOp mode", "[WebImage]") {
+  test_handle_error_noop();
+}
 
 // -- Error mode and placeholder configuration --
 TEST_CASE("SetErrorMode works", "[WebImage]") { test_set_error_mode(); }
-TEST_CASE("SetPlaceholderColor does not crash", "[WebImage]") { test_set_placeholder_color(); }
+TEST_CASE("SetPlaceholderColor does not crash", "[WebImage]") {
+  test_set_placeholder_color();
+}
 
 // -- Unique element IDs --
 TEST_CASE("Id is unique per instance", "[WebImage]") { test_id_unique(); }
 TEST_CASE("Id has expected prefix", "[WebImage]") { test_id_prefix(); }
 
 // -- DOM synchronization --
-TEST_CASE("syncFromModel reapplies state", "[WebImage]") { test_sync_from_model(); }
+TEST_CASE("syncFromModel reapplies state", "[WebImage]") {
+  test_sync_from_model();
+}
 
 // -- Move semantics (constructor and assignment) --
-TEST_CASE("Move constructor transfers state", "[WebImage]") { test_move_constructor(); }
-TEST_CASE("Move assignment transfers state", "[WebImage]") { test_move_assignment(); }
+TEST_CASE("Move constructor transfers state", "[WebImage]") {
+  test_move_constructor();
+}
+TEST_CASE("Move assignment transfers state", "[WebImage]") {
+  test_move_assignment();
+}
 
 // -- Edge cases and regression scenarios --
-TEST_CASE("HandleLoad after error clears error", "[WebImage]") { test_load_after_error(); }
-TEST_CASE("Callback replacement works", "[WebImage]") { test_callback_replacement(); }
+TEST_CASE("HandleLoad after error clears error", "[WebImage]") {
+  test_load_after_error();
+}
+TEST_CASE("Callback replacement works", "[WebImage]") {
+  test_callback_replacement();
+}
 TEST_CASE("No callback no crash", "[WebImage]") { test_no_callback_no_crash(); }
-TEST_CASE("Resize after SetSize overwrites dimensions", "[WebImage]") { test_set_size_then_resize(); }
-TEST_CASE("Error callback with placeholder", "[WebImage]") { test_error_callback_with_placeholder(); }
+TEST_CASE("Resize after SetSize overwrites dimensions", "[WebImage]") {
+  test_set_size_then_resize();
+}
+TEST_CASE("Error callback with placeholder", "[WebImage]") {
+  test_error_callback_with_placeholder();
+}
 TEST_CASE("draw stub no crash", "[WebImage]") { test_draw_no_crash(); }
-TEST_CASE("Multiple SetSource calls", "[WebImage]") { test_multiple_source_changes(); }
+TEST_CASE("Multiple SetSource calls", "[WebImage]") {
+  test_multiple_source_changes();
+}
 
 #endif // __EMSCRIPTEN__

@@ -8,17 +8,12 @@ using namespace cse498;
 
 int WebButton::mNextIdCounter = 1;
 
-static val GetDocument() {
-  return val::global("document");
-}
+static val GetDocument() { return val::global("document"); }
 
-static std::string ToPx(int value) {
-  return std::to_string(value) + "px";
-}
+static std::string ToPx(int value) { return std::to_string(value) + "px"; }
 
-WebButton::WebButton(const std::string& label)
-    : mLabel(label),
-      mElement(val::null()) {
+WebButton::WebButton(const std::string &label)
+    : mLabel(label), mElement(val::null()) {
   mId = "webbutton-" + std::to_string(mNextIdCounter++);
 
   val doc = GetDocument();
@@ -36,16 +31,12 @@ WebButton::~WebButton() {
   mElement = val::null();
 }
 
-WebButton::WebButton(WebButton&& other) noexcept
-    : mLabel(std::move(other.mLabel)),
-      mCallback(std::move(other.mCallback)),
-      mIsEnabled(other.mIsEnabled),
-      mIsVisible(other.mIsVisible),
-      mWidth(other.mWidth),
-      mHeight(other.mHeight),
+WebButton::WebButton(WebButton &&other) noexcept
+    : mLabel(std::move(other.mLabel)), mCallback(std::move(other.mCallback)),
+      mIsEnabled(other.mIsEnabled), mIsVisible(other.mIsVisible),
+      mWidth(other.mWidth), mHeight(other.mHeight),
       mBgColor(std::move(other.mBgColor)),
-      mTextColor(std::move(other.mTextColor)),
-      mElement(other.mElement),
+      mTextColor(std::move(other.mTextColor)), mElement(other.mElement),
       mId(std::move(other.mId)) {
   other.mElement = val::null();
   other.mIsEnabled = false;
@@ -54,7 +45,7 @@ WebButton::WebButton(WebButton&& other) noexcept
   other.mHeight = 0;
 }
 
-WebButton& WebButton::operator=(WebButton&& other) noexcept {
+WebButton &WebButton::operator=(WebButton &&other) noexcept {
   if (this != &other) {
     Unmount();
 
@@ -78,16 +69,14 @@ WebButton& WebButton::operator=(WebButton&& other) noexcept {
   return *this;
 }
 
-void WebButton::SetLabel(const std::string& text) {
+void WebButton::SetLabel(const std::string &text) {
   mLabel = text;
   if (!mElement.isNull()) {
     mElement.set("textContent", mLabel);
   }
 }
 
-std::string WebButton::GetLabel() const {
-  return mLabel;
-}
+std::string WebButton::GetLabel() const { return mLabel; }
 
 void WebButton::SetCallback(std::function<void()> callback) {
   assert(callback && "SetCallback: callback must not be null");
@@ -106,27 +95,25 @@ void WebButton::SetSize(int width, int height) {
   mWidth = width;
   mHeight = height;
   if (!mElement.isNull()) {
-    mElement["style"].set("width", width > 0 ? ToPx(width) : std::string("auto"));
-    mElement["style"].set("height", height > 0 ? ToPx(height) : std::string("auto"));
+    mElement["style"].set("width",
+                          width > 0 ? ToPx(width) : std::string("auto"));
+    mElement["style"].set("height",
+                          height > 0 ? ToPx(height) : std::string("auto"));
   }
 }
 
-int WebButton::GetWidth() const {
-  return mWidth;
-}
+int WebButton::GetWidth() const { return mWidth; }
 
-int WebButton::GetHeight() const {
-  return mHeight;
-}
+int WebButton::GetHeight() const { return mHeight; }
 
-void WebButton::SetBackgroundColor(const std::string& color) {
+void WebButton::SetBackgroundColor(const std::string &color) {
   mBgColor = color;
   if (!mElement.isNull()) {
     mElement["style"].set("backgroundColor", color);
   }
 }
 
-void WebButton::SetTextColor(const std::string& color) {
+void WebButton::SetTextColor(const std::string &color) {
   mTextColor = color;
   if (!mElement.isNull()) {
     mElement["style"].set("color", color);
@@ -147,9 +134,7 @@ void WebButton::Disable() {
   }
 }
 
-bool WebButton::IsEnabled() const {
-  return mIsEnabled;
-}
+bool WebButton::IsEnabled() const { return mIsEnabled; }
 
 void WebButton::Show() {
   mIsVisible = true;
@@ -165,16 +150,15 @@ void WebButton::Hide() {
   }
 }
 
-bool WebButton::IsVisible() const {
-  return mIsVisible;
-}
+bool WebButton::IsVisible() const { return mIsVisible; }
 
-void WebButton::MountToLayout(WebLayout& parent, Alignment align) {
+void WebButton::MountToLayout(WebLayout &parent, Alignment align) {
   parent.AddElement(this, align);
 }
 
 void WebButton::Unmount() {
-  if (mElement.isNull()) return;
+  if (mElement.isNull())
+    return;
 
   val parent = mElement["parentNode"];
   if (!parent.isNull() && !parent.isUndefined()) {
@@ -183,13 +167,16 @@ void WebButton::Unmount() {
 }
 
 void WebButton::SyncFromModel() {
-  if (mElement.isNull()) return;
+  if (mElement.isNull())
+    return;
 
   mElement.set("textContent", mLabel);
   mElement.set("disabled", !mIsEnabled);
 
-  mElement["style"].set("width", mWidth > 0 ? ToPx(mWidth) : std::string("auto"));
-  mElement["style"].set("height", mHeight > 0 ? ToPx(mHeight) : std::string("auto"));
+  mElement["style"].set("width",
+                        mWidth > 0 ? ToPx(mWidth) : std::string("auto"));
+  mElement["style"].set("height",
+                        mHeight > 0 ? ToPx(mHeight) : std::string("auto"));
 
   if (!mBgColor.empty()) {
     mElement["style"].set("backgroundColor", mBgColor);
@@ -198,36 +185,33 @@ void WebButton::SyncFromModel() {
     mElement["style"].set("color", mTextColor);
   }
 
-  mElement["style"].set("display",
-      std::string(mIsVisible ? "" : "none"));
+  mElement["style"].set("display", std::string(mIsVisible ? "" : "none"));
 }
 
-const std::string& WebButton::Id() const {
-  return mId;
-}
+const std::string &WebButton::Id() const { return mId; }
 
-void WebButton::HandleClick() {
-  Click();
-}
+void WebButton::HandleClick() { Click(); }
 
 void WebButton::AttachClickListener() {
-  if (mElement.isNull()) return;
+  if (mElement.isNull())
+    return;
 
-  EM_ASM({
-    var el = Emval.toValue($0);
-    var ptrVal = $1;
-    el.addEventListener("click", function() {
-      Module._WebButton_handleClick(ptrVal);
-    });
-  }, mElement.as_handle(), reinterpret_cast<intptr_t>(this));
+  EM_ASM(
+      {
+        var el = Emval.toValue($0);
+        var ptrVal = $1;
+        el.addEventListener(
+            "click", function() { Module._WebButton_handleClick(ptrVal); });
+      },
+      mElement.as_handle(), reinterpret_cast<intptr_t>(this));
 }
 
 extern "C" {
-  EMSCRIPTEN_KEEPALIVE
-  void WebButton_handleClick(intptr_t ptr) {
-    WebButton* btn = reinterpret_cast<WebButton*>(ptr);
-    if (btn) {
-      btn->HandleClick();
-    }
+EMSCRIPTEN_KEEPALIVE
+void WebButton_handleClick(intptr_t ptr) {
+  WebButton *btn = reinterpret_cast<WebButton *>(ptr);
+  if (btn) {
+    btn->HandleClick();
   }
+}
 }

@@ -1,19 +1,19 @@
 #ifndef WEBIMAGE_HPP_
 #define WEBIMAGE_HPP_
 
-#include <string>
-#include <functional>
 #include <emscripten/val.h>
+#include <functional>
+#include <string>
 
-#include "../internal/IDomElement.hpp"
 #include "../internal/ICanvasElement.hpp"
+#include "../internal/IDomElement.hpp"
 
 namespace cse498 {
 
 /// Behavior when an image source fails to load.
 enum class ImageErrorMode {
-  BlankRect,  ///< Show a blank colored rectangle as placeholder
-  NoOp        ///< Do nothing; the element remains invisible/broken
+  BlankRect, ///< Show a blank colored rectangle as placeholder
+  NoOp       ///< Do nothing; the element remains invisible/broken
 };
 
 /// Manages an HTML <img> element from C++ via Emscripten.
@@ -22,27 +22,26 @@ enum class ImageErrorMode {
 /// Positioning is NOT handled by WebImage. Use WebLayout (Flex/Grid/Free)
 /// to control where the image appears on the page.
 class WebImage : public IDomElement, public ICanvasElement {
- public:
+public:
   /// Construct a WebImage with a source URL/path and optional alt text.
-  explicit WebImage(const std::string& src,
-                    const std::string& alt_text = "");
+  explicit WebImage(const std::string &src, const std::string &alt_text = "");
   ~WebImage();
 
-  WebImage(const WebImage&) = delete;
-  WebImage& operator=(const WebImage&) = delete;
+  WebImage(const WebImage &) = delete;
+  WebImage &operator=(const WebImage &) = delete;
 
-  WebImage(WebImage&& other) noexcept;
-  WebImage& operator=(WebImage&& other) noexcept;
+  WebImage(WebImage &&other) noexcept;
+  WebImage &operator=(WebImage &&other) noexcept;
 
   // ----- Source & Metadata -----
 
   /// Set the image source (URL or asset path).
-  void SetSource(const std::string& src);
+  void SetSource(const std::string &src);
   /// Get the current image source.
   [[nodiscard]] std::string GetSource() const;
 
   /// Set the alternative text for accessibility.
-  void SetAltText(const std::string& alt_text);
+  void SetAltText(const std::string &alt_text);
   /// Get the alternative text.
   [[nodiscard]] std::string GetAltText() const;
 
@@ -69,7 +68,8 @@ class WebImage : public IDomElement, public ICanvasElement {
 
   // ----- Opacity / Transparency -----
 
-  /// Set the opacity of the image (0.0 = fully transparent, 1.0 = fully opaque).
+  /// Set the opacity of the image (0.0 = fully transparent, 1.0 = fully
+  /// opaque).
   void SetOpacity(double alpha);
   /// Get the current opacity.
   [[nodiscard]] double GetOpacity() const;
@@ -103,25 +103,25 @@ class WebImage : public IDomElement, public ICanvasElement {
 
   /// Set the placeholder color shown when image fails to load
   /// (only used when error mode is BlankRect). Any valid CSS color.
-  void SetPlaceholderColor(const std::string& css_color);
+  void SetPlaceholderColor(const std::string &css_color);
 
   // ----- IDomElement Interface -----
 
-  void MountToLayout(WebLayout& parent, Alignment align) override;
+  void MountToLayout(WebLayout &parent, Alignment align) override;
   void Unmount() override;
   void SyncFromModel() override;
-  [[nodiscard]] const std::string& Id() const override;
+  [[nodiscard]] const std::string &Id() const override;
 
   // ----- ICanvasElement Interface -----
 
-  void Draw(WebCanvas& canvas) override;
+  void Draw(WebCanvas &canvas) override;
 
   /// Handle load event (called when image finishes loading).
   void HandleLoad();
   /// Handle error event (called when image fails to load).
   void HandleError();
 
- private:
+private:
   std::string mSrc;
   std::string mAltText;
   int mWidth = 0;
@@ -156,6 +156,6 @@ class WebImage : public IDomElement, public ICanvasElement {
   static std::string ToPx(int value);
 };
 
-}  // namespace cse498
+} // namespace cse498
 
-#endif  // WEBIMAGE_HPP_
+#endif // WEBIMAGE_HPP_
