@@ -7,18 +7,27 @@
 
 namespace cse498
 {
+    size_t Enemy::SelectAction(const WorldGrid& grid)
+    {
+        (void)grid;
 
-size_t Enemy::SelectAction(const WorldGrid &grid)
-{
-    (void)grid;
+        if (!mBehaviorRoot)
+            return 0;
 
-    if (!mBehaviorRoot)
-        return 0;
+        BehaviorTrees::ExecutionContext ctx(mBlackboard);
+        mBehaviorRoot->Tick(ctx);
 
-    BehaviorTrees::ExecutionContext ctx(mBlackboard);
-    mBehaviorRoot->Tick(ctx);
+        return mBlackboard.Get<size_t>("selected_action", 0);
+    }
 
-    return mBlackboard.Get<size_t>("selected_action", 0);
-}
+    std::size_t Enemy::ClaimGoldDrop()
+    {
+        if (mGoldClaimed)
+        {
+            return 0;
+        }
 
+        mGoldClaimed = true;
+        return mGoldDrop;
+    }
 }

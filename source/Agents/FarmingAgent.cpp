@@ -8,22 +8,24 @@
 namespace cse498
 {
 
-    FarmingAgent::FarmingAgent(size_t id, const std::string & name, WorldBase & world)
-      : AgentBase(id, name, world) {}
-
-    size_t FarmingAgent::SelectAction([[maybe_unused]] const WorldGrid & grid)
+    FarmingAgent::FarmingAgent(std::size_t id, const std::string& name, WorldBase& world)
+        : MerchantAgent(id, name, world)
     {
-        return 0;
+        ClearOffers();
+
+        /**
+         * -seeds are unlimited
+         * -Wheat and carrots are limited
+         */
+        AddOffer({"wheat", 3, 1, 1, TradeStockMode::Limited, 30});
+        AddOffer({"seeds", 2, 1, 1, TradeStockMode::Unlimited, 0});
+        AddOffer({"carrot", 4, 2, 1, TradeStockMode::Limited, 18});
     }
 
-    bool FarmingAgent::IsAvailableForTrade() const
+    std::string FarmingAgent::GetTradeGreeting() const
     {
-        return mAvailableForTrade;
+        return "Fresh crops and seeds today.";
     }
 
-    void FarmingAgent::SetAvailableForTrade(bool available)
-    {
-        mAvailableForTrade = available;
-    }
 
 }

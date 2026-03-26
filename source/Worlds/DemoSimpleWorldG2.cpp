@@ -18,10 +18,19 @@ namespace cse498 {
 
 bool DemoSimpleWorldG2::IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const {
     for (size_t i = 0; i < GetNumAgents(); ++i) {
-        if (skip != nullptr && &GetAgent(i) == skip) {
+        const AgentBase& agent = GetAgent(i);
+
+        if (&agent == skip)
+        {
             continue;
         }
-        if (GetAgent(i).GetLocation().AsWorldPosition() == pos) {
+
+        if (!agent.IsAlive())
+        {
+            continue;
+        }
+
+        if (agent.GetLocation().AsWorldPosition() == pos) {
             return true;
         }
     }
@@ -38,6 +47,10 @@ void DemoSimpleWorldG2::PrintWorldState() const {
     }
     for (size_t i = 0; i < GetNumAgents(); ++i) {
         const AgentBase &agent = GetAgent(i);
+        if (!agent.IsAlive())
+        {
+            continue;
+        }
         const WorldPosition pos = agent.GetLocation().AsWorldPosition();
         draw[pos.CellY()][pos.CellX()] = agent.GetSymbol();
     }
@@ -46,8 +59,16 @@ void DemoSimpleWorldG2::PrintWorldState() const {
         std::cout << "|" << row << "|\n";
     }
     std::cout << '+' << std::string(main_grid.GetWidth(), '-') << "+\n";
+    const PlayerAgent *player = GetPlayer();
+    const AgentBase &enemy = GetAgent(kEnemyIdx);
     std::cout << "Player HP: " << static_cast<int>(GetAgent(kPlayerIdx).GetHealth())
-              << " | Enemy HP: " << static_cast<int>(GetAgent(kEnemyIdx).GetHealth()) << '\n';
+              << " | Player Gold: " << (player ? player->GetGold() : 0);
+    if (enemy.IsAlive()) {
+        std::cout << " | Enemy HP: " << static_cast<int>(enemy.GetHealth());
+    } else {
+        std::cout << " | Enemy defeated";
+    }
+    std::cout << '\n';
 }
 
 bool DemoSimpleWorldG2::MoveAgentBy(AgentBase &agent, double dx, double dy) {
@@ -75,6 +96,10 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
             continue;
         }
         AgentBase &other = GetAgent(i);
+        if (!other.IsAlive())
+        {
+            continue;
+        }
         const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
         const double dx = std::abs(actor_pos.X() - other_pos.X());
         const double dy = std::abs(actor_pos.Y() - other_pos.Y());
@@ -85,31 +110,37 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
             interacted = true;
             if (i == kFarmerIdx) {
                 auto &farmer = dynamic_cast<FarmingAgent &>(other);
+                if (&actor == GetPlayer()) {
+                    return HandleMerchantTrade(farmer);
+                }
+
                 std::cout << "Farmer: ";
                 if (farmer.IsAvailableForTrade()) {
-                    std::cout << "Welcome! I've got crops and seeds today.\n";
+                    std::cout << farmer.GetTradeGreeting() << '\n';
                 } else {
-                    std::cout << "Sorry, I'm not trading right now.\n";
+                    std::cout << farmer.GetTradeClosedMessage() << '\n';
                 }
             } else if (i == kPlayerIdx && &actor == &GetAgent(kEnemyIdx)) {
+                auto &player = dynamic_cast<PlayerAgent &>(other);
+                auto &enemy = dynamic_cast<Enemy &>(actor);
+
                 const double dealt =
                     DamageCalculator::Calculate(mEnemyCombat, mPlayerCombat);
-                other.TakeDamage(dealt);
-                std::cout << actor.GetName() << " hits " << other.GetName() << " for "
+                player.TakeDamage(dealt);
+                std::cout << enemy.GetName() << " hits " << player.GetName() << " for "
                           << static_cast<int>(dealt) << " damage.\n";
-                if (!other.IsAlive()) {
-                    std::cout << other.GetName() << " has fallen.\n";
+                if (!player.IsAlive()) {
+                    std::cout << player.GetName() << " has fallen.\n";
                     run_over = true;
                     return 1;
                 }
                 const double retaliate =
                     DamageCalculator::Calculate(mPlayerCombat, mEnemyCombat);
-                actor.TakeDamage(retaliate);
-                std::cout << other.GetName() << " strikes back for " << static_cast<int>(retaliate)
+                enemy.TakeDamage(retaliate);
+                std::cout << player.GetName() << " strikes back for " << static_cast<int>(retaliate)
                           << " damage.\n";
-                if (!actor.IsAlive()) {
-                    std::cout << "Enemy defeated.\n";
-                    run_over = true;
+                if (!enemy.IsAlive()) {
+                    HandleEnemyDefeat(enemy, player);
                     return 1;
                 }
             } else if (i == kEnemyIdx) {
@@ -119,8 +150,9 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                 std::cout << actor.GetName() << " hits enemy for " << static_cast<int>(dealt)
                           << " damage.\n";
                 if (!other.IsAlive()) {
-                    std::cout << "Enemy defeated.\n";
-                    run_over = true;
+                    auto &enemy = dynamic_cast<Enemy &>(other);
+                    auto &player = dynamic_cast<PlayerAgent &>(actor);
+                    HandleEnemyDefeat(enemy, player);
                     return 1;
                 }
                 const double retaliate =
@@ -139,6 +171,108 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
         std::cout << "No one nearby to interact with.\n";
     }
     return interacted ? 1 : 0;
+}
+
+int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const
+{
+    PlayerAgent *player = GetPlayer();
+    if (player == nullptr) {
+        return 0;
+    }
+
+    std::cout << "\n=== Merchant Trade ===\n";
+    std::cout << merchant.GetName() << ": " << merchant.GetTradeGreeting() << '\n';
+    std::cout << "Your gold: " << player->GetGold() << '\n';
+    std::cout << "Merchant gold: " << merchant.GetGold() << '\n';
+
+    std::cout << "\nYour inventory:\n";
+    std::cout << player->GetInventory() << '\n';
+
+    std::cout << "\nShop offers:\n";
+    for (const TradeOffer &offer : merchant.GetOffers()) {
+        std::cout << " - " << offer.mItemName
+                  << " | buy: " << offer.mBuyPrice
+                  << " | sell: " << offer.mSellPrice
+                  << " | stock: ";
+        if (offer.IsUnlimited()) {
+            std::cout << "unlimited";
+        } else {
+            std::cout << offer.mStock;
+        }
+        std::cout << '\n';
+    }
+
+    std::cout << "\nChoose an action: [b] buy  [s] sell  [q] cancel\n> ";
+
+    char choice = '\0';
+    std::cin >> choice;
+
+    if (choice == 'q' || choice == 'Q') {
+        std::cout << "Trade cancelled.\n";
+        return 1;
+    }
+
+    if (choice != 'b' && choice != 'B' && choice != 's' && choice != 'S')
+    {
+        std::cout << "Invalid trade option.\n";
+        return 0;
+    }
+
+    std::string itemName;
+    std::size_t quantity = 1;
+
+    std::cout << "Item name: ";
+    std::cin >> itemName;
+    std::cout << "Quantity: ";
+    std::cin >> quantity;
+
+    if (quantity == 0)
+    {
+        std::cout << "Quantity must be at least 1.\n";
+        return 0;
+    }
+
+    TradeResult result;
+    if (choice == 'b' || choice == 'B')
+    {
+        result = merchant.BuyFromMerchant(*player, itemName, quantity);
+    }
+    else
+    {
+        result = merchant.SellToMerchant(*player, itemName, quantity);
+    }
+
+    std::cout << result.mMessage << '\n';
+    std::cout << "Your gold is now: " << player->GetGold() << '\n';
+    std::cout << "Merchant gold is now: " << merchant.GetGold() << '\n';
+
+    if (const TradeOffer* updatedOffer = merchant.FindOffer(itemName); updatedOffer != nullptr)
+    {
+        std::cout << "Updated shop entry for " << updatedOffer->mItemName << ": stock = ";
+        if (updatedOffer->IsUnlimited())
+        {
+            std::cout << "unlimited";
+        }
+        else
+        {
+            std::cout << updatedOffer->mStock;
+        }
+        std::cout << '\n';
+    }
+
+    return result.IsSuccess() ? 1 : 0;
+}
+
+void DemoSimpleWorldG2::HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player)
+{
+    const std::size_t goldReward = enemy.ClaimGoldDrop();
+
+    std::cout << "Enemy defeated.\n";
+
+    if (goldReward > 0) {
+        player.AddGold(goldReward);
+        std::cout << player.GetName() << " gains " << goldReward << " gold.\n";
+    }
 }
 
 void DemoSimpleWorldG2::ConfigAgent(AgentBase &agent) {
@@ -170,6 +304,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     player->SetMaxHealth(100.0);
     player->SetHealth(100.0);
     player->SetLocation(Location(WorldPosition{2, 2}));
+    player->SetGold(30);
     mPlayerCombat = CombatStats{14.0, 5.0};
 
     auto &farmer = AddAgent<FarmingAgent>("Farmer");

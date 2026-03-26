@@ -1,5 +1,5 @@
 /**
-* @file TestFarmingAgent.cpp
+ * @file TestFarmingAgent.cpp
  * @brief Unit tests for Farming Agent behavior
  */
 
@@ -9,19 +9,27 @@
 #include "../../source/Agents/FarmingAgent.hpp"
 #include "../../source/core/WorldBase.hpp"
 
-using namespace cse498;
 
-/**
- * Minimal dummy world to allow agent construction.
- */
-class TestWorld : public WorldBase
+
+namespace cse498
 {
-public:
-    int DoAction(AgentBase &, size_t) override
+    /**
+     * Minimal dummy world to allow agent construction.
+     */
+    class TestWorld : public WorldBase
     {
-        return 0;
-    }
-};
+    public:
+        TestWorld() : WorldBase() {}
+        ~TestWorld() override = default;
+
+        int DoAction([[maybe_unused]] AgentBase& agent, [[maybe_unused]] size_t action_id) override
+        {
+            return 0;
+        }
+    };
+}
+
+using namespace cse498;
 
 TEST_CASE("FarmingAgent initializes correctly", "[FarmingAgent]")
 {
@@ -35,7 +43,7 @@ TEST_CASE("FarmingAgent initializes correctly", "[FarmingAgent]")
 TEST_CASE("FarmingAgent SelectAction returns 0", "[FarmingAgent]")
 {
     TestWorld world;
-    FarmingAgent agent(1, "Farmer", world);
+    FarmingAgent agent(2, "Farmer", world);
 
     WorldGrid grid;
     REQUIRE(agent.SelectAction(grid) == 0);
@@ -44,13 +52,68 @@ TEST_CASE("FarmingAgent SelectAction returns 0", "[FarmingAgent]")
 TEST_CASE("FarmingAgent trade availability toggle", "[FarmingAgent]")
 {
     TestWorld world;
-    FarmingAgent agent(1, "Farmer", world);
+    FarmingAgent farmer(3, "Farmer", world);
 
-    REQUIRE(agent.IsAvailableForTrade() == true);
+    REQUIRE(farmer.IsAvailableForTrade());
 
-    agent.SetAvailableForTrade(false);
-    REQUIRE(agent.IsAvailableForTrade() == false);
+    farmer.SetAvailableForTrade(false);
+    REQUIRE_FALSE(farmer.IsAvailableForTrade());
 
-    agent.SetAvailableForTrade(true);
-    REQUIRE(agent.IsAvailableForTrade() == true);
+    farmer.SetAvailableForTrade(true);
+    REQUIRE(farmer.IsAvailableForTrade());
+}
+
+TEST_CASE("FarmingAgent has expected trade greeting", "[FarmingAgent][greeting]")
+{
+    TestWorld world;
+    FarmingAgent farmer(4, "Farmer", world);
+
+    REQUIRE(farmer.GetTradeGreeting() == "Fresh crops and seeds today.");
+}
+
+TEST_CASE("FarmingAgent has expected default offers", "[FarmingAgent][offers]")
+{
+    TestWorld world;
+    FarmingAgent farmer(5, "Farmer", world);
+
+    const auto& offers = farmer.GetOffers();
+    REQUIRE(offers.size() == 3);
+
+    const TradeOffer* wheat = farmer.FindOffer("wheat");
+    const TradeOffer* seeds = farmer.FindOffer("seeds");
+    const TradeOffer* carrot = farmer.FindOffer("carrot");
+
+    REQUIRE(wheat != nullptr);
+    REQUIRE(seeds != nullptr);
+    REQUIRE(carrot != nullptr);
+
+    SECTION("wheat offer is limited with expected values")
+    {
+        REQUIRE_FALSE(wheat->IsUnlimited());
+        REQUIRE(wheat->mStockMode == TradeStockMode::Limited);
+        REQUIRE(wheat->mStock == 30);
+        REQUIRE(wheat->mBuyPrice == 3);
+        REQUIRE(wheat->mSellPrice == 1);
+        REQUIRE(wheat->mItemValue == 1);
+    }
+
+    SECTION("seeds offer is unlimited with expected values")
+    {
+        REQUIRE(seeds->IsUnlimited());
+        REQUIRE(seeds->mStockMode == TradeStockMode::Unlimited);
+        REQUIRE(seeds->mStock == 0);
+        REQUIRE(seeds->mBuyPrice == 2);
+        REQUIRE(seeds->mSellPrice == 1);
+        REQUIRE(seeds->mItemValue == 1);
+    }
+
+    SECTION("carrot offer is limited with expected values")
+    {
+        REQUIRE_FALSE(carrot->IsUnlimited());
+        REQUIRE(carrot->mStockMode == TradeStockMode::Limited);
+        REQUIRE(carrot->mStock == 18);
+        REQUIRE(carrot->mBuyPrice == 4);
+        REQUIRE(carrot->mSellPrice == 2);
+        REQUIRE(carrot->mItemValue == 1);
+    }
 }

@@ -18,28 +18,47 @@ namespace cse498
         int DoAction([[maybe_unused]] AgentBase &agent, [[maybe_unused]] size_t action_id) override { return 0; }
     };
 
+    /**
+     * Shared test world used by mock items so they do not hold references
+     * to temporary WorldBase objects that immediately go out of scope.
+     */
+    inline MockWorldBase& GetTestWorld()
+    {
+        static MockWorldBase world;
+        return world;
+    }
+
     class MockTestItem : public Item
     {
     public:
-        MockTestItem(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, MockWorldBase()) {}
+        MockTestItem(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, GetTestWorld()) {}
     };
     class MockTestItem2 : public Item
     {
     public:
-        MockTestItem2(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, MockWorldBase()) { mUnique = true; }
+        MockTestItem2(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, GetTestWorld())
+        {
+            mUnique = true;
+        }
     };
 
 // This is a 'real' item mimicking real items that is 'U' = unique
     class RealUItem : public Item
     {
     public:
-        RealUItem(size_t id, int gold, const WorldBase& world) : Item(id, "RealUItem", "path", gold, world) { mUnique = true; }
+        RealUItem(size_t id, int gold, const WorldBase& world) : Item(id, "RealUItem", "path", gold, world)
+        {
+            mUnique = true;
+        }
     };
 // This is a 'real' item that is non-unique (gold price is determined)
     class RealItem : public Item
     {
     public:
-        RealItem(size_t id, const WorldBase& world) : Item(id, "RealItem", "path", 4, world) { mUnique = false; }
+        RealItem(size_t id, const WorldBase& world) : Item(id, "RealItem", "path", 4, world)
+        {
+            mUnique = false;
+        }
     };
 
 

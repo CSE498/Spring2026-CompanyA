@@ -8,32 +8,37 @@
 #include "../core/WorldBase.hpp"
 #include "../tools/CombatStats.hpp"
 
-namespace cse498 {
+namespace cse498
+{
+    class MerchantAgent;
+    class Enemy;
 
-class DemoSimpleWorldG2 : public WorldBase {
-private:
-    size_t mFloorId = 0;
-    size_t mWallId = 0;
+    class DemoSimpleWorldG2 : public WorldBase
+    {
+    private:
+        size_t mFloorId = 0;
+        size_t mWallId = 0;
 
-    static constexpr size_t kPlayerIdx = 0;
-    static constexpr size_t kFarmerIdx = 1;
-    static constexpr size_t kEnemyIdx = 2;
+        static constexpr size_t kPlayerIdx = 0;
+        static constexpr size_t kFarmerIdx = 1;
+        static constexpr size_t kEnemyIdx = 2;
 
-    CombatStats mPlayerCombat{};
-    CombatStats mEnemyCombat{};
+        CombatStats mPlayerCombat{};
+        CombatStats mEnemyCombat{};
 
-    [[nodiscard]] bool IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const;
-    void PrintWorldState() const;
-    bool MoveAgentBy(AgentBase &agent, double dx, double dy);
-    int HandleInteraction(AgentBase &actor);
+        [[nodiscard]] bool IsOccupiedByAgent(WorldPosition pos, const AgentBase* skip) const;
+        void PrintWorldState() const;
+        bool MoveAgentBy(AgentBase& agent, double dx, double dy);
+        int HandleInteraction(AgentBase& actor);
+        int HandleMerchantTrade(MerchantAgent &merchant) const;
+        static void HandleEnemyDefeat(Enemy &enemy, PlayerAgent &player);
 
-protected:
-    void ConfigAgent(AgentBase &agent) override;
+    protected:
+        void ConfigAgent(AgentBase& agent) override;
 
-public:
-    DemoSimpleWorldG2();
-    int DoAction(AgentBase &agent, size_t action_id) override;
-    void Run() override;
-};
-
+    public:
+        DemoSimpleWorldG2();
+        int DoAction(AgentBase& agent, size_t action_id) override;
+        void Run() override;
+    };
 } // namespace cse498

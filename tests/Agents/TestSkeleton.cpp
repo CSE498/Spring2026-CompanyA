@@ -10,8 +10,10 @@
 using cse498::WorldGrid;
 using cse498::MazeWorld;
 
-TEST_CASE("Skeleton Tests Cumulative -- Categorize later", "[Skeleton Basics")
+TEST_CASE("Skeleton Tests Cumulative -- Categorize later", "[Skeleton Basics]")
 {
     MazeWorld world1;
+    REQUIRE(world1.GetNumAgents() >= 1);
+
 }
 

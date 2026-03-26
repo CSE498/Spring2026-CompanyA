@@ -147,6 +147,14 @@ public:
     size_t GetTotal(const std::string& name) const;
 
     /**
+     * Finds the first item instance with the given name.
+     *
+     * @param name Item category/name to search for
+     * @return Pointer to an item instance if found, otherwise nullptr
+     */
+    [[nodiscard]] const Item* FindFirstItem(const std::string& name) const;
+
+    /**
      * Hand slot item. Quantity is other method
      * @return Gives you the item in the hand slot.
      */

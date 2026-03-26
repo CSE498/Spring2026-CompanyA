@@ -39,4 +39,14 @@ size_t PlayerAgent::SelectAction(const WorldGrid & /*grid*/) {
     }
 }
 
+bool PlayerAgent::SpendGold(std::size_t amount)
+{
+    if (amount > mGold)
+    {
+        return false;
+    }
+
+    mGold -= amount;
+    return true;
+}
 } // namespace cse498

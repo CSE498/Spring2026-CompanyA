@@ -121,6 +121,18 @@ size_t Inventory::GetTotal(const std::string &name) const
     return 0;
 }
 
+const Item* Inventory::FindFirstItem(const std::string& name) const
+{
+    auto it = mItemMap.find(name);
+    if (it == mItemMap.end() || it->second.empty())
+    {
+        return nullptr;
+    }
+
+    const size_t index = *it->second.begin();
+    return mInventory.at(index).GetItem();
+}
+
 size_t Inventory::RemoveUniqueItem(const size_t itemId)
 {
     // We don't have a lookup for itemId so we straight up search for it

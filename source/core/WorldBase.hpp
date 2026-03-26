@@ -91,7 +91,7 @@ namespace cse498 {
       return *agent_set[id];
     }
 
-    [[nodiscard]] PlayerAgent* GetPlayer() { return mPlayer; }
+    [[nodiscard]] PlayerAgent* GetPlayer() const { return mPlayer; }
     /// TODO: I'm not sure whether to check player == nullptr or not. It is technically possible to delete player agent
     /// But this will cause other issues. so we can assume he always exists?
     [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayer->GetLocation().AsWorldPosition(); }

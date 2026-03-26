@@ -1,34 +1,22 @@
 /**
-* @file FarmingAgent.hpp
+ * @file FarmingAgent.hpp
  * @brief Minimal FarmingAgent (trading NPC stub).
  */
 #ifndef CSE498COMPA_FARMINGAGENT_H
 #define CSE498COMPA_FARMINGAGENT_H
 
-#include "../core/AgentBase.hpp"
+#include "MerchantAgent.hpp"
 
 namespace cse498
 {
 
     /** Basic NPC agent used for simple trading interactions. */
-    class FarmingAgent : public AgentBase
+    class FarmingAgent : public MerchantAgent
     {
-    private:
-        bool mAvailableForTrade = true;
-
     public:
-        FarmingAgent(size_t id, const std::string & name, WorldBase & world);
-
-        /** No autonomous behavior; returns 0 (no action). */
-        [[nodiscard]] size_t SelectAction(const WorldGrid & grid) override;
-
-        /** Is trading available? */
-        [[nodiscard]] bool IsAvailableForTrade() const;
-
-        /** Set trading availability. */
-        void SetAvailableForTrade(bool available);
+        FarmingAgent(std::size_t id, const std::string& name, WorldBase& world);
+        [[nodiscard]] std::string GetTradeGreeting() const override;
     };
-
 }
 
 #endif // CSE498COMPA_FARMINGAGENT_H
