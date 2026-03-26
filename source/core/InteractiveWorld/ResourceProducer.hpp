@@ -8,17 +8,12 @@
 
 #include <chrono>
 
-#include "../../Worlds/InteractiveWorld.hpp"
+#include "../InteractiveWorld/InteractiveWorldInventory.hpp"
 #include "Building.hpp"
-#include "InteractiveWorldInventory.hpp"
 
 using namespace cse498;
 
-// Forward declarations
 namespace cse498 {
-class InteractiveWorld;
-}
-
 /**
  * Produces a single kind of resource over time. Rate of production is modified
  * by a Building object
@@ -56,12 +51,8 @@ public:
       return;
     }
 
-    float multiplier;
-    if (m_building->GetCurrentLevel() == 0)
-      multiplier = 1.0;
-    else
-      multiplier =
-          m_building->GetCurrentLevel() * m_building->GetRateModifier();
+    float multiplier =
+        1.0f + (m_building->GetCurrentLevel() * m_building->GetRateModifier());
     m_rate = m_baseRate * multiplier;
   }
 
@@ -107,3 +98,4 @@ private:
    */
   void SetWorldInventory(InteractiveWorldInventory &inv) { m_inventory = inv; }
 };
+} // namespace cse498
