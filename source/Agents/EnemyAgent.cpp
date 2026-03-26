@@ -4,6 +4,8 @@
 
 #include "EnemyAgent.hpp"
 
+#include "../core/WorldBase.hpp"
+
 #include <limits>
 
 namespace cse498
@@ -91,8 +93,24 @@ namespace cse498
             return -1'000'000.0;
         }
 
-        // Replace this with however the world/game stores the player.
-        const WorldPosition player_pos = world.GetPlayerPosition();
+		// Get all known agents
+		const std::vector<size_t> agent_ids = world.GetKnownAgents(*this);
+
+		 // Default to current position in case no other agent is found.
+    	WorldPosition player_pos = current_pos;
+
+    	// Find the first other agent and treat it as the player.
+    	for (size_t id : agent_ids)
+    	{
+        	if (id == GetID())
+        	{
+            	continue;
+        	}
+
+        	const AgentBase &other = world.GetAgent(id);
+        	player_pos = other.GetLocation().AsWorldPosition();
+        	break;
+    	}
 
         // Smaller distance is better.
         const int dist = ManhattanDistance(next_pos, player_pos);
