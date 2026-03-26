@@ -8,7 +8,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 #include <random>
+#include <ranges>
 #include <vector>
 
 namespace cse498 {
@@ -33,8 +35,8 @@ private:
 
   // Const version of FindProcess for use in const methods
   auto FindProcess(ProcessID id) const {
-    return std::find_if(processes.begin(), processes.end(),
-                        [id](const Process &p) { return p.id == id; });
+    return std::ranges::find_if(processes,
+                                [id](const Process &p) { return p.id == id; });
   }
 
   std::vector<Process> processes; // List of processes with their priorities
@@ -58,10 +60,11 @@ public:
 
     // Determines next process to run based on weighted random selection using
     // priorities
-    float totalPriority = 0.0f;
-    for (const auto &p : processes) {
-      totalPriority += p.priority;
-    }
+    float totalPriority = std::ranges::fold_left(
+        processes |
+            std::views::transform([](const Process &p) { return p.priority; }),
+        0.0f, // Starting value of the accumulator
+        [](float acc, float priority) { return acc + priority; });
 
     // Checks that total priority is positive
     assert(totalPriority > 0.0f && "Total priority must be > 0");
