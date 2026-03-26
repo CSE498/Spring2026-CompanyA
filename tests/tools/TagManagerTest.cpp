@@ -11,10 +11,11 @@
 using cse498::TagManager;
 
 // Helpers Functions
-static std::unordered_set<TagManager::ObjectId>
-ToSet(const std::vector<TagManager::ObjectId>& v)
+static std::vector<TagManager::ObjectId>
+ToVector(std::vector<TagManager::ObjectId> v)
 {
-    return { v.begin(), v.end() };
+    std::sort(v.begin(), v.end());
+    return v;
 }
 
 static std::vector<std::string_view> SV(std::initializer_list<std::string_view> tags)
@@ -23,17 +24,34 @@ static std::vector<std::string_view> SV(std::initializer_list<std::string_view> 
 }
 
 // Tests
-TEST_CASE("TagManager: Empty tags throw invalid_argument", "[TagManager]")
+TEST_CASE("TagManager: HasTag with empty tag is false", "[TagManager]")
 {
     TagManager tm;
     TagManager::ObjectId a = 1;
 
-    REQUIRE_THROWS_AS(tm.OnTagAdded(a, ""), std::invalid_argument);
-    REQUIRE_THROWS_AS(tm.OnTagRemoved(a, ""), std::invalid_argument);
-    REQUIRE_THROWS_AS(tm.HasTag(a, ""), std::invalid_argument);
+    REQUIRE_FALSE(tm.HasTag(a, ""));
+}
 
-    REQUIRE_THROWS_AS(tm.Query(SV({ "" })), std::invalid_argument);
-    REQUIRE_THROWS_AS(tm.Query(SV({ "ok" }), SV({ "" })), std::invalid_argument);
+TEST_CASE("TagManager: Query with empty include tag returns empty", "[TagManager]")
+{
+    TagManager tm;
+    TagManager::ObjectId a = 1;
+
+    tm.OnTagAdded(a, "red");
+
+    auto res = tm.Query(SV({""}));
+    REQUIRE(res.empty());
+}
+
+TEST_CASE("TagManager: Query ignores empty exclude tag", "[TagManager]")
+{
+    TagManager tm;
+    TagManager::ObjectId a = 1;
+
+    tm.OnTagAdded(a, "red");
+
+    auto res = tm.Query(SV({"red"}), SV({""}));
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{a});
 }
 
 TEST_CASE("TagManager: OnTagAdded makes HasTag true and Query returns owner", "[TagManager]")
@@ -43,10 +61,10 @@ TEST_CASE("TagManager: OnTagAdded makes HasTag true and Query returns owner", "[
 
     tm.OnTagAdded(a, "red");
 
-    REQUIRE(tm.HasTag(a, "red") == true);
+    REQUIRE(tm.HasTag(a, "red"));
 
     auto res = tm.Query(SV({ "red" }));
-    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a});
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{a});
 }
 
 TEST_CASE("TagManager: Adding same tag twice does not duplicate results", "[TagManager]")
@@ -70,7 +88,7 @@ TEST_CASE("TagManager: OnTagRemoved removes membership for that tag", "[TagManag
     tm.OnTagAdded(a, "red");
     tm.OnTagRemoved(a, "red");
 
-    REQUIRE(tm.HasTag(a, "red") == false);
+    REQUIRE_FALSE(tm.HasTag(a, "red"));
 
     auto res = tm.Query(SV({ "red" }));
     REQUIRE(res.empty());
@@ -84,10 +102,10 @@ TEST_CASE("TagManager: Removing a non-existent tag does not crash and keeps stat
     tm.OnTagAdded(a, "red");
     tm.OnTagRemoved(a, "blue"); // not present
 
-    REQUIRE(tm.HasTag(a, "red") == true);
+    REQUIRE(tm.HasTag(a, "red"));
 
     auto res = tm.Query(SV({ "red" }));
-    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a});
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{a});
 }
 
 TEST_CASE("TagManager: Excluding a tag that doesn't exist changes nothing", "[TagManager]")
@@ -100,7 +118,7 @@ TEST_CASE("TagManager: Excluding a tag that doesn't exist changes nothing", "[Ta
     tm.OnTagAdded(b, "red");
 
     auto res = tm.Query(SV({ "red" }), SV({ "ghost" }));
-    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a, b});
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{a, b});
 }
 
 TEST_CASE("TagManager: Query with multiple include tags returns intersection", "[TagManager]")
@@ -119,7 +137,7 @@ TEST_CASE("TagManager: Query with multiple include tags returns intersection", "
 
     // Must have both "red" and "round" -> only a
     auto res = tm.Query(SV({ "red", "round" }));
-    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a});
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{a});
 }
 
 TEST_CASE("TagManager: Query returns empty if any include tag missing globally", "[TagManager]")
@@ -147,7 +165,7 @@ TEST_CASE("TagManager: Query with excludeTags filters out matches", "[TagManager
 
     // Include "red" but exclude "bad" -> only b
     auto res = tm.Query(SV({ "red" }), SV({ "bad" }));
-    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{b});
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{b});
 }
 
 TEST_CASE("TagManager: Query with empty includeTags uses universe then excludes", "[TagManager]")
@@ -163,7 +181,7 @@ TEST_CASE("TagManager: Query with empty includeTags uses universe then excludes"
 
     // include empty => start from universe => {a,b,c} then exclude "bad" => {a,b}
     auto res = tm.Query({}, SV({ "bad" }));
-    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a, b});
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{a, b});
 }
 
 TEST_CASE("TagManager: Universe keeps owners even if their last tag is removed", "[TagManager]")
@@ -176,7 +194,7 @@ TEST_CASE("TagManager: Universe keeps owners even if their last tag is removed",
 
     // Owner should still be in universe, so Query(include empty) should return it
     auto res = tm.Query({});
-    REQUIRE(ToSet(res) == std::unordered_set<TagManager::ObjectId>{a});
+    REQUIRE(ToVector(res) == std::vector<TagManager::ObjectId>{a});
 }
 
 TEST_CASE("TagManager: Clear removes all tags and universe", "[TagManager]")
@@ -190,8 +208,8 @@ TEST_CASE("TagManager: Clear removes all tags and universe", "[TagManager]")
 
     tm.Clear();
 
-    REQUIRE(tm.HasTag(a, "red") == false);
-    REQUIRE(tm.HasTag(b, "blue") == false);
+    REQUIRE_FALSE(tm.HasTag(a, "red"));
+    REQUIRE_FALSE(tm.HasTag(b, "blue"));
 
     REQUIRE(tm.Query(SV({ "red" })).empty());
     REQUIRE(tm.Query(SV({ "blue" })).empty());
