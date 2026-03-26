@@ -278,11 +278,15 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebTextboxTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -295,13 +299,17 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebImageTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
-    )
+    )   
 
     add_custom_command(
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
@@ -312,11 +320,15 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -328,11 +340,13 @@ if(COMPANYA_EMPP_EXECUTABLE)
             ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
             --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
@@ -345,10 +359,14 @@ if(COMPANYA_EMPP_EXECUTABLE)
             ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebLayoutTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebLayoutTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 

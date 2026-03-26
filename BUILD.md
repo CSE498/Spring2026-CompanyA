@@ -56,6 +56,12 @@ emsdk activate latest
 source emsdk_env.sh
 ```
 
+3. Build web_tests
+
+```bash
+cmake --build build --target web_test
+```
+
 ### Serve the Web Test Files
 
 After building, serve the generated HTML files and open them in a browser:

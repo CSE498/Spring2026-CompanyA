@@ -28,6 +28,28 @@ using emscripten::val;
 
 namespace cse498 {
 
+  // constexpr helpers
+  constexpr const char* kDisplayInline   = "inline-block";
+  constexpr const char* kDisplayNone     = "none";
+  constexpr const char* kNormal          = "normal";
+  constexpr const char* kBold            = "bold";
+  constexpr const char* kItalic          = "italic";
+  constexpr const char* kTransparent     = "transparent";
+  constexpr const char* kPreWrap         = "pre-wrap";
+  constexpr const char* kPre             = "pre";
+  constexpr const char* kDisplayerBorder = "border-box";
+
+  constexpr const char* ToCssAlign(cse498::WebTextbox::TextAlign a)
+  {
+      switch (a)
+      {
+          case cse498::WebTextbox::TextAlign::Left:   return "left";
+          case cse498::WebTextbox::TextAlign::Center: return "center";
+          case cse498::WebTextbox::TextAlign::Right:  return "right";
+          default:                                    return "left";
+      }
+  }
+
 int WebTextbox::mNextIdCounter = 1;
 
 
@@ -59,8 +81,8 @@ WebTextbox::WebTextbox(const std::string& initial_text)
 
   // IMPORTANT: WebLayout owns positioning/mounting. Do not append here.
   // Use inline-block so bounding box + sizing works predictably.
-  mElement["style"].set("display", std::string("inline-block"));
-  mElement["style"].set("boxSizing", std::string("border-box"));
+  mElement["style"].set("display", std::string(kDisplayInline));
+  mElement["style"].set("boxSizing", std::string(kDisplayerBorder));
 
   ApplyText();
   ApplyStyles();
@@ -310,12 +332,15 @@ void WebTextbox::SetAlignment(TextAlign alignment)
 {
     switch (alignment)
     {
-        case TextAlign::Left:   mTextAlign = "left";   break;
-        case TextAlign::Center: mTextAlign = "center"; break;
-        case TextAlign::Right:  mTextAlign = "right";  break;
+        case TextAlign::Left:
+        case TextAlign::Center:
+        case TextAlign::Right:
+            mTextAlign = ToCssAlign(alignment);
+            break;
         default:
             assert(false && "Invalid TextAlign enum value");
-            return;
+            mTextAlign = ToCssAlign(TextAlign::Left);
+            break;
     }
 
     ApplyStyles();
@@ -389,7 +414,7 @@ void WebTextbox::ApplyStyles()
   if (mElement.isNull())
   {
     return;
-  } 
+  }
 
   // Fonts
   std::string font_chain;
@@ -409,8 +434,8 @@ void WebTextbox::ApplyStyles()
   mElement["style"].set("fontFamily", font_chain);
   mElement["style"].set("fontSize", std::to_string(mFontSizePx) + "px");
   mElement["style"].set("color", mColor);
-  mElement["style"].set("fontWeight", mBold ? "bold" : "normal");
-  mElement["style"].set("fontStyle", mItalic ? "italic" : "normal");
+  mElement["style"].set("fontWeight", mBold ? kBold : kNormal);
+  mElement["style"].set("fontStyle", mItalic ? kItalic : kNormal);
   mElement["style"].set("textAlign", mTextAlign);
 
   // Line-height: if > 0 use px, else let browser choose
@@ -420,11 +445,11 @@ void WebTextbox::ApplyStyles()
   }
   else
   {
-    mElement["style"].set("lineHeight", std::string("normal"));
+    mElement["style"].set("lineHeight", kNormal);
   }
 
   // Wrapping
-  mElement["style"].set("whiteSpace", mWrap ? "pre-wrap" : "pre");
+  mElement["style"].set("whiteSpace", mWrap ? kPreWrap : kPre);
 
   // Max width
   if (mMaxWidthPx > 0.0f)
@@ -434,20 +459,20 @@ void WebTextbox::ApplyStyles()
   else
   {
     mElement["style"].set("maxWidth", std::string(""));
-  }    
+  }
+
   // Background color
   if (mBackgroundColor.has_value())
   {
-      mElement["style"].set("backgroundColor", *mBackgroundColor);
+    mElement["style"].set("backgroundColor", *mBackgroundColor);
   }
   else
   {
-      mElement["style"].set(
-          "backgroundColor",
-          Color::FromRGBA255(0, 0, 0, 0).ToRgbaString());
+    mElement["style"].set("backgroundColor", kTransparent);
   }
+
   // Visibility
-  mElement["style"].set("display", mIsVisible ? "inline-block" : "none");
+  mElement["style"].set("display", mIsVisible ? kDisplayInline : kDisplayNone);
 
   // Alignment (align-self) for flex/grid layouts in WebLayout
   ApplyAlignment(mAlign);
