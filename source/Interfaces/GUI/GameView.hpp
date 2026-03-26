@@ -3,6 +3,7 @@
  * @author Group 17
  *
  * Manages the SDL window and renderer for the game.
+ * Made via reference to Claude Sonnet 4.6
  */
 
 #pragma once

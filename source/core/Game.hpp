@@ -2,6 +2,7 @@
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
  * @brief Top-level Game class that owns and manages core game systems.
  * @note Status: PROPOSAL
+ * Made via reference to Claude Sonnet 4.6
  */
 
 #pragma once

@@ -3,6 +3,7 @@
  * @brief A procedurally generated dungeon world using BSP room placement.
  * @author Group 17
  * @note Status: PROPOSAL
+ * Made via reference to Claude Sonnet 4.6
  */
 
 #pragma once

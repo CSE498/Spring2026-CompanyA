@@ -213,6 +213,13 @@ set_target_properties(gameview PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
 )
 
+add_executable(group17_demo "demo/Group17_demo.cpp")
+target_link_libraries(group17_demo PRIVATE companya_native ${COMPANYA_SDL_LIBRARIES})
+target_include_directories(group17_demo PRIVATE "${COMPANYA_SDL_INCLUDE_DIR}")
+set_target_properties(group17_demo PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
+)
+
 file(GLOB_RECURSE COMPANYA_NATIVE_TEST_FILES CONFIGURE_DEPENDS "${COMPANYA_TEST_DIR}/*.cpp")
 list(FILTER COMPANYA_NATIVE_TEST_FILES EXCLUDE REGEX "/Interfaces/WebUI/")
 list(SORT COMPANYA_NATIVE_TEST_FILES)

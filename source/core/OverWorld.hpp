@@ -3,6 +3,7 @@
  * @brief A flat interactive overworld with a dungeon entrance.
  * @author: Group 17
  * @note Status: PROPOSAL
+ * Made via reference to Claude Sonnet 4.6
  */
 
 #pragma once
