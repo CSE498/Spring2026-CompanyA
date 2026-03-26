@@ -5,20 +5,46 @@
 
 #include <memory>
 #include <concepts>
+#include <array>
+#include <algorithm>
 
 namespace cse498 {
 
+/// @class MockWorld
+/// @brief A mock world implementation for testing and demonstrating interfaces.
+/// @details This class provides a simple grid-based world with predefined cell types and agents for testing WebUI interfaces.
 class MockWorld : public WorldBase {
 protected:
+  /// @enum ActionType
+  /// @brief Enumeration of possible agent actions.
   enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT, QUIT };
 
-  size_t mFloorId; ///< Easy access to floor CellType ID.
-  size_t mWallId;  ///< Easy access to wall CellType ID.
+  /// @brief Array of floor cell type IDs for easy access.
+  std::array<size_t, 3> mFloorIds;
+
+  /// @brief Array of impassable cell type IDs for easy access.
+  std::array<size_t, 5> mImpassableIds;
+
+  /// @brief Unique pointer to the interface used by this world.
   std::unique_ptr<InterfaceBase> mInterface = nullptr;
-  double actionTimer{0};
 
-  void IncrementActionTimer(double millis) { actionTimer += millis; }
+  /// @brief Timer for tracking action intervals.
+  double mActionTimer{0};
 
+  /// @brief Delta time for the last update.
+  double mDelta{0};
+
+  /// @brief Increments the action timer by the given milliseconds.
+  /// @param millis The milliseconds to add to the timer.
+  void IncrementActionTimer(double millis) { 
+    mDelta = millis;
+    mActionTimer += mDelta; 
+  }
+
+  /// @brief Adds an interface of the specified type to the world.
+  /// @tparam T The interface type, must derive from InterfaceBase.
+  /// @param interfaceName The name for the interface.
+  /// @return Reference to the added interface.
   template <std::derived_from<InterfaceBase> T>
   InterfaceBase & AddInterface(std::string interfaceName="None") {
     mInterface = std::make_unique<T>(agent_set.size(), interfaceName, *this);
@@ -43,25 +69,36 @@ protected:
   }
 
 public:
+  /// @brief Constructs a MockWorld with predefined grid layout.
   MockWorld() {
-    mFloorId = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
-    mWallId  = main_grid.AddCellType("wall",  "Impenetrable wall.",             '#');
+    mFloorIds[0] = main_grid.AddCellType("floor",          "world/forest/floor_tiles/tile_grass_1.png", ' ');
+    mFloorIds[1] = main_grid.AddCellType("floor-variant1", "world/forest/floor_tiles/tile_grass_5.png", 'v');
+    mFloorIds[2] = main_grid.AddCellType("floor-variant2", "world/forest/floor_tiles/tile_grass_2.png", 't');
 
-    main_grid.Load(std::vector<std::string>{"#######################",
-                                            "# #            ##     #",
-                                            "# #  #  ######    ### #",
-                                            "# #  #  #     #  #  # #",
-                                            "# #  #  #  #  #  #  # #",
-                                            "#    #     #     #    #",
-                                            "##################  # #",
-                                            "#                    ##",
-                                            "#                    ##",
-                                            "#  ####################",
-                                            "#######################"} );
+    mImpassableIds[0]  = main_grid.AddCellType("floor-obstacle", "world/forest/floor_tiles/tile_grass_3.png",            '$');
+    mImpassableIds[1]  = main_grid.AddCellType("top-wall",       "world/forest/walls/external/border_top_forest.png",    '^');
+    mImpassableIds[2]  = main_grid.AddCellType("left-wall",      "world/forest/walls/external/border_left_forest.png",   '<');
+    mImpassableIds[3]  = main_grid.AddCellType("right-wall",     "world/forest/walls/external/border_right_forest.png",  '>');
+    mImpassableIds[4]  = main_grid.AddCellType("bottom-wall",    "world/forest/walls/external/border_bottom_forest.png", '&');
+
+    main_grid.Load(std::vector<std::string>{"^^^^^^^^^^^^^^^^^^",
+                                            "<        t       >",
+                                            "<  vv         $  >",
+                                            "<                >",
+                                            "<  t   $         >",
+                                            "<          t     >",
+                                            "<  vv            >",
+                                            "<  vv        $   >",
+                                            "< $   t          >",
+                                            "<        vvvv    >",
+                                            "&&&&&&&&&&&&&&&&&&"} );
   }
   ~MockWorld() = default;
 
-  /// Allow the agents to move around the maze.
+  /// @brief Executes an action for the given agent.
+  /// @param agent The agent performing the action.
+  /// @param action_id The ID of the action to perform.
+  /// @return True if the action was successful, false otherwise.
   int DoAction(AgentBase & agent, size_t action_id) override {
     // Determine where the agent is trying to move.
     WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
@@ -73,12 +110,12 @@ public:
     case MOVE_LEFT:    new_position = cur_position.Left(); break;
     case MOVE_RIGHT:   new_position = cur_position.Right(); break;
     case INTERACT:     return true;
-    case QUIT: 
+    case QUIT:         return true;
     }
 
     // Don't let the agent move off the world or into a wall.
     if (!main_grid.IsValid(new_position)) { return false; }
-    if (main_grid[new_position] == mWallId) { return false; }
+    if (std::ranges::contains(mImpassableIds, main_grid[new_position])) { return false; }
 
     // Set the agent to its new postion.
     agent.SetLocation(new_position);
@@ -86,12 +123,13 @@ public:
     return true;
   }
 
+  /// @brief Runs the main game loop iteration.
   void Run() override {
-    if (actionTimer < 250) {
+    if (mActionTimer < 250) {
       mInterface->RenderFrame();
       return;
     }
-    actionTimer = 0;
+    mActionTimer = 0;
     size_t action_id = mInterface->SelectAction(main_grid);
     if (action_id == QUIT) Teardown();
     int result = DoAction(*mInterface, action_id);
@@ -102,6 +140,7 @@ public:
     mInterface->RenderFrame();
   }
 
+  /// @brief Cleans up and exits the application.
   void Teardown() {
     mInterface.release();
     exit(0);

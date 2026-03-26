@@ -47,15 +47,29 @@ em++ main.cpp WebButton.cpp ../WebLayout/WebLayout.cpp \
      -o index.html
 ```
 
+## Building Module Demo
+
+The module demo main file is Group18_main.cpp, located in the source directory along with an index.html file. To build the demo, run
+```bash
+# From the repo root (Emscripten environment must be active)
+cmake --build build --target group18_demo
+```
+then
+```bash
+# From the repo root (Emscripten environment must be active)
+emrun /source/index.html --browser <chrome | edge | ...> --serve-root .
+```
+The --serve-root argument is important for loading image assets.
+
 ## Running Tests
 
-WebUI tests are **excluded** from the default `make test` target because they
-require the Emscripten toolchain. A dedicated Makefile target compiles all
+WebUI tests are **excluded** from the default target because they
+require the Emscripten toolchain. A dedicated cmake target compiles all
 WebUI tests:
 
 ```bash
 # From the repo root (Emscripten environment must be active)
-make web_test
+cmake --build build --target web_test
 ```
 
 This produces HTML files in `tests/build/web_tests/`. To run them:
@@ -63,6 +77,10 @@ This produces HTML files in `tests/build/web_tests/`. To run them:
 ```bash
 cd tests/build/web_tests
 python3 -m http.server 8000
+```
+or
+```bash
+emrun tests/build/web_tests --browser <chrome | edge | ...>
 ```
 
 Then open `http://localhost:8000/<TestName>.html` in your browser. Test

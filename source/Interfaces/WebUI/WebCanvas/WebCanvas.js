@@ -177,6 +177,26 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    webcanvas__draw_texture: function (idPtr, bitmapHandle, x, y, scale) {
+        if (typeof document === "undefined") return;
+
+        const bitmap = Emval.toValue(bitmapHandle);
+
+        var id = UTF8ToString(idPtr);
+        var canvas = document.getElementById(id);
+        if (!canvas) return;
+
+        var ctx = canvas.getContext && canvas.getContext("2d");
+        if (!ctx) return;
+
+        const newWidth = Math.floor(bitmap.width * scale);
+        const newHeight = Math.floor(bitmap.height * scale);
+        const newX = x - Math.floor(newWidth / 2);
+        const newY = y - newHeight;
+
+        ctx.drawImage(bitmap, newX, newY, newWidth, newHeight);
+    },
+
     webcanvas__draw_polygon: function (idPtr, coordsXYPtr, count, strokeColorPtr, lineWidth, fillColorPtr) {
         if (typeof document === "undefined") return;
 

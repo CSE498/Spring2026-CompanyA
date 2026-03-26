@@ -52,6 +52,7 @@ third-party/SDL2/
 
 /source/simple
 /tests/build/run_tests
+/tests/build
 
 # ====== Doxygen Output ======
 # The folder where the result reports generated after each Doxygen scan are stored

@@ -253,6 +253,22 @@ if(EXISTS "${COMPANYA_LOCAL_SDL_PREFIX}/lib")
 endif()
 
 find_program(COMPANYA_EMPP_EXECUTABLE em++)
+set(COMPANYA_WEB_DEMO_OUTPUT_DIR "${COMPANYA_SOURCE_DIR}")
+set(COMPANYA_WEB_SOURCE "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI")
+set(COMPANYA_WEB_DEMO_COMMON_ARGS
+    --bind
+    -std=c++23
+    -sWASM=1
+    -sASSERTIONS=1
+    -sASYNCIFY=1
+    -sNO_EXIT_RUNTIME=1
+    -sALLOW_MEMORY_GROWTH=1
+    -gsource-map
+)
+set(COMPANYA_WEB_DEMO_INCLUDE_ARGS
+    "-I${COMPANYA_SOURCE_DIR}"
+)
+
 set(COMPANYA_WEB_TEST_OUTPUT_DIR "${COMPANYA_TEST_DIR}/build/web_tests")
 set(COMPANYA_WEB_TEST_INCLUDE_ARGS
     "-I${COMPANYA_SOURCE_DIR}"
@@ -270,6 +286,32 @@ set(COMPANYA_WEB_TEST_COMMON_ARGS
 
 if(COMPANYA_EMPP_EXECUTABLE)
     add_custom_command(
+        OUTPUT "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
+        COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
+            ${COMPANYA_WEB_DEMO_COMMON_ARGS}
+            --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+            "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
+            "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
+            "${COMPANYA_SOURCE_DIR}/Group18_main.cpp"
+            -o "${COMPANYA_SOURCE_DIR}/Group18_main.js"
+        DEPENDS
+            "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
+            "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
+            "${COMPANYA_SOURCE_DIR}/Group18_main.cpp"
+            "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+    )
+
+    add_custom_command(
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebTextboxTest.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
@@ -278,11 +320,15 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebTextboxTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -295,11 +341,15 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebImageTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -312,11 +362,15 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -327,11 +381,13 @@ if(COMPANYA_EMPP_EXECUTABLE)
             ${COMPANYA_WEB_TEST_COMMON_ARGS}
             ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
             --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
             -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
         DEPENDS
             "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
             "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
@@ -352,6 +408,11 @@ if(COMPANYA_EMPP_EXECUTABLE)
         VERBATIM
     )
 
+    add_custom_target(group18_demo
+        DEPENDS
+            "${COMPANYA_SOURCE_DIR}/Group18_main.js"
+    )
+
     add_custom_target(web_test
         DEPENDS
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebTextboxTest.html"
@@ -361,6 +422,11 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
     )
 else()
+    add_custom_target(group18_demo
+        COMMAND "${CMAKE_COMMAND}" -E echo "group18_demo requires em++ in PATH with the Emscripten environment active."
+        COMMAND "${CMAKE_COMMAND}" -E false
+        VERBATIM
+    )
     add_custom_target(web_test
         COMMAND "${CMAKE_COMMAND}" -E echo "web_test requires em++ in PATH with the Emscripten environment active."
         COMMAND "${CMAKE_COMMAND}" -E false

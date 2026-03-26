@@ -51,6 +51,8 @@ public:
     WebCanvas(WebCanvas&&) noexcept = default;
     WebCanvas& operator=(WebCanvas&&) noexcept = default;
 
+    /// @brief set the color used to clear the screen before drawing
+    /// @param color the color to set
     void SetBackgroundColor(const std::string & color) { mBackgroundColor = color; }
 
     // ---- IDomElement ----
@@ -85,7 +87,7 @@ public:
 
     /// @brief Clears the canvas with the given CSS background color.
     /// @param cssColor CSS color string (e.g., "#000000").
-    void Clear(const std::string& cssColor);
+    void Clear(const std::string& cssColor = "");
 
     /// @brief Draws a line between two points.
     /// @param x1          Start x coordinate.
@@ -160,6 +162,13 @@ public:
     void DrawImage(const std::string& imgSrc,
                    float x, float y,
                    float w, float h);
+
+    /// @brief Draws a bitmap image to the canvas
+    /// @param bitmapHandle handle pointing to the bitmap object
+    /// @param x            the x-coordinate of the bottom center of the image
+    /// @param y            the y-coordinate of the bottom center of the image
+    /// @param scale        the scale factor to apply to the image before drawing
+    void DrawTexture(emscripten::EM_VAL bitmapHandle, int x, int y, double scale);
 
 private:
     std::vector<std::unique_ptr<ICanvasElement>> mElements;  ///< Owned canvas elements.

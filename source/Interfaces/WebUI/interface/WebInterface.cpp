@@ -7,8 +7,11 @@
 #include "../WebTextbox/WebTextbox.hpp"
 #include "../../../tools/Color.hpp"
 #include "../../../core/WorldBase.hpp"
+#include "../../../../third-party/gsl/gsl"
 
+#include <array>
 #include <sstream>
+#include <algorithm>
 
 using namespace cse498;
 
@@ -17,6 +20,28 @@ constexpr cse498::Color kDimGray = cse498::Color::FromRGB255(0xcc, 0xcc, 0xcc);
 constexpr cse498::Color kCanvasBg = cse498::Color::FromRGB255(0x0c, 0x10, 0x17);
 static_assert(kDimGray.R() == 0xcc && kDimGray.G() == 0xcc && kDimGray.B() == 0xcc);
 static_assert(kCanvasBg.R() == 0x0c && kCanvasBg.G() == 0x10 && kCanvasBg.B() == 0x17);
+}
+
+using emscripten::val;
+
+static constexpr const char * PLAYER_IMAGE = "agents/playerCharacter/agent_player.png";
+static constexpr const char * MONSTER_IMAGE = "agents/monsters/agent_monster_goblin.png";
+
+static constexpr int IMAGE_SIZE = 256;
+
+// Use EM_ASYNC_JS to load images synchronously with await
+EM_ASYNC_JS(emscripten::EM_VAL, load_bitmap, (const char* path), {
+    const response = await fetch("/assets/" + UTF8ToString(path));
+    const blob = await response.blob();
+    const bitmap = await createImageBitmap(blob);
+    // We must return a handle that Emscripten can turn into a val
+    return Emval.toHandle(bitmap);
+});
+
+// Wrapper to return a proper emscripten::val
+val loadImage(const std::string& path) {
+    auto handle = load_bitmap(path.c_str());
+    return val::take_ownership(handle);
 }
 
 WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase & world) : InterfaceBase(id, name, world) {
@@ -30,15 +55,6 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   mCanvas = static_cast<WebCanvas*>(mElements.back().get());
   mCanvas->SetBackgroundColor(kCanvasBg.ToHex());
   mRoot->AddElement(mCanvas);
-
-  // Create world textbox
-  auto worldTextPtr = std::make_unique<WebTextbox>();
-  mWorldTextbox = worldTextPtr.get();
-  mWorldTextbox->SetCanvasPosition(300.0f, 150.0f);
-  mWorldTextbox->SetFontSize(20);
-  mWorldTextbox->SetColor(kDimGray.ToHex());
-  mWorldTextbox->SetFontFamily("monospace");
-  mCanvas->AddElement(std::move(worldTextPtr));
 
   // Create points textbox
   auto pointsTextPtr = std::make_unique<WebTextbox>();
@@ -74,6 +90,16 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   descPtr->SetColor(kDimGray.ToHex());
   descPtr->MountToLayout(*mPauseMenu);
 
+  auto cellTypes = world.GetGrid().GetCellTypes();
+
+  std::ranges::for_each(cellTypes, [this](const CellType & cell){
+    if (cell.name == "Unknown") return;
+    mTextures.emplace(cell.symbol, loadImage(cell.desc));
+  });
+
+  mTextures.emplace('@', loadImage(PLAYER_IMAGE));
+  mTextures.emplace('*', loadImage(MONSTER_IMAGE));
+
   RenderFrame();
 }
 
@@ -99,6 +125,29 @@ void WebInterface::DrawGrid(const WorldGrid & grid,
                   const std::vector<size_t> & item_ids,
                   const std::vector<size_t> & agent_ids) {
     {
+      int canvasWidth;
+      int canvasHeight;
+      emscripten_get_canvas_element_size("#web-canvas", &canvasWidth, &canvasHeight);
+      double dpr = emscripten_get_device_pixel_ratio();
+
+      canvasWidth = canvasWidth / dpr;
+      canvasHeight = canvasHeight / dpr;
+
+      const int totalPixelWidth = grid.GetWidth() * IMAGE_SIZE;
+      const int totalPixelHeight = grid.GetHeight() * IMAGE_SIZE;
+
+      const double widthRatio = static_cast<double>(canvasWidth) / totalPixelWidth;
+      const double heightRatio = static_cast<double>(canvasHeight) / totalPixelHeight;
+
+      const double desiredScale = widthRatio <= heightRatio ? widthRatio : heightRatio;
+      const int drawSize = gsl::narrow_cast<int>(IMAGE_SIZE * desiredScale);
+
+      const int leftOffset = (canvasWidth - drawSize * grid.GetWidth()) / 2;
+      const int topOffset = (canvasHeight - drawSize * grid.GetHeight()) / 2;
+
+      auto CellXToLeft = [&leftOffset, &drawSize](auto cellX){ return (leftOffset + drawSize * (cellX + 1)) - drawSize / 2; };
+      auto CellYToTop = [&topOffset, &drawSize](auto cellY){ return topOffset + drawSize * (cellY + 1); };
+
       std::vector<std::string> symbol_grid(grid.GetHeight());
 
       // Load the world into the symbol_grid;
@@ -107,6 +156,18 @@ void WebInterface::DrawGrid(const WorldGrid & grid,
         for (size_t x=0; x < grid.GetWidth(); ++x) {
           symbol_grid[y][x] = grid.GetSymbol(WorldPosition{x,y});
         }
+      }
+
+      mCanvas->Clear();
+
+      int top = topOffset + drawSize;
+      for (const auto & row : symbol_grid) {
+        int left = leftOffset + drawSize / 2;
+        for (char cell : row) {
+          mCanvas->DrawTexture(mTextures.at(cell).as_handle(), left, top, desiredScale);
+          left += drawSize;
+        }
+        top += drawSize;
       }
 
       // Substitute in items.
@@ -120,27 +181,17 @@ void WebInterface::DrawGrid(const WorldGrid & grid,
       for (const auto & agent_id : agent_ids) {
         const AgentBase & agent = world.GetAgent(agent_id);
         WorldPosition pos = agent.GetLocation().AsWorldPosition();
-        symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
+        auto agentTexture = mTextures.at(agent.GetSymbol());
+        auto agentLeft = CellXToLeft(pos.CellX());
+        auto agentTop = CellYToTop(pos.CellY());
+        mCanvas->DrawTexture(agentTexture.as_handle(), agentLeft, agentTop, desiredScale);
       }
 
       auto pos = GetLocation().AsWorldPosition();
-      symbol_grid[pos.CellY()][pos.CellX()] = GetSymbol();
-
-      std::ostringstream out;
-
-      // Print out the symbol_grid with a box around it.
-      out << '+' << std::string(grid.GetWidth(),'-') << "+\n";
-      for (const auto & row : symbol_grid) {
-        out << "|";
-        for (char cell : row) out << cell;
-        out << "|\n";
-      }
-      out << '+' << std::string(grid.GetWidth(),'-') << "+\n";
-      out << "\nW, A, S, D to move,";
-      out << "\nEsc to pause,";
-      out << "\nQ to quit,";
-      mWorldDescription = out.str();
-      out.flush();
+      auto playerTexture = mTextures.at(GetSymbol());
+      auto playerLeft = CellXToLeft(pos.CellX());
+      auto playerTop = CellYToTop(pos.CellY());
+      mCanvas->DrawTexture(playerTexture.as_handle(), playerLeft, playerTop, desiredScale);
     }
 }
 
@@ -156,7 +207,6 @@ void WebInterface::RenderFrame() {
 
     DrawGrid(grid, itemIds, agentIds);
 
-    mWorldTextbox->SetText(mWorldDescription);
     mPointsTextbox->SetText("Points: " + std::to_string(mPoints));
   }
   mRoot->Apply();
