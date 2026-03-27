@@ -73,5 +73,58 @@ TEST_CASE("Reset Log Test", "[DataAnalytics]") {
   CHECK(analytics.GetDamageDealtLog().Count() == 0);
 }
 
-// Tests for ActionLog will be added once ActionLog is implemented into this
-// class
+TEST_CASE("AnalyticsManager ActionLog empty on construction", "[DataAnalytics][actionlog]")
+{
+    cse498::AnalyticsManager analytics;
+
+    CHECK(analytics.GetActionLog().GetActionCount() == 0);
+    CHECK(analytics.GetActionLog().GetActions().empty());
+}
+
+TEST_CASE("AnalyticsManager LogAction stores actions correctly", "[DataAnalytics][actionlog]")
+{
+    cse498::AnalyticsManager analytics;
+
+    analytics.UpdateActionTime(1.0);
+    analytics.LogAction(1, "move", {0.0, 0.0}, {1.0, 0.0});
+
+    REQUIRE(analytics.GetActionLog().GetActionCount() == 1);
+
+    const auto& actions = analytics.GetActionLog().GetActions();
+    CHECK(actions[0].EntityId       == 1);
+    CHECK(actions[0].ActionType     == "move");
+    CHECK(actions[0].Timestamp      == 1.0);
+    CHECK(actions[0].Position.X()   == 0.0);
+    CHECK(actions[0].Position.Y()   == 0.0);
+    CHECK(actions[0].NewPosition.X() == 1.0);
+    CHECK(actions[0].NewPosition.Y() == 0.0);
+}
+
+TEST_CASE("AnalyticsManager LogAction records multiple actions", "[DataAnalytics][actionlog]")
+{
+    cse498::AnalyticsManager analytics;
+
+    analytics.UpdateActionTime(1.0);
+    analytics.LogAction(1, "move",   {0.0, 0.0}, {1.0, 0.0});
+    analytics.UpdateActionTime(2.0);
+    analytics.LogAction(2, "attack", {1.0, 0.0}, {1.0, 0.0});
+    analytics.UpdateActionTime(3.0);
+    analytics.LogAction(1, "move",   {1.0, 0.0}, {2.0, 0.0});
+
+    CHECK(analytics.GetActionLog().GetActionCount() == 3);
+    CHECK(analytics.GetActionLog().GetEntityActions(1).size() == 2);
+    CHECK(analytics.GetActionLog().GetEntityActions(2).size() == 1);
+}
+
+TEST_CASE("AnalyticsManager Reset clears action log", "[DataAnalytics][actionlog]")
+{
+    cse498::AnalyticsManager analytics;
+
+    analytics.UpdateActionTime(1.0);
+    analytics.LogAction(1, "move", {0.0, 0.0}, {1.0, 0.0});
+    REQUIRE(analytics.GetActionLog().GetActionCount() == 1);
+
+    analytics.Reset();
+    CHECK(analytics.GetActionLog().GetActionCount() == 0);
+    CHECK(analytics.GetActionLog().GetActions().empty());
+}

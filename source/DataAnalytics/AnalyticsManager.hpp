@@ -73,7 +73,21 @@ public:
   */
   const DataLog &GetDamageDealtLog() const;
 
-  // Functionality for ActionLog will be added below
+  /*
+  Logs an action performed by an entity into the action log
+  */
+  void LogAction(int entityId, const std::string& actionType,
+                 WorldPosition position, WorldPosition newPosition);
+
+  /*
+  Advances the action log's simulation clock
+  */
+  void UpdateActionTime(double newTime);
+
+  /*
+  Returns a const reference to the action log
+  */
+  const ActionLog& GetActionLog() const;
 };
 
 } // namespace cse498

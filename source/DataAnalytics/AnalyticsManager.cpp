@@ -18,6 +18,7 @@ void AnalyticsManager::Reset() {
   mHealthLog.Clear();
   mEnemiesTrackedLog.Clear();
   mDamageDealtLog.Clear();
+  mActionLog.Clear();
 }
 
 /*
@@ -57,4 +58,18 @@ Returns a const reference to the damage dealt log
 const DataLog &AnalyticsManager::GetDamageDealtLog() const {
   return mDamageDealtLog;
 }
+
+void AnalyticsManager::LogAction(int entityId, const std::string& actionType,
+                                  WorldPosition position, WorldPosition newPosition) {
+  mActionLog.LogAction(entityId, actionType, position, newPosition);
+}
+
+void AnalyticsManager::UpdateActionTime(double newTime) {
+  mActionLog.UpdateTime(newTime);
+}
+
+const ActionLog& AnalyticsManager::GetActionLog() const {
+  return mActionLog;
+}
+
 } // namespace cse498
