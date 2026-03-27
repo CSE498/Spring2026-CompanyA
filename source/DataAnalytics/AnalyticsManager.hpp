@@ -9,7 +9,7 @@
 
 #pragma once
 #include "../tools/DataLog.hpp"
-// #include "../tools/ActionLog.hpp"
+#include "../tools/ActionLog.hpp"
 
 namespace cse498 {
 
@@ -25,7 +25,10 @@ private:
   DataLog mEnemiesTrackedLog;
   DataLog mDamageDealtLog;
 
-  // Functionality for storing ActionLog will be added below
+  
+
+  // ActionLog for tracking entity actions
+  ActionLog mActionLog;
 
 public:
   /*

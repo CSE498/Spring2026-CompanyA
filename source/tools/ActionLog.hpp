@@ -81,9 +81,9 @@ public:
     void Deserialize(const std::string& data);
 
 protected:
-    std::vector<Action> Actions;
-    int                 NextSequenceNumber;
-    double              CurrentTime;
+    std::vector<Action> mActions;
+    int                 mNextSequenceNumber;
+    double              mCurrentTime;
 };
 
 /**

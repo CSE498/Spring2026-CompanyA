@@ -18,27 +18,27 @@ namespace cse498 {
 // ActionLog
 
 ActionLog::ActionLog()
-    : NextSequenceNumber(0), CurrentTime(0.0) {}
+    : mNextSequenceNumber(0), mCurrentTime(0.0) {}
 
 void ActionLog::LogAction(int entityId, const std::string& actionType,
                           WorldPosition position, WorldPosition newPosition) {
     Action action;
     action.EntityId       = entityId;
     action.ActionType     = actionType;
-    action.Timestamp      = CurrentTime;
+    action.Timestamp      = mCurrentTime;
     action.Position       = position;
     action.NewPosition    = newPosition;
-    action.SequenceNumber = NextSequenceNumber++;
-    Actions.push_back(action);
+    action.SequenceNumber = mNextSequenceNumber++;
+    mActions.push_back(action);
 }
 
 void ActionLog::UpdateTime(double newTime) {
     assert(newTime >= 0.0 && "Time must be non-negative");
-    CurrentTime = newTime;
+    mCurrentTime = newTime;
 }
 
 const std::vector<Action>& ActionLog::GetActions() const {
-    return Actions;
+    return mActions;
 }
 
 std::vector<Action> ActionLog::GetActionRange(double startTime, double endTime) const {
@@ -48,27 +48,27 @@ std::vector<Action> ActionLog::GetActionRange(double startTime, double endTime) 
     auto inRange = [startTime, endTime](const Action& a) {
         return a.Timestamp >= startTime && a.Timestamp <= endTime;
     };
-    std::copy_if(Actions.begin(), Actions.end(), std::back_inserter(result), inRange);
+    std::copy_if(mActions.begin(), mActions.end(), std::back_inserter(result), inRange);
     return result;
 }
 
 std::vector<Action> ActionLog::GetEntityActions(int entityId) const {
     std::vector<Action> result;
-    std::copy_if(Actions.begin(), Actions.end(), std::back_inserter(result), [entityId](const Action& a) { return a.EntityId == entityId; });
+    std::copy_if(mActions.begin(), mActions.end(), std::back_inserter(result), [entityId](const Action& a) { return a.EntityId == entityId; });
     return result;
 }
 
 int ActionLog::GetActionCount() const {
-    return static_cast<int>(Actions.size());
+    return static_cast<int>(mActions.size());
 }
 
 std::optional<int> ActionLog::GetMostActiveEntity() const {
-    if (Actions.empty()) {
+    if (mActions.empty()) {
         return std::nullopt;
     }
 
     std::unordered_map<int, int> counts;
-    std::for_each(Actions.begin(), Actions.end(),
+    std::for_each(mActions.begin(), mActions.end(),
         [&counts](const Action& a) { ++counts[a.EntityId]; });
 
     auto maxEntry = std::max_element(counts.begin(), counts.end(),
@@ -80,15 +80,15 @@ std::optional<int> ActionLog::GetMostActiveEntity() const {
 int ActionLog::GetActionCountInRange(double startTime, double endTime) const {
     assert(startTime <= endTime && "startTime must be <= endTime");
 
-    return static_cast<int>(std::count_if(Actions.begin(), Actions.end(),
+    return static_cast<int>(std::count_if(mActions.begin(), mActions.end(),
         [startTime, endTime](const Action& a) {
             return a.Timestamp >= startTime && a.Timestamp <= endTime;
         }));
 }
 
 void ActionLog::Clear() {
-    Actions.clear();
-    NextSequenceNumber = 0;
+    mActions.clear();
+    mNextSequenceNumber = 0;
 }
 
 // AgentActionLog
@@ -97,7 +97,7 @@ double AgentActionLog::GetStuckAgentRatio(int windowSize) const {
     assert(windowSize > 0 && "windowSize must be positive");
 
     std::unordered_set<int> agentIds;
-    for (const auto& action : Actions) {
+    for (const auto& action : mActions) {
         agentIds.insert(action.EntityId);
     }
 
@@ -116,19 +116,19 @@ double AgentActionLog::GetStuckAgentRatio(int windowSize) const {
 // UserActionLog
 
 std::optional<Action> UserActionLog::GetLastAction() const {
-    if (Actions.empty()) {
+    if (mActions.empty()) {
         return std::nullopt;
     }
-    return Actions.back();
+    return mActions.back();
 }
 
 std::optional<std::string> UserActionLog::GetMostFrequentActionType() const {
-    if (Actions.empty()) {
+    if (mActions.empty()) {
         return std::nullopt;
     }
 
     std::unordered_map<std::string, int> counts;
-    std::for_each(Actions.begin(), Actions.end(), [&counts](const Action& a) { ++counts[a.ActionType]; });
+    std::for_each(mActions.begin(), mActions.end(), [&counts](const Action& a) { ++counts[a.ActionType]; });
 
     auto maxEntry = std::max_element(counts.begin(), counts.end(),
         [](const auto& a, const auto& b) { return a.second < b.second; });
