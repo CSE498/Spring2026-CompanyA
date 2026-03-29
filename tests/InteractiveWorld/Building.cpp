@@ -112,8 +112,10 @@ TEST_CASE("Test Building Multiple Upgrades",
         cse498::Building::UpgradeRejectionType::AlreadyMaxLevel);
   CHECK(farm.GetCurrentLevel() == 3);
   CHECK(farm.IsMaxLevel() == true);
-  // Attempting to level beyond max level without catching error status
-  farm.Upgrade(cse498::ItemType::Metal, resources);
+  // Attempting to level beyond max level
+  auto status5 = farm.Upgrade(cse498::ItemType::Metal, resources);
+  CHECK(status5.has_value() == false);
+  CHECK(status5.error() == cse498::Building::UpgradeRejectionType::AlreadyMaxLevel);
   CHECK(farm.GetCurrentLevel() == 3);
   CHECK(farm.IsMaxLevel() == true);
 }
