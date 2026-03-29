@@ -34,10 +34,11 @@ Verify the installation:
 em++ --version
 ```
 
-## Building WebUI Components
+## Building WebUI Components' Demos
 
-Individual components can be compiled with `em++`. Example for the
-WebButton demo:
+Individual components can be compiled with `em++`.
+
+For WebButton:
 
 ```bash
 cd source/Interfaces/WebUI/WebButton
@@ -46,6 +47,8 @@ em++ main.cpp WebButton.cpp ../WebLayout/WebLayout.cpp \
      -s WASM=1 -s ASSERTIONS=1 \
      -o index.html
 ```
+
+For WebCanvas, read [3.4.3](https://github.com/CSE498/Spring2026-CompanyA/blob/d134241584fe44b10db4e1d47f4efdaadfe8ef53/docs/ClassSpecs/Interfaces/WebUI/WebCanvas.md#343-stand-alone-demo--test) in `Spring2026-CompanyA/docs/ClassSpecs/Interfaces/WebUI/WebCanvas.md`
 
 ## Building Module Demo
 
