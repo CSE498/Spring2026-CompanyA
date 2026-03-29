@@ -127,7 +127,8 @@ TEST_CASE("ImageGrid Draw Integrates With ImageManager", "[ImageGrid]") {
     ImageManager manager(mock.renderer);
 
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
-    REQUIRE_NOTHROW(manager.LoadImage("test_img", testImage));
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
 
     ImageGrid grid(2, 2, 32, 32);
     grid.SetCell(0, 0, "test_img");

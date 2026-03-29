@@ -12,10 +12,12 @@
 
 #include "../../../source/Interfaces/GUI/ImageManager.hpp"
 
+#include <expected>
+
 namespace cse498 {
 
 /**
-* Class for initalizing and shutting down the SDL
+* Class for initializing and shutting down the SDL
 */
 class SDLMock {
 public:
@@ -76,16 +78,17 @@ TEST_CASE("Load and get images", "[ImageManager]")
     CHECK(manager.GetTexture("test_img") != nullptr);
 }
 
-
 TEST_CASE("Duplicate images", "[ImageManager]")
 {
     // set up SDL
     SDLMock mock;
     ImageManager manager(mock.renderer);
 
-    // load image
     std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
-    manager.LoadImage("test_img", testImage);
+
+    // load image for setup — first load should succeed
+    auto first = manager.LoadImage("test_img", testImage);
+    REQUIRE(first);
 
     // check for error when trying to load same image again
     auto result = manager.LoadImage("test_img", testImage);
