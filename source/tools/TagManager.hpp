@@ -1,63 +1,115 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <expected>
+#include <functional>  // For std::hash
+#include <ranges>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-namespace cse498 {
+namespace cse498
+{
 
-class TagManager {
-public:
-  using ObjectId = std::uint64_t;
+    /**
+     * Manages associations between object IDs and string tags.
+     *
+     * Internally maintains a reverse index from tag -> set of object IDs,
+     * and a "universe" set containing all objects that have ever been tagged.
+     */
+    class TagManager
+    {
+    public:
+        using ObjectId = std::uint64_t;
 
-  TagManager() = default;
+        /// Errors that may be returned by FindSet().
+        enum class FindSetError { EmptyTag, TagNotFound };
 
-  void OnTagAdded(ObjectId owner, std::string_view tag);
-  void OnTagRemoved(ObjectId owner, std::string_view tag);
+        /**
+         * Default Constructor
+         */
+        TagManager() = default;
 
-  std::vector<ObjectId>
-  Query(const std::vector<std::string_view> &includeTags,
-        const std::vector<std::string_view> &excludeTags = {}) const;
+        void OnTagAdded(ObjectId owner, std::string_view tag);
+        void OnTagRemoved(ObjectId owner, std::string_view tag);
+        
+        std::vector<ObjectId> Query(
+            const std::vector<std::string_view>& includeTags,
+            const std::vector<std::string_view>& excludeTags = {}
+        ) const;
 
-  bool HasTag(ObjectId owner, std::string_view tag) const;
-  void Clear();
+        bool HasTag(ObjectId owner, std::string_view tag) const;
+        void Clear();
 
-private:
-  using ObjectSet = std::unordered_set<ObjectId>;
-  using TagMap = std::unordered_map<std::string, ObjectSet>;
+    private:
+        using ObjectSet = std::unordered_set<ObjectId>;
 
-  static bool AssertValidTag(std::string_view tag);
-  bool ValidateTags(const std::vector<std::string_view> &tags) const;
-  const ObjectSet *FindSet(std::string_view tag) const;
+        // Helper functions (mostly used in the Query function)
+        static std::expected<void, FindSetError> AssertValidTag(std::string_view tag);
+        std::expected<void, FindSetError> ValidateTags(const std::vector<std::string_view>& tags) const;
+        std::expected<const ObjectSet*, FindSetError> FindSet(std::string_view tag) const;
+        std::vector<std::reference_wrapper<const ObjectSet>> CollectExistingSets(const std::vector<std::string_view>& tags) const;
+        std::optional<std::reference_wrapper<const ObjectSet>> FindSmallestIncludeSet(const std::vector<std::string_view>& includeTags) const;
+        bool IsExcluded(ObjectId id, const std::vector<std::reference_wrapper<const ObjectSet>>& excludeSets) const;
+        bool MatchesIncludeTags(ObjectId id, const std::vector<std::string_view>& includeTags) const;
+        std::vector<ObjectId> QueryFromAllObjects(const std::vector<std::reference_wrapper<const ObjectSet>>& excludeSets) const;
+        std::vector<ObjectId> QueryFromBaseSet(
+            const ObjectSet& baseSet,
+            const std::vector<std::string_view>& includeTags,
+            const std::vector<std::reference_wrapper<const ObjectSet>>& excludeSets
+            ) const;
 
-  std::vector<const ObjectSet *>
-  CollectExistingSets(const std::vector<std::string_view> &tags) const;
+        static bool IsValid(const std::expected<void, FindSetError>& result)
+        {
+            return result.has_value();
+        }
 
-  const ObjectSet *FindSmallestIncludeSet(
-      const std::vector<std::string_view> &includeTags) const;
+        // Used ChatGPT to help with string_view issue without it having to create a  temporary string to find tags (redundant)
+        // This enables transparent hash and equality (below), which means no allocation on lookup
+        struct TransparentStringHash
+        {
+            using is_transparent = void;
 
-  bool IsExcluded(ObjectId id,
-                  const std::vector<const ObjectSet *> &excludeSets) const;
+            size_t operator()(std::string_view sv) const noexcept
+            {
+                return std::hash<std::string_view>{}(sv);
+            }
 
-  bool
-  MatchesIncludeTags(ObjectId id,
-                     const std::vector<std::string_view> &includeTags) const;
+            size_t operator()(const std::string& s) const noexcept
+            {
+                return std::hash<std::string_view>{}(s);
+            }
+        };
 
-  std::vector<ObjectId>
-  QueryFromAllObjects(const std::vector<const ObjectSet *> &excludeSets) const;
+        // Transparent Equality
+        struct TransparentStringEqual
+        {
+            using is_transparent = void;
 
-  std::vector<ObjectId>
-  QueryFromBaseSet(const ObjectSet &baseSet,
-                   const std::vector<std::string_view> &includeTags,
-                   const std::vector<const ObjectSet *> &excludeSets) const;
+            constexpr bool operator()(std::string_view a, std::string_view b) const noexcept { return a == b; }
+            constexpr bool operator()(const std::string& a, const std::string& b) const noexcept { return a == b; }
+            constexpr bool operator()(const std::string& a, std::string_view b) const noexcept { return std::string_view(a) == b; }
+            constexpr bool operator()(std::string_view a, const std::string& b) const noexcept { return a == std::string_view(b); }
+        };
 
-  bool Contains(ObjectId owner, std::string_view tag) const;
+        // TagMap now incorporates the Transparent Hash + Equality for no allocation lookup
+        using TagMap = std::unordered_map<
+            std::string,
+            ObjectSet,
+            TransparentStringHash,
+            TransparentStringEqual
+        >;
 
-  TagMap mTagToObjects;
-  ObjectSet mAllObjects;
-};
 
-} // namespace cse498
+        bool Contains(ObjectId owner, std::string_view tag) const;
+        // Reverse index (tag -> object)
+        TagMap mTagToObjects;
+        // 'Universe' of all tagged objects
+        ObjectSet mAllObjects;
+    };
+
+}
