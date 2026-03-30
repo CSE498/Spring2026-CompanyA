@@ -70,7 +70,7 @@ TEST_CASE("Test Generation Happens", "[core]") {
 
 TEST_CASE("Test Random Generation", "[core]") {
     //// Check that it is randomly generating numbers with a set seed
-    std::vector<int> seed1000 =  {2,8,8,9,10,3,1,7,1,2};
+    std::vector<int> seed1000 =  {10,6,9,6,7,4,7,5,3,1};
     cse498::Random ran4;
     ran4.SetSeed(1000);
 
@@ -84,7 +84,7 @@ TEST_CASE("Test Random Generation", "[core]") {
     REQUIRE(seed1000 == generations_int);
     
     // With large range
-    seed1000 = {1827427, 6162588, 21128328, 93315334, 28331346, 12688761, 70148246, 77165926, 87193757, 83189719};
+    seed1000 = {96755444, 6877909, 27446121, 27988652, 21206584, 2012321, 5775199, 94442425, 46733563, 64994790};
     std::vector<int> generations_int_large;
     for (int i = 0; i < 10; ++i) {
         generations_int_large.push_back(ran4.GetValue(0, 100000000));
@@ -93,7 +93,7 @@ TEST_CASE("Test Random Generation", "[core]") {
     REQUIRE(seed1000 == generations_int_large);
 
     // With small range
-    seed1000 = {1, 3, 3, 2, 1, 1, 1, 1, 3, 1};
+    seed1000 = {1, 2, 3, 1, 1, 1, 1, 3, 1, 1};
     std::vector<int> generations_int_small;
     for (int i = 0; i < 10; ++i) {
         generations_int_small.push_back(ran4.GetValue(1, 3));
@@ -102,7 +102,7 @@ TEST_CASE("Test Random Generation", "[core]") {
     REQUIRE(seed1000 == generations_int_small);
 
     // With negative numbers
-    seed1000 = {-60, -72, 69, -21, 86, -91, 47, -33, 9, 84};
+    seed1000 = {25, -79, 12, 13, -79, -19, -68, -6, -17, 6};
     std::vector<int> generations_int_neg;
     for (int i = 0; i < 10; ++i) {
         generations_int_neg.push_back(ran4.GetValue(-100, 100));

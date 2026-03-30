@@ -12,6 +12,8 @@
 #include <cstdint>  // This defined the size of uint64_t
 #include <chrono>    // Used to get the current time off of the computer
 #include <stdexcept> // Allows the program to throw runtime errors
+#include <array> // Allosw the program to use std::array
+#include <concepts>
 
 
 namespace cse498 {
@@ -50,7 +52,8 @@ namespace cse498 {
             // keeps an internal state of 4 64 unsigned 64-bit ints
             // changes each time a number is generated
             struct m_Xoshiro256ppState {
-                uint64_t s[STATE_NUMBER];
+                //uint64_t s[STATE_NUMBER];
+                std::array<uint64_t, STATE_NUMBER> s;
             };
 
             struct m_Splitmix64State {
@@ -72,25 +75,19 @@ namespace cse498 {
             void m_Xoshiro256ppInit(struct m_Xoshiro256ppState &state) {
                 struct m_Splitmix64State sm = {m_seed};
 
-                state.s[0] = m_Splitmix64(sm);
+                /*state.s[0] = m_Splitmix64(sm);
                 state.s[1] = m_Splitmix64(sm);
                 state.s[2] = m_Splitmix64(sm);
-                state.s[3] = m_Splitmix64(sm);
+                state.s[3] = m_Splitmix64(sm);*/
+                for (auto &value : state.s) {
+                    value = m_Splitmix64(sm);
+                }
             }
 
             /// @brief Performs a left rotation on x by k bits
             /// @param x and k, x is the value being rotated and k is how much it is rotated by
             /// @return A rotated x value
             uint64_t m_Rol64(uint64_t x, int k) {
-                // Undefined behavior should never trigger due to constant values
-                // If this triggers, function was used incorrectly.
-                if (k == 0) {
-                    throw std::runtime_error("cse498::Random::m_Rol64(): k = 0 is undefined behavior");
-                }
-                else if (k == 64) {
-                    throw std::runtime_error("cse498::Random::m_Rol64(): k = 64 is undefined behavior");
-                }
-
                 return (x<<k) | (x >> (NUM_BITS-k));
             }
 
@@ -98,7 +95,7 @@ namespace cse498 {
             /// @param the xoshiro state being used to generated the number
             /// @return a randomly generated uint64_t value
             uint64_t m_Xoshiro256pp(struct m_Xoshiro256ppState &state) {
-                uint64_t *s = state.s;
+                auto &s = state.s;
 
                 // Adds parts 0 and 3 of the state, rotates the sum left by 23 bits
                 // then adds part 0 back into the sum
@@ -143,7 +140,7 @@ namespace cse498 {
 
             /// @brief Checks if the rng has been initalized or not
             void m_CheckRng() {
-                if (m_used == false) {
+                if (!m_used) {
                     m_Xoshiro256ppInit(m_rng);
                     m_used = true;
                 }
@@ -166,10 +163,10 @@ namespace cse498 {
             uint64_t GetSeed() const {return m_seed;}
 
 
-            /// @brief Templated function to generate and return values
+            /// @brief Templated function to generate and return values for integral values
             /// @param The range of values to generate a number between. min must be <= max.
             /// @return A random value in range of the specified type
-            template <typename T>
+            template <std::integral T>
             T GetValue(T min, T max) {
                 assert(min <= max);
 
@@ -178,22 +175,35 @@ namespace cse498 {
                 // generate the bits
                 uint64_t r = m_Xoshiro256pp(m_rng);
                 
-                // Turn the bits into the appropriate type
-                if constexpr (std::is_integral_v<T>) {
-                    // Handle int type values: ints, bools, chars
-                    return min + static_cast<T> (r % static_cast<uint64_t>(max-min+1));
-                }
-                else {
-                    // Handle decimal type values: doubles, floats
-                    double decimal_value = static_cast<double>(r)/static_cast<double>(UINT64_MAX);
-                    return static_cast<T>(min + decimal_value * (max-min));
-                }
+                // Handle int type values: ints, bools, chars
+                //return min + static_cast<T> (r % static_cast<uint64_t>(max-min+1));
+                uint64_t range = static_cast<uint64_t>(max) - static_cast<uint64_t>(min) + 1;
+                __uint128_t product = static_cast<__uint128_t>(r) * range;
+                uint64_t scaled = static_cast<uint64_t>(product >> 64);
+                return min + static_cast<T>(scaled);
+            }
+
+            /// @brief Templated function to generate and return values for floating point values
+            /// @param The range of values to generate a number between. min must be <= max.
+            /// @return A random value in range of the specified type
+            template <std::floating_point T>
+            T GetValue(T min, T max) {
+                assert(min <= max);
+
+                m_CheckRng();
+
+                // generate the bits
+                uint64_t r = m_Xoshiro256pp(m_rng);
+                
+                // Handle decimal type values: doubles, floats
+                double decimal_value = static_cast<double>(r)/static_cast<double>(UINT64_MAX);
+                return static_cast<T>(min + decimal_value * (max-min));
             }
 
             /// @brief Generates based off of a given probability, and returns a bool
             /// @param the desired probaility of a true value
             /// @return a weighted generated bool
-            bool P(double probability = 0.5){
+            [[nodiscard]] bool P(double probability = 0.5){
                 // Error handling: probability must be between 0 and 1
                 if (0 > probability || 1 < probability) {
                     throw std::runtime_error("cse498::Random::P(): parameter probability must be between 0 and 1.");

@@ -121,7 +121,13 @@ This extends `WorldPosition` for entities that need to track which direction the
 **Location:** `source/tools/Random.hpp`
 
 **What it's for:**  
-Generating random numbers with reproducible sequences. Uses Xoshiro256++ algorithm instead of `<random>`.
+Generating random numbers with reproducible sequences. Uses and adapted and customized version of Xoshiro256++ algorithm instead of `<random>`.
+
+**How to use it**
+After including Random.hpp, you get access to two main functions. GetValue() and P().
+GetValue() is a templated function that allows you to randomly generate any type that you wish. It has two required parameter, min and max, to define the range of values you would like to generate a number between.
+P() generated a weighted boolean value. It essentailly flips a weighted coin. The weight of the coin is set to 0.5 by default, but this may be changed with the probability parameter.
+Additionally, if you have a specific seed you would like to use instead of the one created based on the time from your computer, you may set it with SetSeed().
 
 ---
 
