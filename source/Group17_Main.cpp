@@ -20,7 +20,7 @@
  *
  * To run:
  *      From root: cmake --build build
- *      After build, run ./source/Group17_Main.cpp
+ *      After build, run ./source/GameView.cpp
  */
 
 #define SDL_MAIN_HANDLED
