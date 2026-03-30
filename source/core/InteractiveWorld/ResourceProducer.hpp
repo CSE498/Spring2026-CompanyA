@@ -7,6 +7,7 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 
 #include "../InteractiveWorld/InteractiveWorldInventory.hpp"
 #include "Building.hpp"
