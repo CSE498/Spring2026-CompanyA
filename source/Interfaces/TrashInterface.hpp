@@ -61,7 +61,7 @@ protected:
       std::cout << "|\n";
     }
     std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
-    std::cout << "\nUse W, A, S, D to move or Q to quit.";
+    std::cout << "\nUse W, A, S, D to move, E to interact, or Q to quit.";
     std::cout << "\nYour move? ";
     std::cout.flush();
   }
