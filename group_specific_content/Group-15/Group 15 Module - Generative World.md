@@ -1,6 +1,10 @@
 # Group 15 — Generative World: Class Documentation
 
+---
 # How to run demo
+
+---
+
 **To run this demo:**
 *    Step 1: follow the instructions in BUILD.md and CMAKE.md to build the executable
 *    Step 2: cd into /demo, and then run ./Group15_demo
@@ -16,7 +20,10 @@
 
 #include "../source/Worlds/DungeonOne.hpp"
 
+---
+
 # Dungeon Generation System
+
 
 The dungeon generation works in layers: `BSP` splits the space into regions, `RoomHolder` manages room templates, `WorldGen` puts it all together, and `DungeonBase/DungeonOne` integrate it with the game world
 
@@ -88,6 +95,10 @@ A concrete dungeon implementation with a specific room pool. Shows how to create
 **What it's for:**  
 Base class for all non-agent items.
 
+
+---
+
+
 ## Position System
 
 
@@ -119,6 +130,8 @@ Generating random numbers with reproducible sequences. Uses Xoshiro256++ algorit
 
 **What it's for:**  
 A container where each item has a weight, and you can sample randomly based on those weights. Used for room selection in dungeon generation, but could be used for loot tables, spawn rates, etc.
+
+---
 
 ## Grid System
 
