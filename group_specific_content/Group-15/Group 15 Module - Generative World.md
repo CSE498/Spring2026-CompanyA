@@ -1,4 +1,21 @@
 # Group 15 — Generative World: Class Documentation
+
+# How to run demo
+**To run this demo:**
+*    Step 1: follow the instructions in BUILD.md and CMAKE.md to build the executable
+*    Step 2: cd into /demo, and then run ./Group15_demo
+     **/
+
+**the modules that we will be using.:**
+
+#include "../source/Agents/PacingAgent.hpp"
+
+#include "../source/Interfaces/TrashInterface.hpp"
+
+#include "../source/Worlds/MazeWorld.hpp"
+
+#include "../source/Worlds/DungeonOne.hpp"
+
 # Dungeon Generation System
 
 The dungeon generation works in layers: `BSP` splits the space into regions, `RoomHolder` manages room templates, `WorldGen` puts it all together, and `DungeonBase/DungeonOne` integrate it with the game world
