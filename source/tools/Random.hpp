@@ -52,7 +52,6 @@ namespace cse498 {
             // keeps an internal state of 4 64 unsigned 64-bit ints
             // changes each time a number is generated
             struct m_Xoshiro256ppState {
-                //uint64_t s[STATE_NUMBER];
                 std::array<uint64_t, STATE_NUMBER> s;
             };
 
@@ -75,10 +74,6 @@ namespace cse498 {
             void m_Xoshiro256ppInit(struct m_Xoshiro256ppState &state) {
                 struct m_Splitmix64State sm = {m_seed};
 
-                /*state.s[0] = m_Splitmix64(sm);
-                state.s[1] = m_Splitmix64(sm);
-                state.s[2] = m_Splitmix64(sm);
-                state.s[3] = m_Splitmix64(sm);*/
                 for (auto &value : state.s) {
                     value = m_Splitmix64(sm);
                 }
