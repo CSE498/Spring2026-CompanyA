@@ -35,9 +35,9 @@ void cse498::ReplayDriver::ReplayAction(const cse498::Action &action,
 
   std::cin.rdbuf(originalBuf);
   world.UpdateWorld();
-#ifndef UNIT_TEST
+
   std::this_thread::sleep_for(std::chrono::milliseconds(m_delay));
-#endif
+
 }
 
 // Replays actions that occurred within a specific time range
