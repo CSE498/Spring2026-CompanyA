@@ -1,5 +1,5 @@
 /**
- * @file gameview_main.cpp
+ * @file Group17_Main.cpp
  * @author Group 17
  *
  * Entry point for the game.
@@ -20,7 +20,7 @@
  *
  * To run:
  *      From root: cmake --build build
- *      After build, run ./source/gameview
+ *      After build, run ./source/Group17_Main.cpp
  */
 
 #define SDL_MAIN_HANDLED
