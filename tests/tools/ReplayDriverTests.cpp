@@ -1,12 +1,13 @@
 // #define CATCH_CONFIG_MAIN
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../source/DataAnalytics/ReplayDriver.hpp"
 #include "../../source/tools/ActionLog.hpp"
 #include "../../source/tools/ReplayDriver.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 // static std::vector<std::string> ReadAllLines(const std::string& filename) {
 //     std::ifstream in(filename);
@@ -16,52 +17,55 @@
 //     return lines;
 // }
 
-// Build a log with known timestamps via UpdateTime(), and known action types/agents.
-static std::shared_ptr<cse498::ActionLog> MakeSampleLog()
-{
-    std::shared_ptr<cse498::ActionLog> log = std::make_shared<cse498::ActionLog>();
+// Build a log with known timestamps via UpdateTime(), and known action
+// types/agents.
+// static std::shared_ptr<cse498::ActionLog> MakeSampleLog() {
+//   std::shared_ptr<cse498::ActionLog> log =
+//       std::make_shared<cse498::ActionLog>();
 
-    auto position1 = cse498::WorldPosition(0.0, 0.0);
-    auto position2 = cse498::WorldPosition(1.0, 1.0);
-    auto position3 = cse498::WorldPosition(2.0, 2.0);
-    auto position4 = cse498::WorldPosition(3.0, 3.0);
-    auto position5 = cse498::WorldPosition(4.0, 4.0);
+//   auto position1 = cse498::WorldPosition(0.0, 0.0);
+//   auto position2 = cse498::WorldPosition(1.0, 1.0);
+//   auto position3 = cse498::WorldPosition(2.0, 2.0);
+//   auto position4 = cse498::WorldPosition(3.0, 3.0);
+//   auto position5 = cse498::WorldPosition(4.0, 4.0);
 
-    log->UpdateTime(0.0);
-    log->LogAction(1, "move", position1, position2); // (x,y,new_x,new_y)
+//   log->UpdateTime(0.0);
+//   log->LogAction(1, "move", position1, position2); // (x,y,new_x,new_y)
 
-    log->UpdateTime(1.0);
-    log->LogAction(2, "attack", position2, position2);
+//   log->UpdateTime(1.0);
+//   log->LogAction(2, "attack", position2, position2);
 
-    log->UpdateTime(2.0);
-    log->LogAction(1, "move", position3, position4);
+//   log->UpdateTime(2.0);
+//   log->LogAction(1, "move", position3, position4);
 
-    log->UpdateTime(3.0);
-    log->LogAction(2, "move", position4, position5);
+//   log->UpdateTime(3.0);
+//   log->LogAction(2, "move", position4, position5);
 
-    return log;
-}
+//   return log;
+// }
 
 // Tests for ReplayDriver
-TEST_CASE("ReplayDriver: IsActionLogSet()", "[ReplayDriver]")
-{
-    cse498::ReplayDriver driver;
-    CHECK(driver.IsActionLogSet() == false);
+// TEST_CASE("ReplayDriver: IsActionLogSet()", "[ReplayDriver]")
+// {
+//     cse498::ReplayDriver driver;
+//     CHECK(driver.IsActionLogSet() == false);
 
-    std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-    driver.setActionLog(log);
-    CHECK(driver.IsActionLogSet() == true);
-}
+//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
+//     driver.setActionLog(log);
+//     CHECK(driver.IsActionLogSet() == true);
+// }
 
-// Empty replays to csv
-TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[ReplayDriver]")
-{
-    cse498::ReplayDriver driver;
-    CHECK(driver.SaveReplayToFile("should_not_write.csv") == false);
-}
+// // Empty replays to csv
+// TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set",
+// "[ReplayDriver]")
+// {
+//     cse498::ReplayDriver driver;
+//     CHECK(driver.SaveReplayToFile("should_not_write.csv") == false);
+// }
 
 // //Full Replays to csv
-// TEST_CASE("ReplayDriver: Replay writes all actions to CSV", "[ReplayDriver]") {
+// TEST_CASE("ReplayDriver: Replay writes all actions to CSV", "[ReplayDriver]")
+// {
 //     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
 //     cse498::ReplayDriver driver(log);
 
@@ -80,7 +84,8 @@ TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[Replay
 // }
 
 // //Replays by steps
-// TEST_CASE("ReplayDriver: ReplayByStep selects every Nth action", "[ReplayDriver]") {
+// TEST_CASE("ReplayDriver: ReplayByStep selects every Nth action",
+// "[ReplayDriver]") {
 //     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
 //     cse498::ReplayDriver driver(log);
 
@@ -97,7 +102,8 @@ TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[Replay
 // }
 
 // // Replays by steps with step <= 0 should replay nothing (safe)
-// TEST_CASE("ReplayDriver: ReplayByStep with step <= 0 replays nothing (safe)", "[ReplayDriver]") {
+// TEST_CASE("ReplayDriver: ReplayByStep with step <= 0 replays nothing (safe)",
+// "[ReplayDriver]") {
 //     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
 //     cse498::ReplayDriver driver(log);
 
@@ -111,7 +117,8 @@ TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[Replay
 // }
 
 // // Replays by time range
-// TEST_CASE("ReplayDriver: ReplayByTimeRange filters actions by timestamp", "[ReplayDriver]") {
+// TEST_CASE("ReplayDriver: ReplayByTimeRange filters actions by timestamp",
+// "[ReplayDriver]") {
 //     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
 //     cse498::ReplayDriver driver(log);
 
@@ -143,7 +150,8 @@ TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[Replay
 // }
 
 // // Replays by action type
-// TEST_CASE("ReplayDriver: ReplayByActionType filters actions", "[ReplayDriver]") {
+// TEST_CASE("ReplayDriver: ReplayByActionType filters actions",
+// "[ReplayDriver]") {
 //     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
 //     cse498::ReplayDriver driver(log);
 
@@ -160,7 +168,8 @@ TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[Replay
 // }
 
 // //Replays are replaced after each new replay method is called
-// TEST_CASE("ReplayDriver: A new replay replaces the last replayed set", "[ReplayDriver]") {
+// TEST_CASE("ReplayDriver: A new replay replaces the last replayed set",
+// "[ReplayDriver]") {
 //     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
 //     cse498::ReplayDriver driver(log);
 

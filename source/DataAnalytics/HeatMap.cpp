@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#include <print>
+// #include <print>
 #include <utility>
 #include <vector>
 // #include "ActionLog.hpp"
@@ -14,10 +14,8 @@ cse498::HeatMap::HeatMap(ActionLog log, std::pair<int, int> ideal_gridsize,
   m_ideal_gridsize = ideal_gridsize;
   m_total_gridsize = total_gridsize;
 
-  auto invalid_pair = [](auto a, auto b) {
-      return a <= 0 || b <= 0;
-  };
-  
+  auto invalid_pair = [](auto a, auto b) { return a <= 0 || b <= 0; };
+
   if (invalid_pair(m_ideal_gridsize.first, m_ideal_gridsize.second)) {
     std::cout << "HeatMap ideal gridsize negative assign new values for valid "
                  "heatmap";
@@ -82,10 +80,8 @@ cse498::HeatMap::OutPutHeatMap(std::ostream &output) {
 
 void cse498::HeatMap::FillGrid() {
   auto in_bounds = [this](double x, double y, double grid_x, double grid_y) {
-  return x < m_total_gridsize.first &&
-          y < m_total_gridsize.second &&
-          grid_x >= 0 &&
-          grid_y >= 0;
+    return x < m_total_gridsize.first && y < m_total_gridsize.second &&
+           grid_x >= 0 && grid_y >= 0;
   };
 
   for (std::vector<std::pair<double, double>>::iterator it =
@@ -94,7 +90,7 @@ void cse498::HeatMap::FillGrid() {
     double temp_grid_x = std::floor(it->first / m_single_grid_size.first);
     double temp_grid_y = std::floor(it->second / m_single_grid_size.second);
     // Check if in bounds
-    if (in_bounds(it->first, it->second, temp_grid_x, temp_grid_y)){
+    if (in_bounds(it->first, it->second, temp_grid_x, temp_grid_y)) {
       m_grid_values[temp_grid_x][temp_grid_y] += 1;
     } else {
       m_invalid_locations.push_back(*it);
