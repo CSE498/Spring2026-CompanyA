@@ -79,12 +79,6 @@ size_t Inventory::RemoveItem(const std::string& name, size_t amount, bool isAllO
     // now the main loop:
     auto& itemIndices = itr->second;
     assert(!itemIndices.empty()); // if this fails something is wrong
-    // size_t anyIndex = *(itemIndices.begin());
-    // Note if this fails, you tried to remove a unique item using its name.
-    // This is NOT ACCEPTABLE, doing this means it removes an arbitrary item of that name and not a specified unique item
-    // This is NOT INPUT VALIDATION since inputting this is fine and works in this function I just don't want it to work.
-    // idk actually... maybe it is ok..
-    // assert(mInventory.at(anyIndex).GetItem().has_value() && !mInventory.at(anyIndex).GetItem().value().IsUnique());
 
     for (auto iterator = itemIndices.begin(); iterator != itemIndices.end(); )
     {
@@ -140,6 +134,8 @@ size_t Inventory::RemoveUniqueItem(const size_t itemId)
     {
         if (mInventory.at(i).Contains(itemId))
         {
+            auto itemSlot = mInventory.at(i).GetItem();
+            mItemMap.at(itemSlot->GetName()).erase(i);
             mInventory.at(i).Reset();
             return 0;
         }
