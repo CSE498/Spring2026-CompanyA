@@ -8,11 +8,20 @@
 #include "../../source/Agents/EnemyAgent.hpp"
 #include "../../source/Agents/LearningExplorerAgent.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
+#include "../../source/core/WorldBase.hpp"
 
 #include <cmath>
 #include <set>
 
 using namespace cse498;
+
+namespace {
+/// World that never registers movement actions (for Initialize() failure tests).
+struct NoMovementActionWorld : WorldBase {
+  void ConfigAgent(AgentBase &) override {}
+  int DoAction(AgentBase &, size_t) override { return 0; }
+};
+} // namespace
 
 // ============================================================
 //  Initialization
@@ -23,10 +32,17 @@ TEST_CASE("EnemyAgent initializes with required actions", "[EnemyAgent]") {
   auto &agent = world.AddAgent<EnemyAgent>("Enemy");
   agent.SetLocation(WorldPosition{10, 7});
 
+  CHECK(agent.Initialize());
   CHECK(agent.HasAction("up"));
   CHECK(agent.HasAction("down"));
   CHECK(agent.HasAction("left"));
   CHECK(agent.HasAction("right"));
+}
+
+TEST_CASE("EnemyAgent Initialize fails without movement actions", "[EnemyAgent]") {
+  NoMovementActionWorld world;
+  EnemyAgent agent(0, "E", world);
+  CHECK_FALSE(agent.Initialize());
 }
 
 TEST_CASE("EnemyAgent has correct name and ID", "[EnemyAgent]") {
@@ -187,4 +203,33 @@ TEST_CASE("EnemyAgent chases horizontally in open corridor", "[EnemyAgent]") {
   // In a straight horizontal corridor, enemy should move left toward target.
   CHECK(after.CellX() == 9);
   CHECK(after.CellY() == 8);
+}
+
+TEST_CASE("EnemyAgent chases vertically in open corridor", "[EnemyAgent]") {
+  MazeWorld world;
+  world.AddAgent<LearningExplorerAgent>("Target").SetLocation(WorldPosition{10, 2});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{10, 8});
+
+  size_t action = enemy.SelectAction(world.GetGrid());
+  world.DoAction(enemy, action);
+
+  WorldPosition after = enemy.GetLocation().AsWorldPosition();
+  CHECK(after.CellX() == 10);
+  CHECK(after.CellY() == 7);
+}
+
+TEST_CASE("EnemyAgent with no other agent still selects valid move", "[EnemyAgent]") {
+  MazeWorld world;
+  auto &enemy = world.AddAgent<EnemyAgent>("Solo");
+  enemy.SetLocation(WorldPosition{10, 7});
+
+  size_t action = enemy.SelectAction(world.GetGrid());
+  CHECK(action != 0);
+  int result = world.DoAction(enemy, action);
+  enemy.SetActionResult(result);
+  WorldPosition pos = enemy.GetLocation().AsWorldPosition();
+  CHECK(world.GetGrid().IsValid(pos));
+  CHECK(world.GetGrid()[pos] != world.GetGrid().GetCellTypeID("wall"));
 }

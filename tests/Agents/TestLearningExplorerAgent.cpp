@@ -8,11 +8,19 @@
 #include "../../source/Agents/LearningExplorerAgent.hpp"
 #include "../../source/Agents/EnemyAgent.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
+#include "../../source/core/WorldBase.hpp"
 
 #include <cmath>
 #include <set>
 
 using namespace cse498;
+
+namespace {
+struct NoMovementActionWorld : WorldBase {
+  void ConfigAgent(AgentBase &) override {}
+  int DoAction(AgentBase &, size_t) override { return 0; }
+};
+} // namespace
 
 // ============================================================
 //  Initialization
@@ -24,10 +32,18 @@ TEST_CASE("LearningExplorerAgent initializes with required actions",
   auto &agent = world.AddAgent<LearningExplorerAgent>("Explorer");
   agent.SetLocation(WorldPosition{6, 1});
 
+  CHECK(agent.Initialize());
   CHECK(agent.HasAction("up"));
   CHECK(agent.HasAction("down"));
   CHECK(agent.HasAction("left"));
   CHECK(agent.HasAction("right"));
+}
+
+TEST_CASE("LearningExplorerAgent Initialize fails without movement actions",
+          "[LearningExplorerAgent]") {
+  NoMovementActionWorld world;
+  LearningExplorerAgent agent(0, "E", world);
+  CHECK_FALSE(agent.Initialize());
 }
 
 TEST_CASE("LearningExplorerAgent has correct name and ID",
@@ -220,4 +236,32 @@ TEST_CASE("LearningExplorerAgent avoids proximity to enemy agent",
   int dist = std::abs(dx) + std::abs(dy);
 
   CHECK(dist >= 2);
+}
+
+TEST_CASE("LearningExplorerAgent visit count increases when SelectAction called "
+          "without moving",
+          "[LearningExplorerAgent]") {
+  MazeWorld world;
+  auto &agent = world.AddAgent<LearningExplorerAgent>("Explorer");
+  agent.SetLocation(WorldPosition{6, 1});
+
+  (void)agent.SelectAction(world.GetGrid());
+  (void)agent.SelectAction(world.GetGrid());
+  CHECK(agent.GetVisitedCellCount(world.GetGrid(), WorldPosition{6, 1}) >= 2);
+}
+
+TEST_CASE("LearningExplorerAgent remains stable after long exploration run",
+          "[LearningExplorerAgent]") {
+  MazeWorld world;
+  auto &agent = world.AddAgent<LearningExplorerAgent>("Explorer");
+  agent.SetLocation(WorldPosition{6, 1});
+
+  for (int step = 0; step < 400; ++step) {
+    size_t action = agent.SelectAction(world.GetGrid());
+    int result = world.DoAction(agent, action);
+    agent.SetActionResult(result);
+  }
+
+  size_t action = agent.SelectAction(world.GetGrid());
+  CHECK(action != 0);
 }
