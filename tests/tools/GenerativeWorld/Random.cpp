@@ -22,27 +22,27 @@ TEST_CASE("Test Random Copy Operator", "[core]") {
   REQUIRE(set_copy.GetSeed() == 1000);
 }
 
-// TEST_CASE("Test Random Assignment Operator", "[core]") {
-//     cse498::Random generated_one;
-//     cse498::Random generated_two;
-//     generated_two = generated_one;
-//     REQUIRE(generated_two.GetSeed() == generated_one.GetSeed());
+TEST_CASE("Test Random Assignment Operator", "[core]") {
+  cse498::Random generated_one;
+  cse498::Random generated_two;
+  generated_two = generated_one;
+  REQUIRE(generated_two.GetSeed() == generated_one.GetSeed());
 
-//     cse498::Random set_one;
-//     set_one.SetSeed(1000);
-//     cse498::Random set_two;
-//     set_two = set_one;
-//     REQUIRE(set_two.GetSeed() == set_one.GetSeed());
+  cse498::Random set_one;
+  set_one.SetSeed(1000);
+  cse498::Random set_two;
+  set_two = set_one;
+  REQUIRE(set_two.GetSeed() == set_one.GetSeed());
 
-//     cse498::Random generated_three;
-//     generated_three = generated_three;
-//     REQUIRE(generated_three.GetSeed() == generated_three.GetSeed());
+  cse498::Random generated_three;
 
-//     cse498::Random set_three;
-//     set_three.SetSeed(1000);
-//     set_three = set_three;
-//     REQUIRE(set_three.GetSeed() == set_three.GetSeed());
-// }
+  REQUIRE(generated_three.GetSeed() == generated_three.GetSeed());
+
+  cse498::Random set_three;
+  set_three.SetSeed(1000);
+
+  REQUIRE(set_three.GetSeed() == set_three.GetSeed());
+}
 
 TEST_CASE("Test Random Move Operator", "[core]") {
   cse498::Random generated;
