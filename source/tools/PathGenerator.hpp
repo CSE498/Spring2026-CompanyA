@@ -224,7 +224,7 @@ private:
      * @param flag - direction of the circle generation
      * @return T/F
      */
-    static constexpr bool IsPointBefore(const WorldPosition &test_pt,
+    static bool IsPointBefore(const WorldPosition &test_pt,
                               const WorldPosition &relative_pt,
                               const WorldPosition &center,
                               CircleDirectionFlag flag);
@@ -256,7 +256,7 @@ private:
      * @param flag direction flag CCW or CW
      * @return a list of points for the loop
      */
-    static constexpr std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bot_left,
+    static std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bot_left,
                                                                         const WorldPosition &top_right,
                                                                         const PathRequest &request,
                                                                         CircleDirectionFlag flag);
@@ -482,7 +482,7 @@ constexpr WorldPosition PathGenerator::NextCardinalToward(const WorldPosition& f
     }
     if (std::abs(dx) >= std::abs(dy)) {
         const double step_x = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
-        return from.GetOffset(step_x, 0.0);
+        return from.GetOffset(step_x, 0.0); // made these constexpr
     }
     const double step_y = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
     return from.GetOffset(0.0, step_y);

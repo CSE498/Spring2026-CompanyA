@@ -70,7 +70,7 @@ namespace cse498 {
     // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
 
     /// Return a the WorldPosition at the requested offset.
-    [[nodiscard]] WorldPosition GetOffset(double offset_x, double offset_y) const {
+    [[nodiscard]] constexpr WorldPosition GetOffset(double offset_x, double offset_y) const {
       return WorldPosition{x+offset_x,y+offset_y};
     }
 

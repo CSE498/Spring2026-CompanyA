@@ -62,7 +62,7 @@ PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPositio
 
     return {IsTravelable(from, vec, request), {from, to}};
 }
-constexpr bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
+bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
                                   const WorldPosition &relative_pt,
                                   const WorldPosition &center,
                                   const CircleDirectionFlag flag)
@@ -78,7 +78,7 @@ constexpr bool PathGenerator::IsPointBefore(const WorldPosition &test_pt,
 
     // This determines if a point is before another point by comparing the angles they make.
     // The weird if statements are because of how the angle is returned from getAngle -- it returns in domain [-pi, pi]
-    double test_angle = test.GetAngle();
+    double test_angle = test.GetAngle(); // Not constexpr
     double rel_angle = relative.GetAngle();
     if (flag == CircleDirectionFlag::CW && rel_angle < 0 && test_angle > 0)
         rel_angle += 2 * std::numbers::pi;
@@ -282,7 +282,7 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
     return CirclePath(WorldPath(path_to_circle), circle_path);
 }
 
-constexpr std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(const WorldPosition &bot_left,
+std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(const WorldPosition &bot_left,
                                                                             const WorldPosition &top_right,
                                                                             const PathRequest &request,
                                                                             const CircleDirectionFlag flag)
@@ -292,7 +292,7 @@ constexpr std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangl
     assert(bot_left.CellY() >= top_right.CellY());
     std::vector<WorldPosition> result;
     WorldPosition cur = bot_left;
-    const size_t up_steps = bot_left.CellY() - top_right.CellY();
+    const size_t up_steps = bot_left.CellY() - top_right.CellY(); // Not constexpr but could be.
     const size_t right_steps = top_right.CellX() - bot_left.CellX();
     const std::array directions = {
         PathVector(0, -STEP_SIZE), PathVector(STEP_SIZE, 0),

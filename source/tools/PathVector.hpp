@@ -37,16 +37,26 @@ public:
      * @param from
      * @param to
      */
-    PathVector(const WorldPosition& from, const WorldPosition& to);
+    constexpr PathVector(const WorldPosition& from, const WorldPosition& to)
+    {
+        mX = to.X() - from.X();
+        mY = to.Y() - from.Y();
+    }
     /**
      * Constructor to make a vector directly. Put the magnitudes of x and y parts
      * @param x - x part
      * @param y - y part
      */
-    PathVector(double x, double y) : mX(x), mY(y) {}
-    PathVector operator+(const PathVector& rhs) const;
-    PathVector operator-(const PathVector& rhs) const;
-    bool operator==(const PathVector& rhs) const
+    constexpr PathVector(double x, double y) : mX(x), mY(y) {}
+    constexpr PathVector operator+(const PathVector& rhs) const
+    {
+        return {mX + rhs.mX, mY + rhs.mY};
+    }
+    constexpr PathVector operator-(const PathVector& rhs) const
+    {
+        return {mX - rhs.mX, mY - rhs.mY};
+    }
+    constexpr bool operator==(const PathVector& rhs) const
     {
         return std::abs(mX - rhs.mX) < 1e-6 && std::abs(mY - rhs.mY) < 1e-6;
     }
@@ -61,7 +71,7 @@ public:
      * Normalizes the vector IN-PLACE so magnitude is approx 1
      * @return modified in place vector
      */
-    constexpr PathVector& Normalize()
+    PathVector& Normalize()
     {
         double mag = GetMagnitude();
         mX /= mag;
@@ -81,6 +91,17 @@ public:
         return *this;
     }
 
+
+
+    [[nodiscard]] constexpr double X() const { return mX; }
+    [[nodiscard]] constexpr double Y() const { return mY; }
+    // In C++26 can be made constexpr but not to confuse anyone. It is currently not capable
+    [[nodiscard]] double GetMagnitude() const { return std::sqrt(mX * mX + mY * mY); }
+    /**
+     * Gives angle with respect to horizontal axis in normal Euclidean calculations
+     * @return angle CCW from x-axis
+     */
+    [[nodiscard]] double GetAngle() const { return std::atan2(mY, mX); }
     /**
      * rotates the path vector with respect to its start position counterclockwise by angle
      * not possible for constexpr until c++26 though
@@ -89,19 +110,24 @@ public:
      */
     PathVector& Rotate(double angle);
 
-    [[nodiscard]] double X() const { return mX; }
-    [[nodiscard]] double Y() const { return mY; }
-    /// can't be constexpr because of sqrt but put it anyway since close to c++26
-    [[nodiscard]] constexpr double GetMagnitude() const { return std::sqrt(mX * mX + mY * mY); }
-    [[nodiscard]] constexpr double GetAngle() const { return std::atan2(mY, mX); }
-
     /**
      * Projects argument onto calling object returning new position of where the projection lands
      * @param this_onto_that whatever is put here is projected onto the object calling this function.
      * @return
      */
-    [[nodiscard]] PathVector Project(const WorldPosition& this_onto_that) const;
-    [[nodiscard]] PathVector Project(const PathVector& this_onto_that) const;
+    [[nodiscard]] constexpr PathVector Project(const WorldPosition& this_onto_that) const
+    {
+        return Project(PathVector(this_onto_that.X(), this_onto_that.Y()));
+    }
+    [[nodiscard]] constexpr PathVector Project(const PathVector& this_onto_that) const
+    {
+        // project input onto "this"
+        PathVector result = *this;
+        double top = this_onto_that.Dot(*this);
+        double bottom = this->Dot(*this);
+        result.Scale(top / bottom);
+        return result;
+    }
 
 };
 
