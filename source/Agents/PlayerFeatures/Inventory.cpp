@@ -189,7 +189,7 @@ std::ostream& operator<<(std::ostream& os, const Inventory& inv)
     os << "HOTBAR: ";
     for (size_t i = 0; i < Inventory::HOTBAR_SIZE; i++)
     {
-        auto& slot = inv.GetInventory().at(i);
+        auto& slot = inv.GetInventoryArray().at(i);
         os << slot << " ";
     }
     for (size_t row = 0; row < Inventory::BACKPACK_SIZE / Inventory::ITEMS_PER_ROW; row++)
@@ -198,7 +198,7 @@ std::ostream& operator<<(std::ostream& os, const Inventory& inv)
         os << "Row " << row+1 << ":";
         for (size_t col = 0; col < Inventory::ITEMS_PER_ROW; col++)
         {
-            auto& slot = inv.GetInventory().at(Inventory::HOTBAR_SIZE + row * Inventory::ITEMS_PER_ROW + col);
+            auto& slot = inv.GetInventoryArray().at(Inventory::HOTBAR_SIZE + row * Inventory::ITEMS_PER_ROW + col);
             os << slot << " ";
         }
     }

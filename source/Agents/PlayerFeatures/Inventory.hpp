@@ -265,7 +265,7 @@ public:
      * Exposure of a const reference to the inventory. Read-only access to see states
      * @return const ref of inventory.
      */
-    const std::array<InventorySlot, INVENTORY_SIZE>& GetInventory() const { return mInventory; }
+    const std::array<InventorySlot, INVENTORY_SIZE>& GetInventoryArray() const { return mInventory; }
 private:
     /**
      * Enforces that removal will take place in the backpack first then

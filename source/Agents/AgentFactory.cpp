@@ -23,6 +23,7 @@ namespace DemoAct = cse498::DemoSimpleWorldG2Actions;
 namespace cse498
 {
 
+
 std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const WorldBase & world)
 {
     // Root node continually runs the enemy behavior.

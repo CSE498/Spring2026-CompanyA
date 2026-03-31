@@ -229,7 +229,7 @@ TEST_CASE("Swap Slots simple", "[inventory, swap]")
 TEST_CASE("Inventory Add and Remove", "[add, remove, inventory]")
 {
     Inventory inv;
-    auto& invView = inv.GetInventory();
+    auto& invView = inv.GetInventoryArray();
     MockWorldBase world;
     inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 500);
     inv.AddItem(std::make_unique<RealItem>(1, world), 3);
@@ -285,7 +285,7 @@ TEST_CASE("Inventory Basic Example walkthrough -- one item", "[inventory]")
     CHECK(inv.GetHand()->GetName() == "TestItem");
     CHECK(inv.GetHand()->GetId() == 0);
     CHECK(inv.GetHandQuantity() == 3);
-    auto& invView = inv.GetInventory();
+    auto& invView = inv.GetInventoryArray();
     CHECK(!invView.at(Inventory::HOTBAR_SIZE).GetItem());
     CHECK(invView.at(Inventory::HOTBAR_SIZE).GetQuantity() == 0);
 
@@ -312,7 +312,7 @@ TEST_CASE("Inventory Unique Item vs Non-Unique -- MultiItem", "[inventory, item,
     CHECK(ov4 == 0);
     CHECK(ov5 == 0);
     CHECK(total == 16);
-    auto& invView = inv.GetInventory();
+    auto& invView = inv.GetInventoryArray();
     CHECK(invView.at(Inventory::HOTBAR_SIZE).GetQuantity() == 16);
     CHECK(invView.at(Inventory::HOTBAR_SIZE + 1).GetQuantity() == 1);
 
@@ -354,7 +354,7 @@ TEST_CASE("Inventory Other methods", "[inventory, methods]")
     inv.AddItem(std::make_unique<MockTestItem>(4, "TestItem"), 3);
 
     inv.ClearInventory();
-    auto& invView = inv.GetInventory();
+    auto& invView = inv.GetInventoryArray();
     for (auto& slot : invView)
     {
         CHECK(!slot.GetItem());
