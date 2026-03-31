@@ -75,16 +75,16 @@ TEST_CASE("Item derived behavior can customize uniqueness and virtuals", "[core,
 {
     TestItemWorld world;
 
-    TestUniqueItem unique_item(100, world);
-    CHECK(unique_item.IsUnique() == true);
-    CHECK(unique_item.IsWeapon() == false);
-    CHECK(unique_item.IsConsumable() == false);
+    TestUniqueItem uniqueItem(100, world);
+    CHECK(uniqueItem.IsUnique() == true);
+    CHECK(uniqueItem.IsWeapon() == false);
+    CHECK(uniqueItem.IsConsumable() == false);
 
-    TestItemConsumable dual_item(101, world);
-    CHECK(dual_item.IsWeapon() == true);
-    CHECK(dual_item.IsConsumable() == true);
-    CHECK(dual_item.WasUsed() == false);
-    dual_item.Use();
-    CHECK(dual_item.WasUsed() == true);
+    TestItemConsumable consumableItem(101, world);
+    CHECK(consumableItem.IsWeapon() == true);
+    CHECK(consumableItem.IsConsumable() == true);
+    CHECK(consumableItem.WasUsed() == false);
+    consumableItem.Use();
+    CHECK(consumableItem.WasUsed() == true);
 }
 
