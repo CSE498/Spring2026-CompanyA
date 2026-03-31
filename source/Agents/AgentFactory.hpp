@@ -6,8 +6,8 @@
  * It sets certain properties and returns the created object
  */
 
-#ifndef CSE498COMPA_AGENTFACTORY_H
-#define CSE498COMPA_AGENTFACTORY_H
+#pragma once
+
 #include <memory>
 #include <string>
 
@@ -72,4 +72,4 @@ public:
 }
 
 
-#endif //CSE498COMPA_AGENTFACTORY_H
+

@@ -20,9 +20,8 @@
  * want because we have yet to design what it is that we are doing. This will have to be changed when teams start
  * working together.
  */
+#pragma once
 
-#ifndef SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHGENERATOR_H
-#define SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHGENERATOR_H
 
 #include <span>
 #include <optional>
@@ -508,5 +507,3 @@ constexpr WorldPosition PathGenerator::Next8DirectionToward(const WorldPosition&
 
 
 }
-
-#endif //SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHGENERATOR_H

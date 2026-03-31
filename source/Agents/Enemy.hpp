@@ -6,8 +6,9 @@
  * factory
  */
 
-#ifndef CSE498COMPA_ENEMY_H
-#define CSE498COMPA_ENEMY_H
+#pragma once
+
+
 #include "core/AgentBase.hpp"
 
 namespace cse498
@@ -53,4 +54,3 @@ namespace cse498
 
 }
 
-#endif //CSE498COMPA_ENEMY_H

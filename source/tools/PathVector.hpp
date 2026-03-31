@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHVECTOR_H
-#define SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHVECTOR_H
+#pragma once
+
 
 
 #include <cmath>
@@ -140,4 +140,4 @@ inline PathVector operator-(const WorldPosition& p, const WorldPosition& pos) { 
 
 
 
-#endif //SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHVECTOR_H
+

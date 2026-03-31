@@ -12,8 +12,8 @@
  * I was unable to push hard enough to convince everyone for this change.
  */
 
-#ifndef SPRING2026COMPANYA_INVENTORY_H
-#define SPRING2026COMPANYA_INVENTORY_H
+#pragma once
+
 #include "core/ItemBase.hpp"
 #include <optional>
 #include <array>
@@ -313,4 +313,3 @@ std::ostream& operator<<(std::ostream& os, const Inventory& inv);
 }
 
 
-#endif //SPRING2026COMPANYA_INVENTORY_H

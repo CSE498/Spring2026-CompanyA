@@ -3,8 +3,8 @@
  * @brief Human-controlled player (text input / interface agent).
  */
 
-#ifndef CSE498COMPA_PLAYERAGENT_H
-#define CSE498COMPA_PLAYERAGENT_H
+#pragma once
+
 
 #include "../core/InterfaceBase.hpp"
 #include "PlayerFeatures/Inventory.hpp"
@@ -45,4 +45,3 @@ public:
 
 }
 
-#endif // CSE498COMPA_PLAYERAGENT_H

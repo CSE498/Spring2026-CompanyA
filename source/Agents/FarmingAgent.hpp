@@ -2,8 +2,8 @@
  * @file FarmingAgent.hpp
  * @brief Minimal FarmingAgent (trading NPC stub).
  */
-#ifndef CSE498COMPA_FARMINGAGENT_H
-#define CSE498COMPA_FARMINGAGENT_H
+#pragma once
+
 
 #include "MerchantAgent.hpp"
 
@@ -19,4 +19,3 @@ namespace cse498
     };
 }
 
-#endif // CSE498COMPA_FARMINGAGENT_H

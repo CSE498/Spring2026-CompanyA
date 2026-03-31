@@ -243,6 +243,33 @@ TEST_CASE("Inventory Add and Remove", "[add, remove, inventory]")
     CHECK(result == 0);
 }
 
+TEST_CASE("Inventory RemoveItem all-or-nothing flag behavior", "[inventory, remove, all-or-nothing]")
+{
+    Inventory inv;
+    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 10);
+
+    SECTION("True flag leaves inventory unchanged when amount exceeds total")
+    {
+        const auto remaining = inv.RemoveItem("TestItem", 12, true);
+        CHECK(remaining == 12);
+        CHECK(inv.GetTotal("TestItem") == 10);
+    }
+
+    SECTION("False flag removes what is available when amount exceeds total")
+    {
+        const auto remaining = inv.RemoveItem("TestItem", 12, false);
+        CHECK(remaining == 2);
+        CHECK(inv.GetTotal("TestItem") == 0);
+    }
+
+    SECTION("True flag removes exactly requested amount when enough stock exists")
+    {
+        const auto remaining = inv.RemoveItem("TestItem", 10, true);
+        CHECK(remaining == 0);
+        CHECK(inv.GetTotal("TestItem") == 0);
+    }
+}
+
 
 TEST_CASE("Inventory Basic Example walkthrough -- one item", "[inventory]")
 {
@@ -360,8 +387,6 @@ TEST_CASE("Check Asserts, some edge cases", "[none]")
     CHECK(item->IsUnique());
 
     // inv.AddItem(std::move(item), 5);
-
-
 
 
 }

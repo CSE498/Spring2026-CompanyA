@@ -5,8 +5,8 @@
  * Defines some movement maps or other movement information
  */
 
-#ifndef SPRING2026COMPANYA_MOVEMENTTYPES_H
-#define SPRING2026COMPANYA_MOVEMENTTYPES_H
+#pragma once
+
 #include <cstddef>
 
 namespace cse498
@@ -27,4 +27,3 @@ namespace cse498
 
 
 
-#endif //SPRING2026COMPANYA_MOVEMENTTYPES_H
