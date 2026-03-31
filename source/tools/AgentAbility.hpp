@@ -15,8 +15,8 @@ class AgentAbility
 {
 private:
 
-    bool climb = false;
-    bool swim = false;
+    //bool climb = false;
+    //bool swim = false;
 public:
 
 
