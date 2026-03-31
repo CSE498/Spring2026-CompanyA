@@ -51,18 +51,18 @@ namespace cse498 {
 
             // keeps an internal state of 4 64 unsigned 64-bit ints
             // changes each time a number is generated
-            struct m_Xoshiro256ppState {
+            struct Xoshiro256ppState {
                 std::array<uint64_t, STATE_NUMBER> s;
             };
 
-            struct m_Splitmix64State {
+            struct Splitmix64State {
                 uint64_t s;
             };
 
             /// @brief Ensurses state values are non-zero and well-mixed.
             /// @param The splitmix state being mixed
             /// @return A well-mixed, non-zero uint64_t value
-            uint64_t m_Splitmix64(struct m_Splitmix64State &state) {
+            uint64_t Splitmix64(struct Splitmix64State &state) {
                 uint64_t result = (state.s += GOLDEN_RATIO);
                 result = (result ^ (result >> RIGHT_SHIFT1)) * FIRST_MIXING;
                 result = (result ^ (result >> RIGHT_SHIFT2)) * SECOND_MIXING;
@@ -71,30 +71,30 @@ namespace cse498 {
 
             /// @brief Uses m_seed to generate the state positions
             /// @param The xoshiro state being initalized
-            void m_Xoshiro256ppInit(struct m_Xoshiro256ppState &state) {
-                struct m_Splitmix64State sm = {m_seed};
+            void Xoshiro256ppInit(struct Xoshiro256ppState &state) {
+                struct Splitmix64State sm = {m_seed};
 
                 for (auto &value : state.s) {
-                    value = m_Splitmix64(sm);
+                    value = Splitmix64(sm);
                 }
             }
 
             /// @brief Performs a left rotation on x by k bits
             /// @param x and k, x is the value being rotated and k is how much it is rotated by
             /// @return A rotated x value
-            uint64_t m_Rol64(uint64_t x, int k) {
+            uint64_t Rol64(uint64_t x, int k) {
                 return (x<<k) | (x >> (NUM_BITS-k));
             }
 
             /// @brief Generates a random number
             /// @param the xoshiro state being used to generated the number
             /// @return a randomly generated uint64_t value
-            uint64_t m_Xoshiro256pp(struct m_Xoshiro256ppState &state) {
+            uint64_t Xoshiro256pp(struct Xoshiro256ppState &state) {
                 auto &s = state.s;
 
                 // Adds parts 0 and 3 of the state, rotates the sum left by 23 bits
                 // then adds part 0 back into the sum
-                uint64_t result = m_Rol64(s[0] + s[3], LEFT_SHIFT) + s[0];
+                uint64_t result = Rol64(s[0] + s[3], LEFT_SHIFT) + s[0];
 
                 // shifts state 1 by 17 bits
                 // helps with state mixing
@@ -106,7 +106,7 @@ namespace cse498 {
                 s[1] ^= s[2];
                 s[0] ^= s[3];
                 s[2] ^= t;
-                s[3] = m_Rol64(s[3], NUM_STATE_VALUES);
+                s[3] = Rol64(s[3], NUM_STATE_VALUES);
                 return result;
             }
 
@@ -117,26 +117,18 @@ namespace cse498 {
             /// @brief Generates a double
             /// @param the xoshiro state being used to generated the number
             /// @return a randomly generated double
-            double m_DoubleXoshiro(struct m_Xoshiro256ppState &state) {
-                uint64_t r = m_Xoshiro256pp(state);
+            double DoubleXoshiro(struct Xoshiro256ppState &state) {
+                uint64_t r = Xoshiro256pp(state);
                 return (r >> D_LOWER_11) * (DOUBLE_CONVERSION_FACTOR); // Using the top 53 bits
             }
 
-            /// @brief Generates a float
-            /// @param the xoshiro state being used to generated the number
-            /// @return a randomly generated float
-            float m_FloatXoshiro(struct m_Xoshiro256ppState &state) {
-                uint64_t r = m_Xoshiro256pp(state);
-                return static_cast<float>(r >> F_LOWER_41) * (FLOAT_CONVERSION_FACTOR); // Using the top 23 bits
-            }
-
-            struct m_Xoshiro256ppState m_rng;
+            struct Xoshiro256ppState m_rng;
             bool m_used = false;
 
             /// @brief Checks if the rng has been initalized or not
-            void m_CheckRng() {
+            void CheckRng() {
                 if (!m_used) {
-                    m_Xoshiro256ppInit(m_rng);
+                    Xoshiro256ppInit(m_rng);
                     m_used = true;
                 }
             }
@@ -165,10 +157,10 @@ namespace cse498 {
             T GetValue(T min, T max) {
                 assert(min <= max);
 
-                m_CheckRng();
+                CheckRng();
 
                 // generate the bits
-                uint64_t r = m_Xoshiro256pp(m_rng);
+                uint64_t r = Xoshiro256pp(m_rng);
                 
                 // Handle int type values: ints, bools, chars
                 //return min + static_cast<T> (r % static_cast<uint64_t>(max-min+1));
@@ -185,10 +177,10 @@ namespace cse498 {
             T GetValue(T min, T max) {
                 assert(min <= max);
 
-                m_CheckRng();
+                CheckRng();
 
                 // generate the bits
-                uint64_t r = m_Xoshiro256pp(m_rng);
+                uint64_t r = Xoshiro256pp(m_rng);
                 
                 // Handle decimal type values: doubles, floats
                 double decimal_value = static_cast<double>(r)/static_cast<double>(UINT64_MAX);
@@ -204,10 +196,10 @@ namespace cse498 {
                     throw std::runtime_error("cse498::Random::P(): parameter probability must be between 0 and 1.");
                 }
 
-                m_CheckRng();
+                CheckRng();
 
                 // Uses the double generation to determine true/false
-                bool return_p = m_DoubleXoshiro(m_rng) < probability;
+                bool return_p = DoubleXoshiro(m_rng) < probability;
 
                 return return_p;
             }
