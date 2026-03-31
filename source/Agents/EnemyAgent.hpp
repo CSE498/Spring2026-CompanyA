@@ -1,6 +1,13 @@
-//
-// Group1 Enemy Agent Class
-//
+/**
+ * @file EnemyAgent.hpp
+ * @brief Greedy grid “chaser” agent: picks a cardinal move that best reduces
+ *        Manhattan distance to another agent (the first other agent from
+ *        GetKnownAgents).
+ *
+ * @details Intended for maze-like worlds with walkable cells and walls.
+ *          Requires movement actions: up, down, left, right. See docs/Group1.md
+ *          for comparison with LearningExplorerAgent and TrailblazerAgent.
+ */
 #pragma once
 
 #include <cstddef>
@@ -11,6 +18,7 @@
 
 namespace cse498
 {
+    /// Chases the first other known agent using greedy cardinal moves.
     class EnemyAgent : public AgentBase
     {
     private:
