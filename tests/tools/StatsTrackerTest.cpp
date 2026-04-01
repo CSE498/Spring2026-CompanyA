@@ -2,6 +2,7 @@
 
 #include "../../source/DataAnalytics/StatsTracker.hpp"
 
+// StatsTracker
 TEST_CASE("Build Series Summary", "[StatsTracker]") {
   cse498::StatsTracker tracker;
   cse498::DataLog log;
@@ -56,6 +57,7 @@ TEST_CASE("Build Snapshot", "[StatsTracker]") {
                       cse498::WorldPosition(4, 3));
 
   dashboard = tracker.BuildSnapshot(analytics);
+  
   REQUIRE(dashboard.actionStats.size() == 1);
 }
 
