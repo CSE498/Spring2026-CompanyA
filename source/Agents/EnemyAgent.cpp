@@ -83,14 +83,14 @@ namespace cse498
         // Reject out-of-bounds moves.
         if (!grid.IsValid(next_pos))
         {
-            return -1'000'000.0;
+            return BadScore;
         }
 
         // Reject walls.
         const size_t wall_id = grid.GetCellTypeID("wall");
         if (wall_id != 0 && grid[next_pos] == wall_id)
         {
-            return -1'000'000.0;
+            return BadScore;
         }
 
 		// Get all known agents
@@ -140,7 +140,10 @@ namespace cse498
 
         for (size_t action_id : candidate_actions)
         {
-            if (action_id == 0) continue;
+            if (action_id == 0)
+            {
+                continue;
+            }
 
             const double score = ScoreAction(grid, action_id);
             if (score > best_score)

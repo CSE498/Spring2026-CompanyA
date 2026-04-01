@@ -192,11 +192,11 @@ LearningExplorerAgent::ScoreAction(const WorldGrid &grid, size_t action_id,
   const WorldPosition next_pos = PredictMove(current_pos, action_id);
 
   if (!grid.IsValid(next_pos))
-    return -1'000'000.0;
+    return BadScore;
 
   const size_t wall_id = grid.GetCellTypeID("wall");
   if (wall_id != 0 && grid[next_pos] == wall_id)
-    return -1'000'000.0;
+    return BadScore;
 
   double score = 0.0;
 

@@ -46,6 +46,8 @@ private:
   void UpdateMemory(const WorldGrid &grid);
 
 public:
+    /// Bad score to prevent certain agent behavior
+    static constexpr int BadScore = -1000000;
   LearningExplorerAgent(size_t id, const std::string &name,
                         const WorldBase &world);
   /**
