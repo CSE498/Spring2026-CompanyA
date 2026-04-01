@@ -54,8 +54,15 @@ namespace cse498 {
     }
 
 
-    /// Enable all comparison operators (==, !=, <, <=, >, >=)
-    auto operator<=>(const WorldPosition &) const = default;
+    /**
+     * We use quantization for hashing ability
+     * @param other - other world position
+     * @return strong ordering for comparisons
+     */
+    auto operator<=>(const WorldPosition & other) const
+    {
+      return std::tuple(Quantize(x), Quantize(y)) <=> std::tuple(Quantize(other.x), Quantize(other.y));
+    }
     /**
      * implemented as such for it to be hashable - ignores digits smaller than epsilon
      * which helps A* search
