@@ -112,6 +112,9 @@ public:
   [[nodiscard]] bool IsEnemyAtPosition(WorldPosition pos) const {
     return IsEnemyAt(pos);
   }
+  [[nodiscard]] bool IsAgentAtPosition(WorldPosition pos, size_t skip_agent_id = static_cast<size_t>(-1)) const {
+    return IsAgentAt(pos, skip_agent_id);
+  }
 
   int DoAction(AgentBase &agent, size_t action_id) override;
   void RunAgents() override;

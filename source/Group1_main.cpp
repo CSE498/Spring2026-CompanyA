@@ -10,7 +10,9 @@
  **/
 
 // Include the modules that we will be using.
+#include "Agents/EnemyAgent.hpp"
 #include "Agents/LearningExplorerAgent.hpp"
+#include "Agents/SmartEnemyAgent.hpp"
 #include "Agents/TrailblazerAgent.hpp"
 #include "Worlds/AIWorld.hpp"
 
@@ -26,6 +28,14 @@ int main() {
   world.AddAgent<LearningExplorerAgent>("Explorer")
       .SetSymbol('E')
       .SetLocation(WorldPosition{3, 1});
+
+  world.AddAgent<SmartEnemyAgent>("Boss")
+      .SetSymbol('B')
+      .SetLocation(WorldPosition{7, 1});
+
+  world.AddAgent<EnemyAgent>("Enemy")
+      .SetSymbol('X')
+      .SetLocation(WorldPosition{8, 1});
 
   world.Run();
 }
