@@ -24,7 +24,7 @@ namespace cse498
 {
 
 
-std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const WorldBase & world)
+std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const WorldBase & world)
 {
     // Root node continually runs the enemy behavior.
     auto root = TreeBuilder::Repeat("Skeleton Root");
@@ -38,30 +38,24 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
     // NOTE: this blackboard execution context doesn't seem that nice to work with here ...
     // attackSeq->AddChild(TreeBuilder::Act("Player in Range", [enemy, &world](ExecutionContext& ctx)
     // Condition: is the player currently within this enemy's attack range?
-    attackSeq->AddChild(TreeBuilder::Act("Player in Range", [enemy, &world](ExecutionContext&)
+    attackSeq->AddChild(TreeBuilder::Act("Player in Range", [&enemy, &world](ExecutionContext&)
     {
-        if (enemy && IsInRange(*enemy, world.GetPlayerPosition(), world.GetGrid()))
+        if (IsInRange(enemy, world.GetPlayerPosition(), world.GetGrid()))
             return Node::Status::Success;
         return Node::Status::Failure;
     }));
 
     // Placeholder "attack" action: when in range, stop moving (no-op for now).
-    attackSeq->AddChild(TreeBuilder::Act("Attack (No-op)", [enemy]([[maybe_unused]] ExecutionContext& ctx)
+    attackSeq->AddChild(TreeBuilder::Act("Attack (No-op)", []([[maybe_unused]] ExecutionContext& ctx)
     {
-        if (!enemy)
-            return Node::Status::Failure;
-
         // No-op attack: enemy will stand still once in range.
         return Node::Status::Success;
     }));
 
     // Chase action: when not in range, move one step toward the player using PathGenerator.
-    auto chasePlayer = TreeBuilder::Act("Chase Player", [enemy, &world](ExecutionContext& ctx)
+    auto chasePlayer = TreeBuilder::Act("Chase Player", [&enemy, &world](ExecutionContext& ctx)
     {
-        if (!enemy)
-            return Node::Status::Failure;
-
-        const WorldPosition enemyPos = enemy->GetLocation().AsWorldPosition();
+        const WorldPosition enemyPos = enemy.GetLocation().AsWorldPosition();
         const WorldPosition playerPos = world.GetPlayerPosition();
 
         // Build a simple pathfinding request for this enemy on the world's main grid.
@@ -114,7 +108,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy* enemy, const
         if (!grid.IsWalkable(nextPos))
             return Node::Status::Failure;
 
-        size_t action_id = enemy->GetActionID(action_name);
+        size_t action_id = enemy.GetActionID(action_name);
         if (action_id == 0)
             return Node::Status::Failure;
 
@@ -207,7 +201,7 @@ std::unique_ptr<Enemy> AgentFactory::CreateAgent(const AgentDefinition& def, Wor
     skeleton->SetMaxHealth(def.hp);
     skeleton->SetHealth(def.hp);
     // atk can be used by combat later; no member on Enemy yet for minimal impl
-    auto root = CreateSkeletonTree(skeleton.get(), world);
+    auto root = CreateSkeletonTree(*skeleton, world);
     skeleton->SetBehaviorTree(std::move(root));
     return skeleton;
 }

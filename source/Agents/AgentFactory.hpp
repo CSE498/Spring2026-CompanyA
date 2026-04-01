@@ -36,7 +36,7 @@ private:
      * @param world - the world from the enemy
      * @return root node for the tree
      */
-    static std::unique_ptr<BehaviorTrees::Node> CreateSkeletonTree(const Enemy* enemy, const WorldBase & world);
+    static std::unique_ptr<BehaviorTrees::Node> CreateSkeletonTree(const Enemy& enemy, const WorldBase & world);
 
     /// Tree that alternates left/right every tick (for patrol agent).
     static std::unique_ptr<BehaviorTrees::Node> CreatePatrolTree(AgentBase* agent);
@@ -76,6 +76,5 @@ public:
 
 
 }
-
 
 
