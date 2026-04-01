@@ -74,14 +74,6 @@ public:
    */
   DashboardSnapshot BuildSnapshot(const AnalyticsManager &analytics) const;
 
-  /*@brief Builds a full dashboard snapshot from analytics and action logs.
-   * @param analytics Analytics manager that owns the numeric logs.
-   * @param actions Action log to summarize for dashboard action stats.
-   * @return Combined snapshot of numeric series summaries and action summaries.
-   */
-  DashboardSnapshot BuildSnapshot(const AnalyticsManager &analytics,
-                                  const ActionLog &actions) const;
-
   /*@brief Builds a summary for one numeric series.
    * @param key Stable identifier for the series.
    * @param label Human-readable name for dashboard display.

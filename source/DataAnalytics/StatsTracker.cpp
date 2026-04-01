@@ -44,17 +44,6 @@ DashboardSnapshot
 StatsTracker::BuildSnapshot(const AnalyticsManager &analytics) const {
   DashboardSnapshot snapshot;
 
-  // if (auto summary = BuildSeriesSummary("successful_moves", "Successful
-  // Moves", analytics.GetSuccessfulMovesLog()); summary.has_value())
-  // {
-  //     snapshot.numericStats.push_back(*summary);
-  // }
-
-  // if (auto summary = BuildSeriesSummary("blocked_moves", "Blocked Moves",
-  // analytics.GetBlockedMovesLog()); summary.has_value())
-  // {
-  //     snapshot.numericStats.push_back(*summary);
-  // }
 
   if (auto summary =
           BuildSeriesSummary("health", "Health", analytics.GetHealthLog());
@@ -72,6 +61,12 @@ StatsTracker::BuildSnapshot(const AnalyticsManager &analytics) const {
                                         analytics.GetDamageDealtLog());
       summary.has_value()) {
     snapshot.numericStats.push_back(*summary);
+  }
+
+    if (auto summary =
+          BuildActionSummary("action_log", "Action Log", analytics.GetActionLog());
+      summary.has_value()) {
+    snapshot.actionStats.push_back(*summary);
   }
 
   return snapshot;
@@ -95,21 +90,6 @@ StatsTracker::BuildActionSummary(const std::string &key,
   summary.mostActiveEntity = log.GetMostActiveEntity();
 
   return summary;
-}
-
-/*
- * Combines numeric summaries and one action summary into one snapshot payload.
- */
-DashboardSnapshot StatsTracker::BuildSnapshot(const AnalyticsManager &analytics,
-                                              const ActionLog &actions) const {
-  DashboardSnapshot snapshot = BuildSnapshot(analytics);
-
-  if (auto summary = BuildActionSummary("action_log", "Action Log", actions);
-      summary.has_value()) {
-    snapshot.actionStats.push_back(*summary);
-  }
-
-  return snapshot;
 }
 
 } // namespace cse498

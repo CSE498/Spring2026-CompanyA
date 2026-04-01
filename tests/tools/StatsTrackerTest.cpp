@@ -30,6 +30,7 @@ TEST_CASE("Build Snapshot", "[StatsTracker]") {
   cse498::DashboardSnapshot dashboard = tracker.BuildSnapshot(analytics);
 
   REQUIRE(dashboard.numericStats.size() == 0);
+  REQUIRE(dashboard.actionStats.size() == 0);
 
   analytics.LogHealth(3.4);
   dashboard = tracker.BuildSnapshot(analytics);
@@ -47,19 +48,15 @@ TEST_CASE("Build Snapshot", "[StatsTracker]") {
   dashboard = tracker.BuildSnapshot(analytics);
   REQUIRE(dashboard.numericStats.size() == 3);
 
-  cse498::ActionLog aLog;
-  cse498::DashboardSnapshot dashboard2 = tracker.BuildSnapshot(analytics, aLog);
-  REQUIRE(dashboard.numericStats.size() == dashboard2.numericStats.size());
+  analytics.LogAction(1, "TestMove", cse498::WorldPosition(1, 2),
+                      cse498::WorldPosition(2, 1));
+  analytics.LogAction(1, "TestMove2", cse498::WorldPosition(2, 1),
+                      cse498::WorldPosition(3, 3));
+  analytics.LogAction(1, "TestMove3", cse498::WorldPosition(3, 3),
+                      cse498::WorldPosition(4, 3));
 
-  aLog.LogAction(1, "TestMove", cse498::WorldPosition(1, 2),
-                 cse498::WorldPosition(2, 1));
-  aLog.LogAction(1, "TestMove2", cse498::WorldPosition(2, 1),
-                 cse498::WorldPosition(3, 3));
-  aLog.LogAction(1, "TestMove3", cse498::WorldPosition(3, 3),
-                 cse498::WorldPosition(4, 3));
-
-  dashboard2 = tracker.BuildSnapshot(analytics, aLog);
-  REQUIRE(dashboard2.actionStats.size() == 1);
+  dashboard = tracker.BuildSnapshot(analytics);
+  REQUIRE(dashboard.actionStats.size() == 1);
 }
 
 TEST_CASE("Build Action Summary", "[StatsTracker]") {
