@@ -31,8 +31,7 @@ std::shared_ptr<cse498::ActionLog> MakeFullGameLog() {
   log->LogAction(1, "move", cse498::WorldPosition{2, 4},
                  cse498::WorldPosition{2, 3});
   log->LogAction(1, "move", cse498::WorldPosition{2, 3},
-                 cse498::WorldPosition{2, 3});  // no-op move
-
+                 cse498::WorldPosition{2, 3});
   return log;
 }
 
@@ -54,7 +53,7 @@ std::shared_ptr<cse498::ActionLog> MakeTimedLog() {
   return log;
 }
 
-}  // namespace
+}
 
 TEST_CASE("ReplayDriver ReplayFullGame runs through valid actions",
           "[ReplayDriver]") {
@@ -81,17 +80,6 @@ TEST_CASE("ReplayDriver ReplayByTimeRange handles empty ranges",
   cse498::ReplayDriver driver(log, 0);
 
   REQUIRE_NOTHROW(driver.ReplayByTimeRange(10.0, 20.0));
-}
-
-TEST_CASE("ReplayDriver ReplayFullGame handles no-op moves",
-          "[ReplayDriver]") {
-  auto log = std::make_shared<cse498::ActionLog>();
-  log->LogAction(1, "move", cse498::WorldPosition{2, 3},
-                 cse498::WorldPosition{2, 3});
-
-  cse498::ReplayDriver driver(log, 0);
-
-  REQUIRE_NOTHROW(driver.ReplayFullGame());
 }
 
 TEST_CASE("ReplayDriver ReplayFullGame handles empty logs",
