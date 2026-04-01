@@ -72,6 +72,9 @@ void DemoSimpleWorldG2::PrintWorldState() const {
 }
 
 bool DemoSimpleWorldG2::MoveAgentBy(AgentBase &agent, double dx, double dy) {
+    // There needs to be a function like this in the WorldBase Class -- this is just an example implementation
+    // for this class. Recall for 8-directional movement you need to check that the two adjacent tiles are free
+    // to move in a diagonal direction (not done here).
     const WorldPosition current = agent.GetLocation().AsWorldPosition();
     const WorldPosition next = current.GetOffset(dx, dy);
     if (!main_grid.IsValid(next)) {
@@ -277,12 +280,13 @@ void DemoSimpleWorldG2::HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player)
 
 void DemoSimpleWorldG2::ConfigAgent(AgentBase &agent) {
     namespace A = DemoSimpleWorldG2Actions;
-    agent.AddAction("up", A::MOVE_UP);
-    agent.AddAction("down", A::MOVE_DOWN);
-    agent.AddAction("left", A::MOVE_LEFT);
-    agent.AddAction("right", A::MOVE_RIGHT);
-    agent.AddAction("interact", A::INTERACT);
-    agent.AddAction("quit", A::QUIT);
+    agent.AddAction("w", A::MOVE_UP);
+    agent.AddAction("s", A::MOVE_DOWN);
+    agent.AddAction("a", A::MOVE_LEFT);
+    agent.AddAction("d", A::MOVE_RIGHT);
+    agent.AddAction("e", A::INTERACT);
+    agent.AddAction("q", A::QUIT);
+    agent.AddAction("stay", A::REMAIN_STILL);
 }
 
 DemoSimpleWorldG2::DemoSimpleWorldG2() {
@@ -299,6 +303,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
 
 
     auto* player = GetPlayer();
+    // Need to call this function to ensure player is set up for this world.
     DemoSimpleWorldG2::ConfigAgent(*player);
     player->SetSymbol('@');
     player->SetMaxHealth(100.0);
@@ -355,7 +360,11 @@ void DemoSimpleWorldG2::Run() {
         if (!player->IsAlive()) {
             break;
         }
-        const size_t action_id = player->SelectAction(main_grid);
+
+        std::cout << "WASD move, E interact with NPC/enemy, X quit.\n> ";
+        char input;
+        std::cin >> input;
+        const size_t action_id = player->SelectPlayerAction(input);
         const int result = DoAction(*player, action_id);
         player->SetActionResult(result);
         if (run_over) {
