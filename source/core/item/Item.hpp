@@ -9,10 +9,12 @@
 #pragma once
 
 #include <string>
-#include "../WorldBase.hpp"
 
 namespace cse498
 {
+class WorldBase;
+
+
 /**
  * Remember to set properties ESPECIALLY Unique-ness
  * Unique item == Only 1 possible in stack size and ID ids it

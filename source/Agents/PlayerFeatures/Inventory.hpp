@@ -15,6 +15,7 @@
 #pragma once
 
 #include "core/ItemBase.hpp"
+#include "../../core/item/Item.hpp"
 #include <optional>
 #include <array>
 #include <unordered_map>
@@ -25,60 +26,6 @@
 
 namespace cse498
 {
-/**
- * This is a temporary placeholding struct that will be deleted once dependancy of Item class is met
- * NOTE!!!
- * NOTE!!!
- * This is NOT my class. This is a placeholder from Group 15 that I needed to implement inventory
- * I wish an early pull request was done so we could both access this, but this class is weird.
- */
-class Item // I am not responsible for tests!!
-{
-private:
-    const size_t mId;              // An id unique to this item
-    std::string mName;             // Name of the item
-    std::string mImagePath;       // Filepath to the image for this item
-    int mGold;                     // Amount of gold the item can be sold/bought for
-    [[maybe_unused]] const WorldBase & mWorld;        // World this item is in
-    // Put something here for specific location? Whether or not it is in player inventory?
-
-protected:
-    /// Allows certain items to set this attribute or make a setter
-    /// This attribute determines stack size default or stack size 1 and mId identifies it
-    bool mUnique = false;
-
-
-public:
-    Item(size_t id, std::string  name, std::string  image_path, int gold,
-        const WorldBase & world): mId(id), mName(std::move(name)), mImagePath(std::move(image_path)),
-        mGold(gold), mWorld(world) {}
-
-    [[nodiscard]] size_t GetId() const {return mId;}
-    [[nodiscard]] std::string GetName() const  {return mName;}
-    [[nodiscard]] std::string GetImagePath() const {return mImagePath;}
-    [[nodiscard]] int GetGold() const  {return mGold;}
-    [[nodiscard]] bool IsUnique() const {return mUnique;}
-
-    void SetName(const std::string & name) {mName = name;}
-    void SetImagePath(const std::string & image_path) {mImagePath = image_path;}
-    void SetGold(int gold) {mGold = gold;}
-
-    [[nodiscard]] virtual bool IsWeapon() const {return false;}
-    [[nodiscard]] virtual bool IsConsumable() const {return false;}
-    /**
-     * An item is attempted to be used -- this defines what it does upon use
-     * default is that it doesn't do anything
-     */
-    virtual void Use() {}
-
-    virtual void DestroyItem() {
-        // TODO: Delete the item from the world
-    };
-    virtual ~Item() = default;
-};
-
-
-
 
 /**
  * !IMPORTANT

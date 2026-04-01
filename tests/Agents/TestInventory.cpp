@@ -3,66 +3,66 @@
  * @author Logan Rimarcik
  */
 
-
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "Agents/PlayerFeatures/Inventory.hpp"
+#include "../../source/core/item/Item.hpp"
 #include "core/WorldBase.hpp"
 
 namespace cse498
 {
-    class MockWorldBase : public WorldBase
+class MockWorldBase : public WorldBase
+{
+public:
+    MockWorldBase() : WorldBase()
     {
-    public:
-        MockWorldBase() : WorldBase() {}
-        ~MockWorldBase() override = default;
-        int DoAction([[maybe_unused]] AgentBase &agent, [[maybe_unused]] size_t action_id) override { return 0; }
-    };
-
-    /**
-     * Shared test world used by mock items so they do not hold references
-     * to temporary WorldBase objects that immediately go out of scope.
-     */
-    inline MockWorldBase& GetTestWorld()
-    {
-        static MockWorldBase world;
-        return world;
     }
+    ~MockWorldBase() override = default;
+    int DoAction([[maybe_unused]] AgentBase &agent, [[maybe_unused]] size_t action_id) override { return 0; }
+};
 
-    class MockTestItem : public Item
+/**
+ * Shared test world used by mock items so they do not hold references
+ * to temporary WorldBase objects that immediately go out of scope.
+ */
+inline MockWorldBase &GetTestWorld()
+{
+    static MockWorldBase world;
+    return world;
+}
+
+class MockTestItem : public Item
+{
+public:
+    MockTestItem(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, GetTestWorld())
     {
-    public:
-        MockTestItem(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, GetTestWorld()) {}
-    };
-    class MockTestItem2 : public Item
+    }
+};
+class MockTestItem2 : public Item
+{
+public:
+    MockTestItem2(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, GetTestWorld())
     {
-    public:
-        MockTestItem2(size_t id = 0, std::string name = "TestItem") : Item(id, std::move(name), "path", 4, GetTestWorld())
-        {
-            mUnique = true;
-        }
-    };
+    }
+    [[nodiscard]] bool IsUnique() const override { return true; }
+};
 
 // This is a 'real' item mimicking real items that is 'U' = unique
-    class RealUItem : public Item
+class RealUItem : public Item
+{
+public:
+    RealUItem(size_t id, int gold, const WorldBase &world) : Item(id, "RealUItem", "path", gold, world)
     {
-    public:
-        RealUItem(size_t id, int gold, const WorldBase& world) : Item(id, "RealUItem", "path", gold, world)
-        {
-            mUnique = true;
-        }
-    };
+    }
+    [[nodiscard]] bool IsUnique() const override { return true; }
+};
 // This is a 'real' item that is non-unique (gold price is determined)
-    class RealItem : public Item
+class RealItem : public Item
+{
+public:
+    RealItem(size_t id, const WorldBase &world) : Item(id, "RealItem", "path", 4, world)
     {
-    public:
-        RealItem(size_t id, const WorldBase& world) : Item(id, "RealItem", "path", 4, world)
-        {
-            mUnique = false;
-        }
-    };
-
-
-
+    }
+};
 }
 
 using cse498::MockTestItem;
@@ -84,7 +84,6 @@ TEST_CASE("Inventory Slot Constructors", "[Constructor]")
         CHECK(x.GetItem());
         CHECK(x.GetQuantity() == 3);
     }
-
 }
 
 TEST_CASE("Reset and Getters", "[inventoryslot, getters]")
@@ -107,7 +106,6 @@ TEST_CASE("Reset and Getters", "[inventoryslot, getters]")
         CHECK(x.IsEmpty());
         CHECK(!x.GetItem());
     }
-
 }
 
 TEST_CASE("Increment/Decrement Quantity", "[inventoryslot]")
@@ -141,7 +139,6 @@ TEST_CASE("bool() operator, Contains", "[operator, inventoryslot]")
         CHECK(!x.Contains("testitem"));
         CHECK(x);
     }
-
 }
 
 TEST_CASE("Insertion and Deletion", "[inventoryslot]")
@@ -175,7 +172,6 @@ TEST_CASE("Insertion and Deletion", "[inventoryslot]")
         overflow = x.Insert(100);
         CHECK(x.GetQuantity() == Inventory::MAX_ITEMS_PER_SLOT);
         CHECK(Inventory::MAX_ITEMS_PER_SLOT + overflow == 100);
-
     }
     {
         // this is all that is allowed
@@ -205,7 +201,6 @@ TEST_CASE("Insertion and Deletion", "[inventoryslot]")
  * INVENTORY SECTION
  * **********************************************************/
 
-
 TEST_CASE("Swap Slots simple", "[inventory, swap]")
 {
     // Swapping null item and real item
@@ -225,11 +220,10 @@ TEST_CASE("Swap Slots simple", "[inventory, swap]")
     CHECK(inv.GetHand()->GetName() == "TestItem");
 }
 
-
 TEST_CASE("Inventory Add and Remove", "[add, remove, inventory]")
 {
     Inventory inv;
-    auto& invView = inv.GetInventoryArray();
+    auto &invView = inv.GetInventoryArray();
     MockWorldBase world;
     inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 500);
     inv.AddItem(std::make_unique<RealItem>(1, world), 3);
@@ -270,14 +264,13 @@ TEST_CASE("Inventory RemoveItem all-or-nothing flag behavior", "[inventory, remo
     }
 }
 
-
 TEST_CASE("Inventory Basic Example walkthrough -- one item", "[inventory]")
 {
     // One item
     Inventory inv;
     CHECK(inv.GetHandSlotIndex() == 0);
     CHECK(inv.GetHand() == nullptr);
-    inv.AddItem(std::make_unique<MockTestItem>(0,"TestItem"), 3);
+    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 3);
     CHECK(inv.GetHandSlotIndex() == 0);
     CHECK(inv.GetHand() == nullptr);
     inv.SwapSlots(Inventory::HOTBAR_SIZE, 0);
@@ -285,10 +278,9 @@ TEST_CASE("Inventory Basic Example walkthrough -- one item", "[inventory]")
     CHECK(inv.GetHand()->GetName() == "TestItem");
     CHECK(inv.GetHand()->GetId() == 0);
     CHECK(inv.GetHandQuantity() == 3);
-    auto& invView = inv.GetInventoryArray();
+    auto &invView = inv.GetInventoryArray();
     CHECK(!invView.at(Inventory::HOTBAR_SIZE).GetItem());
     CHECK(invView.at(Inventory::HOTBAR_SIZE).GetQuantity() == 0);
-
 }
 
 TEST_CASE("Inventory Unique Item vs Non-Unique -- MultiItem", "[inventory, item, constructor]")
@@ -312,12 +304,11 @@ TEST_CASE("Inventory Unique Item vs Non-Unique -- MultiItem", "[inventory, item,
     CHECK(ov4 == 0);
     CHECK(ov5 == 0);
     CHECK(total == 16);
-    auto& invView = inv.GetInventoryArray();
+    auto &invView = inv.GetInventoryArray();
     CHECK(invView.at(Inventory::HOTBAR_SIZE).GetQuantity() == 16);
     CHECK(invView.at(Inventory::HOTBAR_SIZE + 1).GetQuantity() == 1);
 
     auto overflow = inv.AddItem<RealItem>(200, 0, world);
-
 
     CHECK(invView.at(Inventory::HOTBAR_SIZE).GetQuantity() == Inventory::MAX_ITEMS_PER_SLOT);
     CHECK(overflow == 0);
@@ -326,7 +317,7 @@ TEST_CASE("Inventory Unique Item vs Non-Unique -- MultiItem", "[inventory, item,
 
     // now clear and restart with mixture of addItem calls
     inv.ClearInventory();
-    for (auto& slot : invView)
+    for (auto &slot : invView)
     {
         CHECK(!slot.GetItem());
     }
@@ -343,7 +334,6 @@ TEST_CASE("Inventory Unique Item vs Non-Unique -- MultiItem", "[inventory, item,
     auto qu = inv.GetTotal("RealItem");
     CHECK(qu == 20);
     CHECK(invView.at(Inventory::HOTBAR_SIZE + 3).IsEmpty());
-
 }
 
 TEST_CASE("Inventory Other methods", "[inventory, methods]")
@@ -354,8 +344,8 @@ TEST_CASE("Inventory Other methods", "[inventory, methods]")
     inv.AddItem(std::make_unique<MockTestItem>(4, "TestItem"), 3);
 
     inv.ClearInventory();
-    auto& invView = inv.GetInventoryArray();
-    for (auto& slot : invView)
+    auto &invView = inv.GetInventoryArray();
+    for (auto &slot : invView)
     {
         CHECK(!slot.GetItem());
         CHECK(slot.GetQuantity() == 0);
@@ -369,8 +359,6 @@ TEST_CASE("Inventory Other methods", "[inventory, methods]")
     CHECK(inv.GetHandSlotIndex() == 5);
     inv.HotBarIndexDec();
     CHECK(inv.GetHandSlotIndex() == 4);
-
-
 }
 
 TEST_CASE("Check Asserts, some edge cases", "[none]")
@@ -381,12 +369,9 @@ TEST_CASE("Check Asserts, some edge cases", "[none]")
     auto result = inv.RemoveItem("none", 3);
     CHECK(result == 3);
 
-
     // Should hit assert:
     auto item = std::make_unique<RealUItem>(1, 5, world);
     CHECK(item->IsUnique());
 
     // inv.AddItem(std::move(item), 5);
-
-
 }
