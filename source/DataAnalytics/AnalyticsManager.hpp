@@ -8,6 +8,7 @@
  **/
 
 #pragma once
+#include <string>
 #include "../tools/DataLog.hpp"
 #include "../tools/ActionLog.hpp"
 
@@ -56,6 +57,11 @@ public:
   */
   void ResetActionLog();
 
+  /**
+   * Resets all logs
+   */
+  void Reset();
+
   // Temporary DataLogs for the game(can be changed based on what we want to
   // track)
   /*
@@ -76,17 +82,17 @@ public:
   /*
   Returns a const reference to the health log
   */
-  const DataLog &GetHealthLog() const;
+  [[nodiscard]] const DataLog &GetHealthLog() const noexcept;
 
   /*
   Returns a const reference to the enemies tracked log
   */
-  const DataLog &GetEnemiesTrackedLog() const;
+  [[nodiscard]] const DataLog &GetEnemiesTrackedLog() const noexcept;
 
   /*
   Returns a const reference to the damage dealt log
   */
-  const DataLog &GetDamageDealtLog() const;
+  [[nodiscard]] const DataLog &GetDamageDealtLog() const noexcept;
 
   /*
   Logs an action performed by an entity into the action log
@@ -102,7 +108,7 @@ public:
   /*
   Returns a const reference to the action log
   */
-  const ActionLog& GetActionLog() const;
+  [[nodiscard]] const ActionLog& GetActionLog() const noexcept;
 };
 
 } // namespace cse498
