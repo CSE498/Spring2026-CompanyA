@@ -138,7 +138,7 @@ public:
             "#                  #",
             "#                  #",
             "#                  #",
-            "#                  #",
+            "#                  #", // 17
             "#                  #",
             "#                  #",
             "####################"
@@ -448,11 +448,69 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
 
 }
 
-TEST_CASE("Circular Path Generation -- Edge Cases", "[CirclePath]")
+TEST_CASE("Circular Path Generation -- CCW, CW", "[CirclePath]")
 {
-    // Fill this in later possibly. Give me a break this was a lot to write and AI sucks at this type of testing
-    // I have to manually verify every test in desmos and think long and hard about everything returned. It isn't easy
-    // I also don't know if these functions are directly useful yet so before I spend tons more time... please ignore this empty test case
+    cse498::CircleWorld circle_world;
+    PathRequest circle_request({}, circle_world.GetGrid());
+
+    // Check divergence of directions
+    {
+        auto cw = PathGenerator::FindCircularPath({1, 1}, {4, 4}, 2, circle_request);
+        auto ccw = PathGenerator::FindCircularPath({1, 1},
+                                                   {4, 4},
+                                                   2,
+                                                   circle_request,
+                                                   cse498::PathFlag::Skip,
+                                                   cse498::CircleDirectionFlag::CCW);
+
+        REQUIRE(cw);
+        REQUIRE(ccw);
+        REQUIRE(cw->mPathToCircle.Size() >= 2);
+        REQUIRE(ccw->mPathToCircle.Size() >= 2);
+        REQUIRE(cw->mCirclePath.Size() >= 2);
+        REQUIRE(ccw->mCirclePath.Size() >= 2);
+
+        CHECK(cw->mPathToCircle.At(cw->mPathToCircle.Size() - 1) == ccw->mPathToCircle.At(ccw->mPathToCircle.Size() - 1));
+        CHECK(cw->mCirclePath.At(0) == ccw->mCirclePath.At(0));
+        CHECK(cw->mCirclePath.At(1) != ccw->mCirclePath.At(1));
+
+        CHECK(cw->mCirclePath.At(1).X() > cw->mCirclePath.At(0).X());
+        CHECK(cw->mCirclePath.At(1).Y() < cw->mCirclePath.At(0).Y());
+        CHECK(ccw->mCirclePath.At(1).X() < ccw->mCirclePath.At(0).X());
+        CHECK(ccw->mCirclePath.At(1).Y() > ccw->mCirclePath.At(0).Y());
+    }
+
+    // Blocked preferred entry point falls back to a different reachable point
+    {
+        std::unordered_set<WorldPosition> blocked_entry_tiles = {
+            {2, 2}, {3, 2}, {2, 3}
+        };
+        PathRequest blocked_request(blocked_entry_tiles, circle_world.GetGrid());
+
+        auto circ = PathGenerator::FindCircularPath({1, 1}, {4, 4}, 2, blocked_request);
+
+        REQUIRE(circ);
+        REQUIRE(circ->mPathToCircle.Size() >= 2);
+        REQUIRE(circ->mCirclePath.Size() >= 1);
+
+        const auto entry_tile = Round(circ->mPathToCircle.At(circ->mPathToCircle.Size() - 1));
+        CHECK(!blocked_entry_tiles.contains(entry_tile));
+        CHECK(circ->mCirclePath.At(0) == circ->mPathToCircle.At(circ->mPathToCircle.Size() - 1));
+    }
+
+    // No reachable circle point returns no path
+    {
+        std::unordered_set<WorldPosition> avoid_all_walkable;
+        for (size_t y = 1; y < 20; ++y)
+        {
+            for (size_t x = 1; x < 19; ++x)
+                avoid_all_walkable.insert({x, y});
+        }
+        PathRequest impossible_request(avoid_all_walkable, circle_world.GetGrid());
+
+        auto circ = PathGenerator::FindCircularPath({1, 1}, {4, 4}, 2, impossible_request);
+        CHECK(!circ);
+    }
 }
 
 TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
@@ -550,10 +608,6 @@ TEST_CASE("Rectangular Loop Generation -- Simple Cases", "[RectangularLoop]")
     CHECK(WorldPathApprox(WorldPath(rectangle2_path_to), rectangle2.value().mPathToCircle));
 }
 
-TEST_CASE("Rectangular Loop Generation -- Edge Cases", "[RectangularLoop]")
-{
-    // Ignore this one too. This took too long as is.
-}
 
 TEST_CASE("Path Generation - Doubles testing", "[group2]")
 {
@@ -642,9 +696,41 @@ TEST_CASE("Path Generation ALL - testing paths outside of bounds")
 }
 
 
-TEST_CASE("IsPathClear", "[utility]")
+TEST_CASE("IsPathClear -- random double testing", "[utility]")
 {
+    cse498::CircleWorld world;
+    PathRequest request({}, world.GetGrid());
+    // Long northeast ray from a fractional start stays clear in open space
+    {
+        WorldPosition start{2.25, 17.4};
+        PathVector path{11.1, -6.2};
 
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Long southwest ray from a different fractional start stays clear in open space
+    {
+        WorldPosition start{16.8, 4.3};
+        PathVector path{-10.4, 9.1};
+
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Long southeast ray from another start stays clear in open space
+    {
+        WorldPosition start{4.6, 3.2};
+        PathVector path{9.7, 11.4};
+
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Complex ray that would leave the open area is blocked by the border wall
+    {
+        WorldPosition start{8.4, 8.6};
+        PathVector path{5.7, -8.3};
+
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
 }
 TEST_CASE("PathGenerator::IsPathClear basic scenarios", "[path]") {
     cse498::TestWorldUtility1 world;
@@ -861,5 +947,3 @@ TEST_CASE("PathGenerator directional stepping - minimal but complete coverage", 
         CHECK(r == WorldPosition(-2, 3));
     }
 }
-
-

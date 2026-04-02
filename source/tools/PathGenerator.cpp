@@ -460,7 +460,7 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
     WorldPosition roundedStart = Round(start);
     double tileX = roundedStart.X();
     double tileY = roundedStart.Y();
-    WorldPosition endTile = Round(roundedStart + path_dir);
+    WorldPosition endTile = Round(start + path_dir);
 
     PathVector path = path_dir;
     path.Normalize();
