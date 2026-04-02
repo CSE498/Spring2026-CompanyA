@@ -12,12 +12,30 @@
 namespace cse498 {
 
 /*
-Resets all the logs
+Resets the health log
 */
-void AnalyticsManager::Reset() {
+void AnalyticsManager::ResetHealthLog() {
   mHealthLog.Clear();
+}
+
+/*
+Resets the enemies tracked log
+*/
+void AnalyticsManager::ResetEnemiesTrackedLog() {
   mEnemiesTrackedLog.Clear();
+}
+
+/*
+Resets the damage dealt log
+*/
+void AnalyticsManager::ResetDamageDealtLog() {
   mDamageDealtLog.Clear();
+}
+
+/**
+ * Resets the action log
+ */
+void AnalyticsManager::ResetActionLog() {
   mActionLog.Clear();
 }
 

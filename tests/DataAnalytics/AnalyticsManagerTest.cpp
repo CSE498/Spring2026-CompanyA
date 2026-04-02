@@ -66,7 +66,9 @@ TEST_CASE("Reset Log Test", "[DataAnalytics]") {
   CHECK(analytics.GetEnemiesTrackedLog().Count() == 1);
   CHECK(analytics.GetDamageDealtLog().Count() == 1);
 
-  analytics.Reset();
+  analytics.ResetHealthLog();
+  analytics.ResetEnemiesTrackedLog();
+  analytics.ResetDamageDealtLog();
 
   CHECK(analytics.GetHealthLog().Count() == 0);
   CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
@@ -124,7 +126,7 @@ TEST_CASE("AnalyticsManager Reset clears action log", "[DataAnalytics][actionlog
     analytics.LogAction(1, "move", {0.0, 0.0}, {1.0, 0.0});
     REQUIRE(analytics.GetActionLog().GetActionCount() == 1);
 
-    analytics.Reset();
+    analytics.ResetActionLog();
     CHECK(analytics.GetActionLog().GetActionCount() == 0);
     CHECK(analytics.GetActionLog().GetActions().empty());
 }

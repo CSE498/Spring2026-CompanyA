@@ -37,9 +37,24 @@ public:
   AnalyticsManager() = default;
 
   /*
-  Resets all the logs
+  Resets the health log
   */
-  void Reset();
+  void ResetHealthLog();
+
+  /*
+  Resets the enemies tracked log
+  */
+  void ResetEnemiesTrackedLog();
+
+  /*
+  Resets the damage dealt log
+  */
+  void ResetDamageDealtLog();
+
+  /**
+  * Resets the action log
+  */
+  void ResetActionLog();
 
   // Temporary DataLogs for the game(can be changed based on what we want to
   // track)
