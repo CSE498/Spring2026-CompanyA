@@ -1,43 +1,62 @@
 /**
- * This file is part of the Fall 2026, CSE 498, section 2, course project.
- * @brief A base class interface for all non-agent item types.
- * @note Status: PROPOSAL
- **/
+ * @file Item.hpp
+ * @author Group2, Group15
+ *
+ * New Item Class that will be built out and is the decided version of the item class by group2 and group15
+ * If it needs more functionality, ask one of the two groups to ensure it is consistent
+ */
 
 #pragma once
 
 #include <string>
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
 
-namespace cse498 {
-    class Item {
-        private:
-            const size_t m_id;              // An id unique to this item
-            std::string m_name;             // Name of the item
-            std::string m_image_path;       // Filepath to the image for this item
-            int m_gold;                     // Amount of gold the item can be sold/bought for
-            const WorldBase & m_world;        // World this item is in
-            // Put something here for specific location? Wether or not it is in player inventory?
+namespace cse498
+{
+/**
+ * Remember to set properties ESPECIALLY Unique-ness
+ * Unique item == Only 1 possible in stack size and ID ids it
+ */
+class Item
+{
+private:
+    const size_t m_id; // An id unique to this item
+    std::string m_name; // Name of the item
+    std::string m_image_path; // Filepath to the image for this item
+    int m_gold; // Amount of gold the item can be sold/bought for
+    [[maybe_unused]] const WorldBase &m_world; // World this item is in
 
-        public:
-            Item(size_t id, const std::string & name, const std::string & image_path, int gold, 
-                const WorldBase & world): m_id(id), m_name(name), m_image_path(image_path), 
-                m_gold(gold), m_world(world) {}
-            
-            size_t GetId() {return m_id;}
-            std::string GetName() {return m_name;}
-            std::string GetImagePath() {return m_image_path;}
-            int GetGold() {return m_gold;}
+public:
+    Item(const size_t id,
+         std::string name,
+         std::string image_path,
+         const int gold,
+         const WorldBase &world) : m_id(id), m_name(std::move(name)), m_image_path(std::move(image_path)),
+                                   m_gold(gold), m_world(world)
+    {
+    }
 
-            void SetName(const std::string & name) {m_name = name;}
-            void SetImagePath(const std::string & image_path) {m_image_path = image_path;}
-            void SetGold(int gold) {m_gold = gold;}
+    [[nodiscard]] size_t GetId() const { return m_id; }
+    [[nodiscard]] std::string GetName() const { return m_name; }
+    [[nodiscard]] std::string GetImagePath() const { return m_image_path; }
+    [[nodiscard]] int GetGold() const { return m_gold; }
 
-            virtual bool IsWeapon() const {return false;}
-            virtual bool IsConsumable() const {return false;}
+    void SetName(const std::string &name) { m_name = name; }
+    void SetImagePath(const std::string &image_path) { m_image_path = image_path; }
+    void SetGold(const int gold) { m_gold = gold; }
 
-            virtual void DestroyItem() {
-                // TODO: Delete the item from the world
-            }
-    };
+    [[nodiscard]] virtual bool IsWeapon() const { return false; }
+    [[nodiscard]] virtual bool IsConsumable() const { return false; }
+    [[nodiscard]] virtual bool IsUnique() const { return false; }
+
+    /**
+     * An item is attempted to be used -- this defines what it does upon use
+     * default is that it doesn't do anything
+     */
+    virtual void Use()
+    {
+    }
+
+    virtual ~Item() = default;
+};
 }
