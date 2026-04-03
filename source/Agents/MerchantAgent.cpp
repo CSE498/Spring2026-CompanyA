@@ -12,14 +12,12 @@ namespace cse498
     MerchantAgent::MerchantAgent(std::size_t id, const std::string& name, WorldBase& world)
         : AgentBase(id, name, world)
     {
-        /**
-         * - apple stock is unlimited
-         * - bread and potion stocks are limited
-         */
+        // small default shop for the base merchant
         AddOffer({"apple", 4, 2, 1, TradeStockMode::Unlimited, 0});
         AddOffer({"bread", 6, 3, 1, TradeStockMode::Limited, 18});
         AddOffer({"potion", 10, 5, 1, TradeStockMode::Limited, 10});
 
+        // starting gold to buy items from player
         AddGold(200);
     }
 
@@ -45,6 +43,7 @@ namespace cse498
 
     const TradeOffer* MerchantAgent::FindOffer(const std::string& itemName) const
     {
+        // Search the offer list by item name
         const auto it = std::ranges::find_if(mOffers,
                                              [&itemName](const TradeOffer& offer)
                                              {
@@ -56,6 +55,7 @@ namespace cse498
 
     bool MerchantAgent::SpendGold(const std::size_t amount)
     {
+        // reject the transaction if merchant doesn't have enough
         if (amount > mGold)
         {
             return false;
@@ -67,6 +67,7 @@ namespace cse498
 
     TradeResult MerchantAgent::BuyFromMerchant(PlayerAgent& player, const std::string& itemName, std::size_t quantity)
     {
+        // Stop if merchant isn't trading
         if (!mAvailableForTrade)
         {
             return {
@@ -78,6 +79,7 @@ namespace cse498
             };
         }
 
+        // Find if the offer is in the merchant's offer list
         TradeOffer* offer = FindOfferMutable(itemName);
         if (offer == nullptr)
         {
@@ -90,6 +92,7 @@ namespace cse498
             };
         }
 
+        // delegate transaction rules to TradeSystem
         return TradeSystem::BuyItem(
             GetWorld(),
             mNextItemId,
@@ -102,6 +105,7 @@ namespace cse498
 
     TradeResult MerchantAgent::SellToMerchant(PlayerAgent& player, const std::string& itemName, std::size_t quantity)
     {
+        // stop if merchant isn't trading
         if (!mAvailableForTrade)
         {
             return {
@@ -113,6 +117,7 @@ namespace cse498
             };
         }
 
+        // can't sell 0 of something to a merchant
         if (quantity == 0)
         {
             return {
@@ -124,6 +129,7 @@ namespace cse498
             };
         }
 
+        // Inspect the item from the player's inventory so pricing can be derived from item itself
         const Item* item = player.GetInventory().FindFirstItem(itemName);
         if (item == nullptr)
         {
@@ -136,10 +142,12 @@ namespace cse498
             };
         }
 
+        // get a buy and sell price for shop
         const int itemValue = item->GetGold();
         const std::size_t buyPrice = static_cast<std::size_t>(std::max(1, itemValue));
         const std::size_t sellPrice = std::max<std::size_t>(1, buyPrice / 2);
 
+        // make sure the sold item shows up in the shop as a limited offer
         TradeOffer& offer = EnsureLimitedOffer(item->GetName(), buyPrice, sellPrice, itemValue);
 
         return TradeSystem::SellItem(
@@ -163,15 +171,13 @@ namespace cse498
     TradeOffer& MerchantAgent::EnsureLimitedOffer(const std::string& itemName, std::size_t buyPrice,
                                                   std::size_t sellPrice, int itemValue)
     {
+        // Reuse the existing offer if the merchant already sells this item
         if (TradeOffer* existing = FindOfferMutable(itemName); existing != nullptr)
         {
             return *existing;
         }
 
-        /**
-         * If the merchant does not already sell this item, create a new
-         * limited-stock listing so the player can buy it back later.
-         */
+        // create a new limited offer entry so the player can buy it back later
         mOffers.push_back(TradeOffer{
             .mItemName = itemName,
             .mBuyPrice = buyPrice,

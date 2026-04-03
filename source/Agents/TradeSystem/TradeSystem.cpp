@@ -17,14 +17,17 @@ namespace cse498
         const std::string& itemName,
         int value)
     {
+        // Recreate a generic item instance using the next available id
         return std::make_unique<Item>(nextItemId++, itemName, "", value, world);
     }
 
     TradeResult TradeSystem::BuyItem(const WorldBase& world, std::size_t& nextItemId, PlayerAgent& player,
         MerchantAgent& merchant, TradeOffer& offer, std::size_t quantity)
     {
+        // Work with player's inventory during transaction
         Inventory& playerInventory = player.GetInventory();
 
+        // Reject invalid quantities
         if (quantity == 0)
         {
             return {
@@ -36,6 +39,7 @@ namespace cse498
             };
         }
 
+        // Make sure merchant has enough
         if (!offer.HasEnough(quantity))
         {
             return {
@@ -47,7 +51,9 @@ namespace cse498
             };
         }
 
+        // compute total price for requested quantity
         const std::size_t totalCost = offer.mBuyPrice * quantity;
+        // player needs to have enough gold
         if (player.GetGold() < totalCost)
         {
             return {
@@ -59,6 +65,7 @@ namespace cse498
             };
         }
 
+        // spend gold first before inventory changes
         if (!player.SpendGold(totalCost))
         {
             return {
@@ -70,6 +77,7 @@ namespace cse498
             };
         }
 
+        // reserve limited stock before adding the item to the player's inventory
         if (!offer.Consume(quantity))
         {
             player.AddGold(totalCost);
@@ -82,6 +90,7 @@ namespace cse498
             };
         }
 
+        // Roll back cost and stock if the item cannot be inserted into inventory
         if (playerInventory.AddItem(MakeItem(nextItemId, world, offer.mItemName, offer.mItemValue), quantity) != 0)
         {
             offer.Restock(quantity);
@@ -96,6 +105,7 @@ namespace cse498
             };
         }
 
+        // Transfer gold to the merchant after the item has been added successfully
         merchant.AddGold(totalCost);
 
         return {
@@ -111,8 +121,10 @@ namespace cse498
     TradeResult TradeSystem::SellItem(const WorldBase& world, std::size_t& nextItemId, PlayerAgent& player,
         MerchantAgent& merchant, TradeOffer& offer, std::size_t quantity)
     {
+        // Get player's inventory to work with during transaction
         Inventory& playerInventory = player.GetInventory();
 
+        // reject invalid quantities
         if (quantity == 0)
         {
             return {
@@ -124,6 +136,7 @@ namespace cse498
             };
         }
 
+        // Player has to own enough of the item to sell it
         if (playerInventory.GetTotal(offer.mItemName) < quantity)
         {
             return {
@@ -135,7 +148,9 @@ namespace cse498
             };
         }
 
+        // Compute how much gold merchant owes
         const std::size_t payout = offer.mSellPrice * quantity;
+        // Merchant needs enough gold to purchase
         if (merchant.GetGold() < payout)
         {
             return {
@@ -147,6 +162,7 @@ namespace cse498
             };
         }
 
+        // Remove item from the player's inventory before paying out gold owed
         if (playerInventory.RemoveItem(offer.mItemName, quantity, true) != 0)
         {
             return {
@@ -158,6 +174,7 @@ namespace cse498
             };
         }
 
+        // If merchant can't spend gold after removal, need to restore sold item
         if (!merchant.SpendGold(payout))
         {
             playerInventory.AddItem(MakeItem(nextItemId, world, offer.mItemName, offer.mItemValue), quantity);
@@ -171,12 +188,10 @@ namespace cse498
             };
         }
 
+        // Pay the player for the item
         player.AddGold(payout);
 
-        /**
-         * Selling to the merchant makes the item available for repurchase.
-         * Unlimited offers ignore this, limited offers increase stock.
-         */
+        // Restock the offer so sold items can be bought back
         offer.Restock(quantity);
 
         return {

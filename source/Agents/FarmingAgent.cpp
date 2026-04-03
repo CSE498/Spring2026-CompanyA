@@ -11,12 +11,10 @@ namespace cse498
     FarmingAgent::FarmingAgent(std::size_t id, const std::string& name, WorldBase& world)
         : MerchantAgent(id, name, world)
     {
+        // Replace base merchant defaults
         ClearOffers();
 
-        /**
-         * -seeds are unlimited
-         * -Wheat and carrots are limited
-         */
+        // Seeds are always available, while crops are limited
         AddOffer({"wheat", 3, 1, 1, TradeStockMode::Limited, 30});
         AddOffer({"seeds", 2, 1, 1, TradeStockMode::Unlimited, 0});
         AddOffer({"carrot", 4, 2, 1, TradeStockMode::Limited, 18});
