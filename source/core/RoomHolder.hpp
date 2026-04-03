@@ -76,7 +76,7 @@ namespace cse498 {
         }
 
         [[nodiscard]] std::string GenerateFilePath() { 
-			auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight());
+			auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight()).value();
 			
 			auto sample_result = m_room_pool.Sample(room_select);
 			assert(sample_result.has_value());
@@ -123,7 +123,7 @@ namespace cse498 {
                     }
 
                     // Variant floor tiles
-                    file_path += std::to_string(m_rng.GetValue(2,5));
+                    file_path += std::to_string(m_rng.GetValue(2,5).value());
                     file_path += ".png";
                     return file_path;
                 }
@@ -171,7 +171,7 @@ namespace cse498 {
             else if (tile_c == 'm') {
                 file_path += "agents/monsters/agent_monster_";
 
-                int monster = m_rng.GetValue(1,2);
+                int monster = m_rng.GetValue(1,2).value();
                 if (monster == 1) {
                     file_path += "goblin.png";
                 }
