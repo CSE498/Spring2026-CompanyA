@@ -141,7 +141,7 @@ namespace cse498 {
          * @brief Regenerates the BSP Tree incase any modifications to width/height/properties after its creation are made in order to 
          * ensure the object's state is up to date when new dungeons are later created
          */
-        void RegnerateObjectState() {
+        void RegenerateObjectState() {
             ClearState();
             RepopulateTree();
         }

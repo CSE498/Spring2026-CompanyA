@@ -16,6 +16,8 @@
 #include <ranges>
 #include <algorithm>
 
+namespace cse498 {
+
 struct Point {
     int x, y; // x-y points of a room
 };
@@ -24,9 +26,6 @@ struct LinkedRooms {
     int x1, y1; //first room's coordinates
     int x2, y2; //second room's coordinates
 };
-
-namespace cse498 {
-    
 
     class WorldGen {
     protected:

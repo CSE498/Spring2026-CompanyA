@@ -14,7 +14,6 @@
  #include <fstream>
  #include <iostream>
  #include <cassert>
- #include <iostream>
  #include "../tools/Random.hpp"
 #include "../tools/WeightedSet.hpp"
 
