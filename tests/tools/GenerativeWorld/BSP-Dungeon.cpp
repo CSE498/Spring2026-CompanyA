@@ -115,7 +115,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-23456.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_TWO);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_TWO);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -123,7 +123,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-34567.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_THREE);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_THREE);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -131,7 +131,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-45678.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_FOUR);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_FOUR);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -139,7 +139,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-56789.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_FIVE);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_FIVE);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -147,7 +147,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-67890.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_SIX);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_SIX);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -155,7 +155,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-1.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_SEVEN);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_SEVEN);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -163,7 +163,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-1023987435908.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_EIGHT);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_EIGHT);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -171,7 +171,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-10923810957.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_NINE);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_NINE);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
@@ -179,7 +179,7 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         //Refer to BSP-Dungeon-Seed-Info/BSP-Dungeon-Seed-10297834198.md for Tree information
         BSP.SetRngSeed(SEED_VALUE_TEN);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_TEN);
-        BSP.RegnerateObjectState();
+        BSP.RegenerateObjectState();
         CHECK(tree.size() == 29);
         CHECK(leaf.size() == 15);
 
