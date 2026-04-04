@@ -12,16 +12,15 @@
 namespace cse498
 {
     std::unique_ptr<Item> TradeSystem::MakeItem(
-        std::size_t& nextItemId,
         const WorldBase& world,
         const std::string& itemName,
         int value)
     {
-        // Recreate a generic item instance using the next available id
-        return std::make_unique<Item>(nextItemId++, itemName, "", value, world);
+        // For non-unique trade items, inventory ignores item id, so 0 is used instead of generating a unique id
+        return std::make_unique<Item>(0, itemName, "", value, world);
     }
 
-    TradeResult TradeSystem::BuyItem(const WorldBase& world, std::size_t& nextItemId, PlayerAgent& player,
+    TradeResult TradeSystem::BuyItem(const WorldBase& world, PlayerAgent& player,
         MerchantAgent& merchant, TradeOffer& offer, std::size_t quantity)
     {
         // Work with player's inventory during transaction
@@ -91,7 +90,7 @@ namespace cse498
         }
 
         // Roll back cost and stock if the item cannot be inserted into inventory
-        if (playerInventory.AddItem(MakeItem(nextItemId, world, offer.mItemName, offer.mItemValue), quantity) != 0)
+        if (playerInventory.AddItem(MakeItem(world, offer.mItemName, offer.mItemValue), quantity) != 0)
         {
             offer.Restock(quantity);
             player.AddGold(totalCost);
@@ -118,7 +117,7 @@ namespace cse498
         };
     }
 
-    TradeResult TradeSystem::SellItem(const WorldBase& world, std::size_t& nextItemId, PlayerAgent& player,
+    TradeResult TradeSystem::SellItem(const WorldBase& world, PlayerAgent& player,
         MerchantAgent& merchant, TradeOffer& offer, std::size_t quantity)
     {
         // Get player's inventory to work with during transaction
@@ -177,7 +176,7 @@ namespace cse498
         // If merchant can't spend gold after removal, need to restore sold item
         if (!merchant.SpendGold(payout))
         {
-            playerInventory.AddItem(MakeItem(nextItemId, world, offer.mItemName, offer.mItemValue), quantity);
+            playerInventory.AddItem(MakeItem(world, offer.mItemName, offer.mItemValue), quantity);
 
             return {
                 TradeStatus::MerchantCannotAfford,

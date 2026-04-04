@@ -12,13 +12,8 @@ namespace cse498
     MerchantAgent::MerchantAgent(std::size_t id, const std::string& name, WorldBase& world)
         : AgentBase(id, name, world)
     {
-        // small default shop for the base merchant
-        AddOffer({"apple", 4, 2, 1, TradeStockMode::Unlimited, 0});
-        AddOffer({"bread", 6, 3, 1, TradeStockMode::Limited, 18});
-        AddOffer({"potion", 10, 5, 1, TradeStockMode::Limited, 10});
-
-        // starting gold to buy items from player
-        AddGold(200);
+        // Merchant starts empty by default and owning world decides what merchant sells and how
+        // much gold it starts with
     }
 
     std::size_t MerchantAgent::SelectAction([[maybe_unused]] const WorldGrid& grid)
@@ -51,6 +46,16 @@ namespace cse498
                                              });
 
         return (it == mOffers.end()) ? nullptr : &(*it);
+    }
+
+    void MerchantAgent::AddInitialOffer(const TradeOffer& offer)
+    {
+        AddOffer(offer);
+    }
+
+    void MerchantAgent::ClearInitialOffers()
+    {
+        ClearOffers();
     }
 
     bool MerchantAgent::SpendGold(const std::size_t amount)
@@ -95,7 +100,6 @@ namespace cse498
         // delegate transaction rules to TradeSystem
         return TradeSystem::BuyItem(
             GetWorld(),
-            mNextItemId,
             player,
             *this,
             *offer,
@@ -152,7 +156,6 @@ namespace cse498
 
         return TradeSystem::SellItem(
             GetWorld(),
-            mNextItemId,
             player,
             *this,
             offer,

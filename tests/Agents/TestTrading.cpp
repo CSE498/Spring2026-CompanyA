@@ -42,6 +42,14 @@ namespace cse498
 }
 
 using namespace cse498;
+static void SetupBasicMerchant(MerchantAgent& merchant)
+{
+    merchant.ClearInitialOffers();
+    merchant.AddInitialOffer({"apple", 4, 2, 1, TradeStockMode::Unlimited, 0});
+    merchant.AddInitialOffer({"bread", 6, 3, 1, TradeStockMode::Limited, 18});
+    merchant.AddInitialOffer({"potion", 10, 5, 1, TradeStockMode::Limited, 10});
+    merchant.AddGold(200);
+}
 
 TEST_CASE("PlayerAgent gold helpers work", "[agents][player][gold]")
 {
@@ -85,6 +93,7 @@ TEST_CASE("Buying a limited merchant item reduces stock and player gold", "[agen
     TestWorld world;
     PlayerAgent player(300, "Buyer", world);
     MerchantAgent merchant(301, "Merchant", world);
+    SetupBasicMerchant(merchant);
 
     player.SetGold(100);
 
@@ -113,6 +122,7 @@ TEST_CASE("Selling unknown item creates limited merchant offer", "[agents][trade
     TestWorld world;
     PlayerAgent player(400, "Seller", world);
     MerchantAgent merchant(401, "Merchant", world);
+    SetupBasicMerchant(merchant);
 
     player.SetGold(0);
 
@@ -143,6 +153,7 @@ TEST_CASE("Selling existing limited item increases merchant stock", "[agents][tr
     TestWorld world;
     PlayerAgent player(500, "Seller", world);
     MerchantAgent merchant(501, "Merchant", world);
+    SetupBasicMerchant(merchant);
 
     player.SetGold(0);
 

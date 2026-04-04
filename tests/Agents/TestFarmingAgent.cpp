@@ -30,6 +30,14 @@ namespace cse498
 }
 
 using namespace cse498;
+static void SetupBasicFarmer(FarmingAgent& farmer)
+{
+    farmer.ClearInitialOffers();
+    farmer.AddInitialOffer({"wheat", 3, 1, 1, TradeStockMode::Limited, 30});
+    farmer.AddInitialOffer({"seeds", 2, 1, 1, TradeStockMode::Unlimited, 0});
+    farmer.AddInitialOffer({"carrot", 4, 2, 1, TradeStockMode::Limited, 18});
+    farmer.AddGold(100);
+}
 
 TEST_CASE("FarmingAgent initializes correctly", "[FarmingAgent]")
 {
@@ -71,10 +79,11 @@ TEST_CASE("FarmingAgent has expected trade greeting", "[FarmingAgent][greeting]"
     REQUIRE(farmer.GetTradeGreeting() == "Fresh crops and seeds today.");
 }
 
-TEST_CASE("FarmingAgent has expected default offers", "[FarmingAgent][offers]")
+TEST_CASE("FarmingAgent can be configured with expected offers", "[FarmingAgent][offers]")
 {
     TestWorld world;
     FarmingAgent farmer(5, "Farmer", world);
+    SetupBasicFarmer(farmer);
 
     const auto& offers = farmer.GetOffers();
     REQUIRE(offers.size() == 3);

@@ -315,6 +315,11 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     auto &farmer = AddAgent<FarmingAgent>("Farmer");
     farmer.SetSymbol('F');
     farmer.SetLocation(Location(WorldPosition{4, 2}));
+    farmer.ClearInitialOffers();
+    farmer.AddInitialOffer({"apple", 4, 2, 1, TradeStockMode::Unlimited, 0});
+    farmer.AddInitialOffer({"bread", 6, 3, 1, TradeStockMode::Limited, 18});
+    farmer.AddInitialOffer({"potion", 10, 5, 1, TradeStockMode::Limited, 10});
+    farmer.AddGold(200);
 
     // just for demonstration of another method for creation
     auto &enemy = AddAgent(std::make_unique<Enemy>(GetNextAgentId(), "Enemy", *this));

@@ -24,7 +24,6 @@ namespace cse498
 
         /** Catalog of items merchant can trade*/
         std::vector<TradeOffer> mOffers;
-        std::size_t mNextItemId = 10000;
 
         /** Currency held by merchant for paying the player for sales. */
         std::size_t mGold = 0;
@@ -68,7 +67,9 @@ namespace cse498
 
     public:
         /**
-         * Constructs a merchant agent with default shop offers and starter gold.
+         * Constructs an empty merchant agent.
+         *
+         * Initial shop offers and starting gold are expected to be provided by owning world.
          *
          * @param id Unique agent id
          * @param name Display name
@@ -108,6 +109,21 @@ namespace cse498
          * @return Pointer to matching offer, or nullptr if not found
          */
         [[nodiscard]] const TradeOffer* FindOffer(const std::string& itemName) const;
+
+        /**
+         * Adds an initial shop offer during world setup.
+         *
+         * This is intended for setup time, so owning world can decide what the merchant sells without
+         * hardcoding it in the constructor.
+         *
+         * @param offer Offer to add to merchant catalog
+         */
+        void AddInitialOffer(const TradeOffer& offer);
+
+        /**
+         * Removes all existing shop offers during world setup.
+         */
+        void ClearInitialOffers();
 
         /**
          * @return Merchant's current gold total

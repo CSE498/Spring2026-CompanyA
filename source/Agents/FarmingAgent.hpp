@@ -15,7 +15,9 @@ namespace cse498
     {
     public:
         /**
-         * Constructs a farming merchant with crop focused offers
+         * Constructs a farming merchant NPC.
+         *
+         * Shop offers are configured by owning world setup.
          *
          * @param id Unique agent id
          * @param name NPC display name
