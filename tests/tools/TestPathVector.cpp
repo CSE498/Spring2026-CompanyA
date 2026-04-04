@@ -8,7 +8,6 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "tools/PathVector.hpp"
 #include "core/WorldPosition.hpp"
-#include <iostream>
 #include <numbers>
 using cse498::PathVector;
 using std::numbers::pi;
