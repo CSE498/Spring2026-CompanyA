@@ -196,10 +196,13 @@ TEST_CASE("Timer String Method", "[Timer]") {
   REQUIRE(timer.toString(false) == "Test [STOPPED]: 01:20.270");
 
   timer.lap();
-  REQUIRE(timer.toString(true) ==
-          "Test [STOPPED]: 01:20.270\n  Lap 1: 01:20.270\n  Lap 2: 00:00.000");
+  REQUIRE(timer.toString(false) == "Test [STOPPED]: 01:20.270");
 
   timer.start();
+  timer.lap();
+  REQUIRE(timer.toString(true) ==
+          "Test [RUNNING]: 01:20.270\n  Lap 1: 01:20.270\n  Lap 2: 00:00.000");
+
   timer.advanceTime(3.82);
   REQUIRE(timer.toString(true) ==
           "Test [RUNNING]: 01:24.090\n  Lap 1: 01:20.270\n  Lap 2: 00:03.820");

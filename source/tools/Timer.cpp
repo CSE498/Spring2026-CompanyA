@@ -76,11 +76,13 @@ void cse498::Timer::restart() {
  * Lap the Timer, stopping the previous lap and immediately starting a new one.
  */
 void cse498::Timer::lap() {
-  mLaps.at(mLaps.size() - 1) +=
-      (std::chrono::steady_clock::now() - mLapStart).count() /
-      NS_TO_S_CONVERSION;
-  mLaps.push_back(0.0);
-  mLapStart = std::chrono::steady_clock::now();
+  if (mRunning) {
+    mLaps.at(mLaps.size() - 1) +=
+        (std::chrono::steady_clock::now() - mLapStart).count() /
+        NS_TO_S_CONVERSION;
+    mLaps.push_back(0.0);
+    mLapStart = std::chrono::steady_clock::now();
+  }
 }
 
 /**
