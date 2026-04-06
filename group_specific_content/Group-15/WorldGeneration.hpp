@@ -26,7 +26,7 @@ struct LinkedRooms {
 namespace cse498 {
     
 
-    class WorldGen {
+    class WorldGeneration {
     protected:
         BSP mBSP; // BSP_Tree that contains information on the grid and it's dimensions
         RoomHolder mRoomHolder; //
@@ -39,7 +39,7 @@ namespace cse498 {
     public: 
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
-        WorldGen() 
+        WorldGeneration() 
             : mBSP(), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
               mRoomHolder(), 
               mGrid(mBSP.GetHeight(), std::string(mBSP.GetWidth(), '#')) 

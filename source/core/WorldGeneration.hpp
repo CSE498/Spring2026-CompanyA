@@ -27,7 +27,7 @@ struct LinkedRooms {
     int x2, y2; //second room's coordinates
 };
 
-    class WorldGen {
+    class WorldGeneration {
     protected:
         BSP m_bsp; // BSP_Tree that contains information on the grid and it's dimensions
         //RoomHolder mRoomHolder;
@@ -40,7 +40,7 @@ struct LinkedRooms {
     public: 
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
-        WorldGen(const cse498::WeightedSet<std::string>& room_pool) 
+        WorldGeneration(const WeightedSet<std::string>& room_pool) 
             : m_bsp(room_pool), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
               //mRoomHolder(room_pool), 
               m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'))
@@ -116,7 +116,7 @@ struct LinkedRooms {
         /// @brief Calculate center of room placed in grid
         /// @param room we're inputting the BSP_Tree Node's room value
         /// @return pair of coordinates 
-        [[nodiscard]] Point CalcRoomCenter(std::vector<std::string>& room) {
+        [[nodiscard]] Point CalcRoomCenter(const std::vector<std::string>& room) const {
             auto width = room[0].length();
             auto height = room.size();
 
@@ -196,14 +196,11 @@ struct LinkedRooms {
 
             m_connected_rooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
 
-            auto gamble = m_rng.GetValue(0,1); //Determines which node is returned
+            auto return_determiner = m_rng.GetValue(0,1); //Determines which node is returned
 
             //sends a node upwards, allowing connectivity between nodes for linking 
-            if (gamble == 0) {
+            if (return_determiner == 0) {
                 return right; 
-            }
-            else {
-                return left;
             }
 
             return left;

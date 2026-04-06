@@ -55,7 +55,7 @@ namespace cse498 {
       m_door_tile = main_grid.AddCellType("wall",  "door tile wall.", 'd');
       m_secret_door = main_grid.AddCellType("wall",  "secret tile wall.", 's');
 
-      WorldGen generation(room_pool); 
+      WorldGeneration generation(room_pool); 
       generation.CreateDungeon(); 
       std::vector<std::string> testing = generation.GetDungeon();
 
