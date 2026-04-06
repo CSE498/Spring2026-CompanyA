@@ -3,7 +3,7 @@
  * @brief Implementation of WebLayout DOM container and layout engine.
  *
  * Contains the DOM interaction logic for creating, configuring, and
- * destroying a root \<div\> element, as well as applying Flexbox, CSS Grid,
+ * destroying a root <div> element, as well as applying Flexbox, CSS Grid,
  * or Free (absolute/relative) positioning to child IDomElement objects.
  * Requires Emscripten; the entire file is conditionally compiled with
  * \c __EMSCRIPTEN__.
@@ -26,15 +26,23 @@ int WebLayout::mNextIdCounter = 1;
 /// Helper function to convert a pixel value to a CSS string.
 /// @param v Pixel value (non-negative)
 /// @return CSS string like "10px" or empty string if v < 0
-static std::string px(std::optional<int> v) noexcept {
-  if (!v.has_value() || *v < 0) return "";
-  return std::to_string(*v) + "px";
+static std::string px(int v) noexcept {
+  if (v < 0) return "";
+  return std::to_string(v) + "px";
+}
+
+/// Helper function to convert an optional pixel value to a CSS string.
+/// @param v Optional pixel value
+/// @return CSS string like "10px" or empty string if not set or v < 0
+static std::string px(const std::optional<int>& v) noexcept {
+  if (!v.has_value()) return "";
+  return px(*v);
 }
 
 /// @brief Constructs a WebLayout, creating or adopting a root DOM element.
 /// @param rootId Optional ID; if an element with this ID exists in the DOM it
-///               is adopted as root, otherwise a new \<div\> is created and
-///               appended to \<body\>.
+///               is adopted as root, otherwise a new <div> is created and
+///               appended to <body\>.
 WebLayout::WebLayout(const std::string& rootId) noexcept {
   mDocument = val::global("document");
   if (!rootId.empty()) {
@@ -276,7 +284,7 @@ void WebLayout::ApplyStyling(val style) noexcept {
 
 void WebLayout::ApplyLayout(val style) noexcept {
   // Helper lambda to convert Justification to CSS justify-content string.
-  auto getJustifyStr = [](Justification j) -> std::string {
+  constexpr auto getJustifyStr = [](Justification j) -> std::string {
     switch (j) {
       case Justification::Start:
         return "flex-start";
@@ -294,11 +302,12 @@ void WebLayout::ApplyLayout(val style) noexcept {
         return "";
     }
     assert(false && "Unhandled Justification");
+    return "";
   };
 
   // Helper lambda to convert Alignment to CSS align-items / justify-items
   // string.
-  auto getAlignItemsStr = [](Alignment a) -> std::string {
+  constexpr auto getAlignItemsStr = [](Alignment a) -> std::string {
     switch (a) {
       case Alignment::Start:
         return "flex-start";
@@ -312,6 +321,7 @@ void WebLayout::ApplyLayout(val style) noexcept {
         return "";
     }
     assert(false && "Unhandled Alignment");
+    return "";
   };
 
   switch (mType) {
