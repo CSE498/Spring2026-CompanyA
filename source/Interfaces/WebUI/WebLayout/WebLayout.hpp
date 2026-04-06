@@ -3,7 +3,7 @@
  * @brief Declaration of WebLayout, a DOM container supporting Flexbox, Grid,
  *        and Free positioning of IDomElement children.
  *
- * WebLayout creates and manages a single root \<div\> element in the browser
+ * WebLayout creates and manages a single root <div> element in the browser
  * DOM and exposes a high-level C++ API for configuring its layout model,
  * styling, and child elements. It also implements IDomElement so that layouts
  * can be nested inside other layouts.
@@ -88,7 +88,7 @@ class WebLayout : public IDomElement {
   void MountToLayout(WebLayout& parent,
                      Alignment align = Alignment::None) noexcept override;
 
-  void RemoveChild(IDomElement * elem) override;
+  void RemoveChild(IDomElement* elem) override;
 
   /// Synchronizes the layout state with the DOM. Calls Apply() to refresh.
   void SyncFromModel() noexcept override;
@@ -202,7 +202,7 @@ class WebLayout : public IDomElement {
   // ===== Layout State =====
   LayoutType mType = LayoutType::Free;                  ///< Current layout type
   Justification mJustification = Justification::Start;  ///< Main axis alignment
-  Alignment mAlignItems = Alignment::None;  ///< Cross axis alignment
+  Alignment mAlignItems = Alignment::None;              ///< Cross axis alignment
 
   // ===== Styling Properties =====
   std::string mBackgroundColor{};
