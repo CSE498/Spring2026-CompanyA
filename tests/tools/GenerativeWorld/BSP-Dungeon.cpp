@@ -5,16 +5,26 @@
 
 /// @brief Brought over from DungeonOne for test case purposes
 /// @return vector of 
+inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{{
+		{1, 10},
+		{2, 10},
+		{3, 10},
+		{4, 10},
+		{5, 10},
+		{6, 1},
+	}};
+
+inline static const std::string PREFIX = "one_pool/room_";
+
 static cse498::WeightedSet<std::string> MakeRoomPool() {
-    cse498::WeightedSet<std::string> rooms;
-    std::string file_name = "one_pool/room_";
-    rooms.Insert(file_name + "1.txt", 10);
-    rooms.Insert(file_name + "2.txt", 10);
-    rooms.Insert(file_name + "3.txt", 10);
-    rooms.Insert(file_name + "4.txt", 10);
-    rooms.Insert(file_name + "5.txt", 10);
-    rooms.Insert(file_name + "6.txt", 1);
-    return rooms;
+	cse498::WeightedSet<std::string> rooms;
+	
+	for (const auto& [num, weight] : ROOM_DATA) {
+		auto result = rooms.Insert(PREFIX + std::to_string(num) + ".txt", weight);
+		assert(result.has_value());
+	}
+
+	return rooms;
 }
 
 const uint64_t SEED_VALUE_ONE = 12345;

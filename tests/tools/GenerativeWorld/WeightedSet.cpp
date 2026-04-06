@@ -24,10 +24,11 @@ static constexpr double TOL = 1e-12;
  */
 cse498::WeightedSet<std::string> MakeSmallTree() {
 	cse498::WeightedSet<std::string> wSet;
-	wSet.Insert("A", 2.0);
-	wSet.Insert("B", 3.0);
-	wSet.Insert("C", 5.0);
-	wSet.Insert("D", 7.0);
+	//overriding nodiscard for std::expected by casting to void
+	static_cast<void>(wSet.Insert("A", 2.0));
+	static_cast<void>(wSet.Insert("B", 3.0));
+	static_cast<void>(wSet.Insert("C", 5.0));
+	static_cast<void>(wSet.Insert("D", 7.0));
 	return wSet;
 }
 
@@ -44,16 +45,16 @@ cse498::WeightedSet<std::string> MakeSmallTree() {
  */
 cse498::WeightedSet<int> MakeLargerTree() {
 	cse498::WeightedSet<int> wSet;
-	wSet.Insert(1, 11.0);	
-	wSet.Insert(2, 2.0);
-	wSet.Insert(3, 2.0);
-	wSet.Insert(4, 0.0);
-	wSet.Insert(5, 5.5);
-	wSet.Insert(6, 13.5);
-	wSet.Insert(7, 17.0);
-	wSet.Insert(8, 1.0);
-	wSet.Insert(9, 25.0);
-	wSet.Insert(10, 23.0);
+	static_cast<void>(wSet.Insert(1, 11.0));	
+    static_cast<void>(wSet.Insert(2, 2.0));
+    static_cast<void>(wSet.Insert(3, 2.0));
+    static_cast<void>(wSet.Insert(4, 0.0));
+    static_cast<void>(wSet.Insert(5, 5.5));
+    static_cast<void>(wSet.Insert(6, 13.5));
+    static_cast<void>(wSet.Insert(7, 17.0));
+    static_cast<void>(wSet.Insert(8, 1.0));
+    static_cast<void>(wSet.Insert(9, 25.0));
+    static_cast<void>(wSet.Insert(10, 23.0));
 	return wSet;
 }
 
@@ -71,10 +72,10 @@ cse498::WeightedSet<int> MakeLargerTree() {
  */
 cse498::WeightedSet<char> MakeDecimalTree() {
 	cse498::WeightedSet<char> wSet;
-	wSet.Insert('a', 2.000000000000001);
-	wSet.Insert('b', 3.023344563390414);
-	wSet.Insert('c', 4.999999999999999);
-	wSet.Insert('d', 7.003450023394053);
+	static_cast<void>(wSet.Insert('a', 2.000000000000001));
+	static_cast<void>(wSet.Insert('b', 3.023344563390414));
+	static_cast<void>(wSet.Insert('c', 4.999999999999999));
+	static_cast<void>(wSet.Insert('d', 7.003450023394053));
 	return wSet;
 }
 
@@ -93,10 +94,10 @@ cse498::WeightedSet<char> MakeDecimalTree() {
  */
 cse498::WeightedSet<int> MakeTinyTree() {
 	cse498::WeightedSet<int> wSet;
-	wSet.Insert(1, TOL);
-	wSet.Insert(2, 1e-15);
-	wSet.Insert(3, 0.000000009);
-	wSet.Insert(4, 0.000000010);
+	static_cast<void>(wSet.Insert(1, TOL));
+	static_cast<void>(wSet.Insert(2, 1e-15));
+	static_cast<void>(wSet.Insert(3, 0.000000009));
+	static_cast<void>(wSet.Insert(4, 0.000000010));
 	return wSet;
 }
 
@@ -181,21 +182,21 @@ TEST_CASE("Test Update", "[core]"){
 	SECTION("Small Tree"){
 		cse498::WeightedSet<std::string> wSet = MakeSmallTree();
 
-		wSet.Update("D", 10.4561);
+		CHECK(wSet.Update("D", 10.4561).has_value());
 		CHECK(wSet.GetWeight("D") == Approx(10.4561));
 		CHECK(wSet.GetItemSum("A") == Approx(2.0 + 3.0 + 10.4561 + 5.0));
 		CHECK(wSet.GetItemSum("B") == Approx(3.0 + 10.4561));
 		CHECK(wSet.GetItemSum("C") == Approx(5.0));
 		CHECK(wSet.GetItemSum("D") == Approx(10.4561));
 
-		wSet.Update("A", 2.5327);
+		CHECK(wSet.Update("A", 2.5327).has_value());
 		CHECK(wSet.GetWeight("A") == Approx(2.5327));
 		CHECK(wSet.GetItemSum("A") == Approx(2.5327 + 3.0 + 10.4561 + 5.0));
 		CHECK(wSet.GetItemSum("B") == Approx(3.0 + 10.4561));
 		CHECK(wSet.GetItemSum("C") == Approx(5.0));
 		CHECK(wSet.GetItemSum("D") == Approx(10.4561));
 
-		wSet.Update("C", 0.0);
+		CHECK(wSet.Update("C", 0.0).has_value());
 		CHECK(wSet.GetWeight("C") == Approx(0.0));
 		CHECK(wSet.GetItemSum("A") == Approx(2.5327 + 3.0 + 10.4561 + 0.0));
 		CHECK(wSet.GetItemSum("B") == Approx(3.0 + 10.4561));
@@ -291,32 +292,32 @@ TEST_CASE("Test Sample", "[core]"){
 		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Sample number invalid");
 
 		//leftmost leaf
-		wSet.Update("D", 0.0);
+		CHECK(wSet.Update("D", 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == "B");
 		CHECK(wSet.Sample(3.0) == "B");
 		CHECK(wSet.Sample(3.0 + 2.0) == "A");
 		CHECK(wSet.Sample(3.0 + 2.0 + 5.0) == "C");
 
 		//Leftmost leaf + it's parent
-		wSet.Update("B", 0.0);
+		CHECK(wSet.Update("B", 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == "A");
 		CHECK(wSet.Sample(2.0) == "A");
 		CHECK(wSet.Sample(7.0) == "C");
 
 		//Left side + root
-		wSet.Update("A", 0.0);
+		CHECK(wSet.Update("A", 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == "C");
 		CHECK(wSet.Sample(5.0) == "C");
 
 		//All 0
-		wSet.Update("C", 0.0);
+		CHECK(wSet.Update("C", 0.0).has_value());
 		result = wSet.Sample(0.0);
 		REQUIRE_FALSE(result.has_value());
 		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
 
-		wSet.Update("D", 7.0);
-		wSet.Update("B", 3.0);
-		wSet.Update("A", 2.0);
+		CHECK(wSet.Update("D", 7.0).has_value());
+		CHECK(wSet.Update("B", 3.0).has_value());
+		CHECK(wSet.Update("A", 2.0).has_value());
 
 		//Right leaf 0
 		CHECK(wSet.Sample(0.0) == "D");
@@ -328,7 +329,7 @@ TEST_CASE("Test Sample", "[core]"){
 		REQUIRE(result.error() == "cse498::WeightedSet::Sample(): Sample number invalid");
 
 		//Right side + root
-		wSet.Update("A", 0.0);
+		CHECK(wSet.Update("A", 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == "D");
 		CHECK(wSet.Sample(7.0) == "D");
 		CHECK(wSet.Sample(7.0 + 3.0) == "B");
@@ -341,12 +342,12 @@ TEST_CASE("Test Sample", "[core]"){
 		cse498::WeightedSet<int> wSet = MakeLargerTree();
 
 		//Remove 4th row leaf nodes
-		wSet.Update(8, 0.0);
-		wSet.Update(9, 0.0);
-		wSet.Update(10, 0.0);
+		CHECK(wSet.Update(8, 0.0).has_value());
+		CHECK(wSet.Update(9, 0.0).has_value());
+		CHECK(wSet.Update(10, 0.0).has_value());
 
 		//Make item 4 nonzero
-		wSet.Update(4, 4.0);
+		CHECK(wSet.Update(4, 4.0).has_value());
 
 		CHECK(wSet.Sample(0.0) == 4);
 		CHECK(wSet.Sample(4.0) == 4);
@@ -358,7 +359,7 @@ TEST_CASE("Test Sample", "[core]"){
 		CHECK(wSet.Sample(55) == 7);
 
 		//Right parent
-		wSet.Update(3, 0.0);
+		CHECK(wSet.Update(3, 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == 4);
 		CHECK(wSet.Sample(4.0) == 4);
 		CHECK(wSet.Sample(6.0) == 2);
@@ -368,7 +369,7 @@ TEST_CASE("Test Sample", "[core]"){
 		CHECK(wSet.Sample(53) == 7);
 
 		//Right parent + Right Right leaf
-		wSet.Update(7, 0.0);
+		CHECK(wSet.Update(7, 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == 4);
 		CHECK(wSet.Sample(4.0) == 4);
 		CHECK(wSet.Sample(6.0) == 2);
@@ -377,8 +378,8 @@ TEST_CASE("Test Sample", "[core]"){
 		CHECK(wSet.Sample(36) == 6);
 
 		//Right parent + Right Left leaf
-		wSet.Update(7, 17.0);
-		wSet.Update(6, 0.0);
+		CHECK(wSet.Update(7, 17.0).has_value());
+		CHECK(wSet.Update(6, 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == 4);
 		CHECK(wSet.Sample(4.0) == 4);
 		CHECK(wSet.Sample(6.0) == 2);
@@ -386,15 +387,15 @@ TEST_CASE("Test Sample", "[core]"){
 		CHECK(wSet.Sample(22.5) == 1);
 		CHECK(wSet.Sample(39.5) == 7);
 
-		wSet.Update(7, 0.0); //Right side deleted
+		CHECK(wSet.Update(7, 0.0).has_value()); //Right side deleted
 
 		//Add full left side back
-		wSet.Update(8, 1.0);
-		wSet.Update(9, 25.0);
-		wSet.Update(10, 23.0);
+		CHECK(wSet.Update(8, 1.0).has_value());
+		CHECK(wSet.Update(9, 25.0).has_value());
+		CHECK(wSet.Update(10, 23.0).has_value());
 
 		//Item 2 deleted
-		wSet.Update(2, 0.0);
+		CHECK(wSet.Update(2, 0.0).has_value());
 		CHECK(wSet.Sample(0.0) == 8);
 		CHECK(wSet.Sample(1.0) == 8);
 		CHECK(wSet.Sample(26.0) == 9);
