@@ -12,6 +12,7 @@
 #include <array>
 #include <sstream>
 #include <algorithm>
+#include <stdexcept>
 
 using namespace cse498;
 
@@ -90,6 +91,14 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   descPtr->SetColor(kDimGray.ToHex());
   descPtr->MountToLayout(*mPauseMenu);
 
+  action_map.emplace("up", GetActionID("up"));
+  action_map.emplace("left", GetActionID("left"));
+  action_map.emplace("down", GetActionID("down"));
+  action_map.emplace("right", GetActionID("right"));
+  action_map.emplace("interact", GetActionID("interact"));
+  action_map.emplace("pause", GetActionID("pause"));
+  action_map.emplace("quit", GetActionID("quit"));
+
   auto cellTypes = world.GetGrid().GetCellTypes();
 
   std::ranges::for_each(cellTypes, [this](const CellType & cell){
@@ -100,6 +109,19 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   mTextures.emplace('@', loadImage(PLAYER_IMAGE));
   mTextures.emplace('*', loadImage(MONSTER_IMAGE));
 
+  for (const auto & cell : cellTypes) {
+    if (cell.name == "Unknown") continue;
+    if (!mTextures.contains(cell.symbol)) {
+      throw std::runtime_error(std::string("Missing texture for cell symbol: ") + cell.symbol);
+    }
+  }
+  if (!mTextures.contains('@')) {
+    throw std::runtime_error("Missing texture for player symbol: @");
+  }
+  if (!mTextures.contains('*')) {
+    throw std::runtime_error("Missing texture for monster symbol: *");
+  }
+
   RenderFrame();
 }
 
@@ -109,13 +131,13 @@ size_t WebInterface::SelectAction(const WorldGrid & grid) {
   if (mPaused && userAction != InputManager::ActiveAction::Pause && userAction != InputManager::ActiveAction::Quit) return 0;
 
   switch (userAction) {
-    case InputManager::ActiveAction::Up:       return action_map["up"];
-    case InputManager::ActiveAction::Left:     return action_map["left"];
-    case InputManager::ActiveAction::Down:     return action_map["down"];
-    case InputManager::ActiveAction::Right:    return action_map["right"];
-    case InputManager::ActiveAction::Interact: ++mPoints; return action_map["interact"];
-    case InputManager::ActiveAction::Pause:    return action_map["pause"];
-    case InputManager::ActiveAction::Quit:     return action_map["quit"];
+    case InputManager::ActiveAction::Up:       return action_map.at("up");
+    case InputManager::ActiveAction::Left:     return action_map.at("left");
+    case InputManager::ActiveAction::Down:     return action_map.at("down");
+    case InputManager::ActiveAction::Right:    return action_map.at("right");
+    case InputManager::ActiveAction::Interact: ++mPoints; return action_map.at("interact");
+    case InputManager::ActiveAction::Pause:    return action_map.at("pause");
+    case InputManager::ActiveAction::Quit:     return action_map.at("quit");
     case InputManager::ActiveAction::None:     return 0;
     default: return 0;
   }
