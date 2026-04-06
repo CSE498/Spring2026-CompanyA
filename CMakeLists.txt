@@ -55,7 +55,7 @@ endfunction()
 function(companya_collect_native_sources out_var)
     file(GLOB_RECURSE native_sources CONFIGURE_DEPENDS "${COMPANYA_SOURCE_DIR}/*.cpp")
     list(FILTER native_sources EXCLUDE REGEX "/Interfaces/WebUI/")
-    list(REMOVE_ITEM native_sources "${COMPANYA_SOURCE_DIR}/simpleMainG2.cpp")
+    list(REMOVE_ITEM native_sources "${COMPANYA_SOURCE_DIR}/Group02_main.cpp")
     list(REMOVE_ITEM native_sources "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
     list(SORT native_sources)
     set(${out_var} "${native_sources}" PARENT_SCOPE)
@@ -195,9 +195,9 @@ target_compile_definitions(companya_native
 )
 companya_apply_native_profile(companya_native)
 
-add_executable(simpleMainG2 "${COMPANYA_SOURCE_DIR}/simpleMainG2.cpp")
-target_link_libraries(simpleMainG2 PRIVATE companya_native)
-set_target_properties(simpleMainG2 PROPERTIES
+add_executable(Group02_main "${COMPANYA_SOURCE_DIR}/Group02_main.cpp")
+target_link_libraries(Group02_main PRIVATE companya_native)
+set_target_properties(Group02_main PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
 )
 

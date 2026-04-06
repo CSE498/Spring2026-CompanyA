@@ -9,6 +9,7 @@ namespace cse498
 {
     size_t Enemy::SelectAction([[maybe_unused]] const WorldGrid& grid)
     {
+
         if (!mBehaviorRoot)
             return 0;
 

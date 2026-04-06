@@ -19,9 +19,9 @@ namespace cse498
         size_t mFloorId = 0;
         size_t mWallId = 0;
 
-        static constexpr size_t kPlayerIdx = 0;
-        static constexpr size_t kFarmerIdx = 1;
-        static constexpr size_t kEnemyIdx = 2;
+        static constexpr size_t kPlayerId = 0;
+        static constexpr size_t kFarmerId = 1;
+        static constexpr size_t kEnemyId = 2;
 
         CombatStats mPlayerCombat{};
         CombatStats mEnemyCombat{};

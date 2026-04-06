@@ -81,14 +81,67 @@ namespace cse498 {
 
     /// Return a reference to an Agent with a given ID.
     [[nodiscard]] AgentBase & GetAgent(size_t id) {
-      assert(id < mAgentIdIndex);
-      return *agent_set[id];
+      AgentBase* agent = TryGetAgent(id);
+      assert(agent != nullptr);
+      return *agent;
     }
 
     /// Return a CONST reference to an Agent with a given ID.
     [[nodiscard]] const AgentBase & GetAgent(size_t id) const {
-      assert(id < mAgentIdIndex);
-      return *agent_set[id];
+      const AgentBase* agent = TryGetAgent(id);
+      assert(agent != nullptr);
+      return *agent;
+    }
+
+      /**
+       *Finds the current vector index for an agent with the given stable ID.
+       *
+       * Agent IDs do not change when dead agents are erased from agent_set,
+       * so ID lookup must not assume ID == vector index.
+       */
+      [[nodiscard]] size_t FindAgentIndexById(size_t id) const {
+      for (size_t i = 0; i < agent_set.size(); ++i) {
+        if (agent_set[i] && agent_set[i]->GetID() == id) {
+          return i;
+        }
+      }
+      return agent_set.size();
+    }
+
+    [[nodiscard]] bool HasAgent(size_t id) const {
+      return FindAgentIndexById(id) != agent_set.size();
+    }
+
+    [[nodiscard]] AgentBase* TryGetAgent(size_t id) {
+      const size_t index = FindAgentIndexById(id);
+      if (index == agent_set.size()) {
+        return nullptr;
+      }
+      return agent_set[index].get();
+    }
+
+    [[nodiscard]] const AgentBase* TryGetAgent(size_t id) const {
+      const size_t index = FindAgentIndexById(id);
+      if (index == agent_set.size()) {
+        return nullptr;
+      }
+      return agent_set[index].get();
+    }
+
+      /**
+       * Accesses an agent by its current storage position in agent_set.
+       *
+       * This is intended for safe iteration over the internal agent container.
+       * It should not be used when stable ID lookup is required.
+       */
+      [[nodiscard]] AgentBase & GetAgentByIndex(size_t index) {
+      assert(index < agent_set.size());
+      return *agent_set[index];
+    }
+
+    [[nodiscard]] const AgentBase & GetAgentByIndex(size_t index) const {
+      assert(index < agent_set.size());
+      return *agent_set[index];
     }
 
     [[nodiscard]] PlayerAgent* GetPlayer() const { return mPlayer; }
@@ -165,6 +218,9 @@ namespace cse498 {
       auto it = agent_set.begin();
       while (it != agent_set.end()) {
         if (!(*it)->IsAlive()) {
+          if (it->get() == mPlayer) {
+            mPlayer = nullptr;
+          }
           (*it)->OnDestroy();
           it = agent_set.erase(it);
         } else {
@@ -183,6 +239,7 @@ namespace cse498 {
       run_over = false;
       while (!run_over) {
         RunAgents();
+        RemoveDeadAgents();
         UpdateWorld();
       }
     }

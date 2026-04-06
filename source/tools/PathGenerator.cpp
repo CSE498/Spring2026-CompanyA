@@ -314,9 +314,9 @@ std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(cons
     return result;
 }
 
-std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosition &agent_pos,
-                                                                 const WorldPosition &bot_left,
-                                                                 const WorldPosition &top_right,
+std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosition &agentPos,
+                                                                 const WorldPosition &bottomLeft,
+                                                                 const WorldPosition &topRight,
                                                                  const PathRequest &request,
                                                                  const CircleDirectionFlag flag)
 {
@@ -325,42 +325,35 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     // TODO MULTIGOAL H. You need to make map of INTS Cell positions for comparison in calcs.
 
     std::unordered_set<WorldPosition> goals;
-    const auto goals_vec = MakeRectangleLoop(bot_left, top_right, request, flag);
-    if (!goals_vec)
+    auto loop = MakeRectangleLoop(bottomLeft, topRight, request, flag);
+    if (!loop)
         return {};
-    const auto &loop_vec = goals_vec.value();
-    for (const auto &each : loop_vec)
-    {
-        goals.insert({each.CellX(), each.CellY()});
-    }
+    auto &loopVector = loop.value(); // just reference this value and modify it. We own it in loop
 
-    auto start_path = AStarSearch(agent_pos, request, MultiGoalHeuristic{goals});
-    if (start_path.empty())
+    // Forcing std::ranges ..
+    // Necessary to make goal set for the multiGoalHeuristic in A*
+    std::ranges::for_each(loopVector, [&goals](const auto& tile) { goals.insert({tile.CellX(), tile.CellY()}); });
+
+    auto startPath = AStarSearch(agentPos, request, MultiGoalHeuristic{goals});
+    if (startPath.empty())
         return {};
-    assert(goals.contains(Round(start_path.back())));
+    const auto loopStart = startPath.back(); // ensure it exists in the goals.
+    assert(goals.contains(Round(loopStart)));
 
-    const auto loop_start = start_path.back();
-    std::vector<WorldPosition> loop_path;
-    size_t start_index = 0;
-    for (size_t i = 0; i < loop_vec.size(); i++)
+    // Get the loop in the proper order.
+    auto itr = std::ranges::find_if(loopVector, [loopStart](const auto& tile)
     {
-        if (Round(loop_start) == Round(loop_vec.at(i)))
-        {
-            start_index = i;
-            break;
-        }
-    }
-    // The original start_path worked with finding cell positions, not actual positions. This can affect
-    // The creation of the loop vs intended.
-    if ((loop_start - loop_vec.at(start_index)).GetMagnitude() > EP)
-        start_path.push_back(loop_vec.at(start_index));
-    for (size_t i = 0; i < loop_vec.size(); i++)
-    {
-        const size_t index = (start_index + i) % loop_vec.size();
-        loop_path.push_back(loop_vec.at(index));
-    }
+        return Round(loopStart) == Round(tile);
+    });
+    if (itr == loopVector.end()) // should always be able to find it by definition
+        return {};
+    if ((loopStart - *itr).GetMagnitude() > EP) // so little deflections aren't made in the loop also no repeats
+        startPath.push_back(*itr);
 
-    return CirclePath(WorldPath(start_path), WorldPath(loop_path));
+    // Move the start of the vector over!
+    std::ranges::rotate(loopVector, itr);
+
+    return CirclePath(WorldPath(startPath), WorldPath(loopVector));
 }
 std::optional<WorldPath> PathGenerator::FindShortestPath(const WorldPosition &start,
                                                          const WorldPosition &end,
@@ -460,7 +453,7 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
     WorldPosition roundedStart = Round(start);
     double tileX = roundedStart.X();
     double tileY = roundedStart.Y();
-    WorldPosition endTile = Round(roundedStart + path_dir);
+    WorldPosition endTile = Round(start + path_dir);
 
     PathVector path = path_dir;
     path.Normalize();
