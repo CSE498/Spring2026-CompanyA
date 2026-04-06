@@ -12,6 +12,8 @@
 
 #include "../core/InterfaceBase.hpp"
 #include "../core/WorldBase.hpp"
+#include "../Worlds/InteractiveWorld.hpp"
+#include "../core/InteractiveWorld/InteractiveWorldSaveManager.hpp"
 
 namespace cse498 {
 
@@ -113,6 +115,13 @@ public:
       break;
     case 'q':
     case 'Q':
+      {
+        const auto* interactive_world = dynamic_cast<const InteractiveWorld*>(&world);
+        if (interactive_world) {
+          InteractiveWorldSaveManager save_manager;
+          save_manager.Save(*interactive_world, "interactive_world_save.json");
+        }
+      }
       exit(0); // Quit!
     }
 

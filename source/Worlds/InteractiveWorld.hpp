@@ -117,6 +117,7 @@ public:
    * @return reference to world inventory
    */
   InteractiveWorldInventory &GetInventory() { return m_inventory; }
+  const InteractiveWorldInventory &GetInventory() const { return m_inventory; }
   /**
    * Have agent perform an action
    * @param agent Agent to perform action on

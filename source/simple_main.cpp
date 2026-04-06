@@ -13,17 +13,23 @@
 #include "core/InteractiveWorld/InteractiveWorldInventory.hpp"
 #include "core/InteractiveWorld/NPC.hpp"
 #include "core/InteractiveWorld/ResourceProducer.hpp"
+#include "core/InteractiveWorld/InteractiveWorldSaveManager.hpp"
 
 #include <string>
+#include <iostream>
+#include <memory>
 
 using namespace cse498;
 
 int main() {
   std::shared_ptr<InteractiveWorld> world =
       std::make_shared<InteractiveWorld>();
-
+  
+  InteractiveWorldSaveManager saveManager;
+  
   world->GetInventory().AddItem(ItemType::Wood, 10);
   world->GetInventory().AddItem(ItemType::Stone, 5);
+
   world->AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
   world->AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
   world->AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(
@@ -83,4 +89,5 @@ int main() {
   miner->SetSymbol('X');
 
   world->Run();
+
 }

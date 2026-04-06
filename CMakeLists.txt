@@ -180,7 +180,9 @@ companya_collect_native_sources(COMPANYA_NATIVE_SOURCES)
 companya_collect_native_test_sources(COMPANYA_NATIVE_TEST_SOURCES)
 
 add_library(companya_native STATIC ${COMPANYA_NATIVE_SOURCES}
-        tests/InteractiveWorld/InteractiveWorldInventory.cpp)
+        tests/InteractiveWorld/InteractiveWorldInventory.cpp
+        source/core/InteractiveWorld/InteractiveWorldSaveManager.hpp
+        third-party/json/json.hpp)
 target_compile_features(companya_native PUBLIC cxx_std_23)
 target_include_directories(companya_native
     PUBLIC
