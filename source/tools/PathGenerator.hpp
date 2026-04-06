@@ -98,7 +98,7 @@ private:
     };
 
     /**
-     * comparison operaor for the priority queue
+     * comparison operator for the priority queue
      */
     struct ANodeCompare
     {
