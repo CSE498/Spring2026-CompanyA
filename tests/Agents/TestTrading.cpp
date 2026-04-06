@@ -177,3 +177,180 @@ TEST_CASE("Selling existing limited item increases merchant stock", "[agents][tr
     REQUIRE(after != nullptr);
     REQUIRE(after->mStock == 21);
 }
+
+TEST_CASE("Buying with quantity 0 fails", "[TradeSystem][buy][edge]")
+{
+    // Create a merchant with known stock and give the player gold.
+    TestWorld world;
+    PlayerAgent player(601, "Player", world);
+    MerchantAgent merchant(602, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    player.SetGold(100);
+
+    // Attempt to buy zero items.
+    const TradeResult result = merchant.BuyFromMerchant(player, "bread", 0);
+
+    // Assert transaction is rejected and no state changes occur.
+    REQUIRE_FALSE(result.IsSuccess());
+    REQUIRE(result.mStatus == TradeStatus::InvalidQuantity);
+    REQUIRE(player.GetGold() == 100);
+
+    const TradeOffer* bread = merchant.FindOffer("bread");
+    REQUIRE(bread != nullptr);
+    REQUIRE(bread->mStock == 18);
+}
+
+TEST_CASE("Buying an unknown item fails", "[TradeSystem][buy][unknown]")
+{
+    // Merchant only knows about the configured default shop items.
+    TestWorld world;
+    PlayerAgent player(611, "Player", world);
+    MerchantAgent merchant(612, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    player.SetGold(100);
+
+    // Ask to buy an item that is not in the merchant catalog.
+    const TradeResult result = merchant.BuyFromMerchant(player, "ruby", 1);
+
+    // Assert merchant rejects the request and nothing changes.
+    REQUIRE_FALSE(result.IsSuccess());
+    REQUIRE(result.mStatus == TradeStatus::UnknownItem);
+    REQUIRE(player.GetGold() == 100);
+}
+
+TEST_CASE("Buying without enough gold fails", "[TradeSystem][buy][gold]")
+{
+    // Player cannot afford the requested purchase.
+    TestWorld world;
+    PlayerAgent player(621, "Player", world);
+    MerchantAgent merchant(622, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    player.SetGold(2);
+
+    const TradeOffer* before = merchant.FindOffer("bread");
+    REQUIRE(before != nullptr);
+    REQUIRE(before->mStock == 18);
+
+    // Try to buy one bread costing more than the player's gold.
+    const TradeResult result = merchant.BuyFromMerchant(player, "bread", 1);
+
+    // Assert purchase fails and stock/gold stay unchanged.
+    REQUIRE_FALSE(result.IsSuccess());
+    REQUIRE(result.mStatus == TradeStatus::InsufficientFunds);
+    REQUIRE(player.GetGold() == 2);
+
+    const TradeOffer* after = merchant.FindOffer("bread");
+    REQUIRE(after != nullptr);
+    REQUIRE(after->mStock == 18);
+}
+
+TEST_CASE("Buying more than merchant stock fails", "[TradeSystem][buy][stock]")
+{
+    // bread is limited stock, so requesting too much should fail.
+    TestWorld world;
+    PlayerAgent player(631, "Player", world);
+    MerchantAgent merchant(632, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    player.SetGold(1000);
+
+    const TradeOffer* before = merchant.FindOffer("bread");
+    REQUIRE(before != nullptr);
+    REQUIRE(before->mStock == 18);
+
+    // Try to buy more bread than exists in stock.
+    const TradeResult result = merchant.BuyFromMerchant(player, "bread", 25);
+
+    // Assert transaction fails and limited stock is unchanged.
+    REQUIRE_FALSE(result.IsSuccess());
+    REQUIRE(result.mStatus == TradeStatus::MerchantOutOfStock);
+    REQUIRE(player.GetGold() == 1000);
+
+    const TradeOffer* after = merchant.FindOffer("bread");
+    REQUIRE(after != nullptr);
+    REQUIRE(after->mStock == 18);
+}
+
+TEST_CASE("Selling with quantity 0 fails", "[TradeSystem][sell][edge]")
+{
+    // Player has an item, but quantity 0 should still be rejected.
+    TestWorld world;
+    PlayerAgent player(641, "Player", world);
+    MerchantAgent merchant(642, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    player.GetInventory().AddItem(std::make_unique<Item>(0, "bread", "", 6, world), 1);
+
+    // Try to sell zero copies.
+    const TradeResult result = merchant.SellToMerchant(player, "bread", 0);
+
+    // Assert transaction is rejected immediately.
+    REQUIRE_FALSE(result.IsSuccess());
+    REQUIRE(result.mStatus == TradeStatus::InvalidQuantity);
+}
+
+TEST_CASE("Selling an item the player does not own fails", "[TradeSystem][sell][missing]")
+{
+    // Merchant is valid, but player inventory does not contain the item.
+    TestWorld world;
+    PlayerAgent player(651, "Player", world);
+    MerchantAgent merchant(652, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    // Try to sell an item that is not in the player's inventory.
+    const TradeResult result = merchant.SellToMerchant(player, "ruby", 1);
+
+    // Assert merchant rejects the sale.
+    REQUIRE_FALSE(result.IsSuccess());
+    REQUIRE(result.mStatus == TradeStatus::PlayerOutOfStock);
+}
+
+TEST_CASE("Selling fails when merchant cannot afford payout", "[TradeSystem][sell][merchant-gold]")
+{
+    // Player owns bread, but merchant has no gold.
+    TestWorld world;
+    PlayerAgent player(661, "Player", world);
+    MerchantAgent merchant(662, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    merchant.SetGold(0);
+    player.GetInventory().AddItem(std::make_unique<Item>(0, "bread", "", 6, world), 1);
+
+    // Try to sell bread back to the merchant.
+    const TradeResult result = merchant.SellToMerchant(player, "bread", 1);
+
+    // Assert sale fails because merchant cannot pay.
+    REQUIRE_FALSE(result.IsSuccess());
+    REQUIRE(result.mStatus == TradeStatus::MerchantCannotAfford);
+
+    // Player should still have the item.
+    REQUIRE(player.GetInventory().GetTotal("bread") == 1);
+}
+
+TEST_CASE("Closed merchant blocks buying and selling", "[TradeSystem][merchant][closed]")
+{
+    // Merchant exists but trading is disabled.
+    TestWorld world;
+    PlayerAgent player(671, "Player", world);
+    MerchantAgent merchant(672, "Merchant", world);
+    SetupBasicMerchant(merchant);
+
+    merchant.SetAvailableForTrade(false);
+    player.SetGold(100);
+    player.GetInventory().AddItem(std::make_unique<Item>(0, "bread", "", 6, world), 1);
+
+    // Attempt both buy and sell operations.
+    const TradeResult buyResult = merchant.BuyFromMerchant(player, "bread", 1);
+    const TradeResult sellResult = merchant.SellToMerchant(player, "bread", 1);
+
+    // Assert both operations are rejected because the merchant is closed.
+    REQUIRE_FALSE(buyResult.IsSuccess());
+    REQUIRE(buyResult.mStatus == TradeStatus::MerchantClosed);
+
+    REQUIRE_FALSE(sellResult.IsSuccess());
+    REQUIRE(sellResult.mStatus == TradeStatus::MerchantClosed);
+}
+
