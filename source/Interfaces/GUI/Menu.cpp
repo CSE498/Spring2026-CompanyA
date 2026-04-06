@@ -12,6 +12,8 @@
  
 #include "Menu.hpp"
 #include "Text.hpp"
+
+#include <algorithm>
 using namespace cse498;
 
 /**
@@ -26,12 +28,24 @@ Menu::Menu() : mSelectedIndex(std::nullopt) {}
  * @param callback what happens when activates
  * @return
  */
+
 bool Menu::AddOption(const std::string& label, std::function<void()> callback) {
   if (label.empty() || !callback) {
     return false;
   }
 
-  mOptions.push_back({label, callback});
+  // prevents duplicate labels
+  const bool duplicate = std::any_of(mOptions.begin(), mOptions.end(),
+      [&label](const MenuOption& option) {
+          return option.label == label;
+      });
+
+  if (duplicate)
+  {
+    return false;
+  }
+
+  mOptions.push_back({label, std::move(callback)}); // move instead of copy
 
   if (mOptions.size() == 1) {
     mSelectedIndex = 0;
@@ -45,24 +59,31 @@ bool Menu::AddOption(const std::string& label, std::function<void()> callback) {
  * @param label text to match
  * @return true if found and removed, false otherwise 
  */
+
 bool Menu::RemoveOption(const std::string& label) {
-  for(size_t i = 0; i < mOptions.size(); i++){
-    if (mOptions[i].label == label) {
-      mOptions.erase(mOptions.begin() + static_cast<int>(i));
+  // when you build, code runs fine. If you see underlined red, just IDE issue
+  auto it = std::find_if(mOptions.begin(), mOptions.end(),
+      [&label](const MenuOption& opt) {
+          return opt.label == label;
+      });
 
-      if (mOptions.empty()) {
-        mSelectedIndex = std::nullopt;
-      }
+  if (it == mOptions.end())
+    return false;
 
-      else if (mSelectedIndex.has_value() && *mSelectedIndex >= mOptions.size()) {  // ADD *
-        mSelectedIndex = mOptions.size() - 1;
-      }
+  size_t i = static_cast<size_t>(std::distance(mOptions.begin(), it));
+  mOptions.erase(it);
 
-      return true;
+  if (mOptions.empty()) {
+    mSelectedIndex = std::nullopt;
+  } else if (mSelectedIndex.has_value()) {
+    if (*mSelectedIndex >= mOptions.size()) {
+      mSelectedIndex = mOptions.size() - 1;
+    } else if (i < *mSelectedIndex) {
+      mSelectedIndex = *mSelectedIndex - 1;
     }
-
   }
-  return false;
+
+  return true;
 }
 
 /**
@@ -230,57 +251,35 @@ void Menu::HandleSDLInput(const SDL_KeyboardEvent& key_event)
  * @param width The width of the menu area (unused for now)
  * @param height The height of the menu area, calculates spacing between options
  */
-void Menu::DrawMenu(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int  width, int height,
-  const MenuStyle& style) {
-  // Return silently if menu is empty - nothing to draw
-  if (IsEmpty()) {
-    return;
-  }
+void Menu::DrawMenu(SDL_Renderer* renderer, int x, int y,
+    [[maybe_unused]] int width, int height, const MenuStyle& style)
+{
+  if (IsEmpty() || !renderer) return;
 
-  // Return silently if no renderer provided
-  if (!renderer) {
-    return;
-  }
-
-  // Create Text object for rendering
   Text menuText(renderer);
-  menuText.SetSize(style.font_size);  // Font size for menu options
+  menuText.SetSize(style.font_size);
 
-  // Calculate spacing between options
   int option_count = static_cast<int>(GetOptionCount());
   int spacing = (option_count > 1) ? height / option_count : height;
 
-  // Draw each menu option
-  int current_y = y;
+  // Lambda captures selection state — avoids repeating the check each iteration
+  auto isSelected = [&](size_t i) {
+    return mSelectedIndex.has_value() && *mSelectedIndex == i;
+  };
 
+  int current_y = y;
   for (size_t i = 0; i < GetOptionCount(); i++) {
-    // Set content
     menuText.SetContent(GetOptionLabel(i).value());
 
-    // Check if this option is selected
-    bool is_selected = false;
-    if (mSelectedIndex.has_value() && *mSelectedIndex == i) {
-      is_selected = true;
-    }
-
-    // Set color based on selection
-    if (is_selected) {
-
-      // Yellow for selected option
+    if (isSelected(i)) {
       menuText.SetColor(style.selected_color);
       menuText.SetBold(style.bold_selected);
-    }
-
-    else {
-      // White for unselected options
+    } else {
       menuText.SetColor(style.unselected_color);
       menuText.SetBold(false);
     }
 
-    // Draw the option
     menuText.Draw(x, current_y);
-
-    // Move to next line
     current_y += spacing;
   }
 }

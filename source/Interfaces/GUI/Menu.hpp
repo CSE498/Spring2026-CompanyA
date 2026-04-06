@@ -18,10 +18,17 @@ namespace cse498 {
 
 struct MenuStyle
 {
-  int font_size = 18;
+
+  static constexpr int kDefaulFontSize = 24;
+  static constexpr bool kDefautlBoldSelected = true;
+
+  int font_size = kDefaulFontSize;
+  bool bold_selected = kDefautlBoldSelected;
+
+
   Color selected_color = {255, 255, 0, 255}; // yellow
   Color unselected_color = {255, 255, 255, 255 }; // white
-  bool bold_selected = true;
+
 };
 
 class Menu {
