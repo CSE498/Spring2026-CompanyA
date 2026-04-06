@@ -325,10 +325,10 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     // TODO MULTIGOAL H. You need to make map of INTS Cell positions for comparison in calcs.
 
     std::unordered_set<WorldPosition> goals;
-    const auto loop = MakeRectangleLoop(bottomLeft, topRight, request, flag);
+    auto loop = MakeRectangleLoop(bottomLeft, topRight, request, flag);
     if (!loop)
         return {};
-    const auto &loopVector = loop.value();
+    auto &loopVector = loop.value(); // just reference this value and modify it. We own it in loop
 
     // Forcing std::ranges ..
     // Necessary to make goal set for the multiGoalHeuristic in A*
@@ -341,22 +341,19 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     assert(goals.contains(Round(loopStart)));
 
     // Get the loop in the proper order.
-    std::vector<WorldPosition> loopPath;
     auto itr = std::ranges::find_if(loopVector, [loopStart](const auto& tile)
     {
-        return Round(loopStart) == Round(tile); // What if this can't find it
+        return Round(loopStart) == Round(tile);
     });
-    if (itr == loopVector.end())
-        itr = loopVector.begin();
+    if (itr == loopVector.end()) // should always be able to find it by definition
+        return {};
     if ((loopStart - *itr).GetMagnitude() > EP) // so little deflections aren't made in the loop also no repeats
         startPath.push_back(*itr);
 
-    // Copy over the values to make the corrected order loopPath.
-    std::ranges::copy(itr, loopVector.end(), std::back_inserter(loopPath));
-    std::ranges::copy(loopVector.begin(), itr, std::back_inserter(loopPath));
+    // Move the start of the vector over!
+    std::ranges::rotate(loopVector, itr);
 
-
-    return CirclePath(WorldPath(startPath), WorldPath(loopPath));
+    return CirclePath(WorldPath(startPath), WorldPath(loopVector));
 }
 std::optional<WorldPath> PathGenerator::FindShortestPath(const WorldPosition &start,
                                                          const WorldPosition &end,
