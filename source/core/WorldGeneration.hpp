@@ -3,7 +3,7 @@
  * Attributed References for the 'random_splits' function: https://eskerda.com/bsp-dungeon-generation/
  * References: https://www.roguebasin.com/index.php/Basic_BSP_Dungeon_generation 
  * References: https://en.wikipedia.org/wiki/Binary_space_partitioning
- * @brief A BSP tree
+ * @brief  Provides the utilities and tools to aid in the generation of a dungeon world
  * @note Status: PROPOSAL
  **/
 
@@ -27,6 +27,7 @@ struct LinkedRooms {
     int x2, y2; //second room's coordinates
 };
 
+    /// @brief utilizes BSP-Tree.hpp and RoomHolder.hpp to generate a dungeon level, represented as a vector of strings to be loaded in DungeonBase.
     class WorldGeneration {
     protected:
         BSP m_bsp; // BSP_Tree that contains information on the grid and it's dimensions
@@ -34,8 +35,8 @@ struct LinkedRooms {
         std::vector<std::string> m_grid; //Grid we're rasterizing information from mBSP_Tree to
         std::vector<LinkedRooms> m_connected_rooms; //The x-y coord pairs of two rooms used for connecting the room pair
         Random m_rng;
-        int m_offset_x; //x offset of room placement
-        int m_offset_y; //y offset of room placement
+        // int m_offset_x; //x offset of room placement
+        // int m_offset_y; //y offset of room placement
             
     public: 
 
