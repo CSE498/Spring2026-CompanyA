@@ -6,7 +6,7 @@
 
 #include "DemoSimpleWorldG2Actions.hpp"
 #include "../core/WorldBase.hpp"
-#include "../tools/CombatStats.hpp"
+
 
 namespace cse498
 {
@@ -19,12 +19,9 @@ namespace cse498
         size_t mFloorId = 0;
         size_t mWallId = 0;
 
-        static constexpr size_t kPlayerId = 0;
-        static constexpr size_t kFarmerId = 1;
-        static constexpr size_t kEnemyId = 2;
-
-        CombatStats mPlayerCombat{};
-        CombatStats mEnemyCombat{};
+        size_t mPlayerId;
+        size_t mFarmerId;
+        size_t mEnemyId;
 
         [[nodiscard]] bool IsOccupiedByAgent(WorldPosition pos, const AgentBase* skip) const;
         void PrintWorldState() const;

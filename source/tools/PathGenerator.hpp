@@ -217,46 +217,46 @@ private:
                                            const PathRequest &request);
     /**
      * Determines if a point comes before another point on a circle during generation.
-     * @param test_pt - point to test or ask the question about
-     * @param relative_pt - relative to this point. this is the static point compared to
+     * @param testPt - point to test or ask the question about
+     * @param relativePt - relative to this point. this is the static point compared to
      * @param center - circle center
      * @param flag - direction of the circle generation
      * @return T/F
      */
-    static bool IsPointBefore(const WorldPosition &test_pt,
-                              const WorldPosition &relative_pt,
+    static bool IsPointBefore(const WorldPosition &testPt,
+                              const WorldPosition &relativePt,
                               const WorldPosition &center,
                               CircleDirectionFlag flag);
     /**
      * Finds only a path around the circle given that the start is on the circle whic which is a requirement
      * Start can be determined a lot of ways refer to FindCircle function to see how
      * @param start Should be a point on the circle. Can be a double
-     * @param circ_center - center of circle
-     * @param circ_radius - radius of circle
+     * @param circCenter - center of circle
+     * @param cRadius - radius of circle
      * @param request - request info
      * @param flag - flag for how to generate circle, expand pushes agent outwards, skip chops the circle if not available
-     * @param circle_flag - CCW or CW
+     * @param circleFlag - CCW or CW
      * @return
      * can't be constexpr until c++26 for trig.
      */
     static WorldPath MakeCircle(const WorldPosition &start,
-                                const WorldPosition &circ_center,
-                                double circ_radius,
+                                const WorldPosition &circCenter,
+                                double cRadius,
                                 const PathRequest &request,
                                 PathFlag flag,
-                                CircleDirectionFlag circle_flag);
+                                CircleDirectionFlag circleFlag);
 
 
     /**
      * makes the loop itself []
-     * @param bot_left bottom left of loop
-     * @param top_right top right of the loop
+     * @param bottomLeft bottom left of loop
+     * @param topRight top right of the loop
      * @param request - request information about the world map
      * @param flag direction flag CCW or CW
      * @return a list of points for the loop
      */
-    static std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bot_left,
-                                                                        const WorldPosition &top_right,
+    static std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bottomLeft,
+                                                                        const WorldPosition &topRight,
                                                                         const PathRequest &request,
                                                                         CircleDirectionFlag flag);
 
@@ -271,20 +271,20 @@ public:
      * This isn't *fully* functional intentionally because the correct world doesn't exist yet for this.
      * This is a _rough_ class ensuring the key components are done for adaptation:
      * TODO: Update upon new world implementation
-     * @param agent_pos - orients the resulting list of points so the first is the shortest path to this point
-     * @param circ_center - center point for the circle
-     * @param circ_radius - radius for the circle
+     * @param agentPos - orients the resulting list of points so the first is the shortest path to this point
+     * @param circleCenter - center point for the circle
+     * @param cRadius - radius for the circle
      * @param request - request information to make paths
      * @param flag - type of generation whether skipping points or trying to get close to those points
-     * @param circle_flag - generation direction
+     * @param circleFlag - generation direction
      * @return list of points with starting point closest to agent_pos
      */
-    static std::optional<CirclePath> FindCircularPath(const WorldPosition &agent_pos,
-                                                      const WorldPosition &circ_center,
-                                                      double circ_radius,
+    static std::optional<CirclePath> FindCircularPath(const WorldPosition &agentPos,
+                                                      const WorldPosition &circleCenter,
+                                                      double cRadius,
                                                       const PathRequest &request,
                                                       PathFlag flag = PathFlag::Skip,
-                                                      CircleDirectionFlag circle_flag = CircleDirectionFlag::CW);
+                                                      CircleDirectionFlag circleFlag = CircleDirectionFlag::CW);
 
     /**
      * Makes a loop from bot left to top right passed back separately from the provided path to get to the loop
@@ -359,7 +359,6 @@ public:
      *
      * @param avoidTiles pass in {} if there are no such tiles. Otherwise treated as
      * list of points to avoid default to entire tile. so given (1,1) == [0.5, 1.49) in x,y
-     * @param ability  reference as this path is bound and only valid for the created agent so its abilities follow
      * @param worldGrid
      * @param maxSearchDistance - max search distance for the function if it needs to be limited. (0 means ignored)
      *                            only applicable when `finding` some path through A*
@@ -410,14 +409,14 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
         {STEP_SIZE, 0}, {0, STEP_SIZE}, {-STEP_SIZE, 0}, {0, -STEP_SIZE},
         {STEP_SIZE, STEP_SIZE}, {-STEP_SIZE, STEP_SIZE}, {STEP_SIZE, -STEP_SIZE}, {-STEP_SIZE, -STEP_SIZE}
     });
-    ANode* closest_node = nullptr;
+    ANode* closestNode = nullptr;
 
     // pq can't own these because you can't std::move pq.top() and don't get it from pq.pop
     std::vector<std::unique_ptr<ANode>> storage;
 
     std::priority_queue<ANode*, std::vector<ANode*>, ANodeCompare> pq;
     std::unordered_set<WorldPosition> visited = {};
-    double closest_distance = h(from); // Does heuristic calc to check distances
+    double closestDistance = h(from); // Does heuristic calc to check distances
 
     storage.push_back(std::make_unique<ANode>(from, 0, 0, nullptr));
     pq.push(storage.back().get());
@@ -429,19 +428,19 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
         // Just check if the node is too far away from the goal and this is our current best estimate then stop looking
         if (node->mf > maxSearchDist) // Could change this to distance traveled instead
         {
-            if (closest && closest_node != nullptr)
+            if (closest && closestNode != nullptr)
             {
-                return AStarReconstruction(closest_node);
+                return AStarReconstruction(closestNode);
             }
             return {};
         }
         if (closest)
         {
-            double close_test = h(node->mPos);
-            if (close_test < closest_distance)
+            double closeTest = h(node->mPos);
+            if (closeTest < closestDistance)
             {
-                closest_distance = close_test;
-                closest_node = node;
+                closestDistance = closeTest;
+                closestNode = node;
             }
         }
 
@@ -480,11 +479,11 @@ constexpr WorldPosition PathGenerator::NextCardinalToward(const WorldPosition& f
         return from;
     }
     if (std::abs(dx) >= std::abs(dy)) {
-        const double step_x = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
-        return from.GetOffset(step_x, 0.0); // made these constexpr
+        const double stepX = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
+        return from.GetOffset(stepX, 0.0); // made these constexpr
     }
-    const double step_y = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
-    return from.GetOffset(0.0, step_y);
+    const double stepY = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
+    return from.GetOffset(0.0, stepY);
 }
 
 constexpr WorldPosition PathGenerator::Next8DirectionToward(const WorldPosition& from, const WorldPosition& to)
@@ -496,10 +495,10 @@ constexpr WorldPosition PathGenerator::Next8DirectionToward(const WorldPosition&
         return from;
     }
 
-    const double step_x = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
-    const double step_y = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
+    const double stepX = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
+    const double stepY = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
 
-    return from.GetOffset(step_x, step_y);
+    return from.GetOffset(stepX, stepY);
 }
 
 

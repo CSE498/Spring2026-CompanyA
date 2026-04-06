@@ -10,6 +10,7 @@
 #include "../tools/PathGenerator.hpp"
 #include "../tools/PathVector.hpp"
 #include "Worlds/DemoSimpleWorldG2Actions.hpp"
+#include "../tools/DamageCalculator.hpp"
 #include <cmath>
 
 #include "MovementTypes.hpp"
@@ -18,10 +19,96 @@ using cse498::BehaviorTrees::TreeBuilder;
 using cse498::BehaviorTrees::ExecutionContext;
 using cse498::BehaviorTrees::Node;
 namespace DemoAct = cse498::DemoSimpleWorldG2Actions;
-
+using Node::Status::Success;
+using Node::Status::Failure;
 
 namespace cse498
 {
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Helper functions to build out agents easily!
+//
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
+std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const WorldBase& world)
+{
+    return TreeBuilder::Act("Player in Range", [&world,&enemy](ExecutionContext&)
+    {
+        assert(enemy.IsAlive());
+
+        if (IsInRange(enemy, world.GetPlayerPosition(), world.GetGrid()))
+            return Success;
+        return Failure;
+    });
+}
+
+
+std::unique_ptr<Node> AgentFactory::Attack(const Enemy& enemy, const WorldBase& world)
+{
+    return TreeBuilder::Act("Attack Player", [&world, &enemy](ExecutionContext&)
+    {
+        auto dmg = DamageCalculator::Calculate(enemy.GetStats(), world.GetPlayer()->GetStats());
+        world.GetPlayer()->TakeDamage(dmg);
+        return Success;
+    });
+}
+
+std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldBase& world)
+{
+    return TreeBuilder::Act("Chase Player", [&enemy, &world](ExecutionContext& ctx)
+    {
+        const WorldPosition enemyPos = enemy.GetLocation().AsWorldPosition();
+        const WorldPosition playerPos = world.GetPlayerPosition();
+
+        // Build a simple pathfinding request for this enemy on the world's main grid.
+        const WorldGrid &grid = world.GetGrid();
+        PathRequest request({},  grid);
+
+        auto pathOpt = PathGenerator::FindShortestPath(enemyPos, playerPos, request);
+        if (!pathOpt)
+        {
+            // No path found; fail so selector can try another behavior.
+            return Failure;
+        }
+
+        const WorldPath &path = pathOpt.value();
+        if (path.Size() == 1) // we are on the tile
+        {
+            // Path either only contains our current position or we're already at the player.
+            return Success;
+        }
+
+        // The second point in the path is the next tile to step toward.
+        WorldPosition nextPos = Round(path.At(1));
+        WorldPosition curPos  = Round(enemyPos);
+        auto dir = nextPos - curPos;
+
+        auto action_name = ToDirection(dir);
+        // Just checks that the next position is indeed in the 8 diagonal positions
+        // otherwise action_name will be false from std::optional
+        assert(action_name && "Something went wrong with path generation");
+
+        // Sanity check: ensure the destination tile is walkable.
+        assert(grid.IsWalkable(nextPos));
+
+        size_t action_id = enemy.GetActionID(action_name.value());
+        if (action_id == 0)
+            return Failure;
+
+        ctx.mBlackboard.Set<size_t>("selected_action", action_id);
+        return Success;
+    });
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Real Agent Implementations
+//
+//////////////////////////////////////////////////////////////////////////////////////////
 
 
 std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const WorldBase & world)
@@ -38,88 +125,15 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const
     // NOTE: this blackboard execution context doesn't seem that nice to work with here ...
     // attackSeq->AddChild(TreeBuilder::Act("Player in Range", [enemy, &world](ExecutionContext& ctx)
     // Condition: is the player currently within this enemy's attack range?
-    attackSeq->AddChild(TreeBuilder::Act("Player in Range", [&enemy, &world](ExecutionContext&)
-    {
-        if (IsInRange(enemy, world.GetPlayerPosition(), world.GetGrid()))
-            return Node::Status::Success;
-        return Node::Status::Failure;
-    }));
+    attackSeq->AddChild(IsPlayerInRange(enemy, world));
+    attackSeq->AddChild(Attack(enemy, world));
 
-    // Placeholder "attack" action: when in range, stop moving (no-op for now).
-    attackSeq->AddChild(TreeBuilder::Act("Attack (No-op)", [](ExecutionContext&)
-    {
-        // No-op attack: enemy will stand still once in range.
-
-
-        return Node::Status::Success;
-    }));
 
     // Chase action: when not in range, move one step toward the player using PathGenerator.
-    auto chasePlayer = TreeBuilder::Act("Chase Player", [&enemy, &world](ExecutionContext& ctx)
-    {
-        const WorldPosition enemyPos = enemy.GetLocation().AsWorldPosition();
-        const WorldPosition playerPos = world.GetPlayerPosition();
 
-        // Build a simple pathfinding request for this enemy on the world's main grid.
-        const WorldGrid &grid = world.GetGrid();
-        PathRequest request({},  grid);
-
-        auto pathOpt = PathGenerator::FindShortestPath(enemyPos, playerPos, request);
-        if (!pathOpt)
-        {
-            // No path found; fail so selector can try another behavior.
-            return Node::Status::Failure;
-        }
-
-        const WorldPath &path = pathOpt.value();
-        if (path.Size() < 2)
-        {
-            // Path either only contains our current position or we're already at the player.
-            return Node::Status::Success;
-        }
-
-        // The second point in the path is the next tile to step toward.
-        WorldPosition nextPos = Round(path.At(1));
-        WorldPosition curPos  = Round(enemyPos);
-
-        std::string action_name;
-
-        if (nextPos.CellX() > curPos.CellX())
-        {
-            action_name = "right";
-        }
-        else if (nextPos.CellX() < curPos.CellX())
-        {
-            action_name = "left";
-        }
-        else if (nextPos.CellY() > curPos.CellY())
-        {
-            action_name = "down";
-        }
-        else if (nextPos.CellY() < curPos.CellY())
-        {
-            action_name = "up";
-        }
-        else
-        {
-            // No movement between tiles; nothing to do.
-            return Node::Status::Success;
-        }
-
-        // Sanity check: ensure the destination tile is walkable.
-        if (!grid.IsWalkable(nextPos))
-            return Node::Status::Failure;
-
-        size_t action_id = enemy.GetActionID(action_name);
-        if (action_id == 0)
-            return Node::Status::Failure;
-
-        ctx.mBlackboard.Set<size_t>("selected_action", action_id);
-        return Node::Status::Success;
-    });
 
     selector->AddChild(std::move(attackSeq));
-    selector->AddChild(std::move(chasePlayer));
+    selector->AddChild(ChasePlayer(enemy, world));
 
     root->SetChild(std::move(selector));
 
@@ -175,7 +189,7 @@ std::unique_ptr<Node> AgentFactory::CreateEnemyFollowPlayerTree(Enemy *enemy,
             const WorldPosition next = PathGenerator::NextCardinalToward(epos, ppos);
             const double dx = next.X() - epos.X();
             const double dy = next.Y() - epos.Y();
-            const std::size_t aid = MovementTypes::DeltaToMoveAction(dx, dy);
+            const std::size_t aid = MovementTypes::GetActionID(dx, dy);
             ctx.mBlackboard.Set<std::size_t>("selected_action", aid);
             return Node::Status::Success;
         });
@@ -183,29 +197,22 @@ std::unique_ptr<Node> AgentFactory::CreateEnemyFollowPlayerTree(Enemy *enemy,
 
 }
 
-std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const std::string & name, WorldBase & world)
+
+std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const AgentDefinition& def, WorldBase & world)
 {
-    AgentDefinition def;
-    def.name = name;
-    WorldPosition spawn(0, 0); // caller can move after add
-    return CreateAgent(def, world, spawn);
+    AgentStats stats = AgentLevels::GetSkeletonStats(def.mLevel);
+    auto enemy = CreateAgent(def, stats, world); // createAgent can't return nullptr
+    enemy->SetBehaviorTree(CreateSkeletonTree(*enemy, world));
+    return enemy;
 }
 
-std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const AgentDefinition& def, WorldBase & world, const WorldPosition& spawn)
+std::unique_ptr<Enemy> AgentFactory::CreateAgent(const AgentDefinition& def, const AgentStats& stats, WorldBase& world)
 {
-    return CreateAgent(def, world, spawn);
-}
-
-std::unique_ptr<Enemy> AgentFactory::CreateAgent(const AgentDefinition& def, WorldBase& world, const WorldPosition& spawn)
-{
-    auto skeleton = std::make_unique<Enemy>(world.GetNextAgentId(), def.name, world);
-    skeleton->SetLocation(spawn);
-    skeleton->SetMaxHealth(def.hp);
-    skeleton->SetHealth(def.hp);
+    auto agent = std::make_unique<Enemy>(world.GetNextAgentId(), def.mName, world);
+    agent->SetLocation(def.mSpawn);
+    agent->SetStats(stats);
     // atk can be used by combat later; no member on Enemy yet for minimal impl
-    auto root = CreateSkeletonTree(*skeleton, world);
-    skeleton->SetBehaviorTree(std::move(root));
-    return skeleton;
+    return agent;
 }
 
 /* ///////////////////////////////////////////////////////////////////////

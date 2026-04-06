@@ -10,26 +10,70 @@
 
 #include <memory>
 #include <string>
+#include <optional>
 
 #include "Enemy.hpp"
 #include "../core/WorldPosition.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
-
+#include "AgentDefinition.hpp"
+#include "AgentLevels.hpp"
+#include "../tools/PathVector.hpp"
 
 namespace cse498 {
 
 class WorldBase;
 
 /// Minimal data to create an agent (e.g. skeleton) without a separate class per type.
-struct AgentDefinition {
-    std::string name = "agent";
-    double hp = 100.0;
-    double atk = 10.0;
-};
+
 
 class AgentFactory
 {
 private:
+    ////////////////////////////////////////////////////////////////////////////////////
+    //                  HELPER FUNCTIONS TO BUILD TREES
+    ////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Creates an Action node for determining if the player is in range
+     * @param enemy - enemy creature that owns this
+     * @param world - world where player lives
+     * @return Action node. True if player is in range
+     */
+    static std::unique_ptr<BehaviorTrees::Node> IsPlayerInRange(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> Attack(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> ChasePlayer(const Enemy& enemy, const WorldBase& world);
+
+
+    static constexpr std::optional<std::string> ToDirection(const PathVector& v)
+    {
+        // edge case.
+        if (v.X() == 0 && v.Y() == 0) return "stay";
+
+        // X direction
+        std::string xStr;
+        if (v.X() == 1)      xStr = "right";
+        else if (v.X() == -1) xStr = "left";
+
+        // Y direction
+        std::string yStr;
+        if (v.Y() == 1)      yStr = "down";
+        else if (v.Y() == -1) yStr = "up";
+
+        // This case is blocked out because we only have 4D movement right now
+        // If we do 8D then reenable this case and account for it.
+        // if (!xStr.empty() && !yStr.empty())
+        //     return yStr + "-" + xStr;  // "up-right", etc.
+
+        // if 'x' only has stuff
+        if (!xStr.empty())
+            return xStr;
+        // if y only has stuff
+        if (!yStr.empty())
+            return yStr;
+
+        // Fallback -- all cases for other strings
+        return {};
+    }
+
     /**
      * Creates the tree for the skeleton
      * @param enemy the skeleton that will own this tree
@@ -38,11 +82,14 @@ private:
      */
     static std::unique_ptr<BehaviorTrees::Node> CreateSkeletonTree(const Enemy& enemy, const WorldBase & world);
 
+
+
+
     /// Tree that alternates left/right every tick (for patrol agent).
     static std::unique_ptr<BehaviorTrees::Node> CreatePatrolTree(AgentBase* agent);
 
     /// Internal creation: build base enemy from definition at spawn; createX functions call this.
-    static std::unique_ptr<Enemy> CreateAgent(const AgentDefinition& def, WorldBase& world, const WorldPosition& spawn);
+    static std::unique_ptr<Enemy> CreateAgent(const AgentDefinition& def, const AgentStats& stats, WorldBase& world);
 
     /**
      * Checks if the enemy who owns a property called range is in range of the entity -- pretty much anything with a
@@ -62,9 +109,8 @@ private:
 
 
 public:
-    static std::unique_ptr<Enemy> CreateEnemySkeleton(const std::string & name, WorldBase & world);
     /// Create a skeleton enemy from a definition and spawn position.
-    static std::unique_ptr<Enemy> CreateEnemySkeleton(const AgentDefinition& def, WorldBase & world, const WorldPosition& spawn);
+    static std::unique_ptr<Enemy> CreateEnemySkeleton(const AgentDefinition& def, WorldBase & world);
 
     /// Create an agent that walks left then right, repeatedly. Uses action names "left" and "right".
     static std::unique_ptr<Enemy> CreatePatrolAgent(WorldBase& world, const WorldPosition& spawn);

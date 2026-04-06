@@ -12,11 +12,11 @@
 #include <unordered_map>
 
 #include "Entity.hpp"
-#include "ItemBase.hpp"
 #include "Location.hpp"
 #include "WorldGrid.hpp"
 #include "WorldPosition.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
+#include "Agents/AgentStats.hpp"
 
 namespace cse498 {
 
@@ -33,8 +33,7 @@ namespace cse498 {
     char mSymbol = '*';
 
     /// Health and alive state for takeDamage / isAlive / onDeath
-    double mHealth = 100.0;
-    double mMaxHealth = 100.0;
+    AgentStats mStats;
     bool mAlive = true;
 
     /// Behavior tree root and blackboard; factory or subclass sets the tree.
@@ -71,19 +70,37 @@ namespace cse498 {
     /// Apply damage; at or below zero calls onDeath() and sets alive to false.
     virtual void TakeDamage(double amount) {
       if (!mAlive) return;
-      mHealth -= amount;
-      if (mHealth <= 0.0) {
-        mHealth = 0.0;
+      mStats.mHp -= amount;
+      if (mStats.mHp <= 0.0) {
+        mStats.mHp = 0.0;
         mAlive = false;
         OnDeath();
       }
     }
 
     [[nodiscard]] bool IsAlive() const { return mAlive; }
-    [[nodiscard]] double GetHealth() const { return mHealth; }
-    [[nodiscard]] double GetMaxHealth() const { return mMaxHealth; }
-    void SetHealth(double h) { mHealth = h; }
-    void SetMaxHealth(double h) { mMaxHealth = h; }
+    [[nodiscard]] const AgentStats& GetStats() const { return mStats; }
+    void SetStats(const AgentStats& stats) { mStats = stats; }
+    [[nodiscard]] double GetCurrentHealth() const { return mStats.mHp; }
+    [[nodiscard]] double GetMaxHealth() const { return mStats.mMaxHp; }
+    [[nodiscard]] double GetAtk() const { return mStats.mAtk; }
+    [[nodiscard]] double GetDef() const { return mStats.mDef; }
+    [[nodiscard]] size_t GetRange() const { return mStats.mRange; }
+    [[nodiscard]] size_t GetLevel() const { return mStats.mLevel; }
+
+
+
+    /**
+     * sets hp and forces within proper range [0, mMaxHp]
+     * @param h - health
+     */
+    void SetHealth(double h)
+    {
+      if (h < 0) h = 0;
+      else if (h > mStats.mMaxHp) h = mStats.mMaxHp;
+      mStats.mHp = h;
+    }
+    void SetMaxHealth(double h) { mStats.mMaxHp = h; }
 
     /// Called after agent is added to the world. Override to register or init state.
     virtual void OnSpawn() { }

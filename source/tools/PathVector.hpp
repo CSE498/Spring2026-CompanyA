@@ -10,6 +10,8 @@
 
 
 #include <cmath>
+#include <string>
+
 #include "../core/WorldPosition.hpp"
 
 namespace cse498
@@ -130,7 +132,6 @@ public:
     }
 
 };
-
 
 inline WorldPosition operator+(const WorldPosition& p, const PathVector& v) { return {p.X() + v.X(), p.Y() + v.Y()}; }
 inline WorldPosition operator-(const WorldPosition& p, const PathVector& v) { return {p.X() - v.X(), p.Y() - v.Y()}; }

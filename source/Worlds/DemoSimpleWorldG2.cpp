@@ -60,11 +60,11 @@ void DemoSimpleWorldG2::PrintWorldState() const {
     }
     std::cout << '+' << std::string(main_grid.GetWidth(), '-') << "+\n";
     const PlayerAgent *player = GetPlayer();
-    const AgentBase *enemy = TryGetAgent(kEnemyId);
-    std::cout << "Player HP: " << (player ? static_cast<int>(player->GetHealth()) : 0)
+    const AgentBase *enemy = TryGetAgent(mEnemyId);
+    std::cout << "Player HP: " << (player ? static_cast<int>(player->GetCurrentHealth()) : 0)
               << " | Player Gold: " << (player ? player->GetGold() : 0);
     if (enemy != nullptr && enemy->IsAlive()) {
-        std::cout << " | Enemy HP: " << static_cast<int>(enemy->GetHealth());
+        std::cout << " | Enemy HP: " << static_cast<int>(enemy->GetCurrentHealth());
     } else {
         std::cout << " | Enemy defeated";
     }
@@ -107,11 +107,11 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
         const double dx = std::abs(actor_pos.X() - other_pos.X());
         const double dy = std::abs(actor_pos.Y() - other_pos.Y());
         if (dx <= 1.0 && dy <= 1.0) {
-            if (other.GetID() == kFarmerId && HasAgent(kEnemyId) && &actor == &GetAgent(kEnemyId)) {
+            if (other.GetID() == mFarmerId && HasAgent(mEnemyId) && &actor == &GetAgent(mEnemyId)) {
                 continue;
             }
             interacted = true;
-            if (other.GetID() == kFarmerId) {
+            if (other.GetID() == mFarmerId) {
                 auto &farmer = dynamic_cast<FarmingAgent &>(other);
                 if (&actor == GetPlayer()) {
                     return HandleMerchantTrade(farmer);
@@ -123,12 +123,12 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                 } else {
                     std::cout << farmer.GetTradeClosedMessage() << '\n';
                 }
-            } else if (other.GetID() == kPlayerId && HasAgent(kEnemyId) && &actor == &GetAgent(kEnemyId)) {
+            } else if (other.GetID() == mPlayerId && HasAgent(mEnemyId) && &actor == &GetAgent(mEnemyId)) {
                 auto &player = dynamic_cast<PlayerAgent &>(other);
                 auto &enemy = dynamic_cast<Enemy &>(actor);
 
                 const double dealt =
-                    DamageCalculator::Calculate(mEnemyCombat, mPlayerCombat);
+                    DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
                 player.TakeDamage(dealt);
                 std::cout << enemy.GetName() << " hits " << player.GetName() << " for "
                           << static_cast<int>(dealt) << " damage.\n";
@@ -138,7 +138,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                     return 1;
                 }
                 const double retaliate =
-                    DamageCalculator::Calculate(mPlayerCombat, mEnemyCombat);
+                    DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
                 enemy.TakeDamage(retaliate);
                 std::cout << player.GetName() << " strikes back for " << static_cast<int>(retaliate)
                           << " damage.\n";
@@ -146,9 +146,9 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                     HandleEnemyDefeat(enemy, player);
                     return 1;
                 }
-            } else if (other.GetID() == kEnemyId) {
+            } else if (other.GetID() == mEnemyId) {
                 const double dealt =
-                    DamageCalculator::Calculate(mPlayerCombat, mEnemyCombat);
+                    DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
                 other.TakeDamage(dealt);
                 std::cout << actor.GetName() << " hits enemy for " << static_cast<int>(dealt)
                           << " damage.\n";
@@ -159,7 +159,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                     return 1;
                 }
                 const double retaliate =
-                    DamageCalculator::Calculate(mEnemyCombat, mPlayerCombat);
+                    DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
                 actor.TakeDamage(retaliate);
                 std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
                 if (!actor.IsAlive()) {
@@ -303,16 +303,17 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
 
 
     auto* player = GetPlayer();
+    mPlayerId = player->GetID();
     // Need to call this function to ensure player is set up for this world.
     DemoSimpleWorldG2::ConfigAgent(*player);
     player->SetSymbol('@');
-    player->SetMaxHealth(100.0);
-    player->SetHealth(100.0);
+    player->SetStats(AgentStats(100, 14, 5, 3, 0));
     player->SetLocation(Location(WorldPosition{2, 2}));
     player->SetGold(30);
-    mPlayerCombat = CombatStats{14.0, 5.0};
 
+    // Creating agents by using the template this way
     auto &farmer = AddAgent<FarmingAgent>("Farmer");
+    mFarmerId = farmer.GetID();
     farmer.SetSymbol('F');
     farmer.SetLocation(Location(WorldPosition{4, 2}));
     farmer.ClearInitialOffers();
@@ -321,14 +322,13 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     farmer.AddInitialOffer({"potion", 10, 5, 1, TradeStockMode::Limited, 10});
     farmer.AddGold(200);
 
-    // just for demonstration of another method for creation
-    auto &enemy = AddAgent(std::make_unique<Enemy>(GetNextAgentId(), "Enemy", *this));
+    // just for demonstration of another method for creation of an agent
+    mEnemyId = GetNextAgentId(); // this is just for demonstration. ids should be organized by world
+    auto &enemy = AddAgent(std::make_unique<Enemy>(mEnemyId, "Enemy", *this));
     enemy.SetSymbol('S');
-    enemy.SetMaxHealth(45.0);
-    enemy.SetHealth(45.0);
     enemy.SetLocation(Location(WorldPosition{8, 3}));
-    mEnemyCombat = CombatStats{9.0, 2.0};
-    enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, kPlayerId));
+    enemy.SetStats(AgentStats(45, 9, 2, 3, 0));
+    enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, mPlayerId));
 }
 
 int DemoSimpleWorldG2::DoAction(AgentBase &agent, size_t action_id) {
@@ -378,7 +378,7 @@ void DemoSimpleWorldG2::Run() {
             break;
         }
 
-        AgentBase *enemy = TryGetAgent(kEnemyId);
+        AgentBase *enemy = TryGetAgent(mEnemyId);
         if (enemy != nullptr && enemy->IsAlive()) {
             const size_t enemy_action = enemy->SelectAction(main_grid);
             const int enemy_result = DoAction(*enemy, enemy_action);

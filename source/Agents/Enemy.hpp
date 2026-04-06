@@ -22,7 +22,7 @@ namespace cse498
         bool mGoldClaimed = false; // Whether gold has been claimed
 
     public:
-        Enemy(size_t id, const std::string & name, WorldBase & world) : AgentBase(id, name, world) {}
+        Enemy(size_t id, const std::string & name, const WorldBase & world) : AgentBase(id, name, world) {}
 
         [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
 

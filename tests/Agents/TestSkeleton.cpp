@@ -31,13 +31,13 @@ using namespace cse498;
 TEST_CASE("CreateEnemySkeleton by name returns a valid enemy", "[Skeleton][factory]")
 {
     TestWorld world;
-
-    auto skeleton = AgentFactory::CreateEnemySkeleton("Bones", world);
+    auto def = AgentDefinition("Bones", 0, {0,0});
+    auto skeleton = AgentFactory::CreateEnemySkeleton(def, world);
 
     REQUIRE(skeleton != nullptr);
     REQUIRE(skeleton->GetName() == "Bones");
     REQUIRE(skeleton->IsAlive());
-    REQUIRE(skeleton->GetHealth() == Approx(100.0));
+    REQUIRE(skeleton->GetCurrentHealth() == Approx(100.0));
     REQUIRE(skeleton->GetMaxHealth() == Approx(100.0));
     REQUIRE(skeleton->GetAttackRange() == Approx(3.0));
 
@@ -52,28 +52,25 @@ TEST_CASE("CreateEnemySkeleton from AgentDefinition applies definition and spawn
 {
     TestWorld world;
 
-    AgentDefinition def;
-    def.name = "EliteSkeleton";
-    def.hp = 150.0;
-    def.atk = 25.0;
+    AgentDefinition def("EliteSkeleton", 0, {4,7});
 
-    const WorldPosition spawn(4, 7);
 
-    auto skeleton = AgentFactory::CreateEnemySkeleton(def, world, spawn);
+    auto skeleton = AgentFactory::CreateEnemySkeleton(def, world);
 
     REQUIRE(skeleton != nullptr);
     REQUIRE(skeleton->GetName() == "EliteSkeleton");
-    REQUIRE(skeleton->GetHealth() == Approx(150.0));
-    REQUIRE(skeleton->GetMaxHealth() == Approx(150.0));
-    REQUIRE(skeleton->GetLocation().AsWorldPosition() == spawn);
+    REQUIRE(skeleton->GetCurrentHealth() == Approx(100.0));
+    REQUIRE(skeleton->GetMaxHealth() == Approx(100.0));
+    REQUIRE(skeleton->GetLocation().AsWorldPosition() == WorldPosition{4,7});
     REQUIRE(skeleton->IsAlive());
 }
 
 TEST_CASE("Skeleton enemy gold drop can only be claimed once until reset", "[Skeleton][gold]")
 {
     TestWorld world;
+    auto def = AgentDefinition("Bones", 0, {3,4});
 
-    auto skeleton = AgentFactory::CreateEnemySkeleton("Bones", world);
+    auto skeleton = AgentFactory::CreateEnemySkeleton(def, world);
     REQUIRE(skeleton != nullptr);
 
     REQUIRE(skeleton->GetGoldDrop() == 5);
@@ -91,17 +88,18 @@ TEST_CASE("Skeleton enemy gold drop can only be claimed once until reset", "[Ske
 TEST_CASE("Skeleton enemy can die through inherited AgentBase damage handling", "[Skeleton][damage]")
 {
     TestWorld world;
+    auto def = AgentDefinition("Bones", 0, {3,4});
 
-    auto skeleton = AgentFactory::CreateEnemySkeleton("Bones", world);
+    auto skeleton = AgentFactory::CreateEnemySkeleton(def, world);
     REQUIRE(skeleton != nullptr);
     REQUIRE(skeleton->IsAlive());
 
     skeleton->TakeDamage(25.0);
     REQUIRE(skeleton->IsAlive());
-    REQUIRE(skeleton->GetHealth() == Approx(75.0));
+    REQUIRE(skeleton->GetCurrentHealth() == Approx(75.0));
 
     skeleton->TakeDamage(100.0);
     REQUIRE_FALSE(skeleton->IsAlive());
-    REQUIRE(skeleton->GetHealth() == Approx(0.0));
+    REQUIRE(skeleton->GetCurrentHealth() == Approx(0.0));
 }
 
