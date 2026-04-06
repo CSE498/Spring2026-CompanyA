@@ -18,7 +18,7 @@ namespace cse498 {
 
 bool DemoSimpleWorldG2::IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const {
     for (size_t i = 0; i < GetNumAgents(); ++i) {
-        const AgentBase& agent = GetAgent(i);
+        const AgentBase& agent =  GetAgentByIndex(i);
 
         if (&agent == skip)
         {
@@ -46,7 +46,7 @@ void DemoSimpleWorldG2::PrintWorldState() const {
         }
     }
     for (size_t i = 0; i < GetNumAgents(); ++i) {
-        const AgentBase &agent = GetAgent(i);
+        const AgentBase &agent = GetAgentByIndex(i);
         if (!agent.IsAlive())
         {
             continue;
@@ -60,11 +60,11 @@ void DemoSimpleWorldG2::PrintWorldState() const {
     }
     std::cout << '+' << std::string(main_grid.GetWidth(), '-') << "+\n";
     const PlayerAgent *player = GetPlayer();
-    const AgentBase &enemy = GetAgent(kEnemyIdx);
-    std::cout << "Player HP: " << static_cast<int>(GetAgent(kPlayerIdx).GetHealth())
+    const AgentBase *enemy = TryGetAgent(kEnemyId);
+    std::cout << "Player HP: " << (player ? static_cast<int>(player->GetHealth()) : 0)
               << " | Player Gold: " << (player ? player->GetGold() : 0);
-    if (enemy.IsAlive()) {
-        std::cout << " | Enemy HP: " << static_cast<int>(enemy.GetHealth());
+    if (enemy != nullptr && enemy->IsAlive()) {
+        std::cout << " | Enemy HP: " << static_cast<int>(enemy->GetHealth());
     } else {
         std::cout << " | Enemy defeated";
     }
@@ -95,10 +95,10 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
     bool interacted = false;
 
     for (size_t i = 0; i < GetNumAgents(); ++i) {
-        if (&GetAgent(i) == &actor) {
+        AgentBase &other = GetAgentByIndex(i);
+        if (&other == &actor) {
             continue;
         }
-        AgentBase &other = GetAgent(i);
         if (!other.IsAlive())
         {
             continue;
@@ -107,11 +107,11 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
         const double dx = std::abs(actor_pos.X() - other_pos.X());
         const double dy = std::abs(actor_pos.Y() - other_pos.Y());
         if (dx <= 1.0 && dy <= 1.0) {
-            if (i == kFarmerIdx && &actor == &GetAgent(kEnemyIdx)) {
+            if (other.GetID() == kFarmerId && HasAgent(kEnemyId) && &actor == &GetAgent(kEnemyId)) {
                 continue;
             }
             interacted = true;
-            if (i == kFarmerIdx) {
+            if (other.GetID() == kFarmerId) {
                 auto &farmer = dynamic_cast<FarmingAgent &>(other);
                 if (&actor == GetPlayer()) {
                     return HandleMerchantTrade(farmer);
@@ -123,7 +123,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                 } else {
                     std::cout << farmer.GetTradeClosedMessage() << '\n';
                 }
-            } else if (i == kPlayerIdx && &actor == &GetAgent(kEnemyIdx)) {
+            } else if (other.GetID() == kPlayerId && HasAgent(kEnemyId) && &actor == &GetAgent(kEnemyId)) {
                 auto &player = dynamic_cast<PlayerAgent &>(other);
                 auto &enemy = dynamic_cast<Enemy &>(actor);
 
@@ -146,7 +146,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                     HandleEnemyDefeat(enemy, player);
                     return 1;
                 }
-            } else if (i == kEnemyIdx) {
+            } else if (other.GetID() == kEnemyId) {
                 const double dealt =
                     DamageCalculator::Calculate(mPlayerCombat, mEnemyCombat);
                 other.TakeDamage(dealt);
@@ -328,7 +328,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     enemy.SetHealth(45.0);
     enemy.SetLocation(Location(WorldPosition{8, 3}));
     mEnemyCombat = CombatStats{9.0, 2.0};
-    enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, kPlayerIdx));
+    enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, kPlayerId));
 }
 
 int DemoSimpleWorldG2::DoAction(AgentBase &agent, size_t action_id) {
@@ -372,14 +372,18 @@ void DemoSimpleWorldG2::Run() {
         const size_t action_id = player->SelectPlayerAction(input);
         const int result = DoAction(*player, action_id);
         player->SetActionResult(result);
+        RemoveDeadAgents();
+
         if (run_over) {
             break;
         }
-        AgentBase &enemy = GetAgent(kEnemyIdx);
-        if (enemy.IsAlive()) {
-            const size_t enemy_action = enemy.SelectAction(main_grid);
-            const int enemy_result = DoAction(enemy, enemy_action);
-            enemy.SetActionResult(enemy_result);
+
+        AgentBase *enemy = TryGetAgent(kEnemyId);
+        if (enemy != nullptr && enemy->IsAlive()) {
+            const size_t enemy_action = enemy->SelectAction(main_grid);
+            const int enemy_result = DoAction(*enemy, enemy_action);
+            enemy->SetActionResult(enemy_result);
+            RemoveDeadAgents();
         }
     }
     PrintWorldState();
