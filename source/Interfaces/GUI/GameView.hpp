@@ -22,6 +22,8 @@ namespace cse498 {
         int mWidth;
         int mHeight;
 
+        static constexpr SDL_Color mBackgroundColor = {30, 30, 30, 255};
+
     public:
         GameView(const std::string& title = "Slay the Dungeon",
                  int width = 800,

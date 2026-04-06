@@ -59,7 +59,7 @@ bool GameView::Initialize()
 void GameView::Clear()
 {
     if (mRenderer == nullptr) return;
-    SDL_SetRenderDrawColor(mRenderer, 30, 30, 30, 255);
+    SDL_SetRenderDrawColor(mRenderer, mBackgroundColor.r, mBackgroundColor.g, mBackgroundColor.b, mBackgroundColor.a);
     SDL_RenderClear(mRenderer);
 }
 
