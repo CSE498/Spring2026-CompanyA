@@ -62,10 +62,9 @@ bool Menu::AddOption(const std::string& label, std::function<void()> callback) {
 
 bool Menu::RemoveOption(const std::string& label) {
   // when you build, code runs fine. If you see underlined red, just IDE issue
-  auto it = std::find_if(mOptions.begin(), mOptions.end(),
-      [&label](const MenuOption& opt) {
+  auto it = std::find_if(mOptions.begin(), mOptions.end(), [&label](const MenuOption& opt) {
           return opt.label == label;
-      });
+  });
 
   if (it == mOptions.end())
     return false;
@@ -75,12 +74,18 @@ bool Menu::RemoveOption(const std::string& label) {
 
   if (mOptions.empty()) {
     mSelectedIndex = std::nullopt;
-  } else if (mSelectedIndex.has_value()) {
+  }
+
+  else if (mSelectedIndex.has_value()) {
+
     if (*mSelectedIndex >= mOptions.size()) {
       mSelectedIndex = mOptions.size() - 1;
-    } else if (i < *mSelectedIndex) {
+    }
+
+    else if (i < *mSelectedIndex) {
       mSelectedIndex = *mSelectedIndex - 1;
     }
+
   }
 
   return true;
@@ -111,10 +116,12 @@ void Menu::SelectNext() {
   {
     mSelectedIndex = 0;
   }
+
   else
   {
     mSelectedIndex = (*mSelectedIndex + 1) % mOptions.size();
   }
+
 }
 
 /**
@@ -159,6 +166,7 @@ bool Menu::ActivateSelected() const {
   if (!mSelectedIndex.has_value() || *mSelectedIndex >= mOptions.size()) {
     return false;
   }
+
   mOptions.at(*mSelectedIndex).callback();
   return true;
 }
@@ -274,12 +282,16 @@ void Menu::DrawMenu(SDL_Renderer* renderer, int x, int y,
     if (isSelected(i)) {
       menuText.SetColor(style.selected_color);
       menuText.SetBold(style.bold_selected);
-    } else {
+    }
+
+    else {
       menuText.SetColor(style.unselected_color);
       menuText.SetBold(false);
     }
 
     menuText.Draw(x, current_y);
     current_y += spacing;
+
   }
+
 }
