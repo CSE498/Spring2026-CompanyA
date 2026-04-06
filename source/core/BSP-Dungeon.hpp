@@ -210,48 +210,38 @@ namespace cse498 {
 
         /// @brief grabs height of the grid map
         /// @return HEIGHT value
-        [[nodiscard]] size_t GetHeight() {
+        [[nodiscard]] int GetHeight() {
             return m_height;
         }
 
         /// @brief grabs width of the rid map
         /// @return WIDTH value
-        [[nodiscard]] size_t GetWidth() {
+        [[nodiscard]] int GetWidth() {
             return m_width;
         }   
 
         /// @brief updates the HEIGHT value for the grid map
         /// @param height 
-        void SetHeight(size_t height) {
+        void SetHeight(int height) {
             m_height = height;
         }
 
         /// @brief updates the WIDTH value for the grid map
         /// @param width 
-        void SetWidth(size_t width) {
+        void SetWidth(int width) {
             m_width = width;
         }
         
         /// @brief Sets the number of splits done to the BSP Tree
         /// @param iter 
-        void SetIterations (size_t iter) {
+        void SetIterations (int iter) {
             m_iterations = iter;
         }
 
         /// @brief Grabs the number of iterations done in splitting the BSP_Tree
         /// @return number of iterations we want to split the rooms with
-        [[nodiscard]] size_t GetIterations() const { 
+        [[nodiscard]] int GetIterations() const { 
             return m_iterations;
-        }
-
-        /// @brief Returns the BSP_Tree's leaf nodes
-        [[nodiscard]] std::vector<BSPNode> GetLeafNodes() const {
-            return m_leaf_nodes;
-        }
-
-        /// @brief Returns the entirety of the created BSP_Tree
-        [[nodiscard]] std::vector<BSPNode> GetBSPTree() const {
-            return m_BSP_tree;
         }
 
         /// @brief Returns the reference to BSP_Tree's leaf nodes

@@ -16,7 +16,7 @@
 
 namespace cse498 {
 
-    ///Place
+    ///Placeholders until we're able to define level states
     const int LEVEL_ONE = 1;
     const int LEVEL_TWO = 2;
     const int LEVEL_THREE = 3;
