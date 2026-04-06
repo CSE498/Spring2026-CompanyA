@@ -5,6 +5,7 @@
 
 #ifdef __EMSCRIPTEN__
 
+#include <algorithm>
 #include <emscripten/emscripten.h>
 #include "Interfaces/WebUI/interface/MockWorld.hpp"
 #include "Interfaces/WebUI/interface/WebInterface.hpp"
@@ -54,24 +55,21 @@ struct App {
   /// @param userData Pointer to the App instance.
   /// @return EM_BOOL indicating whether to continue the loop.
   static EM_BOOL MainLoop(double currentTimeMs, void* userData) {
-  auto* app = static_cast<App*>(userData);
-  if (!app) return EM_FALSE;
+    auto* app = static_cast<App*>(userData);
 
-  // Handle the very first frame
-  if (app->last_time_ms == 0.0) {
+    // Handle the very first frame
+    if (app->last_time_ms == 0.0) {
+      app->last_time_ms = currentTimeMs;
+    }
+
+    const double delta = std::max(0.0, currentTimeMs - app->last_time_ms);
     app->last_time_ms = currentTimeMs;
-  }
 
-  const double delta = currentTimeMs - app->last_time_ms;
-  app->last_time_ms = currentTimeMs;
-
-  if (delta >= 0) {
     app->world.Tick(delta);
     app->world.Run();
-  }
 
-  return EM_TRUE; 
-}
+    return EM_TRUE;
+  }
 };
 
 } // anonymous namespace
@@ -79,9 +77,9 @@ struct App {
 /// @brief Main entry point for the application.
 /// @return Exit code.
 int main() {
-  static App * app = new App();
+  static App app;
 
-  emscripten_request_animation_frame_loop(&App::MainLoop, app);
+  emscripten_request_animation_frame_loop(&App::MainLoop, &app);
 
   return 0;
 }
