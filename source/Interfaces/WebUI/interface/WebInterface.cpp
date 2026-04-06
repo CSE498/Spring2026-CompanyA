@@ -12,7 +12,7 @@
 #include <array>
 #include <sstream>
 #include <algorithm>
-#include <stdexcept>
+#include <cassert>
 
 using namespace cse498;
 
@@ -31,17 +31,31 @@ static constexpr const char * MONSTER_IMAGE = "agents/monsters/agent_monster_gob
 static constexpr int IMAGE_SIZE = 256;
 
 // Use EM_ASYNC_JS to load images synchronously with await
-EM_ASYNC_JS(emscripten::EM_VAL, load_bitmap, (const char* path), {
-    const response = await fetch("/assets/" + UTF8ToString(path));
-    const blob = await response.blob();
-    const bitmap = await createImageBitmap(blob);
-    // We must return a handle that Emscripten can turn into a val
-    return Emval.toHandle(bitmap);
+EM_ASYNC_JS(emscripten::EM_VAL, loadBitmap, (const char* path), {
+    try {
+        const filename = "/assets/" + UTF8ToString(path);
+        
+        // Read the file from the sandboxed filesystem
+        // This returns a Uint8Array view of the file in the Emscripten heap
+        const data = FS.readFile(filename);
+
+        // Create a Blob from the data
+        // specify the MIME type in case it can't be detected automatically
+        const blob = new Blob([data], { type: 'image/png' });
+
+        // Convert to ImageBitmap
+        const bitmap = await createImageBitmap(blob);
+
+        return Emval.toHandle(bitmap);
+    } catch (e) {
+        console.error("Failed to load image from FS:", e);
+        return Emval.toHandle(null);
+    }
 });
 
 // Wrapper to return a proper emscripten::val
 val loadImage(const std::string& path) {
-    auto handle = load_bitmap(path.c_str());
+    auto handle = loadBitmap(path.c_str());
     return val::take_ownership(handle);
 }
 
@@ -91,14 +105,6 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
   descPtr->SetColor(kDimGray.ToHex());
   descPtr->MountToLayout(*mPauseMenu);
 
-  action_map.emplace("up", GetActionID("up"));
-  action_map.emplace("left", GetActionID("left"));
-  action_map.emplace("down", GetActionID("down"));
-  action_map.emplace("right", GetActionID("right"));
-  action_map.emplace("interact", GetActionID("interact"));
-  action_map.emplace("pause", GetActionID("pause"));
-  action_map.emplace("quit", GetActionID("quit"));
-
   auto cellTypes = world.GetGrid().GetCellTypes();
 
   std::ranges::for_each(cellTypes, [this](const CellType & cell){
@@ -111,16 +117,11 @@ WebInterface::WebInterface(size_t id, const std::string & name, const WorldBase 
 
   for (const auto & cell : cellTypes) {
     if (cell.name == "Unknown") continue;
-    if (!mTextures.contains(cell.symbol)) {
-      throw std::runtime_error(std::string("Missing texture for cell symbol: ") + cell.symbol);
-    }
+    assert(mTextures.contains(cell.symbol) && (std::string("Missing texture for cell symbol: ") + cell.symbol).c_str());
   }
-  if (!mTextures.contains('@')) {
-    throw std::runtime_error("Missing texture for player symbol: @");
-  }
-  if (!mTextures.contains('*')) {
-    throw std::runtime_error("Missing texture for monster symbol: *");
-  }
+
+  assert(mTextures.contains('@') && "Missing texture for player symbol: @");
+  assert(mTextures.contains('*') && "Missing texture for monster symbol: *");
 
   RenderFrame();
 }
@@ -130,27 +131,45 @@ size_t WebInterface::SelectAction(const WorldGrid & grid) {
 
   if (mPaused && userAction != InputManager::ActiveAction::Pause && userAction != InputManager::ActiveAction::Quit) return 0;
 
+  // action_map is populated with all available actions in ConfigAgent()
+  // and all these values are checked in Initialize();
   switch (userAction) {
     case InputManager::ActiveAction::Up:       return action_map.at("up");
     case InputManager::ActiveAction::Left:     return action_map.at("left");
     case InputManager::ActiveAction::Down:     return action_map.at("down");
     case InputManager::ActiveAction::Right:    return action_map.at("right");
     case InputManager::ActiveAction::Interact: ++mPoints; return action_map.at("interact");
-    case InputManager::ActiveAction::Pause:    return action_map.at("pause");
     case InputManager::ActiveAction::Quit:     return action_map.at("quit");
+    case InputManager::ActiveAction::Pause:    return 0;
     case InputManager::ActiveAction::None:     return 0;
     default: return 0;
   }
 }
 
+bool WebInterface::Initialize() {
+  std::array<const char *, 6> actions{
+    "up",
+    "left",
+    "down",
+    "right",
+    "interact",
+    "quit"
+  };
+
+  // true if any of these actions are not available
+  bool invalid = std::ranges::any_of(actions, [this](const auto & action){ return !HasAction(action); });
+
+  return !invalid;
+}
+
 void WebInterface::DrawGrid(const WorldGrid & grid,
-                  const std::vector<size_t> & item_ids,
-                  const std::vector<size_t> & agent_ids) {
+                  const std::vector<size_t> & itemIds,
+                  const std::vector<size_t> & agentIds) {
     {
       int canvasWidth;
       int canvasHeight;
       emscripten_get_canvas_element_size("#web-canvas", &canvasWidth, &canvasHeight);
-      double dpr = emscripten_get_device_pixel_ratio();
+      const double dpr = emscripten_get_device_pixel_ratio();
 
       canvasWidth = canvasWidth / dpr;
       canvasHeight = canvasHeight / dpr;
@@ -170,20 +189,20 @@ void WebInterface::DrawGrid(const WorldGrid & grid,
       auto CellXToLeft = [&leftOffset, &drawSize](auto cellX){ return (leftOffset + drawSize * (cellX + 1)) - drawSize / 2; };
       auto CellYToTop = [&topOffset, &drawSize](auto cellY){ return topOffset + drawSize * (cellY + 1); };
 
-      std::vector<std::string> symbol_grid(grid.GetHeight());
+      std::vector<std::string> symbolGrid(grid.GetHeight());
 
-      // Load the world into the symbol_grid;
+      // Load the world into the symbolGrid;
       for (size_t y=0; y < grid.GetHeight(); ++y) {
-        symbol_grid[y].resize(grid.GetWidth());
+        symbolGrid[y].resize(grid.GetWidth());
         for (size_t x=0; x < grid.GetWidth(); ++x) {
-          symbol_grid[y][x] = grid.GetSymbol(WorldPosition{x,y});
+          symbolGrid[y][x] = grid.GetSymbol(WorldPosition{x,y});
         }
       }
 
       mCanvas->Clear();
 
       int top = topOffset + drawSize;
-      for (const auto & row : symbol_grid) {
+      for (const auto & row : symbolGrid) {
         int left = leftOffset + drawSize / 2;
         for (char cell : row) {
           mCanvas->DrawTexture(mTextures.at(cell).as_handle(), left, top, desiredScale);
@@ -193,15 +212,15 @@ void WebInterface::DrawGrid(const WorldGrid & grid,
       }
 
       // Substitute in items.
-      for (size_t id : item_ids) {
+      for (size_t id : itemIds) {
         const ItemBase & item = world.GetItem(id);
         WorldPosition pos = item.GetLocation().AsWorldPosition();
-        symbol_grid[pos.CellY()][pos.CellX()] = '+';
+        symbolGrid[pos.CellY()][pos.CellX()] = '+';
       }
 
       // Substitute in agents.
-      for (const auto & agent_id : agent_ids) {
-        const AgentBase & agent = world.GetAgent(agent_id);
+      for (const auto & agentId : agentIds) {
+        const AgentBase & agent = world.GetAgent(agentId);
         WorldPosition pos = agent.GetLocation().AsWorldPosition();
         auto agentTexture = mTextures.at(agent.GetSymbol());
         auto agentLeft = CellXToLeft(pos.CellX());

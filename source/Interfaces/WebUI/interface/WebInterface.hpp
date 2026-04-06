@@ -35,6 +35,10 @@ public:
   /// @return The selected action ID.
   [[nodiscard]] size_t SelectAction(const WorldGrid & grid) override;
 
+  /// @brief Runs after ConfigAgent to ensure configuration was successful
+  /// @return true for success, false for failure
+  bool Initialize() override;
+
   /// @brief Renders the current frame.
   void RenderFrame() override;
 

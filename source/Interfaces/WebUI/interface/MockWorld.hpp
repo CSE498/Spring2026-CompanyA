@@ -14,11 +14,12 @@ namespace cse498 {
 /// @brief A mock world implementation for testing and demonstrating interfaces.
 /// @details This class provides a simple grid-based world with predefined cell types and agents for testing WebUI interfaces.
 class MockWorld : public WorldBase {
-protected:
+public:
   /// @enum ActionType
   /// @brief Enumeration of possible agent actions.
   enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT, QUIT };
 
+protected:
   /// @brief Array of floor cell type IDs for easy access.
   std::array<size_t, 3> mFloorIds;
 
@@ -52,9 +53,7 @@ protected:
     InterfaceBase & interfaceRef = *mInterface;
     ConfigAgent(*mInterface);
 
-    if (mInterface->Initialize() == false) {
-      std::cerr << "Failed to initialize interface" << std::endl;
-    }
+    assert(mInterface->Initialize() && "Failed to initialize interface");
     return interfaceRef;
   }
 
@@ -99,7 +98,7 @@ public:
   /// @param agent The agent performing the action.
   /// @param action_id The ID of the action to perform.
   /// @return True if the action was successful, false otherwise.
-  int DoAction(AgentBase & agent, size_t action_id) override {
+  virtual int DoAction(AgentBase & agent, size_t action_id) override {
     // Determine where the agent is trying to move.
     WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
     WorldPosition new_position;
@@ -124,7 +123,7 @@ public:
   }
 
   /// @brief Runs the main game loop iteration.
-  void Run() override {
+  virtual void Run() override {
     if (mActionTimer < 250) {
       mInterface->RenderFrame();
       return;
@@ -141,7 +140,7 @@ public:
   }
 
   /// @brief Cleans up and exits the application.
-  void Teardown() {
+  virtual void Teardown() {
     mInterface.release();
     exit(0);
   }

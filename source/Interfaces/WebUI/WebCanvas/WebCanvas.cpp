@@ -61,6 +61,7 @@ WebCanvas::WebCanvas(const std::string & id)
     }
 #ifdef __EMSCRIPTEN__
     mElement = GetDocument().call<emscripten::val>("getElementById", mId);
+    mExisting = true;
 #endif
     webcanvas__init(mId.c_str());
 }
@@ -88,7 +89,7 @@ void WebCanvas::Unmount()
     mMounted = false;
 }
 
-/// @brief No-op placeholder; canvas state is managed via RenderFrame().
+/// @brief calls RenderFrame so the canvas is updated when its parent wants to update the screen
 void WebCanvas::SyncFromModel()
 {
     RenderFrame();
@@ -145,7 +146,7 @@ void WebCanvas::RenderFrame()
 void WebCanvas::Clear(const std::string& cssColor)
 {
 #ifdef __EMSCRIPTEN__
-    webcanvas__clear(mId.c_str(), cssColor == "" ? mBackgroundColor.c_str() : cssColor.c_str());
+    webcanvas__clear(mId.c_str(), cssColor.empty() ? mBackgroundColor.c_str() : cssColor.c_str());
 #else
     (void)cssColor;
 #endif

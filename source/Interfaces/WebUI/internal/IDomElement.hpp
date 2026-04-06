@@ -99,6 +99,11 @@ class IDomElement {
       return;
     }
 
+    if (element->mExisting) {
+      GetConsole().call<void>("warn", "element with Id: " + element->Id() + " is an existing element and will not be removed.");
+      return;
+    }
+
     mElement.call<void>("removeChild", element->GetElement());
   }
 
@@ -150,6 +155,7 @@ class IDomElement {
   emscripten::val mElement = emscripten::val::undefined();  ///< HTML element for this dom element
   IDomElement * mParent = nullptr;                          ///< DOM element for the parent of this element
   std::string mId{};                                        ///< DOM Id of this element
+  bool mExisting{false};                                    ///< True if this element is just hooking into an existing element
 
   int mGridRow = -1;  ///< Grid row position (-1 = unset)
   int mGridCol = -1;  ///< Grid column position (-1 = unset)

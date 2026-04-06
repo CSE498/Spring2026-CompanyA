@@ -39,6 +39,24 @@ static std::string px(const std::optional<int>& v) noexcept {
   return px(*v);
 }
 
+// Helper lambda to convert Alignment to CSS align-items string
+static constexpr auto getAlignItemsStr = [](Alignment a) -> std::string {
+  switch (a) {
+    case Alignment::Start:
+      return "flex-start";
+    case Alignment::Center:
+      return "center";
+    case Alignment::End:
+      return "flex-end";
+    case Alignment::Stretch:
+      return "stretch";
+    case Alignment::None:
+      return "";
+  }
+  assert(false && "Unhandled Alignment");
+  return "";
+};
+
 /// @brief Constructs a WebLayout, creating or adopting a root DOM element.
 /// @param rootId Optional ID; if an element with this ID exists in the DOM it
 ///               is adopted as root, otherwise a new <div> is created and
@@ -49,6 +67,7 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
     val found = mDocument.call<val>("getElementById", rootId);
     if (!found.isNull() && !found.isUndefined()) {
       mElement = found;
+      mExisting = true;
     } else {
       // create a container div with the requested id and append to body
       mElement = mDocument.call<val>("createElement", std::string("div"));
@@ -70,9 +89,6 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
 
 /// @brief Destructor: unmounts all children and removes the root element from the DOM.
 WebLayout::~WebLayout() noexcept {
-  // unmount children
-  Clear();
-
   // remove the root element from DOM if present
   Unmount();
   mDocument = val::undefined();
@@ -305,25 +321,6 @@ void WebLayout::ApplyLayout(val style) noexcept {
     return "";
   };
 
-  // Helper lambda to convert Alignment to CSS align-items / justify-items
-  // string.
-  constexpr auto getAlignItemsStr = [](Alignment a) -> std::string {
-    switch (a) {
-      case Alignment::Start:
-        return "flex-start";
-      case Alignment::Center:
-        return "center";
-      case Alignment::End:
-        return "flex-end";
-      case Alignment::Stretch:
-        return "stretch";
-      case Alignment::None:
-        return "";
-    }
-    assert(false && "Unhandled Alignment");
-    return "";
-  };
-
   switch (mType) {
     // leave to default styling
     case LayoutType::None: return;
@@ -378,24 +375,7 @@ void WebLayout::ApplyChildren() noexcept {
     auto it = mParams.find(elem);
     if (it != mParams.end()) {
       Alignment a = it->second;
-      std::string alignStr;
-      switch (a) {
-        case Alignment::Start:
-          alignStr = "flex-start";
-          break;
-        case Alignment::Center:
-          alignStr = "center";
-          break;
-        case Alignment::End:
-          alignStr = "flex-end";
-          break;
-        case Alignment::Stretch:
-          alignStr = "stretch";
-          break;
-        default:
-          alignStr = "";
-      }
-      est.set("alignSelf", alignStr);
+      est.set("alignSelf", getAlignItemsStr(a));
     }
 
     // If grid layout and the element has grid coordinates, apply them
@@ -444,7 +424,7 @@ void WebLayout::Apply() noexcept {
 void WebLayout::Clear() noexcept {
   // remove children from DOM by unmounting them
   for (const auto& elem : mChildren) {
-    elem->Unmount();
+    if (elem) elem->Unmount();
   }
   mChildren.clear();
   mParams.clear();

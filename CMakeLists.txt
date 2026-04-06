@@ -281,14 +281,17 @@ set(COMPANYA_WEB_TEST_COMMON_ARGS
     WASM=1
     -s
     ASSERTIONS=1
+    -gsource-map
     -DCATCH_CONFIG_MAIN
 )
 
 if(COMPANYA_EMPP_EXECUTABLE)
     add_custom_command(
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         OUTPUT "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
             ${COMPANYA_WEB_DEMO_COMMON_ARGS}
+            --preload-file "assets"
             --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
             "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
@@ -412,6 +415,41 @@ if(COMPANYA_EMPP_EXECUTABLE)
         VERBATIM
     )
 
+    add_custom_command(
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
+      COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
+      COMMAND "${CMAKE_COMMAND}" -E copy
+          "${COMPANYA_TEST_DIR}/Interfaces/WebUi/WebInterfaceTest.html"
+          "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.html"
+      COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
+          ${COMPANYA_WEB_TEST_COMMON_ARGS}
+          ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
+          -sASYNCIFY=1
+          -sNO_EXIT_RUNTIME=1
+          -sALLOW_MEMORY_GROWTH=1
+          --preload-file "assets"
+          --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+          "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
+          "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
+          "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
+          "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.cpp"
+          -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
+      DEPENDS
+          "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
+          "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
+          "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
+          "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+    )
+
     add_custom_target(group18_demo
         DEPENDS
             "${COMPANYA_SOURCE_DIR}/Group18_main.js"
@@ -424,6 +462,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
+            "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
     )
 else()
     add_custom_target(group18_demo
