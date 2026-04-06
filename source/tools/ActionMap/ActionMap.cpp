@@ -85,7 +85,7 @@ namespace cse498
         }
 
         // Return a copy of the optional description.
-        return it->second.description;
+        return it->second.mDescription;
     }
 
     bool ActionMap::SetDescription(std::string_view name, std::optional<std::string> description)
@@ -102,7 +102,7 @@ namespace cse498
         }
 
         // Overwrite existing description (or clear it).
-        it->second.description = std::move(description);
+        it->second.mDescription = std::move(description);
         return true;
     }
 }

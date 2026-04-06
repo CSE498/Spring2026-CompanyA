@@ -41,9 +41,9 @@ namespace cse498
          */
         struct ActionEntry
         {
-            std::type_index signature{typeid(void)}; // exact std::function signature we registered with
-            std::function<std::expected<std::any, InvokeError>(const std::vector<std::any>&)> invoker; // type-erased call wrapper
-            std::optional<std::string> description; // optional UI tooltip text
+            std::type_index mSignature{typeid(void)}; // exact std::function signature we registered with
+            std::function<std::expected<std::any, InvokeError>(const std::vector<std::any>&)> mInvoker; // type-erased call wrapper
+            std::optional<std::string> mDescription; // optional UI tooltip text
         };
 
         // Stores mapping from action names to associated entries.
@@ -155,7 +155,7 @@ namespace cse498
                 return {endIt, {}};
             }
 
-            if (it->second.signature != std::type_index(typeid(Signature)))
+            if (it->second.mSignature != std::type_index(typeid(Signature)))
             {
                 return {endIt, {}};
             }
@@ -316,9 +316,9 @@ namespace cse498
 
             ActionEntry entry;
             // Store the signature to guard Trigger* calls later.
-            entry.signature = std::type_index(typeid(Signature));
-            entry.invoker = MakeInvoker<R, Args...>(std::move(func));
-            entry.description = std::move(description);
+            entry.mSignature = std::type_index(typeid(Signature));
+            entry.mInvoker = MakeInvoker<R, Args...>(std::move(func));
+            entry.mDescription = std::move(description);
 
             return mActions.emplace(std::move(name), std::move(entry)).second;
         }
@@ -337,7 +337,7 @@ namespace cse498
                 return std::nullopt; // not found
             }
 
-            auto out = it->second.invoker(packedArgs);
+            auto out = it->second.mInvoker(packedArgs);
             if (!out)
             {
                 return std::nullopt;
@@ -360,7 +360,7 @@ namespace cse498
             {
                 return false;
             }
-            return it->second.invoker(packedArgs).has_value();
+            return it->second.mInvoker(packedArgs).has_value();
         }
     };
 }

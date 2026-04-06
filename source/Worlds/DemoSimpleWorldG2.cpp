@@ -366,7 +366,7 @@ void DemoSimpleWorldG2::Run() {
             break;
         }
 
-        std::cout << "WASD move, E interact with NPC/enemy, X quit.\n> ";
+        std::cout << "WASD move, E interact with NPC/enemy, Q quit.\n> ";
         char input;
         std::cin >> input;
         const size_t action_id = player->SelectPlayerAction(input);
