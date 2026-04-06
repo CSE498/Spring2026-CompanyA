@@ -6,15 +6,12 @@
  **/
 
 
- #pragma once
+#pragma once
 
- #include <vector>
- #include <string>
- #include <cmath>
- #include <fstream>
- #include <iostream>
- #include <cassert>
- #include "../tools/Random.hpp"
+#include <string>
+#include <cmath>
+#include <fstream>
+#include "../tools/Random.hpp"
 #include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
@@ -37,36 +34,38 @@ namespace cse498 {
 			  m_room_pool(room_pool)
 		{}
 
-        /// @brief 
-        /// @return 
-        [[nodiscard]] std::vector<std::string> GetCurrentRoom() {
+        /// @brief Grabs the currently selected room from the WeightedSets room_pool
+        /// @return returns currently selected room from the m_room_pool
+        [[nodiscard]] const std::vector<std::string>& GetCurrentRoom() {
             return current_room;
         }
 
+
+        /// @brief Sets the m_current_room with a random room from a set pool of pre-defined rooms
         void SetCurrentRoom() { 
             auto determined_room = LoadRoom();
             current_room = determined_room;
             
         }
 
-        /// @brief 
-        /// @return 
-        [[nodiscard]] int GetRoomWidth() {
+        /// @brief Grabs the width of the currently selected room
+        /// @return int value of the room's width
+        [[nodiscard]] int GetRoomWidth() const {
 
             return (current_room)[0].length();
 
         }
 
-        /// @brief 
-        /// @return 
-        [[nodiscard]] int GetRoomHeight() {
+        /// @brief Grabs the height of the currently selected room
+        /// @return int value of the room's height
+        [[nodiscard]] int GetRoomHeight() const{
 
             return (current_room).size();
         }
 
-        /// @brief 
-        /// @return 
-        [[nodiscard]] std::pair<int,int> GetRoomCenter() {
+        /// @brief Grabs the center of the room
+        /// @return integer pair (x,y) of coordinates that represent the center of the room
+        [[nodiscard]] std::pair<int,int> GetRoomCenter() const {
 
             auto width_midpoint = std::ceil(GetRoomWidth() / 2);
             auto height_midpoint = std::ceil(GetRoomHeight() / 2);
@@ -74,6 +73,8 @@ namespace cse498 {
             return std::make_pair(width_midpoint, height_midpoint);
         }
 
+        /// @brief Generates a file path to the currently selected room 
+        /// @return string file path
         [[nodiscard]] std::string GenerateFilePath() { 
 			auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight()).value();
 			
@@ -186,7 +187,7 @@ namespace cse498 {
         }
 
         /// @brief Loads a random pre-made room based off of the level dungeon we're currently in
-        /// @return 
+        /// @return a vector of strings representing a room, which is loaded in from a txt file
         std::vector<std::string> LoadRoom() {
             std::string selected_pool = GenerateFilePath();
             std::ifstream file(m_file_path + selected_pool); // this will open one of the rooms
