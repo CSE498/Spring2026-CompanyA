@@ -10,6 +10,9 @@
 // seconds.
 constexpr double NS_TO_S_CONVERSION = 1000000000.0;
 
+// Variable to help convert seconds to minutes in calculations.
+constexpr double SECONDS_IN_MINUTE = 60.0;
+
 /**
  * Timer constructor.
  * @param name The name of the Timer.
@@ -145,14 +148,16 @@ std::string cse498::Timer::toString(bool withLaps) const {
   std::ostringstream oss;
   oss << mName << " [" << (mRunning ? "RUNNING" : "STOPPED")
       << "]: " << std::setfill('0') << std::setw(2)
-      << static_cast<int>(time / 60) << ":" << std::setw(6) << std::fixed
-      << std::setprecision(3) << std::fmod(time, 60.0);
+      << static_cast<int>(time / SECONDS_IN_MINUTE) << ":" << std::setw(6)
+      << std::fixed << std::setprecision(3)
+      << std::fmod(time, SECONDS_IN_MINUTE);
 
   if (withLaps) {
     for (auto [i, lapTime] : std::ranges::views::enumerate(mLaps)) {
       oss << "\n  Lap " << (i + 1) << ": " << std::setfill('0') << std::setw(2)
-          << static_cast<int>(lapTime / 60) << ":" << std::setw(6) << std::fixed
-          << std::setprecision(3) << std::fmod(lapTime, 60.0);
+          << static_cast<int>(lapTime / SECONDS_IN_MINUTE) << ":"
+          << std::setw(6) << std::fixed << std::setprecision(3)
+          << std::fmod(lapTime, SECONDS_IN_MINUTE);
     }
   }
   return oss.str();
