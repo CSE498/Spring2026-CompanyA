@@ -103,15 +103,24 @@ const DataLog &AnalyticsManager::GetDamageDealtLog() const noexcept {
   return mDamageDealtLog;
 }
 
+/*
+Logs an action performed by an entity into the action log
+*/
 void AnalyticsManager::LogAction(int entityId, const std::string& actionType,
                                   WorldPosition position, WorldPosition newPosition) {
   mActionLog.LogAction(entityId, actionType, position, newPosition);
 }
 
+/*
+Advances the action log's simulation clock
+*/
 void AnalyticsManager::UpdateActionTime(double newTime) {
   mActionLog.UpdateTime(newTime);
 }
 
+/*
+Returns a const reference to the action log
+*/
 const ActionLog& AnalyticsManager::GetActionLog() const noexcept {
   return mActionLog;
 }
