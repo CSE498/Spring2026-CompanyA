@@ -289,15 +289,15 @@ public:
     /**
      * Makes a loop from bot left to top right passed back separately from the provided path to get to the loop
      * It is the shortest path to any position in the loop
-     * @param agent_pos - agent position currently
-     * @param bot_left - loops bottom left corner
-     * @param top_right - loops top right corner
+     * @param agentPos - agent position currently
+     * @param bottomLeft - loops bottom left corner
+     * @param topRight - loops top right corner
      * @param request - other parameters to watch out for.
      * @return
      */
-    static std::optional<CirclePath> FindRectangularLoopPath(const WorldPosition &agent_pos,
-                                                             const WorldPosition &bot_left,
-                                                             const WorldPosition &top_right,
+    static std::optional<CirclePath> FindRectangularLoopPath(const WorldPosition &agentPos,
+                                                             const WorldPosition &bottomLeft,
+                                                             const WorldPosition &topRight,
                                                              const PathRequest &request,
                                                              CircleDirectionFlag flag = CircleDirectionFlag::CW);
 
