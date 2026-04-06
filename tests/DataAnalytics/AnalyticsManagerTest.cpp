@@ -73,6 +73,23 @@ TEST_CASE("Reset Log Test", "[DataAnalytics]") {
   CHECK(analytics.GetHealthLog().Count() == 0);
   CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
   CHECK(analytics.GetDamageDealtLog().Count() == 0);
+
+  analytics.LogHealth(10.0);
+
+  analytics.LogEnemiesTracked(2);
+
+  analytics.LogDamageDealt(50.0);
+
+  CHECK(analytics.GetHealthLog().Count() == 1);
+  CHECK(analytics.GetEnemiesTrackedLog().Count() == 1);
+  CHECK(analytics.GetDamageDealtLog().Count() == 1);
+
+  analytics.Reset();
+
+  CHECK(analytics.GetHealthLog().Count() == 0);
+  CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
+  CHECK(analytics.GetDamageDealtLog().Count() == 0);
+
 }
 
 TEST_CASE("AnalyticsManager ActionLog empty on construction", "[DataAnalytics][actionlog]")

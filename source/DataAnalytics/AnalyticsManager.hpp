@@ -16,9 +16,6 @@ namespace cse498 {
 
 class AnalyticsManager {
 private:
-  // Temporary Logs used for connecting with the starter code
-  // DataLog mSuccessfulMovesLog;
-  // DataLog mBlockedMovesLog;
 
   // Initial DataLogs for keeping track of data(Initial placeholders Logs for
   // now, can be changed based on what we want to track)
