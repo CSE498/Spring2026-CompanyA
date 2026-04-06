@@ -15,11 +15,16 @@
 #include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
+
+    ///Place
+    const int LEVEL_ONE = 1;
+    const int LEVEL_TWO = 2;
+    const int LEVEL_THREE = 3;
+
     class BSPTree;
     class RoomHolder { 
-
     protected:
-        std::vector<std::string> current_room; //Holds the currently selected/stored room
+        std::vector<std::string> m_current_room; //Holds the currently selected/stored room
         std::string m_file_path; //File path used to access the directory of different .txt rooms
         std::string m_image_path = "../assets/";  //File path location for images
 
@@ -37,14 +42,14 @@ namespace cse498 {
         /// @brief Grabs the currently selected room from the WeightedSets room_pool
         /// @return returns currently selected room from the m_room_pool
         [[nodiscard]] const std::vector<std::string>& GetCurrentRoom() {
-            return current_room;
+            return m_current_room;
         }
 
 
         /// @brief Sets the m_current_room with a random room from a set pool of pre-defined rooms
         void SetCurrentRoom() { 
             auto determined_room = LoadRoom();
-            current_room = determined_room;
+            m_current_room = determined_room;
             
         }
 
@@ -52,7 +57,7 @@ namespace cse498 {
         /// @return int value of the room's width
         [[nodiscard]] int GetRoomWidth() const {
 
-            return (current_room)[0].length();
+            return (m_current_room)[0].length();
 
         }
 
@@ -60,7 +65,7 @@ namespace cse498 {
         /// @return int value of the room's height
         [[nodiscard]] int GetRoomHeight() const{
 
-            return (current_room).size();
+            return (m_current_room).size();
         }
 
         /// @brief Grabs the center of the room
@@ -93,7 +98,7 @@ namespace cse498 {
         std::string GetImageFile(char tile_c /*, char adj_tile*/) {
             if (!tile_c) {}
 
-            int level = 1; // TODO: Add a counter for number of levels generated
+            int level = LEVEL_ONE; // TODO: Add a counter for number of levels generated
             std::string file_path = m_image_path;
 
             // World objects (floor tiles, walls, doors, barriers, ect.)
@@ -102,18 +107,18 @@ namespace cse498 {
 
                 // Level folder
                 file_path += "world/";
-                if (level == 1) {file_path += "forest/";}
-                else if (level == 2) {file_path += "cave/";}
-                else if (level == 3) {file_path += "dungeon/";}
+                if (level == LEVEL_ONE) {file_path += "forest/";}
+                else if (level == LEVEL_TWO) {file_path += "cave/";}
+                else if (level == LEVEL_THREE) {file_path += "dungeon/";}
                 else {file_path += "castle/";}
 
                 // Floor tiles
                 if (tile_c == ' ' || tile_c == 'v') {
                     file_path += "floor_tiles/tile_";
 
-                    if (level == 1) {file_path += "grass_";}
-                    else if (level == 2) {file_path += "cave_";}
-                    else if (level == 3) {file_path += "stoneBrick_";}
+                    if (level == LEVEL_ONE) {file_path += "grass_";}
+                    else if (level == LEVEL_TWO) {file_path += "cave_";}
+                    else if (level == LEVEL_THREE) {file_path += "stoneBrick_";}
                     else {file_path += "wood_";}
 
                     // Regular floor tile
@@ -153,9 +158,9 @@ namespace cse498 {
                                 file_path += "left_";
                             }
 
-                            if (level == 1) {file_path += "forest.png";}
-                            else if (level == 2) {file_path += "cave.png";}
-                            else if (level == 3) {file_path += "dungeon.png";}
+                            if (level == LEVEL_ONE) {file_path += "forest.png";}
+                            else if (level == LEVEL_TWO) {file_path += "cave.png";}
+                            else if (level == LEVEL_THREE) {file_path += "dungeon.png";}
                             else {file_path += "castle.png";}
                         }
                 }
