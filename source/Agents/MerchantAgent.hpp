@@ -11,11 +11,12 @@
 #include <vector>
 
 #include "../core/AgentBase.hpp"
-#include "TradeSystem/TradeSystem.hpp"
-#include "PlayerAgent.hpp"
+#include "TradeSystem/TradeTypes.hpp"
 
 namespace cse498
 {
+    class PlayerAgent;
+
     class MerchantAgent : public AgentBase
     {
     private:
@@ -136,6 +137,8 @@ namespace cse498
          * @param amount Gold to add
          */
         void AddGold(std::size_t amount) { mGold += amount; }
+
+        void SetGold(std::size_t amount) { mGold = amount; }
 
         /**
          * Attempts to remove gold from merchant.

@@ -4,6 +4,7 @@
  */
 
 #include "MerchantAgent.hpp"
+#include "TradeSystem/TradeSystem.hpp"
 
 #include <algorithm>
 
