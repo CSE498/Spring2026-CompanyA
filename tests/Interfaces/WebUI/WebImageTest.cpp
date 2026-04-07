@@ -1,6 +1,18 @@
 /**
  * @file WebImageTest.cpp
- * @brief Unit tests for the WebImage WebUI component using Catch2.
+ * @brief Unit tests for the WebImage class using the Catch2 testing framework.
+ *
+ * These tests verify behavior including image source and alt text updates,
+ * sizing and resizing, visibility and opacity changes, error handling and
+ * placeholder rendering, load state transitions, DOM synchronization, canvas
+ * integration, ID generation, and move semantics when compiled to WebAssembly
+ * using Emscripten.
+ *
+ * Additional Note:
+ *      Portions of formatting, documentation, and cleanup were assisted by
+ *      AI tooling to improve consistency and readability.
+ *
+ * All project classes and tests correspond to the cse498 WebUI subsystem.
  *
  */
 
@@ -975,6 +987,270 @@ TEST_CASE_METHOD(SharedWebContext, "SyncFromModel restores DOM attributes and st
   CHECK_MSG(GetCSSProperty(el, "display") == "none", "SyncFromModel should restore hidden display state");
   CHECK_MSG(GetCSSProperty(el, "opacity").rfind("0.8", 0) == 0,
       "SyncFromModel should restore the DOM opacity");
+}
+// ========================================================
+// Test 40: SetAltText updates mounted DOM alt attribute
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "SetAltText updates DOM alt attribute",
+                 "[WebImage][dom]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc, "old alt");
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.SetAltText("new alt");
+  CHECK_MSG(GetAttributeStr(el, "alt") == "new alt",
+      "SetAltText should update the DOM alt attribute");
+}
+
+// ========================================================
+// Test 41: SetSize applies width height and object-fit fill in DOM
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "SetSize applies DOM width height and fill object-fit",
+                 "[WebImage][dom][style]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.SetSize(210, 140);
+
+  CHECK_MSG(GetCSSProperty(el, "width") == "210px",
+      "SetSize should apply width to the DOM");
+  CHECK_MSG(GetCSSProperty(el, "height") == "140px",
+      "SetSize should apply height to the DOM");
+  CHECK_MSG(GetCSSProperty(el, "object-fit") == "fill",
+      "SetSize should apply object-fit fill");
+}
+
+// ========================================================
+// Test 42: Resize with aspect ratio uses contain object-fit
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Resize with maintain aspect ratio uses contain",
+                 "[WebImage][dom][style]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.Resize(320, 180, true);
+
+  CHECK_MSG(GetCSSProperty(el, "width") == "320px",
+      "Resize should apply width to the DOM");
+  CHECK_MSG(GetCSSProperty(el, "height") == "180px",
+      "Resize should apply height to the DOM");
+  CHECK_MSG(GetCSSProperty(el, "object-fit") == "contain",
+      "Resize(true) should apply object-fit contain");
+}
+
+// ========================================================
+// Test 43: Resize without aspect ratio uses fill object-fit
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Resize without maintain aspect ratio uses fill",
+                 "[WebImage][dom][style]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.Resize(111, 77, false);
+
+  CHECK_MSG(GetCSSProperty(el, "width") == "111px",
+      "Resize should apply width to the DOM");
+  CHECK_MSG(GetCSSProperty(el, "height") == "77px",
+      "Resize should apply height to the DOM");
+  CHECK_MSG(GetCSSProperty(el, "object-fit") == "fill",
+      "Resize(false) should apply object-fit fill");
+}
+
+// ========================================================
+// Test 44: SetOpacity updates DOM style immediately
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "SetOpacity updates DOM opacity immediately",
+                 "[WebImage][dom][style]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.SetOpacity(0.35);
+  CHECK_MSG(GetCSSProperty(el, "opacity").rfind("0.35", 0) == 0,
+      "SetOpacity should immediately update the DOM opacity");
+}
+
+// ========================================================
+// Test 45: Show and Hide update DOM display immediately
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Show and Hide update DOM display immediately",
+                 "[WebImage][dom][visibility]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.Hide();
+  CHECK_MSG(GetCSSProperty(el, "display") == "none",
+      "Hide should immediately set display none");
+
+  img.Show();
+  CHECK_MSG(GetCSSProperty(el, "display").empty(),
+      "Show should clear the inline display override");
+}
+
+// ========================================================
+// Test 46: Loading state transitions via public API
+// ========================================================
+TEST_CASE("Loading state transitions via public API", "[WebImage]") {
+  WebImage img("img.png");
+
+  REQUIRE_MSG(img.IsLoaded() == false, "default should not be loaded");
+
+  img.HandleLoad();
+  CHECK_MSG(img.IsLoaded() == true, "HandleLoad should set loaded");
+
+  img.HandleError();
+  CHECK_MSG(img.IsLoaded() == false, "HandleError should clear loaded");
+  CHECK_MSG(img.HasError() == true, "HandleError should set error");
+}
+
+// ========================================================
+// Test 47: SetCanvasRect updates stored canvas rectangle
+// ========================================================
+TEST_CASE("SetCanvasRect updates canvas-space rectangle", "[WebImage][canvas]") {
+  WebImage img("img.png");
+
+  img.SetCanvasRect(10.0f, 20.0f, 30.0f, 40.0f);
+
+  CHECK_MSG(img.CanvasX() == 10.0f, "CanvasX should match SetCanvasRect");
+  CHECK_MSG(img.CanvasY() == 20.0f, "CanvasY should match SetCanvasRect");
+  CHECK_MSG(img.CanvasW() == 30.0f, "CanvasW should match SetCanvasRect");
+  CHECK_MSG(img.CanvasH() == 40.0f, "CanvasH should match SetCanvasRect");
+}
+
+// ========================================================
+// Test 48: BlankRect placeholder falls back to default size when unset
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "BlankRect placeholder uses default size when image size is unset",
+                 "[WebImage][dom][error]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.SetPlaceholderColor("rgb(1, 2, 3)");
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.HandleError();
+
+  CHECK_MSG(GetCSSProperty(el, "width") == "100px",
+      "placeholder width should fall back to the default size");
+  CHECK_MSG(GetCSSProperty(el, "height") == "100px",
+      "placeholder height should fall back to the default size");
+  CHECK_MSG(GetComputedStyleStr(el, "background-color") == "rgb(1, 2, 3)",
+      "placeholder should still apply the configured background color");
+}
+
+// ========================================================
+// Test 49: SetSource after error clears error state and restores src
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "SetSource after error clears error state and restores src",
+                 "[WebImage][dom][error]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.SetSize(90, 60);
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.SetPlaceholderColor("rgb(200, 10, 10)");
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.HandleError();
+  REQUIRE_MSG(img.HasError() == true, "image should report an error after HandleError");
+  REQUIRE_MSG(GetCSSProperty(el, "display") == "inline-block",
+      "placeholder should force inline-block display");
+
+  img.SetSource(kValidImageSrc);
+
+  CHECK_MSG(img.HasError() == false, "SetSource should clear error state");
+  CHECK_MSG(img.IsLoaded() == false, "SetSource should reset loaded state");
+  CHECK_MSG(GetAttributeStr(el, "src") == kValidImageSrc,
+      "SetSource should restore the DOM src");
+  CHECK_MSG(GetCSSProperty(el, "background-color").empty(),
+      "SetSource should clear placeholder background styling");
+}
+
+// ========================================================
+// Test 50: HandleLoad after placeholder does not remove placeholder styling until resync/source change
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "HandleLoad updates state after placeholder error",
+                 "[WebImage][dom][error]") {
+  root.SetLayoutType(LayoutType::Vertical);
+  root.Apply();
+
+  WebImage img(kValidImageSrc);
+  img.SetSize(100, 50);
+  img.SetErrorMode(ImageErrorMode::BlankRect);
+  img.SetPlaceholderColor("rgb(8, 9, 10)");
+  img.MountToLayout(root, Alignment::Start);
+  root.Apply();
+
+  val el = GetElement(img.Id());
+  REQUIRE_MSG((!el.isNull() && !el.isUndefined()),
+      "image should be mounted into the DOM");
+
+  img.HandleError();
+  REQUIRE_MSG(img.HasError() == true, "image should have an error after HandleError");
+
+  img.HandleLoad();
+
+  CHECK_MSG(img.IsLoaded() == true, "HandleLoad should mark the image as loaded");
+  CHECK_MSG(img.HasError() == false, "HandleLoad should clear the error flag");
 }
 
 #endif // __EMSCRIPTEN__
