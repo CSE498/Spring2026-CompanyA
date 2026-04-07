@@ -420,8 +420,8 @@ if(COMPANYA_EMPP_EXECUTABLE)
       OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
       COMMAND "${CMAKE_COMMAND}" -E copy
-          "${COMPANYA_TEST_DIR}/Interfaces/WebUi/WebInterfaceTest.html"
-          "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.html"
+            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.html"
+            "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.html"
       COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
           ${COMPANYA_WEB_TEST_COMMON_ARGS}
           ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
