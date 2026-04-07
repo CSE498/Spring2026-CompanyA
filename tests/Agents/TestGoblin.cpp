@@ -1,0 +1,173 @@
+/**
+ * @file TestGoblin.cpp
+ * @author Group 2
+ * @brief Tests for goblin enemy creation and behavior through AgentFactory.
+ */
+
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+
+#include "../../source/Agents/AgentDefinition.hpp"
+#include "../../source/Agents/AgentFactory.hpp"
+#include "../../source/Worlds/WorldActions.hpp"
+#include "../../source/core/WorldBase.hpp"
+#include "../../source/tools/DamageCalculator.hpp"
+
+namespace cse498
+{
+    class GoblinTestWorld : public WorldBase
+    {
+    private:
+        size_t mLastActorId = 0;
+        size_t mLastActionId = 0;
+
+        void ConfigAgent(AgentBase &agent) override
+        {
+            agent.AddAction(WorldActions::REMAIN_STILL_STRING, WorldActions::REMAIN_STILL);
+            agent.AddAction(WorldActions::MOVE_UP_STRING, WorldActions::MOVE_UP);
+            agent.AddAction(WorldActions::MOVE_DOWN_STRING, WorldActions::MOVE_DOWN);
+            agent.AddAction(WorldActions::MOVE_LEFT_STRING, WorldActions::MOVE_LEFT);
+            agent.AddAction(WorldActions::MOVE_RIGHT_STRING, WorldActions::MOVE_RIGHT);
+            agent.AddAction(WorldActions::INTERACT_STRING, WorldActions::INTERACT);
+            agent.AddAction(WorldActions::QUIT_STRING, WorldActions::QUIT);
+        }
+
+    public:
+        GoblinTestWorld()
+            : WorldBase()
+        {
+            main_grid.AddCellType("floor", "Walkable floor", ' ');
+            main_grid.AddCellType("wall", "Blocking wall", '#');
+
+            GoblinTestWorld::ConfigAgent(*GetPlayer());
+            GetPlayer()->SetStats(AgentStats(40.0, 7.0, 2.0, 1, 0));
+            GetPlayer()->SetLocation(WorldPosition(0, 0));
+            main_grid.Load(std::vector<std::string>{
+            "#######################",
+            "#                     #",
+            "#                 ### #",
+            "#             #  #  # #",
+            "# #     #  #  #  #  # #",
+            "#          #     #    #",
+            "##################  # #",
+            "#                    ##",
+            "#                    ##",
+            "#  ####################",
+            "#######################"
+            });
+        }
+
+        int DoAction(AgentBase& agent, size_t action_id) override
+        {
+            mLastActorId = agent.GetID();
+            mLastActionId = action_id;
+
+            WorldPosition next = agent.GetLocation().AsWorldPosition();
+            switch (action_id)
+            {
+                case WorldActions::MOVE_UP:
+                    next = next.GetOffset(0, -1);
+                    break;
+                case WorldActions::MOVE_DOWN:
+                    next = next.GetOffset(0, 1);
+                    break;
+                case WorldActions::MOVE_LEFT:
+                    next = next.GetOffset(-1, 0);
+                    break;
+                case WorldActions::MOVE_RIGHT:
+                    next = next.GetOffset(1, 0);
+                    break;
+                case WorldActions::REMAIN_STILL:
+                case WorldActions::INTERACT:
+                case WorldActions::QUIT:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+            if (!main_grid.IsWalkable(next))
+            {
+                return 0;
+            }
+
+            agent.SetLocation(next);
+            return 1;
+        }
+
+        void SetPlayerPosition(const WorldPosition& pos)
+        {
+            GetPlayer()->SetLocation(pos);
+        }
+
+        void RunNonPlayerAgents()
+        {
+            for (const auto& agent_ptr : agent_set)
+            {
+                if (agent_ptr.get() == mPlayer)
+                {
+                    continue;
+                }
+
+                const size_t action_id = agent_ptr->SelectAction(main_grid);
+                const int result = DoAction(*agent_ptr, action_id);
+                agent_ptr->SetActionResult(result);
+            }
+        }
+
+        [[nodiscard]] size_t GetLastActorId() const { return mLastActorId; }
+        [[nodiscard]] size_t GetLastActionId() const { return mLastActionId; }
+    };
+}
+
+using namespace cse498;
+
+TEST_CASE("Goblin factory applies differentiated stats and spawn data", "[Goblin][factory]")
+{
+    GoblinTestWorld world;
+    const AgentDefinition def("Gobbo", 5, {4, 7});
+
+    auto goblin = AgentFactory::CreateEnemyGoblin(def, world);
+
+    REQUIRE(goblin != nullptr);
+    REQUIRE(goblin->GetName() == "Gobbo");
+    REQUIRE(goblin->GetID() == 1);
+    REQUIRE(goblin->GetLocation().AsWorldPosition() == WorldPosition(4, 7));
+    REQUIRE(goblin->GetCurrentHealth() == Approx(160.0));
+    REQUIRE(goblin->GetMaxHealth() == Approx(160.0));
+    REQUIRE(goblin->GetAtk() == Approx(23.0));
+    REQUIRE(goblin->GetDef() == Approx(9.0));
+    REQUIRE(goblin->GetAtkRange() == 2);
+    REQUIRE(goblin->GetLevel() == 5);
+    REQUIRE(goblin->IsAlive());
+
+    world.AddAgent(std::move(goblin));
+    auto* stored = dynamic_cast<Enemy*>(world.TryGetAgent(1));
+    REQUIRE(stored != nullptr);
+    REQUIRE(stored->HasAction(WorldActions::MOVE_UP_STRING));
+    REQUIRE(stored->HasAction(WorldActions::MOVE_DOWN_STRING));
+    REQUIRE(stored->HasAction(WorldActions::MOVE_LEFT_STRING));
+    REQUIRE(stored->HasAction(WorldActions::MOVE_RIGHT_STRING));
+    REQUIRE(stored->HasAction(WorldActions::REMAIN_STILL_STRING));
+    REQUIRE(stored->HasAction(WorldActions::INTERACT_STRING));
+}
+
+TEST_CASE("Goblin chases then attacks from shorter range with higher damage", "[Goblin][combat][movement]")
+{
+    GoblinTestWorld world;
+    world.SetPlayerPosition({4, 1});
+
+    auto goblin = AgentFactory::CreateEnemyGoblin(AgentDefinition("Gobbo", 0, {1, 1}), world);
+    REQUIRE(goblin != nullptr);
+    auto& stored = world.AddAgent(std::move(goblin));
+
+    world.RunNonPlayerAgents();
+    REQUIRE(world.GetLastActorId() == stored.GetID());
+    REQUIRE(world.GetLastActionId() == WorldActions::MOVE_RIGHT);
+    REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(2, 1));
+
+    world.SetPlayerPosition({3, 1});
+    const double before = world.GetPlayer()->GetCurrentHealth();
+    const double expectedDamage = DamageCalculator::Calculate(stored.GetStats(), world.GetPlayer()->GetStats());
+
+    REQUIRE(stored.SelectAction(world.GetGrid()) == WorldActions::REMAIN_STILL);
+    REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(before - expectedDamage));
+}
