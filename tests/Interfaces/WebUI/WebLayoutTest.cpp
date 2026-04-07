@@ -1,9 +1,17 @@
 /**
  * @file WebLayoutTest.cpp
- * @brief Unit tests for WebLayout class using Catch2 framework.
+ * @brief Unit tests for the WebLayout class using the Catch2 testing framework.
  *
- * Tests cover layout configuration, child element management, styling,
- * positioning, and DOM lifecycle behaviors.
+ * These tests verify behavior including layout construction, element mounting
+ * and unmounting, alignment and layout type handling, child management,
+ * DOM integration, ordering of elements, and synchronization with layout state
+ * when compiled to WebAssembly using Emscripten.
+ *
+ * Additional Note:
+ *      Portions of formatting, documentation, and cleanup were assisted by
+ *      AI tooling to improve consistency and readability.
+ *
+ * All project classes and tests correspond to the cse498 WebUI subsystem.
  *
  */
 
@@ -920,6 +928,247 @@ TEST_CASE_METHOD(SharedWebContext, "WebLayout preserves child order through oper
     CHECK(elem2.syncCount == 2);
     CHECK(elem3.syncCount == 3);
     CHECK(elem2.unmountCount == 0);
+}
+
+// ---------------------------
+// Additional Tests
+// ---------------------------
+
+// ========================================================
+// Adding the same element twice does not duplicate it
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout does not duplicate child when added twice",
+          "[weblayout][children][dom]")
+{
+    WebLayout layout("duplicate-add-test");
+    layout.MountToLayout(root);
+
+    MockDomElement elem("duplicate-add-child");
+    elem.MountToLayout(layout);
+    elem.MountToLayout(layout);   // same child again
+    layout.Apply();
+
+    val layoutElem = GetElement(layout.Id());
+    CHECK(GetProperty(layoutElem, "children")["length"].as<int>() == 1);
+    CHECK(elem.mountCount == 2); // AddElement returned true both times
+    CHECK(elem.syncCount == 1);  // but only tracked/applied once
+}
+
+// ========================================================
+// Grid layout applies row and column CSS to child
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout applies grid CSS positions to child",
+          "[weblayout][positioning][grid][dom]")
+{
+    WebLayout layout("grid-css-test");
+    layout.SetLayoutType(LayoutType::Grid);
+    layout.MountToLayout(root);
+
+    MockDomElement elem("grid-css-child");
+    elem.SetGridPosition(2, 3);
+    elem.MountToLayout(layout);
+
+    layout.Apply();
+
+    val elemVal = GetElement(elem.Id());
+    CHECK(GetCSSProperty(elemVal, "grid-row-start") == "3");
+    CHECK(GetCSSProperty(elemVal, "grid-column-start") == "4");
+}
+
+// ========================================================
+// Free layout applies top and left CSS to child
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout applies free layout CSS positions to child",
+          "[weblayout][positioning][free][dom]")
+{
+    WebLayout layout("free-css-test");
+    layout.SetLayoutType(LayoutType::Free);
+    layout.MountToLayout(root);
+
+    MockDomElement elem("free-css-child");
+    elem.SetFreePosition(40, 70);
+    elem.MountToLayout(layout);
+
+    layout.Apply();
+
+    val elemVal = GetElement(elem.Id());
+    CHECK(GetCSSProperty(elemVal, "top") == "40px");
+    CHECK(GetCSSProperty(elemVal, "left") == "70px");
+    CHECK(GetCSSProperty(elemVal, "position") == "relative");
+}
+
+// ========================================================
+// Hidden layout becomes visible again with correct display
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout can hide and show repeatedly",
+          "[weblayout][visibility][dom]")
+{
+    WebLayout layout("hide-show-repeat-test");
+    layout.SetLayoutType(LayoutType::Vertical);
+    layout.MountToLayout(root);
+
+    val elem = GetElement(layout.Id());
+
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "display") == "flex");
+
+    layout.ToggleVisibility();
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "display") == "none");
+
+    layout.ToggleVisibility();
+    layout.Apply();
+    CHECK(GetCSSProperty(elem, "display") == "flex");
+}
+
+// ========================================================
+// Child sync resumes after layout becomes visible again
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Child sync resumes after layout is shown again",
+          "[weblayout][visibility][children]")
+{
+    WebLayout layout("sync-resume-test");
+    layout.MountToLayout(root);
+
+    MockDomElement elem("sync-resume-child");
+    elem.MountToLayout(layout);
+
+    layout.Apply();
+    CHECK(elem.syncCount == 1);
+
+    layout.ToggleVisibility(); // hidden
+    layout.Apply();
+    CHECK(elem.syncCount == 1);
+
+    layout.ToggleVisibility(); // visible again
+    layout.Apply();
+    CHECK(elem.syncCount == 2);
+}
+
+// ========================================================
+// Styling set before mount persists after mount and apply
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout pre-mount styling persists after mount",
+          "[weblayout][styling][dom]")
+{
+    WebLayout layout("premount-style-test");
+    layout.SetBackgroundColor("red");
+    layout.SetBorderWidth(2);
+    layout.SetPadding(12);
+    layout.SetMargin(8);
+    layout.SetWidth(250);
+    layout.SetHeight(150);
+
+    layout.MountToLayout(root);
+    layout.Apply();
+
+    val elem = GetElement(layout.Id());
+    CHECK(GetCSSProperty(elem, "background-color") == "red");
+    CHECK(GetCSSProperty(elem, "border-width") == "2px");
+    CHECK(GetCSSProperty(elem, "padding") == "12px");
+    CHECK(GetCSSProperty(elem, "margin") == "8px");
+    CHECK(GetCSSProperty(elem, "width") == "250px");
+    CHECK(GetCSSProperty(elem, "height") == "150px");
+}
+
+// ========================================================
+// Child can be moved from one layout to another
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Child can be remounted from one layout to another",
+          "[weblayout][children][dom]")
+{
+    WebLayout layout1("remount-parent-1");
+    WebLayout layout2("remount-parent-2");
+    layout1.MountToLayout(root);
+    layout2.MountToLayout(root);
+
+    MockDomElement elem("remount-child");
+    elem.MountToLayout(layout1);
+    layout1.Apply();
+    layout2.Apply();
+
+    val parent1 = GetElement(layout1.Id());
+    val parent2 = GetElement(layout2.Id());
+
+    CHECK(GetProperty(parent1, "children")["length"].as<int>() == 1);
+    CHECK(GetProperty(parent2, "children")["length"].as<int>() == 0);
+
+    elem.MountToLayout(layout2);
+    layout1.Apply();
+    layout2.Apply();
+
+    CHECK(GetProperty(parent2, "children")["length"].as<int>() == 1);
+    CHECK(GetElement(elem.Id())["parentElement"]["id"].as<std::string>() == layout2.Id());
+}
+
+// ========================================================
+// SetAlignment applies all alignment values correctly
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout SetAlignment applies start center end stretch",
+          "[weblayout][children][style]")
+{
+    WebLayout layout("child-align-all-test");
+    layout.SetLayoutType(LayoutType::Horizontal);
+    layout.MountToLayout(root);
+
+    MockDomElement elem("child-align-all");
+    elem.MountToLayout(layout);
+    val elemVal = GetElement(elem.Id());
+
+    layout.SetAlignment(&elem, Alignment::Start);
+    layout.Apply();
+    CHECK(GetCSSProperty(elemVal, "align-self") == "flex-start");
+
+    layout.SetAlignment(&elem, Alignment::Center);
+    layout.Apply();
+    CHECK(GetCSSProperty(elemVal, "align-self") == "center");
+
+    layout.SetAlignment(&elem, Alignment::End);
+    layout.Apply();
+    CHECK(GetCSSProperty(elemVal, "align-self") == "flex-end");
+
+    layout.SetAlignment(&elem, Alignment::Stretch);
+    layout.Apply();
+    CHECK(GetCSSProperty(elemVal, "align-self") == "stretch");
+}
+
+// ========================================================
+// Clear removes all child DOM nodes from layout element
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout Clear removes child DOM nodes",
+          "[weblayout][children][dom]")
+{
+    WebLayout layout("clear-dom-test");
+    layout.MountToLayout(root);
+
+    MockDomElement elem1("clear-dom-child-1");
+    MockDomElement elem2("clear-dom-child-2");
+
+    elem1.MountToLayout(layout);
+    elem2.MountToLayout(layout);
+    layout.Apply();
+
+    val layoutElem = GetElement(layout.Id());
+    CHECK(GetProperty(layoutElem, "children")["length"].as<int>() == 2);
+
+    layout.Clear();
+
+    CHECK(GetProperty(layoutElem, "children")["length"].as<int>() == 0);
+}
+
+// ========================================================
+// Apply on empty layout is safe
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "WebLayout Apply on empty layout is safe",
+          "[weblayout][edge-case]")
+{
+    WebLayout layout("empty-apply-test");
+    layout.MountToLayout(root);
+
+    REQUIRE_NOTHROW(layout.Apply());
+    val elem = GetElement(layout.Id());
+    CHECK(!elem.isNull());
+    CHECK(!elem.isUndefined());
 }
 
 #endif
