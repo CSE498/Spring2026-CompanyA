@@ -17,6 +17,8 @@
 #include <expected>
 #include <iostream>
 #include <memory>
+#include <sstream>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -33,11 +35,6 @@ private:
 
   char m_symbol = 'N'; // NPC symbol
 
-  /// Ensure this NPC references a valid building before use.
-  void ValidateBuilding() const {
-    assert(m_building && "NPC must reference a building");
-  }
-
 public:
   NPC() = delete;
 
@@ -47,7 +44,7 @@ public:
    */
   explicit NPC(std::shared_ptr<Building> building)
       : m_building(std::move(building)) {
-    ValidateBuilding();
+    assert(m_building && "NPC must reference a building");
   }
 
   /**
@@ -77,14 +74,12 @@ public:
   char GetSymbol() const { return m_symbol; }
 
   /**
-   * Show the building's upgrade information.
+   * Build the building's upgrade information for a UI layer to consume.
    */
-  void ShowUpgradeUI() const {
-
-    ValidateBuilding();
-
-    std::cout << m_building->GetName()
-              << " - level: " << m_building->GetCurrentLevel();
+  std::string GetUpgradeUI() const {
+    std::ostringstream output;
+    output << m_building->GetName()
+           << " - level: " << m_building->GetCurrentLevel();
 
     if (const auto next_upgrade = m_building->GetNextUpgradeInfo();
         next_upgrade.has_value()) {
@@ -103,14 +98,22 @@ public:
         break;
       }
 
-      std::cout << " | next upgrade: " << next_upgrade->quantity << ' '
-                << item_name << " for level "
-                << m_building->GetNextUpgradeLevel();
+      output << " | next upgrade: " << next_upgrade->quantity << ' '
+             << item_name << " for level "
+             << m_building->GetNextUpgradeLevel();
     } else {
-      std::cout << " | max level reached";
+      output << " | max level reached";
     }
 
-    std::cout << '\n';
+    return output.str();
+  }
+
+  /**
+   * Show the building's upgrade information.
+   * @param output Stream to write the upgrade information to
+   */
+  void ShowUpgradeUI(std::ostream &output = std::cout) const {
+    output << GetUpgradeUI() << '\n';
   }
 
   /**
@@ -120,9 +123,6 @@ public:
    */
   std::expected<void, Building::UpgradeRejectionType>
   AttemptUpgrade(InteractiveWorldInventory &inventory) {
-
-    ValidateBuilding();
-
     if (m_building->IsMaxLevel()) {
       return std::unexpected(Building::UpgradeRejectionType::AlreadyMaxLevel);
     }

@@ -7,6 +7,8 @@
 #include <sstream>
 #include <string>
 
+/// used codex for some testcase generation
+
 TEST_CASE("NPC displays building upgrade information",
           "[core][InteractiveWorld][NPC]") {
   std::string farmStr = "Farm";
@@ -17,10 +19,10 @@ TEST_CASE("NPC displays building upgrade information",
   cse498::NPC npc(building);
 
   std::ostringstream output;
-  std::streambuf *originalBuffer = std::cout.rdbuf(output.rdbuf());
+  CHECK(npc.GetUpgradeUI() ==
+        "Farm - level: 0 | next upgrade: 25 Wood for level 1");
 
-  npc.ShowUpgradeUI();
-  std::cout.rdbuf(originalBuffer);
+  npc.ShowUpgradeUI(output);
 
   CHECK(output.str() ==
         "Farm - level: 0 | next upgrade: 25 Wood for level 1\n");
@@ -64,4 +66,33 @@ TEST_CASE("NPC rejects upgrades when inventory is missing resources",
         cse498::Building::UpgradeRejectionType::NotEnoughItems);
   CHECK(building->GetCurrentLevel() == 0);
   CHECK(inventory.GetAmount(cse498::ItemType::Metal) == 4);
+}
+
+TEST_CASE("NPC position and symbol accessors update state",
+          "[core][InteractiveWorld][NPC]") {
+  auto building = std::make_shared<cse498::Building>("Farm");
+  cse498::NPC npc(building);
+
+  npc.SetPosition(cse498::WorldPosition{4, 7});
+  npc.SetSymbol('F');
+
+  CHECK(npc.GetPosition() == cse498::WorldPosition{4, 7});
+  CHECK(npc.GetSymbol() == 'F');
+}
+
+TEST_CASE("NPC interact prints upgrade information",
+          "[core][InteractiveWorld][NPC]") {
+  auto building = std::make_shared<cse498::Building>("Farm");
+  building->AddUpgrade(cse498::ItemType::Wood, 25);
+
+  cse498::NPC npc(building);
+
+  std::ostringstream output;
+  std::streambuf *originalBuffer = std::cout.rdbuf(output.rdbuf());
+
+  npc.Interact();
+  std::cout.rdbuf(originalBuffer);
+
+  CHECK(output.str() ==
+        "Farm - level: 0 | next upgrade: 25 Wood for level 1\n");
 }
