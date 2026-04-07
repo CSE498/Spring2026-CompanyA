@@ -92,6 +92,25 @@ TEST_CASE("Reset Log Test", "[DataAnalytics]") {
 
 }
 
+
+/*
+Test checks that negative values are not added to the DataLogs
+*/
+TEST_CASE("Negative Value Test", "[DataAnalytics]") {
+
+  cse498::AnalyticsManager analytics;
+
+  analytics.LogHealth(-100.0);
+
+  analytics.LogEnemiesTracked(-5);
+
+  analytics.LogDamageDealt(-50.0);
+
+  CHECK(analytics.GetHealthLog().Count() == 0);
+  CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
+  CHECK(analytics.GetDamageDealtLog().Count() == 0);
+}
+
 TEST_CASE("AnalyticsManager ActionLog empty on construction", "[DataAnalytics][actionlog]")
 {
     cse498::AnalyticsManager analytics;
