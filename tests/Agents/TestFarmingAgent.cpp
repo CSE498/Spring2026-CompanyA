@@ -126,3 +126,15 @@ TEST_CASE("FarmingAgent can be configured with expected offers", "[FarmingAgent]
         REQUIRE(carrot->mItemValue == 1);
     }
 }
+
+TEST_CASE("Trade Greeting Setting and Getting")
+{
+    TestWorld world;
+    FarmingAgent farmer(5, "Farmer", world);
+    farmer.SetTradeGreeting("TestFun");
+    farmer.SetTradeClosedMessage("Test1");
+    CHECK(farmer.GetTradeGreeting() == "TestFun");
+    CHECK(farmer.GetTradeClosedMessage() == "Test1");
+
+
+}

@@ -221,7 +221,7 @@ namespace cse498
                     payout
                 };
             }
-
+            // != 0 means quantity wasn't removed at all and user doesn't have the stuffs
             if (playerInventory.RemoveItem(offer.mItemName, quantity, true) != 0)
             {
                 return {

@@ -22,8 +22,19 @@ namespace cse498
     class MovementTypes
     {
     private:
+        static constexpr double EPS = 1e-9;
+        static constexpr bool Approx(double a, double b) {
+            return std::abs(a - b) < EPS;
+        }
 
     public:
+        MovementTypes() = delete;
+        MovementTypes(const MovementTypes&) = delete;
+        MovementTypes(MovementTypes&&) = delete;
+        MovementTypes& operator=(const MovementTypes&) = delete;
+        MovementTypes& operator=(MovementTypes&&) = delete;
+
+
         /**
          * Gives the action id for a given movement action
          * @param dx - x part

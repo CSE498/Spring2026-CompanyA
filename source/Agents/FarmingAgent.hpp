@@ -23,12 +23,12 @@ namespace cse498
          * @param name NPC display name
          * @param world Owning world
          */
-        FarmingAgent(std::size_t id, const std::string& name, WorldBase& world);
+        FarmingAgent(std::size_t id, const std::string& name, WorldBase& world) : MerchantAgent(id, name, world)
+        {
+            mTradeGreeting = "Fresh crops and seeds today.";
+        }
 
-        /**
-         * @return Farmer specific trade greeting
-         */
-        [[nodiscard]] std::string GetTradeGreeting() const override;
+
     };
 }
 

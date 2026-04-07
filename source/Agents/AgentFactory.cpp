@@ -180,15 +180,20 @@ std::unique_ptr<Node> AgentFactory::CreateEnemyFollowPlayerTree(Enemy *enemy,
                 ctx.mBlackboard.Set<std::size_t>("selected_action", WorldActions::REMAIN_STILL);
                 return Failure;
             }
-            const WorldPosition epos = enemy->GetLocation().AsWorldPosition();
-            const WorldPosition ppos = world.GetAgent(targetAgentIndex).GetLocation().AsWorldPosition();
-            if (IsAdjacentForCombat(epos, ppos)) {
+            const auto target = world.TryGetAgent(targetAgentIndex);
+            if (target == nullptr)
+                return Failure;
+            const WorldPosition enemyPos = enemy->GetLocation().AsWorldPosition();
+            const WorldPosition targetPos = target->GetLocation().AsWorldPosition();
+
+
+            if (IsAdjacentForCombat(enemyPos, targetPos)) {
                 ctx.mBlackboard.Set<std::size_t>("selected_action", WorldActions::INTERACT);
                 return Success;
             }
-            const WorldPosition next = PathGenerator::NextCardinalToward(epos, ppos);
-            const double dx = next.X() - epos.X();
-            const double dy = next.Y() - epos.Y();
+            const WorldPosition next = PathGenerator::NextCardinalToward(enemyPos, targetPos);
+            const double dx = next.X() - enemyPos.X();
+            const double dy = next.Y() - enemyPos.Y();
             const std::size_t aid = MovementTypes::GetActionID(dx, dy);
             ctx.mBlackboard.Set<std::size_t>("selected_action", aid);
             return Success;

@@ -29,7 +29,11 @@ namespace cse498
         /** Currency held by merchant for paying the player for sales. */
         std::size_t mGold = 0;
 
+
     protected:
+        std::string mTradeGreeting = "Take a look at my shop.";
+        std::string mTradeClosedMessage = "Sorry, shop's closed.";
+
         /**
          * Removes all current offers from the merchant catalog.
          */
@@ -172,11 +176,13 @@ namespace cse498
         /**
          * @return Greeting shown when the player opens the trade menu
          */
-        [[nodiscard]] virtual std::string GetTradeGreeting() const;
+        [[nodiscard]] std::string GetTradeGreeting() const { return mTradeGreeting; }
+        void SetTradeGreeting(const std::string& greeting) { mTradeGreeting = greeting; }
 
         /**
          * @return Message shown when the merchant shop is closed
          */
-        [[nodiscard]] virtual std::string GetTradeClosedMessage() const;
+        [[nodiscard]] std::string GetTradeClosedMessage() const { return mTradeClosedMessage; }
+        void SetTradeClosedMessage(const std::string& message) { mTradeClosedMessage = message; }
     };
 } // cse498

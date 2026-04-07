@@ -73,7 +73,7 @@ size_t Inventory::RemoveItem(const std::string& name, size_t amount, bool isAllO
         return amount;
 
     size_t total = GetTotal(name);
-    if (isAllOrNothing && amount > total)
+    if (isAllOrNothing && amount < total) // amount to remove < total to remove
         return amount;
 
     // now the main loop:

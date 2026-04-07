@@ -71,7 +71,7 @@ public:
      * False ==> return amount removed. Requested 5 removal, had 2 --> return 2
      * @return ^^^
      */
-    size_t RemoveItem(const std::string& name, size_t amount = 1, bool isAllOrNothing = true);
+    size_t RemoveItem(const std::string& name, size_t amount = 1, bool isAllOrNothing = false);
 
     /**
      * Removes a particular item that was created. This is for unique items of stack size 1

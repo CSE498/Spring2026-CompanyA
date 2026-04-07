@@ -194,16 +194,6 @@ namespace cse498
         return mOffers.back();
     }
 
-    std::string MerchantAgent::GetTradeGreeting() const
-    {
-        return "Take a look at my shop.";
-    }
-
-    std::string MerchantAgent::GetTradeClosedMessage() const
-    {
-        return "Sorry, shop's closed.";
-    }
-
     void MerchantAgent::ClearOffers()
     {
         mOffers.clear();
