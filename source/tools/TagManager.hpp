@@ -20,6 +20,11 @@ namespace cse498
      *
      * Internally maintains a reverse index from tag -> set of object IDs,
      * and a "universe" set containing all objects that have ever been tagged.
+     *
+     * Ownership: TagManager does not own the objects it tracks. It stores
+     * plain integer IDs with no mechanism to detect external object destruction.
+     * Callers are responsible for calling OnTagRemoved (or Clear) when an object
+     * is destroyed; otherwise stale IDs will persist in query results.
      */
     class TagManager
     {

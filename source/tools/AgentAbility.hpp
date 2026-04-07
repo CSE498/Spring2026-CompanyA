@@ -13,8 +13,8 @@
 namespace cse498 {
 class AgentAbility {
 private:
-  [[maybe_unused]] bool climb = false;
-  [[maybe_unused]] bool swim = false;
+  [[maybe_unused]] bool mClimb = false;
+  [[maybe_unused]] bool mSwim = false;
 
 public:
 };

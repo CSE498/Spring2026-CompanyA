@@ -26,7 +26,7 @@ public:
   explicit MemoryFactory(std::size_t blockSize = 64)
       : blockSize(blockSize), freeList(nullptr) {
     assert(blockSize > 0);
-    allocateNewBlock();
+    AllocateNewBlock();
   }
 
   MemoryFactory(const MemoryFactory &) = delete;
@@ -44,7 +44,7 @@ public:
 
     void operator()(T *ptr) const noexcept {
       if (pool && ptr) {
-        pool->destroy(ptr);
+        pool->Destroy(ptr);
       }
     }
   };
@@ -61,13 +61,13 @@ public:
    * then wraps the resulting raw pointer in a smart pointer.
    */
   template <class... Args>
-  std::unique_ptr<T, PoolDeleter> make(Args &&...args) {
-    T *obj = create(std::forward<Args>(args)...);
+  std::unique_ptr<T, PoolDeleter> Make(Args &&...args) {
+    T *obj = Create(std::forward<Args>(args)...);
     return std::unique_ptr<T, PoolDeleter>(obj, PoolDeleter{this});
   }
 
   // Destroys the object and returns the slot to the free list
-  void destroy(T *obj) noexcept {
+  void Destroy(T *obj) noexcept {
     if (!obj)
       return;
 
@@ -117,10 +117,10 @@ private:
    * the object to the pool. Failure to do so will result in the slot
    * not being reclaimed.
    **/
-  template <class... Args> T *create(Args &&...args) {
+  template <class... Args> T *Create(Args &&...args) {
     // If the free list is empty, allocate a new block of memory
     if (!freeList)
-      allocateNewBlock();
+      AllocateNewBlock();
 
     // Take the first node from the free list
     Node *slot = freeList;
@@ -132,7 +132,7 @@ private:
     return ::new (static_cast<void *>(slot)) T(std::forward<Args>(args)...);
   }
 
-  void allocateNewBlock() {
+  void AllocateNewBlock() {
 
     // Allocate a new block of memory for blockSize nodes, ensuring proper
     // alignment

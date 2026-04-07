@@ -137,12 +137,12 @@ std::optional<size_t> TrailblazerAgent::NextMoveToward(
     if (pos == target) break;
 
     const std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(), pos.Right()};
-    for (const auto &n : neighbors) {
-      if (visited.contains(n)) continue;
-      if (!is_walkable_for_path(n)) continue;
-      visited.insert(n);
-      parent[n] = pos;
-      frontier.push(n);
+    for (const auto &neighbor : neighbors) {
+      if (visited.contains(neighbor)) continue;
+      if (!is_walkable_for_path(neighbor)) continue;
+      visited.insert(neighbor);
+      parent[neighbor] = pos;
+      frontier.push(neighbor);
     }
   }
 

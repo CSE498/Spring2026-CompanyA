@@ -107,8 +107,8 @@ namespace cse498
             	continue;
         	}
 
-        	const AgentBase &other = world.GetAgent(id);
-        	player_pos = other.GetLocation().AsWorldPosition();
+        	const AgentBase &known_agent = world.GetAgent(id);
+        	player_pos = known_agent.GetLocation().AsWorldPosition();
         	break;
     	}
 

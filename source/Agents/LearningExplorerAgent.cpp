@@ -52,8 +52,8 @@ size_t LearningExplorerAgent::CellIndex(const WorldGrid &grid,
 int LearningExplorerAgent::GetVisitCount(const WorldGrid &grid,
                                          WorldPosition pos) const {
   const size_t index = CellIndex(grid, pos);
-  auto it = visit_count_by_cell.find(index);
-  return (it == visit_count_by_cell.end()) ? 0 : it->second;
+  auto it = m_visit_count_by_cell.find(index);
+  return (it == m_visit_count_by_cell.end()) ? 0 : it->second;
 }
 
 /**
@@ -87,10 +87,10 @@ WorldPosition LearningExplorerAgent::PredictMove(WorldPosition pos,
  */
 void LearningExplorerAgent::UpdateMemory(const WorldGrid &grid) {
   const WorldPosition current_pos = GetLocation().AsWorldPosition();
-  visit_count_by_cell[CellIndex(grid, current_pos)]++;
+  m_visit_count_by_cell[CellIndex(grid, current_pos)]++;
 
-  if (first_turn) {
-    first_turn = false;
+  if (m_first_turn) {
+    m_first_turn = false;
   }
 }
 
@@ -114,12 +114,12 @@ WorldPosition LearningExplorerAgent::BFSNextStep(const WorldGrid &grid) const {
     if (aid == GetID())
       continue;
 
-    const AgentBase &other = world.GetAgent(aid);
+    const AgentBase &known_agent = world.GetAgent(aid);
 
-    if (!other.GetLocation().IsPosition())
+    if (!known_agent.GetLocation().IsPosition())
       continue;
 
-    agent_cells.insert(CellIndex(grid, other.GetLocation().AsWorldPosition()));
+    agent_cells.insert(CellIndex(grid, known_agent.GetLocation().AsWorldPosition()));
   }
 
   std::queue<WorldPosition> frontier;
@@ -135,9 +135,9 @@ WorldPosition LearningExplorerAgent::BFSNextStep(const WorldGrid &grid) const {
 
     // Target must be unvisited AND not occupied by another agent.
     if (cur_idx != start_idx) {
-      auto it = visit_count_by_cell.find(cur_idx);
+      auto it = m_visit_count_by_cell.find(cur_idx);
 
-      if (it == visit_count_by_cell.end() &&
+      if (it == m_visit_count_by_cell.end() &&
           agent_cells.find(cur_idx) == agent_cells.end()) {
         size_t trace = cur_idx;
         while (parent[trace] != start_idx) {
@@ -205,12 +205,12 @@ LearningExplorerAgent::ScoreAction(const WorldGrid &grid, size_t action_id,
   for (size_t aid : agent_ids) {
     if (aid == GetID())
       continue;
-    const AgentBase &other = world.GetAgent(aid);
+    const AgentBase &known_agent = world.GetAgent(aid);
 
-    if (!other.GetLocation().IsPosition())
+    if (!known_agent.GetLocation().IsPosition())
       continue;
 
-    const WorldPosition apos = other.GetLocation().AsWorldPosition();
+    const WorldPosition apos = known_agent.GetLocation().AsWorldPosition();
     const int dx =
         static_cast<int>(next_pos.CellX()) - static_cast<int>(apos.CellX());
     const int dy =
@@ -218,27 +218,27 @@ LearningExplorerAgent::ScoreAction(const WorldGrid &grid, size_t action_id,
     const int dist = std::abs(dx) + std::abs(dy);
 
     if (dist == 0)
-      return -1'000'000.0;
+      return BadScore;
     if (dist <= 2)
-      score -= 50.0;
+      score -= AgentProximityPenalty;
   }
 
   // Strongly prefer unvisited cells; penalise revisits proportionally.
   const int visits = GetVisitCount(grid, next_pos);
   if (visits == 0) {
-    score += 100.0;
+    score += UnvisitedBonus;
   } else {
-    score -= static_cast<double>(visits) * 5.0;
+    score -= static_cast<double>(visits) * RevisitPenaltyPerVisit;
   }
 
   // BFS guidance: bonus for the move that leads toward nearest unvisited cell.
   if (!(bfs_target == current_pos) && next_pos == bfs_target) {
-    score += 200.0;
+    score += BfsGuidanceBonus;
   }
 
   // Anti-oscillation: penalize going back to the cell we just came from.
-  if (has_prev_position && next_pos == prev_position) {
-    score -= 30.0;
+  if (m_has_prev_position && next_pos == m_prev_position) {
+    score -= OscillationPenalty;
   }
 
   return score;
@@ -254,14 +254,18 @@ LearningExplorerAgent::ScoreAction(const WorldGrid &grid, size_t action_id,
  * @return The chosen action ID.
  */
 size_t LearningExplorerAgent::SelectAction(const WorldGrid &grid) {
+  // Record current cell as visited before choosing next move.
   UpdateMemory(grid);
 
+  // Find the nearest unvisited cell via BFS to guide exploration.
   const WorldPosition bfs_target = BFSNextStep(grid);
 
+  // Gather all candidate movement actions.
   const std::vector<size_t> candidate_actions = {
       GetActionID("up"), GetActionID("down"), GetActionID("left"),
       GetActionID("right")};
 
+  // Score each candidate and pick the highest-scoring action.
   double best_score = -std::numeric_limits<double>::infinity();
   size_t best_action = 0;
 
@@ -276,10 +280,11 @@ size_t LearningExplorerAgent::SelectAction(const WorldGrid &grid) {
     }
   }
 
-  prev_position = GetLocation().AsWorldPosition();
-  has_prev_position = true;
+  // Track previous position for anti-oscillation scoring next turn.
+  m_prev_position = GetLocation().AsWorldPosition();
+  m_has_prev_position = true;
 
-  last_action = best_action;
+  m_last_action = best_action;
   return best_action;
 }
 

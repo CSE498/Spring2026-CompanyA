@@ -19,13 +19,13 @@ namespace cse498 {
 /// Grid explorer using visit memory and BFS guidance (no chase/combat).
 class LearningExplorerAgent : public AgentBase {
 private:
-  std::unordered_map<size_t, int> visit_count_by_cell;
+  std::unordered_map<size_t, int> m_visit_count_by_cell;
 
-  size_t last_action = 0;
-  bool first_turn = true;
+  size_t m_last_action = 0;
+  bool m_first_turn = true;
 
-  WorldPosition prev_position{-1, -1};
-  bool has_prev_position = false;
+  WorldPosition m_prev_position{-1, -1};
+  bool m_has_prev_position = false;
 
   [[nodiscard]] size_t CellIndex(const WorldGrid &grid,
                                  WorldPosition pos) const;
@@ -46,8 +46,12 @@ private:
   void UpdateMemory(const WorldGrid &grid);
 
 public:
-    /// Bad score to prevent certain agent behavior
-    static constexpr int BadScore = -1000000;
+    static constexpr double BadScore = -1'000'000.0;
+    static constexpr double UnvisitedBonus = 100.0;
+    static constexpr double RevisitPenaltyPerVisit = 5.0;
+    static constexpr double AgentProximityPenalty = 50.0;
+    static constexpr double BfsGuidanceBonus = 200.0;
+    static constexpr double OscillationPenalty = 30.0;
   LearningExplorerAgent(size_t id, const std::string &name,
                         const WorldBase &world);
   /**
@@ -60,7 +64,7 @@ public:
   [[nodiscard]] int GetActionFailureCount(size_t action_id) const;
   [[nodiscard]] int GetVisitedCellCount(const WorldGrid &grid,
                                         WorldPosition pos) const;
-  [[nodiscard]] size_t GetLastAction() const { return last_action; }
+  [[nodiscard]] size_t GetLastAction() const { return m_last_action; }
 };
 
 } // namespace cse498

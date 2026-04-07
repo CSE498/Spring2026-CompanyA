@@ -46,7 +46,7 @@ TEST_CASE("MemoryFactory: make/destroy via unique_ptr",
 
   Tracked *raw = nullptr;
   {
-    auto p = pool.make(7, "hi", alive, constructor, destructor);
+    auto p = pool.Make(7, "hi", alive, constructor, destructor);
     raw = p.get();
 
     CHECK(raw != nullptr);
@@ -64,7 +64,7 @@ TEST_CASE("MemoryFactory: make/destroy via unique_ptr",
 
 TEST_CASE("MemoryFactory: destroy(nullptr) is safe", "[tools][MemoryFactory]") {
   cse498::MemoryFactory<int> pool(4);
-  pool.destroy(nullptr);
+  pool.Destroy(nullptr);
 }
 
 TEST_CASE("MemoryFactory: reuses freed slot", "[tools][MemoryFactory]") {
@@ -77,13 +77,13 @@ TEST_CASE("MemoryFactory: reuses freed slot", "[tools][MemoryFactory]") {
 
   P *first = nullptr;
   {
-    auto a = pool.make(1);
+    auto a = pool.Make(1);
     first = a.get();
   }
 
   P *second = nullptr;
   {
-    auto b = pool.make(2);
+    auto b = pool.Make(2);
     second = b.get();
   }
 
@@ -98,14 +98,14 @@ TEST_CASE("MemoryFactory: grows when pool is full", "[tools][MemoryFactory]") {
 
   cse498::MemoryFactory<P> pool(2);
 
-  auto p1 = pool.make(1);
-  auto p2 = pool.make(2);
+  auto p1 = pool.Make(1);
+  auto p2 = pool.Make(2);
 
   CHECK(p1.get() != nullptr);
   CHECK(p2.get() != nullptr);
 
   // Forces allocateNewBlock()
-  auto p3 = pool.make(3);
+  auto p3 = pool.Make(3);
   CHECK(p3.get() != nullptr);
 }
 
@@ -117,11 +117,11 @@ TEST_CASE("MemoryFactory: stress test", "[tools][MemoryFactory]") {
 
   cse498::MemoryFactory<P> pool(64);
 
-  std::vector<decltype(pool.make(0))> ptrs;
+  std::vector<decltype(pool.Make(0))> ptrs;
   ptrs.reserve(10000);
 
   for (int i = 0; i < 10000; ++i) {
-    ptrs.push_back(pool.make(i));
+    ptrs.push_back(pool.Make(i));
   }
 
   ptrs.clear(); // automatic destruction
@@ -137,7 +137,7 @@ TEST_CASE("MemoryFactory with Agents: can construct/destroy PacingAgent with "
   cse498::MazeWorld world;
   cse498::MemoryFactory<cse498::PacingAgent> pool(4);
 
-  auto a = pool.make(0, std::string("pace"), world);
+  auto a = pool.Make(0, std::string("pace"), world);
   REQUIRE(a != nullptr);
 
   CHECK(a->IsAgent());
@@ -153,13 +153,13 @@ TEST_CASE("MemoryFactory with Agents: slot reuse works with PacingAgent",
 
   cse498::PacingAgent *first = nullptr;
   {
-    auto a1 = pool.make(0, std::string("a1"), world);
+    auto a1 = pool.Make(0, std::string("a1"), world);
     first = a1.get();
   }
 
   cse498::PacingAgent *second = nullptr;
   {
-    auto a2 = pool.make(1, std::string("a2"), world);
+    auto a2 = pool.Make(1, std::string("a2"), world);
     second = a2.get();
   }
 
@@ -174,13 +174,13 @@ TEST_CASE(
 
   cse498::PacingAgent *raw = nullptr;
   {
-    auto up = pool.make(0, std::string("pace"), world);
+    auto up = pool.Make(0, std::string("pace"), world);
     raw = up.get();
     REQUIRE(raw != nullptr);
     raw->SetSymbol('X');
     CHECK(raw->GetSymbol() == 'X');
   }
 
-  auto again = pool.make(1, std::string("again"), world);
+  auto again = pool.Make(1, std::string("again"), world);
   CHECK(again.get() == raw);
 }

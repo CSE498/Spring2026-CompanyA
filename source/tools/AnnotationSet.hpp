@@ -1,8 +1,10 @@
 // AnnotationSet.hpp
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -47,6 +49,8 @@ namespace cse498 {
         // Removes all tags
         void Clear();
 
+        /// Returns a copy of all tags as a vector, useful for serialization or iteration
+        /// where set semantics are not needed.
         std::vector<std::string> ToVector() const {
             std::vector<std::string> out;
             out.reserve(mTags.size());
@@ -54,10 +58,6 @@ namespace cse498 {
             return out;
         }
 
-        // ============================================================
-        // Arya made changes here (lines 57-132), please review
-        // Added: ForEach, Filter, AnyOf, AllOf, NoneOf, RemoveIf
-        // ============================================================
 
         /// Apply a function to each tag.
         /// @tparam Func  Callable taking const std::string&.
@@ -76,11 +76,7 @@ namespace cse498 {
         template <typename Pred>
         [[nodiscard]] std::vector<std::string> Filter(Pred && pred) const {
             std::vector<std::string> result;
-            for (const auto& tag : mTags) {
-                if (pred(tag)) {
-                    result.push_back(tag);
-                }
-            }
+            std::copy_if(mTags.begin(), mTags.end(), std::back_inserter(result), pred);
             return result;
         }
 

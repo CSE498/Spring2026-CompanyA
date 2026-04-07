@@ -233,3 +233,246 @@ TEST_CASE("EnemyAgent with no other agent still selects valid move", "[EnemyAgen
   CHECK(world.GetGrid().IsValid(pos));
   CHECK(world.GetGrid()[pos] != world.GetGrid().GetCellTypeID("wall"));
 }
+
+// ============================================================
+//  Initialize edge cases
+// ============================================================
+
+TEST_CASE("EnemyAgent Initialize returns true only when all four actions exist",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &agent = world.AddAgent<EnemyAgent>("Enemy");
+  agent.SetLocation(WorldPosition{10, 7});
+
+  // MazeWorld adds all four actions, so Initialize should pass
+  CHECK(agent.Initialize());
+
+  // Verify each action individually
+  CHECK(agent.HasAction("up"));
+  CHECK(agent.HasAction("down"));
+  CHECK(agent.HasAction("left"));
+  CHECK(agent.HasAction("right"));
+
+  // Non-existent actions should return false
+  CHECK_FALSE(agent.HasAction("jump"));
+  CHECK_FALSE(agent.HasAction(""));
+  CHECK_FALSE(agent.HasAction("fly"));
+}
+
+TEST_CASE("EnemyAgent Initialize can be called multiple times safely",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &agent = world.AddAgent<EnemyAgent>("Enemy");
+  agent.SetLocation(WorldPosition{10, 7});
+
+  CHECK(agent.Initialize());
+  CHECK(agent.Initialize());
+  CHECK(agent.Initialize());
+}
+
+// ============================================================
+//  SetActionResult edge cases
+// ============================================================
+
+TEST_CASE("EnemyAgent SetActionResult with failure does not corrupt state",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+  target.SetLocation(WorldPosition{1, 7});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{10, 7});
+
+  WorldPosition before = enemy.GetLocation().AsWorldPosition();
+
+  // Force a move into a wall (MOVE_UP from row 7 toward walls)
+  int result = world.DoAction(enemy, 1); // MOVE_UP
+  enemy.SetActionResult(result);
+
+  // If move failed, position should be unchanged
+  if (result == 0) {
+    CHECK(enemy.GetLocation().AsWorldPosition() == before);
+  }
+
+  // Agent should still function normally
+  size_t action = enemy.SelectAction(world.GetGrid());
+  CHECK(action != 0);
+}
+
+TEST_CASE("EnemyAgent SetActionResult with success updates position",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+  target.SetLocation(WorldPosition{1, 7});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{10, 7});
+
+  WorldPosition before = enemy.GetLocation().AsWorldPosition();
+
+  size_t action = enemy.SelectAction(world.GetGrid());
+  int result = world.DoAction(enemy, action);
+  enemy.SetActionResult(result);
+
+  CHECK(result == 1);
+  // Position should have changed after a successful move
+  CHECK_FALSE(enemy.GetLocation().AsWorldPosition() == before);
+}
+
+TEST_CASE("EnemyAgent handles repeated failed actions without crashing",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+  target.SetLocation(WorldPosition{1, 7});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{1, 1});
+
+  WorldPosition start = enemy.GetLocation().AsWorldPosition();
+
+  // Repeatedly try to move up into the wall
+  for (int i = 0; i < 10; ++i) {
+    int result = world.DoAction(enemy, 1); // MOVE_UP into wall
+    enemy.SetActionResult(result);
+    CHECK(result == 0);
+  }
+
+  // Agent should be at the same position
+  CHECK(enemy.GetLocation().AsWorldPosition() == start);
+
+  // Agent should still select valid actions
+  size_t action = enemy.SelectAction(world.GetGrid());
+  CHECK(action != 0);
+}
+
+// ============================================================
+//  Invalid action IDs and edge cases
+// ============================================================
+
+TEST_CASE("EnemyAgent action ID 0 (REMAIN_STILL) keeps position unchanged",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+  target.SetLocation(WorldPosition{1, 7});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{10, 7});
+
+  WorldPosition before = enemy.GetLocation().AsWorldPosition();
+
+  int result = world.DoAction(enemy, 0); // REMAIN_STILL
+  enemy.SetActionResult(result);
+
+  CHECK(enemy.GetLocation().AsWorldPosition() == before);
+}
+
+// ============================================================
+//  Getter coverage
+// ============================================================
+
+TEST_CASE("EnemyAgent GetName returns correct name", "[EnemyAgent]") {
+  MazeWorld world;
+  auto &enemy = world.AddAgent<EnemyAgent>("TestEnemy");
+  enemy.SetLocation(WorldPosition{10, 7});
+  CHECK(enemy.GetName() == "TestEnemy");
+}
+
+TEST_CASE("EnemyAgent GetID returns sequential IDs", "[EnemyAgent]") {
+  MazeWorld world;
+  auto &first = world.AddAgent<EnemyAgent>("First");
+  first.SetLocation(WorldPosition{10, 7});
+
+  auto &second = world.AddAgent<EnemyAgent>("Second");
+  second.SetLocation(WorldPosition{5, 7});
+
+  CHECK(first.GetID() == 0);
+  CHECK(second.GetID() == 1);
+}
+
+TEST_CASE("EnemyAgent GetLocation returns set position", "[EnemyAgent]") {
+  MazeWorld world;
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{10, 7});
+
+  WorldPosition pos = enemy.GetLocation().AsWorldPosition();
+  CHECK(pos.CellX() == 10);
+  CHECK(pos.CellY() == 7);
+}
+
+TEST_CASE("EnemyAgent SetSymbol and GetSymbol", "[EnemyAgent]") {
+  MazeWorld world;
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{10, 7});
+
+  enemy.SetSymbol('X');
+  CHECK(enemy.GetSymbol() == 'X');
+
+  enemy.SetSymbol('E');
+  CHECK(enemy.GetSymbol() == 'E');
+}
+
+// ============================================================
+//  Cornered / boundary cases
+// ============================================================
+
+TEST_CASE("EnemyAgent cornered near walls still selects valid action",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+  target.SetLocation(WorldPosition{15, 7});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  // Top-left corner area — walls above and to the left
+  enemy.SetLocation(WorldPosition{1, 1});
+
+  size_t action = enemy.SelectAction(world.GetGrid());
+  CHECK(action != 0);
+
+  int result = world.DoAction(enemy, action);
+  enemy.SetActionResult(result);
+
+  WorldPosition pos = enemy.GetLocation().AsWorldPosition();
+  CHECK(world.GetGrid().IsValid(pos));
+  CHECK(world.GetGrid()[pos] != world.GetGrid().GetCellTypeID("wall"));
+}
+
+TEST_CASE("EnemyAgent does not walk into walls after many steps at boundary",
+          "[EnemyAgent]") {
+  MazeWorld world;
+  auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+  target.SetLocation(WorldPosition{20, 5});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{1, 1});
+
+  const size_t wall_id = world.GetGrid().GetCellTypeID("wall");
+
+  for (int step = 0; step < 50; ++step) {
+    size_t action = enemy.SelectAction(world.GetGrid());
+    int result = world.DoAction(enemy, action);
+    enemy.SetActionResult(result);
+
+    WorldPosition pos = enemy.GetLocation().AsWorldPosition();
+    REQUIRE(world.GetGrid().IsValid(pos));
+    REQUIRE(world.GetGrid()[pos] != wall_id);
+  }
+}
+
+TEST_CASE("EnemyAgent remains stable after long chase run", "[EnemyAgent]") {
+  MazeWorld world;
+  auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+  target.SetLocation(WorldPosition{1, 7});
+
+  auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+  enemy.SetLocation(WorldPosition{15, 7});
+
+  for (int step = 0; step < 200; ++step) {
+    size_t action = enemy.SelectAction(world.GetGrid());
+    int result = world.DoAction(enemy, action);
+    enemy.SetActionResult(result);
+  }
+
+  // Agent should still produce valid actions
+  size_t action = enemy.SelectAction(world.GetGrid());
+  CHECK(action != 0);
+}
