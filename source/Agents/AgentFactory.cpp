@@ -37,6 +37,8 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const Wo
     return TreeBuilder::Act("Player in Range", [&world,&enemy](ExecutionContext&)
     {
         assert(enemy.IsAlive());
+        if (world.GetPlayer()->IsAlive() == false)
+            return Failure;
 
         if (IsInRange(enemy, world.GetPlayerPosition(), world.GetGrid()))
             return Success;
@@ -49,6 +51,8 @@ std::unique_ptr<Node> AgentFactory::Attack(const Enemy& enemy, const WorldBase& 
 {
     return TreeBuilder::Act("Attack Player", [&world, &enemy](ExecutionContext&)
     {
+        if (world.GetPlayer()->IsAlive() == false)
+            return Failure;
         auto dmg = DamageCalculator::Calculate(enemy.GetStats(), world.GetPlayer()->GetStats());
         world.GetPlayer()->TakeDamage(dmg);
         return Success;

@@ -144,10 +144,29 @@ namespace cse498 {
       return *agent_set[index];
     }
 
-    [[nodiscard]] PlayerAgent* GetPlayer() const { return mPlayer; }
-    /// TODO: I'm not sure whether to check player == nullptr or not. It is technically possible to delete player agent
-    /// But this will cause other issues. so we can assume he always exists?
-    [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayer->GetLocation().AsWorldPosition(); }
+      /**
+       * Gets the player. Player shouldn't be nullptr (it is asserted)
+       * @return actual player pointer
+       */
+      [[nodiscard]] PlayerAgent* GetPlayer() const
+    {
+      /*
+       * It shouldn't be possible for player to ever be null. Dead ==> IsAlive is false
+       * Player object shouldn't need to be recreated, if so then design a function for that
+       * or check whole project for UB
+       */
+      assert(mPlayer != nullptr && "Player got set to nullptr somehow?");
+      return mPlayer;
+    }
+
+      /**
+       * Gets player position -- Will return even if player is dead (like minecraft)
+       * @return Player position
+       */
+      [[nodiscard]] WorldPosition GetPlayerPosition() const
+    {
+        return mPlayer->GetLocation().AsWorldPosition();
+    }
 
     /// Return an editable version of the current grid for this world (main_grid by default) 
     virtual WorldGrid & GetGrid() { return main_grid; }
@@ -219,7 +238,8 @@ namespace cse498 {
       while (it != agent_set.end()) {
         if (!(*it)->IsAlive()) {
           if (it->get() == mPlayer) {
-            mPlayer = nullptr;
+            it++; // we can declare the player dead but not null.
+            continue;
           }
           (*it)->OnDestroy();
           it = agent_set.erase(it);
