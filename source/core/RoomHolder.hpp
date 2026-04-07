@@ -196,9 +196,11 @@ namespace cse498 {
         std::vector<std::string> LoadRoom() {
             std::string selected_pool = GenerateFilePath();
             std::ifstream file(m_file_path + selected_pool); // this will open one of the rooms
-            //std::cout << m_file_path + selected_pool << std::endl;
 
-            assert(file.is_open());
+            if (!file.is_open()) {
+                std::cerr << "ERROR: RoomHolder.hpp: Issues opening the file.\n";
+                return {};
+            }
 
             std::vector<std::string> lines;
             std::string line;
