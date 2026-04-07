@@ -11,9 +11,13 @@
 namespace cse498 {
 
     namespace {
+        /// The size of mRecentPositions, works like short term memory
         constexpr size_t kRecentMemory = 10;
+
+        /// HP threshold below which the agent prioritizes healing.
         constexpr int kLowHpThreshold = 4;
 
+        /// Bitmask predicates representing world/agent state for GOAP planning.
         enum Predicate : uint32_t {
             LOW_HP = 1u << 0,
             HAS_HEAL = 1u << 1,
@@ -26,6 +30,7 @@ namespace cse498 {
             WEAPON_VISIBLE = 1u << 8
         };
 
+        /// Defines a GOAP action with preconditions and effects.
         struct GoapActionDef {
             TrailblazerAgent::PlanAction action;
             uint32_t required_mask;
@@ -35,16 +40,40 @@ namespace cse498 {
             size_t cost;
         };
 
+        /**
+         * @brief Checks whether a state satisfies a goal condition.
+         *
+         * @param state The current state represented as a bitmask.
+         * @param goal_mask Mask indicating which bits are relevant for the goal.
+         * @param goal_value Required values for the masked bits.
+         * @return true if the state satisfies the goal condition; false otherwise.
+         */
         bool MeetsGoal(uint32_t state, uint32_t goal_mask, uint32_t goal_value) {
             return (state & goal_mask) == goal_value;
         }
     } // namespace
 
+
+    /**
+     * @brief Initializes the Trailblazer agent.
+     * Sets the display symbol 'T' for the agent.
+     *
+     * @return true if initialization succeeds.
+     */
     bool TrailblazerAgent::Initialize() {
         SetSymbol('T');
         return true;
     }
 
+    /**
+     * @brief Checks whether a position is walkable.
+     *
+     * A position is walkable if it is valid and does not contain a wall tile.
+     *
+     * @param grid The world grid.
+     * @param pos The position to test.
+     * @return true if the position can be traversed; false otherwise.
+     */
     bool TrailblazerAgent::IsWalkable(const WorldGrid &grid, WorldPosition pos) const {
         if (!grid.IsValid(pos))
             return false;
@@ -52,6 +81,12 @@ namespace cse498 {
         return tile != '#';
     }
 
+    /**
+     * @brief Finds the nearest item of the requested type.
+     *
+     * @param heal_item True to search for a healing item, false to search for a weapon.
+     * @return The position of the nearest matching item.
+     */
     std::optional<WorldPosition> TrailblazerAgent::NearestItemPosition(bool heal_item) const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!ai_world || !GetLocation().IsPosition())
@@ -77,6 +112,11 @@ namespace cse498 {
         return best;
     }
 
+    /**
+     * @brief Finds the nearest living enemy.
+     *
+     * @return The position of the nearest alive enemy.
+     */
     std::optional<WorldPosition> TrailblazerAgent::NearestEnemyPosition() const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!ai_world || !GetLocation().IsPosition())
@@ -101,6 +141,12 @@ namespace cse498 {
         return best;
     }
 
+    /**
+     * @brief Returns an attack action when an enemy is adjacent.
+     * Checks the four neighboring cells for an enemy and returns the matching directional attack action.
+     *
+     * @return The attack action ID if an adjacent enemy exists, or std::nullopt if no path exists.
+     */
     std::optional<size_t> TrailblazerAgent::AttackActionForAdjacentEnemy() const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!ai_world || !GetLocation().IsPosition())
@@ -118,6 +164,15 @@ namespace cse498 {
         return std::nullopt;
     }
 
+    /**
+     * @brief Computes the next movement step toward a target using BFS.
+     * Avoids walls and, unless allowed, avoids stepping onto enemy-occupied tiles.
+     *
+     * @param grid The world grid.
+     * @param target The target position.
+     * @param allow_enemy_target Whether enemy tiles may be treated as valid targets.
+     * @return The action ID for the first step toward the target, or std::nullopt if no path exists.
+     */
     std::optional<size_t> TrailblazerAgent::NextMoveToward(const WorldGrid &grid, WorldPosition target,
                                                            bool allow_enemy_target) const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
@@ -183,6 +238,13 @@ namespace cse498 {
         return std::nullopt;
     }
 
+    /**
+     * @brief Selects an exploration move based on visit history.
+     * Prefers less-visited neighboring cells and penalizes immediate backtracking.
+     *
+     * @param grid The world grid.
+     * @return The chosen movement action ID, or std::nullopt if no legal move exists.
+     */
     std::optional<size_t> TrailblazerAgent::ExploreMove(const WorldGrid &grid) const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!GetLocation().IsPosition())
@@ -215,6 +277,14 @@ namespace cse498 {
         return best_action;
     }
 
+    /**
+     * @brief Moves toward an enemy by choosing a reachable position that minimizes distance.
+     * Uses BFS over reachable cells and picks the first step toward the best candidate position.
+     *
+     * @param grid The world grid.
+     * @param enemy_pos The target enemy position.
+     * @return The movement action ID that gets closer to the enemy, or std::nullopt if none is available.
+     */
     std::optional<size_t> TrailblazerAgent::ChaseEnemyMove(const WorldGrid &grid, WorldPosition enemy_pos) const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!ai_world || !GetLocation().IsPosition())
@@ -276,6 +346,14 @@ namespace cse498 {
         return std::nullopt;
     }
 
+    /**
+     * @brief Builds a GOAP plan from the current world state.
+     * Chooses a high-level objective such as healing, getting a weapon, attacking, or exploring,
+     * then searches for a sequence of plan actions that satisfies it.
+     *
+     * @param grid The world grid.
+     * @return A sequence of planned actions to execute. Returns a single Explore action if no better plan is available.
+     */
     std::vector<TrailblazerAgent::PlanAction> TrailblazerAgent::BuildPlan(const WorldGrid &grid) const {
         (void) grid;
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
@@ -398,6 +476,13 @@ namespace cse498 {
         return {PlanAction::Explore};
     }
 
+    /**
+     * @brief Converts a high-level plan action into a concrete game action.
+     *
+     * @param grid The world grid.
+     * @param action The plan action to execute.
+     * @return The corresponding action ID, or std::nullopt if the action cannot be executed.
+     */
     std::optional<size_t> TrailblazerAgent::ExecutePlanAction(const WorldGrid &grid, PlanAction action) const {
         switch (action) {
             case PlanAction::PickUpHeal:
@@ -435,6 +520,20 @@ namespace cse498 {
         return std::nullopt;
     }
 
+    /**
+     * @brief Selects the Trailblazer agent's next action.
+     *
+     * Decision priority:
+     * - Attack immediately if an enemy is adjacent
+     * - Pick up an item if standing on one
+     * - Execute the first action from the current GOAP plan
+     * - Fall back to exploration if needed
+     *
+     * Also updates visit memory used by exploration.
+     *
+     * @param grid The world grid.
+     * @return The selected action ID, or 0 if no valid action is available.
+     */
     size_t TrailblazerAgent::SelectAction(const WorldGrid &grid) {
         if (!GetLocation().IsPosition())
             return 0;

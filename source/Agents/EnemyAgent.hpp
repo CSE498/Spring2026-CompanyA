@@ -20,10 +20,8 @@ namespace cse498 {
     /**
      * @class EnemyAgent
      * @brief An AI-controlled agent that selects actions based on heuristic evaluation.
-     *
-     * The EnemyAgent evaluates possible actions using a scoring function that considers
-     * predicted movement outcomes and distance to the player. It uses a Manhattan distance
-     * heuristic and simulates potential moves to determine the most favorable action.
+     * The EnemyAgent evaluates possible actions using a scoring function that considers predicted movement outcomes and distance to the player.
+     * It uses a Manhattan distance, heuristics, and simulates potential moves to determine the most favorable action.
      *
      * Actions that result in undesirable states are assigned a low score (see BadScore).
      *

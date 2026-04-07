@@ -16,15 +16,29 @@
 #include "../core/AgentBase.hpp"
 
 namespace cse498 {
-    /// Grid explorer using visit memory and BFS guidance (no chase/combat).
+    /**
+     * @class LearningExplorerAgent
+     * @brief Agent that explores the grid by prioritizing unvisited cells.
+     * This agent uses visit counts and BFS to guide movement toward the nearest unvisited cell.
+     * Actions are scored to favor exploration, avoid obstacles and other agents, and reduce oscillation between positions.
+     *
+     * @note Requires movement actions: up, down, left, right.
+     *
+     * @inherits AgentBase
+     */
     class LearningExplorerAgent : public AgentBase {
     private:
+        /// Stores visit counts for each grid cell (indexed as a 1D value).
         std::unordered_map<size_t, int> m_visit_count_by_cell;
 
+        /// ID of the last action taken by the agent.
         size_t m_last_action = 0;
+        /// Indicates whether the agent is on its first turn.
         bool m_first_turn = true;
 
+        /// Stores the agent's previous position.
         WorldPosition m_prev_position{-1, -1};
+        /// Indicates whether a valid previous position exists.
         bool m_has_prev_position = false;
 
         [[nodiscard]] size_t CellIndex(const WorldGrid &grid, WorldPosition pos) const;
@@ -43,11 +57,17 @@ namespace cse498 {
         void UpdateMemory(const WorldGrid &grid);
 
     public:
+        /// Score assigned to invalid or undesirable actions.
         static constexpr double BadScore = -1'000'000.0;
+        /// Bonus for moving to an unvisited cell.
         static constexpr double UnvisitedBonus = 100.0;
+        /// Penalty applied per prior visit to a cell.
         static constexpr double RevisitPenaltyPerVisit = 5.0;
+        /// Penalty for being close to another agent.
         static constexpr double AgentProximityPenalty = 50.0;
+        /// Bonus for following BFS guidance toward unexplored areas.
         static constexpr double BfsGuidanceBonus = 200.0;
+        /// Penalty for moving back to the previous position.
         static constexpr double OscillationPenalty = 30.0;
         LearningExplorerAgent(size_t id, const std::string &name, const WorldBase &world);
         /**
@@ -59,6 +79,12 @@ namespace cse498 {
         [[nodiscard]] int GetActionSuccessCount(size_t action_id) const;
         [[nodiscard]] int GetActionFailureCount(size_t action_id) const;
         [[nodiscard]] int GetVisitedCellCount(const WorldGrid &grid, WorldPosition pos) const;
+
+        /**
+         * @brief Getter function for last action taken
+         *
+         * @return the last action taken by the agent
+         */
         [[nodiscard]] size_t GetLastAction() const { return m_last_action; }
     };
 

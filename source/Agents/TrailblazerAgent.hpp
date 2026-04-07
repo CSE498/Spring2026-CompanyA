@@ -18,9 +18,24 @@
 
 namespace cse498 {
 
-    /// GOAP-style planner over combat/loot goals; designed for AIWorld.
+    /**
+     * @class TrailblazerAgent
+     * @brief Goal-oriented agent that balances survival, combat, and exploration.
+     *
+     * This agent uses a GOAP (Goal-Oriented Action Planning) approach to decide
+     * actions based on its current state. It prioritizes:
+     * - Healing when low on HP
+     * - Collecting weapons or healing items
+     * - Attacking enemies when possible
+     * - Exploring when no higher-priority goal exists
+     *
+     * The agent also uses BFS for navigation and visit tracking to guide exploration.
+     *
+     * @note Designed to run within AIWorld for full functionality.
+     */
     class TrailblazerAgent : public AgentBase {
     public:
+        /// High-level actions used in GOAP planning.
         enum class PlanAction {
             MoveToHeal,
             PickUpHeal,
@@ -33,7 +48,10 @@ namespace cse498 {
         };
 
     private:
+        /// The Agent holds the number of times it has visited a tile
         std::unordered_map<WorldPosition, size_t> mVisitCounts;
+
+        /// Holds a queue of recently visited positions
         std::deque<WorldPosition> mRecentPositions;
 
         [[nodiscard]] bool IsWalkable(const WorldGrid &grid, WorldPosition pos) const;

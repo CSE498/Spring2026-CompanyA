@@ -11,14 +11,28 @@
 namespace cse498 {
 
     namespace {
+        /// The size of mRecentPositions, works like short term memory
         constexpr size_t kRecentMemory = 10;
     }
 
+    /**
+     * Initializes the smart enemy agent. Sets the display symbol for the agent to 'S'.
+     *
+     * @return true if initialization succeeds.
+     */
     bool SmartEnemyAgent::Initialize() {
         SetSymbol('S');
         return true;
     }
 
+    /**
+     * @brief Determines whether a world position can be traversed. A position is considered walkable if it is within the grid bounds and
+     * does not contain a wall tile ('#').
+     *
+     * @param grid The world grid being queried.
+     * @param pos The position to test.
+     * @return true if the position is valid and not blocked by a wall.
+     */
     bool SmartEnemyAgent::IsWalkable(const WorldGrid &grid, WorldPosition pos) const {
         if (!grid.IsValid(pos))
             return false;
@@ -26,7 +40,11 @@ namespace cse498 {
         return tile != '#';
     }
 
-    /// Need to modify this when multiple agents are
+    /**
+     * Finds the nearest other agent to use as the current target using Manhattan distance.
+     *
+     * @return The target player's position if one is found.
+     */
     std::optional<WorldPosition> SmartEnemyAgent::GetTargetPlayerPosition() const {
         if (!GetLocation().IsPosition())
             return std::nullopt;
@@ -58,6 +76,12 @@ namespace cse498 {
         return best_target;
     }
 
+    /**
+     * @brief Determines whether an adjacent target can be attacked immediately.
+     * If the current target is in one of the four neighboring cells, this returns the corresponding attack action ID.
+     *
+     * @return The attack action ID if the target is adjacent.
+     */
     std::optional<size_t> SmartEnemyAgent::AttackActionForAdjacentPlayer() const {
         const auto target = GetTargetPlayerPosition();
         if (!target.has_value() || !GetLocation().IsPosition())
@@ -77,6 +101,15 @@ namespace cse498 {
         return std::nullopt;
     }
 
+    /**
+     * @brief Checks whether two positions have a clear horizontal or vertical line of sight.
+     * Line of sight is only considered valid when the positions share the same row or column and all cells between them are walkable.
+     *
+     * @param grid The world grid used for obstruction checks.
+     * @param from The starting position.
+     * @param to The destination position.
+     * @return true if no walls block a straight-line path between the positions.
+     */
     bool SmartEnemyAgent::HasLineOfSight(const WorldGrid &grid, WorldPosition from, WorldPosition to) const {
         if (from.CellX() == to.CellX()) {
             const size_t x = from.CellX();
@@ -105,6 +138,13 @@ namespace cse498 {
         return false;
     }
 
+    /**
+     * @brief Chooses a direct pursuit move when the target is visible in a straight line.
+     *
+     * @param grid The world grid used to test visibility.
+     * @param target The target position to pursue.
+     * @return The movement action ID for pursuit.
+     */
     std::optional<size_t> SmartEnemyAgent::LineOfSightPursuitMove(const WorldGrid &grid, WorldPosition target) const {
         if (!GetLocation().IsPosition())
             return std::nullopt;
@@ -131,6 +171,14 @@ namespace cse498 {
         return std::nullopt;
     }
 
+    /**
+     * @brief Computes the next movement step toward a target using breadth-first search.
+     * The search avoids walls and other occupied agent positions, except when the occupied position is the target itself.
+     *
+     * @param grid The world grid used for pathfinding.
+     * @param target The destination position.
+     * @return The action ID for the first step along the shortest path.
+     */
     std::optional<size_t> SmartEnemyAgent::NextMoveToward(const WorldGrid &grid, WorldPosition target) const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!ai_world || !GetLocation().IsPosition())
@@ -195,6 +243,16 @@ namespace cse498 {
         return std::nullopt;
     }
 
+    /**
+     * @brief Chooses a move toward the best reachable tile adjacent to the target.
+     * This is used when the target cannot be attacked immediately and is not in
+     * direct line of sight. The function evaluates the four attack-adjacent tiles
+     * around the target and selects the one with the shortest reachable path.
+     *
+     * @param grid The world grid used for reachability and pathfinding.
+     * @param target The target position to surround.
+     * @return The action ID for moving toward the best attack lane.
+     */
     std::optional<size_t> SmartEnemyAgent::ShortestAttackLaneMove(const WorldGrid &grid, WorldPosition target) const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!ai_world)
@@ -268,6 +326,14 @@ namespace cse498 {
         return NextMoveToward(grid, *best_tile);
     }
 
+    /**
+     * @brief Selects an exploration move when no attack or pursuit option is available.
+     * The exploration strategy prefers neighboring tiles with lower visit counts
+     * and penalizes immediately returning to the most recent previous position.
+     *
+     * @param grid The world grid used to validate candidate moves.
+     * @return The action ID for the best exploration move.
+     */
     std::optional<size_t> SmartEnemyAgent::ExploreMove(const WorldGrid &grid) const {
         const auto *ai_world = dynamic_cast<const AIWorld *>(&world);
         if (!GetLocation().IsPosition())
@@ -305,6 +371,17 @@ namespace cse498 {
         return best_action;
     }
 
+    /**
+     * @brief Selects the smart enemy's next action for the current turn.
+     *
+     * The decision process follows three priorities:
+     * 1. Attack an adjacent target immediately.
+     * 2. Pursue the nearest target using line-of-sight or shortest attack-lane movement.
+     * 3. Explore the map when no direct pursuit is possible.
+     *
+     * @param grid The current world grid.
+     * @return The selected action ID, or 0 if no action is available.
+     */
     size_t SmartEnemyAgent::SelectAction(const WorldGrid &grid) {
         if (!GetLocation().IsPosition())
             return 0;

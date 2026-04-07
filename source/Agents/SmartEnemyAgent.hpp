@@ -8,9 +8,22 @@
 
 namespace cse498 {
 
+    /**
+     * @class SmartEnemyAgent
+     * @brief An AI-controlled enemy agent that intelligently pursues and attacks other agents.
+     * The SmartEnemyAgent extends AgentBase and implements a decision-making system.
+     * This class is designed to produce more strategic and natural enemy behavior compared to simple random or greedy movement patterns.
+     *
+     * @note Assumes other agents in the world represent valid targets (e.g., the player). (For now)
+     *
+     * @inherits AgentBase
+     */
     class SmartEnemyAgent : public AgentBase {
     private:
+        /// The Agent holds the number of times it has visited a tile
         std::unordered_map<WorldPosition, size_t> mVisitCounts;
+
+        /// Holds a queue of recently visited positions
         std::deque<WorldPosition> mRecentPositions;
 
         [[nodiscard]] bool IsWalkable(const WorldGrid &grid, WorldPosition pos) const;
