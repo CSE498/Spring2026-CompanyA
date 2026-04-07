@@ -1,11 +1,11 @@
 > [!NOTE]
 >
-> This document elaborates Section 3.2 of the README.
+> This document elaborates Section 3.2 of the README.  
 > Section numbers here follow the global numbering (3.2.x).
 
 # Group 18's Write-up for Initial C++ Class (WebUI)
 
-*Last updated: Jan 30, 2026*
+*Last updated: April 2026*
 
 ## 3.2 `WebTextbox` Class Specification
 
@@ -13,24 +13,36 @@
 
 ### 3.2.1 Class Description
 
-A C++ class that represents a logical text box used in the Web UI; in our implementation it will eventually be rendered as an HTML element (such as `<p>` and `<span>`) via `WebLayout`, or a canvas element via `WebCanvas`. Supports setting text content, font properties, alignment, color, size constraints, and visibility. Intended for HUD displays, dialogue boxes, logs, tooltips, and debug overlays.  
-`WebTextbox` serves as the Web-GUI implementation of the shared text interface used across groups, ensuring it is interchangeable with Group 17’s local GUI Text class.
+A C++ class that represents a styled, DOM-backed text element for the Web UI. Internally, it wraps an HTML `<div>` element and uses Emscripten (`emscripten::val`) to synchronize C++ state with browser DOM properties.  
+
+`WebTextbox` supports rich text styling (font family, size, bold/italic, alignment), layout constraints (max width, wrapping), background color, visibility, and bounding box queries. It can be rendered in two ways:
+
+- **DOM Mode (primary):** Mounted into a `WebLayout` container as part of the UI hierarchy  
+- **Canvas Mode (secondary):** Drawn directly onto a `WebCanvas` using the same text/style properties  
+
+This dual-interface design allows `WebTextbox` to function as both a **layout element (`IDomElement`)** and a **renderable object (`ICanvasElement`)**.  
+
+`WebTextbox` serves as the Web-GUI implementation of the shared text interface used across groups, ensuring compatibility with Group 17’s GUI system.
 
 ---
 
 ### 3.2.2 Similar Standard Library Classes
 
-- **`std::string`** – for storing and formatting text  
-- **`std::ostringstream`** – for constructing dynamic text output  
-- **Emscripten’s `val`** – for JavaScript/DOM interaction  
+- **`std::string`** – stores and manipulates text content  
+- **`std::optional`** – used for optional background color state  
+- **`std::move` / value semantics** – used in move constructor/assignment  
+- **Emscripten `val`** – bridges C++ with JavaScript DOM  
 
 ---
 
 ### 3.2.3 Key Functions
 
 ```cpp
-// Construction
-WebTextbox(const std::string& elementId);
+// Construction / Move semantics
+WebTextbox();
+explicit WebTextbox(const std::string& initial_text);
+WebTextbox(WebTextbox&& other) noexcept;
+WebTextbox& operator=(WebTextbox&& other) noexcept;
 ~WebTextbox();
 
 // Core Text Operations
@@ -39,45 +51,63 @@ void AppendText(const std::string& text);
 std::string GetText() const;
 void Clear();
 
-// Formatting
+// Formatting / Style
 void SetFontFamily(const std::string& family);
+void SetFallbackFontFamily(const std::string& fallback_family);
 void SetFontSize(float sizePx);
+void SetLineHeight(float lineHeightPx);
 void SetColor(const std::string& cssColor);
 void SetBold(bool enabled);
 void SetItalic(bool enabled);
-void SetAlignment(const std::string& alignment); // "left", "center", "right"
+void SetAlignment(TextAlign alignment); // enum: Left, Center, Right
 
-// Layout
-void SetPosition(int x, int y);
+// Layout / Behavior
 void SetMaxWidth(float widthPx);
+void SetWrap(bool enabled);
+void SetBackgroundColor(const std::string& cssColor);
+void ClearBackgroundColor();
+
+// Bounding Box
+RectPx GetBoundingBoxPx() const;
+double GetWidthPx() const;
+double GetHeightPx() const;
 
 // Visibility
 void Show();
 void Hide();
 bool IsVisible() const;
-```
 
+// DOM Integration
+void MountToLayout(WebLayout& parent, Alignment align = Alignment::None);
+void SyncFromModel();
+
+// Canvas Integration
+void SetCanvasPosition(float x, float y);
+void Draw(WebCanvas& canvas);
+```
 ---
 
 ### 3.2.4 Error Conditions
 
 | Type | Example | Handling |
 |------|---------|----------|
-| Programmer error | Invalid DOM ID, negative font size | assert() |
-| Recoverable error | DOM update failure, missing element at runtime | Return false + console debug log |
-| User error | Invalid input (if textbox later supports editing) | Ignore or return special state |
+| Programmer error | Invalid enum, negative font size, invalid width | `assert()` + safe fallback |
+| Recoverable error | DOM element not mounted, missing parent | Return default values (e.g., empty bounding box) |
+| Runtime/UI issue | Requested font not available in browser | Console warning logged via JS |
+| User error | Invalid CSS color or input | Passed through to browser (graceful degradation) |
 
-Following instructor guidance, **no C++ exceptions** will be thrown inside `WebTextbox` for WebAssembly builds.
+Following project constraints, **no C++ exceptions are thrown** (WebAssembly-safe design).
 
 ---
 
 ### 3.2.5 Expected Challenges
 
-- Understanding Emscripten C++ ↔ JavaScript bridging   
-- Ensuring efficient DOM updates to avoid layout performance issues  
-- Integrating text elements cleanly within WebLayout  
-- Handling word-wrapping, adaptive sizing, and multi-line UI elements  
-- Debugging errors across C++ and JavaScript without exception support  
+- Managing **C++ ↔ JavaScript DOM synchronization** using Emscripten  
+- Ensuring efficient updates (avoiding excessive `ApplyStyles()` calls)  
+- Handling **layout vs. content separation** with `WebLayout`  
+- Supporting both **DOM rendering and Canvas rendering paths** cleanly  
+- Debugging browser-side issues without traditional exception handling  
+- Ensuring consistent behavior across different browsers (fonts, layout, wrapping)  
 
 ---
 
@@ -85,9 +115,12 @@ Following instructor guidance, **no C++ exceptions** will be thrown inside `WebT
 
 | Class | Group | Reason |
 |--------|--------|---------|
-| **`Text`** | 17 (GUI Interface) | Must match API to ensure GUI interchangeability |
-| **`Menu`** | 17 | Shared text formatting conventions for menu labels |
-| **`WebLayout`** | 18 | Controls positioning and DOM structure for textboxes |
-| **`WebButton`** | 18 | Ensures UI styling consistency across widgets |
-| **`ActionMap`** | 2 (Classic Agents) | Enables text-linked actions or UI command triggers |
-| **`OutputManager`** | 16 (Data Analytics) | Supports log/text-output to debug consoles or HUD elements |
+| **`Text`** | 17 (GUI Interface) | Must maintain API compatibility for interchangeable UI systems |
+| **`WebLayout`** | 18 | Responsible for mounting, positioning, and layout alignment |
+| **`WebCanvas`** | 18 | Enables alternate rendering path for text drawing |
+| **`WebButton`** | 18 | Ensures UI styling consistency |
+| **`IDomElement`** | 18 | Interface for DOM-based UI elements |
+| **`ICanvasElement`** | 18 | Interface for canvas-renderable elements |
+| **World / Agent Systems** | Other groups | Provide dynamic text (HUD, logs, state updates) |
+
+---
