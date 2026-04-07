@@ -3,21 +3,32 @@
 #include "../../../core/WorldBase.hpp"
 #include "../../../core/InterfaceBase.hpp"
 
-#include <memory>
-#include <concepts>
-#include <array>
 #include <algorithm>
+#include <array>
+#include <cassert>
+#include <concepts>
+#include <cstdlib>
+#include <memory>
 
 namespace cse498 {
 
 /// @class MockWorld
 /// @brief A mock world implementation for testing and demonstrating interfaces.
-/// @details This class provides a simple grid-based world with predefined cell types and agents for testing WebUI interfaces.
+/// @details This class provides a simple grid-based world with predefined cell
+/// types and agents for testing WebUI interfaces.
 class MockWorld : public WorldBase {
 public:
   /// @enum ActionType
   /// @brief Enumeration of possible agent actions.
-  enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT, QUIT };
+  enum ActionType {
+    REMAIN_STILL = 0,
+    MOVE_UP,
+    MOVE_DOWN,
+    MOVE_LEFT,
+    MOVE_RIGHT,
+    INTERACT,
+    QUIT
+  };
 
 protected:
   /// @brief Array of floor cell type IDs for easy access.
@@ -37,9 +48,9 @@ protected:
 
   /// @brief Increments the action timer by the given milliseconds.
   /// @param millis The milliseconds to add to the timer.
-  void IncrementActionTimer(double millis) { 
+  void IncrementActionTimer(double millis) {
     mDelta = millis;
-    mActionTimer += mDelta; 
+    mActionTimer += mDelta;
   }
 
   /// @brief Adds an interface of the specified type to the world.
@@ -47,18 +58,23 @@ protected:
   /// @param interfaceName The name for the interface.
   /// @return Reference to the added interface.
   template <std::derived_from<InterfaceBase> T>
-  InterfaceBase & AddInterface(std::string interfaceName="None") {
+  InterfaceBase& AddInterface(std::string interfaceName = "None") {
     mInterface = std::make_unique<T>(agent_set.size(), interfaceName, *this);
-    
-    InterfaceBase & interfaceRef = *mInterface;
+
+    InterfaceBase& interfaceRef = *mInterface;
     ConfigAgent(*mInterface);
 
-    assert(mInterface->Initialize() && "Failed to initialize interface");
+    if (!mInterface->Initialize()) {
+      mInterface.reset();
+      assert(false && "Failed to initialize interface");
+      std::abort();
+    }
+
     return interfaceRef;
   }
 
   /// Provide the agent with movement actions.
-  void ConfigAgent(AgentBase & agent) override {
+  void ConfigAgent(AgentBase& agent) override {
     agent.AddAction("up", MOVE_UP);
     agent.AddAction("down", MOVE_DOWN);
     agent.AddAction("left", MOVE_LEFT);
@@ -70,55 +86,65 @@ protected:
 public:
   /// @brief Constructs a MockWorld with predefined grid layout.
   MockWorld() {
-    mFloorIds[0] = main_grid.AddCellType("floor",          "world/forest/floor_tiles/tile_grass_1.png", ' ');
-    mFloorIds[1] = main_grid.AddCellType("floor-variant1", "world/forest/floor_tiles/tile_grass_5.png", 'v');
-    mFloorIds[2] = main_grid.AddCellType("floor-variant2", "world/forest/floor_tiles/tile_grass_2.png", 't');
+    mFloorIds[0] = main_grid.AddCellType(
+      "floor", "world/forest/floor_tiles/tile_grass_1.png", ' ');
+    mFloorIds[1] = main_grid.AddCellType(
+      "floor-variant1", "world/forest/floor_tiles/tile_grass_5.png", 'v');
+    mFloorIds[2] = main_grid.AddCellType(
+      "floor-variant2", "world/forest/floor_tiles/tile_grass_2.png", 't');
 
-    mImpassableIds[0]  = main_grid.AddCellType("floor-obstacle", "world/forest/floor_tiles/tile_grass_3.png",            '$');
-    mImpassableIds[1]  = main_grid.AddCellType("top-wall",       "world/forest/walls/external/border_top_forest.png",    '^');
-    mImpassableIds[2]  = main_grid.AddCellType("left-wall",      "world/forest/walls/external/border_left_forest.png",   '<');
-    mImpassableIds[3]  = main_grid.AddCellType("right-wall",     "world/forest/walls/external/border_right_forest.png",  '>');
-    mImpassableIds[4]  = main_grid.AddCellType("bottom-wall",    "world/forest/walls/external/border_bottom_forest.png", '&');
+    mImpassableIds[0] = main_grid.AddCellType(
+      "floor-obstacle", "world/forest/floor_tiles/tile_grass_3.png", '$');
+    mImpassableIds[1] = main_grid.AddCellType(
+      "top-wall", "world/forest/walls/external/border_top_forest.png", '^');
+    mImpassableIds[2] = main_grid.AddCellType(
+      "left-wall", "world/forest/walls/external/border_left_forest.png", '<');
+    mImpassableIds[3] = main_grid.AddCellType(
+      "right-wall", "world/forest/walls/external/border_right_forest.png", '>');
+    mImpassableIds[4] = main_grid.AddCellType(
+      "bottom-wall", "world/forest/walls/external/border_bottom_forest.png", '&');
 
-    main_grid.Load(std::vector<std::string>{"^^^^^^^^^^^^^^^^^^",
-                                            "<        t       >",
-                                            "<  vv         $  >",
-                                            "<                >",
-                                            "<  t   $         >",
-                                            "<          t     >",
-                                            "<  vv            >",
-                                            "<  vv        $   >",
-                                            "< $   t          >",
-                                            "<        vvvv    >",
-                                            "&&&&&&&&&&&&&&&&&&"} );
+    main_grid.Load(std::vector<std::string>{
+      "^^^^^^^^^^^^^^^^^^",
+      "<        t       >",
+      "<  vv         $  >",
+      "<                >",
+      "<  t   $         >",
+      "<          t     >",
+      "<  vv            >",
+      "<  vv        $   >",
+      "< $   t          >",
+      "<        vvvv    >",
+      "&&&&&&&&&&&&&&&&&&"
+    });
   }
+
   ~MockWorld() = default;
 
   /// @brief Executes an action for the given agent.
   /// @param agent The agent performing the action.
   /// @param action_id The ID of the action to perform.
   /// @return True if the action was successful, false otherwise.
-  virtual int DoAction(AgentBase & agent, size_t action_id) override {
+  virtual int DoAction(AgentBase& agent, size_t action_id) override {
     // Determine where the agent is trying to move.
     WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
     WorldPosition new_position;
     switch (action_id) {
-    case REMAIN_STILL: new_position = cur_position; break;
-    case MOVE_UP:      new_position = cur_position.Up(); break;
-    case MOVE_DOWN:    new_position = cur_position.Down(); break;
-    case MOVE_LEFT:    new_position = cur_position.Left(); break;
-    case MOVE_RIGHT:   new_position = cur_position.Right(); break;
-    case INTERACT:     return true;
-    case QUIT:         return true;
+      case REMAIN_STILL: new_position = cur_position; break;
+      case MOVE_UP:      new_position = cur_position.Up(); break;
+      case MOVE_DOWN:    new_position = cur_position.Down(); break;
+      case MOVE_LEFT:    new_position = cur_position.Left(); break;
+      case MOVE_RIGHT:   new_position = cur_position.Right(); break;
+      case INTERACT:     return true;
+      case QUIT:         return true;
     }
 
     // Don't let the agent move off the world or into a wall.
     if (!main_grid.IsValid(new_position)) { return false; }
     if (std::ranges::contains(mImpassableIds, main_grid[new_position])) { return false; }
 
-    // Set the agent to its new postion.
+    // Set the agent to its new position.
     agent.SetLocation(new_position);
-
     return true;
   }
 
@@ -144,7 +170,6 @@ public:
     mInterface.release();
     exit(0);
   }
-
 };
 
-}
+}  // namespace cse498
