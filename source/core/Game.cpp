@@ -68,32 +68,32 @@ namespace cse498 {
     };
 
     // Grass variants
-    if (!LoadCheck("grass",  std::string(ASSETS_DIR) + "tiles/grass.png"))  return false;
-    if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "tiles/grass_flowers.png")) return false;
-    if (!LoadCheck("grass_bones",   std::string(ASSETS_DIR) + "tiles/grass_bones.png"))   return false;
-    if (!LoadCheck("grass_mud",     std::string(ASSETS_DIR) + "tiles/grass_mud.png"))     return false;
-    if (!LoadCheck("grass_rock",    std::string(ASSETS_DIR) + "tiles/grass_rock.png"))    return false;
+    if (!LoadCheck("grass",  std::string(ASSETS_DIR) + "Tiles/grass.png"))  return false;
+    if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "Tiles/grass_flowers.png")) return false;
+    if (!LoadCheck("grass_bones",   std::string(ASSETS_DIR) + "Tiles/grass_bones.png"))   return false;
+    if (!LoadCheck("grass_mud",     std::string(ASSETS_DIR) + "Tiles/grass_mud.png"))     return false;
+    if (!LoadCheck("grass_rock",    std::string(ASSETS_DIR) + "Tiles/grass_rock.png"))    return false;
 
     // Structure
-    if (!LoadCheck("entrance",      std::string(ASSETS_DIR) + "tiles/grass_left_entrance.png")) return false;
+    if (!LoadCheck("entrance",      std::string(ASSETS_DIR) + "Tiles/grass_left_entrance.png")) return false;
 
     // Border walls
-    if (!LoadCheck("wall_left",     std::string(ASSETS_DIR) + "tiles/grass_wall_left.png"))   return false;
-    if (!LoadCheck("wall_right",    std::string(ASSETS_DIR) + "tiles/grass_wall_right.png"))  return false;
-    if (!LoadCheck("wall_top",      std::string(ASSETS_DIR) + "tiles/grass_wall_up.png"))     return false;
-    if (!LoadCheck("wall_bottom",   std::string(ASSETS_DIR) + "tiles/grass_wall_bottom.png")) return false;
-    if (!LoadCheck("wall_corner",   std::string(ASSETS_DIR) + "tiles/grass_wall_up.png"))     return false;
+    if (!LoadCheck("wall_left",     std::string(ASSETS_DIR) + "Tiles/grass_wall_left.png"))   return false;
+    if (!LoadCheck("wall_right",    std::string(ASSETS_DIR) + "Tiles/grass_wall_right.png"))  return false;
+    if (!LoadCheck("wall_top",      std::string(ASSETS_DIR) + "Tiles/grass_wall_up.png"))     return false;
+    if (!LoadCheck("wall_bottom",   std::string(ASSETS_DIR) + "Tiles/grass_wall_bottom.png")) return false;
+    if (!LoadCheck("wall_corner",   std::string(ASSETS_DIR) + "Tiles/grass_wall_up.png"))     return false;
 
     // Mobs
     if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png")) return false;
 
     // Dungeon tile images
-    if (!LoadCheck("wall",  std::string(ASSETS_DIR) + "tiles/grass.png")) return false;
-    if (!LoadCheck("floor", std::string(ASSETS_DIR) + "tiles/stone.png")) return false;
-    if (!LoadCheck("dot",   std::string(ASSETS_DIR) + "tiles/stone.png")) return false;
+    if (!LoadCheck("wall",  std::string(ASSETS_DIR) + "Tiles/grass.png")) return false;
+    if (!LoadCheck("floor", std::string(ASSETS_DIR) + "Tiles/stone.png")) return false;
+    if (!LoadCheck("dot",   std::string(ASSETS_DIR) + "Tiles/stone.png")) return false;
     
     // Player
-    if (!LoadCheck("player", std::string(ASSETS_DIR) + "player/player.png")) return false;
+    if (!LoadCheck("player", std::string(ASSETS_DIR) + "Player/player.png")) return false;
 
     // World Setups
     SetupOverworld();
@@ -341,13 +341,13 @@ namespace cse498 {
     int tw = static_cast<int>(grid.GetTileWidth());
     int th = static_cast<int>(grid.GetTileHeight());
 
-    // How many tiles fit on screen
-    int tiles_x = mGameView->GetWidth()  / tw;
-    int tiles_y = mGameView->GetHeight() / th;
+    // How many Tiles fit on screen
+    int Tiles_x = mGameView->GetWidth()  / tw;
+    int Tiles_y = mGameView->GetHeight() / th;
 
     // Max camera position so the viewport never scrolls past the grid edge
-    int max_cam_x = std::max(0, static_cast<int>(grid.GetWidth())  - tiles_x);
-    int max_cam_y = std::max(0, static_cast<int>(grid.GetHeight()) - tiles_y);
+    int max_cam_x = std::max(0, static_cast<int>(grid.GetWidth())  - Tiles_x);
+    int max_cam_y = std::max(0, static_cast<int>(grid.GetHeight()) - Tiles_y);
 
     bool moved = false;
     if (keys[SDL_SCANCODE_W]) { camY = std::max(0, camY - 1);          moved = true; }
@@ -384,7 +384,7 @@ namespace cse498 {
 
   // Z-layer ordering. Put here for future reference of probable Game draw logic
   void Game::RenderOverworld() {
-    // Layer 0 — tiles (bottom)
+    // Layer 0 — Tiles (bottom)
     RenderWorld(*mOverworldGrid, mCamX, mCamY);
 
     // Layer 1 — items/objects on the ground
@@ -433,7 +433,7 @@ namespace cse498 {
     mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
 }
 
-  void Game::RenderWorld(ImageGrid& grid, int camX, int camY) {
+  void Game::RenderWorld(const ImageGrid& grid, int camX, int camY) {
     grid.DrawViewport(
         *mImageManager,
         camX, camY,
@@ -486,14 +486,14 @@ namespace cse498 {
       int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
       int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
-      int tiles_x = mGameView->GetWidth() / tw;
-      int tiles_y = mGameView->GetHeight() / th;
+      int Tiles_x = mGameView->GetWidth() / tw;
+      int Tiles_y = mGameView->GetHeight() / th;
 
-      int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - tiles_x);
-      int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
+      int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
+      int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
 
-      mCamX = std::clamp(mPlayerX - tiles_x / 2, 0, max_cam_x);
-      mCamY = std::clamp(mPlayerY - tiles_y / 2, 0, max_cam_y);
+      mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
+      mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
     }
 
     else if (mState == GameState::DUNGEON) {
@@ -511,14 +511,14 @@ namespace cse498 {
       int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
       int th = static_cast<int>(mDungeonGrid->GetTileHeight());
 
-      int tiles_x = mGameView->GetWidth() / tw;
-      int tiles_y = mGameView->GetHeight() / th;
+      int Tiles_x = mGameView->GetWidth() / tw;
+      int Tiles_y = mGameView->GetHeight() / th;
 
-      int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - tiles_x);
-      int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - tiles_y);
+      int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - Tiles_x);
+      int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - Tiles_y);
 
-      mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
-      mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
+      mDungeonCamX = std::clamp(mDungeonPlayerX - Tiles_x / 2, 0, max_cam_x);
+      mDungeonCamY = std::clamp(mDungeonPlayerY - Tiles_y / 2, 0, max_cam_y);
     }
 
     mTurnTaken = true;
