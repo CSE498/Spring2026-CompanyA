@@ -25,7 +25,6 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <stdexcept>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
