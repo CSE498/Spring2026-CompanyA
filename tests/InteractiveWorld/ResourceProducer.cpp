@@ -1,9 +1,10 @@
 #include "../../../source/core/InteractiveWorld/ResourceProducer.hpp"
 #include "../../../source/core/InteractiveWorld/InteractiveWorldInventory.hpp"
 #include "catch2/catch.hpp"
-#include <iostream>
 
 #include <string>
+
+using cse498::ItemType;
 
 bool ApproxEqual(float a, float b, float tolerance = 1e-5f) {
   return std::abs(a - b) <= tolerance;
@@ -43,17 +44,20 @@ TEST_CASE("Test ResourceProducer Rate increase",
   ItemType type = ItemType::Wood;
 
   int inventoryWoodCount = inv.GetAmount(type);
-  farm->Upgrade(type, inventoryWoodCount);
+  const auto firstUpgrade = farm->Upgrade(type, inventoryWoodCount);
+  REQUIRE(firstUpgrade.has_value());
   CHECK(farm->GetCurrentLevel() == 1);
   producer.CalculateRate();
   CHECK(ApproxEqual(producer.GetRate(), 1.25f));
 
-  farm->Upgrade(type, inventoryWoodCount);
+  const auto secondUpgrade = farm->Upgrade(type, inventoryWoodCount);
+  REQUIRE(secondUpgrade.has_value());
   CHECK(farm->GetCurrentLevel() == 2);
   producer.CalculateRate();
   CHECK(ApproxEqual(producer.GetRate(), 1.5f));
 
-  farm->Upgrade(type, inventoryWoodCount);
+  const auto thirdUpgrade = farm->Upgrade(type, inventoryWoodCount);
+  REQUIRE(thirdUpgrade.has_value());
   CHECK(farm->GetCurrentLevel() == 3);
   producer.CalculateRate();
   CHECK(ApproxEqual(producer.GetRate(), 1.75f));
