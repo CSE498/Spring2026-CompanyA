@@ -13,6 +13,8 @@ namespace cse498
         if (!mBehaviorRoot)
             return 0;
 
+        mBlackboard.Remove("selected_action");
+
         BehaviorTrees::ExecutionContext ctx(mBlackboard);
         mBehaviorRoot->Tick(ctx);
 

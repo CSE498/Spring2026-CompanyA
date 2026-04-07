@@ -53,6 +53,10 @@ public:
     }
 
     bool Has(const std::string& key) const;
+    /**
+     * Safe removal. If key doesn't exist then doesn't do anything
+     * @param key - tries to remove this key from unordered_map
+     */
     void Remove(const std::string& key);
     void Clear();
     std::vector<std::string> GetKeys() const;

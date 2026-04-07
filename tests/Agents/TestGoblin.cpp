@@ -168,6 +168,6 @@ TEST_CASE("Goblin chases then attacks from shorter range with higher damage", "[
     const double before = world.GetPlayer()->GetCurrentHealth();
     const double expectedDamage = DamageCalculator::Calculate(stored.GetStats(), world.GetPlayer()->GetStats());
 
-    REQUIRE(stored.SelectAction(world.GetGrid()) == WorldActions::MOVE_RIGHT);
+    REQUIRE(stored.SelectAction(world.GetGrid()) == WorldActions::REMAIN_STILL);
     REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(before - expectedDamage));
 }
