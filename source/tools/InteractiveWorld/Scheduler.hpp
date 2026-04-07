@@ -27,20 +27,20 @@ private:
   };
 
   // Helper function to find a process by ID; returns iterator to process or
-  // processes.end() if not found
+  // mProcesses.end() if not found
   auto FindProcess(ProcessID id) {
-    return std::find_if(processes.begin(), processes.end(),
-                        [id](const Process &p) { return p.id == id; });
+    return std::ranges::find_if(mProcesses,
+                                [id](const Process &p) { return p.id == id; });
   }
 
   // Const version of FindProcess for use in const methods
   auto FindProcess(ProcessID id) const {
-    return std::ranges::find_if(processes,
+    return std::ranges::find_if(mProcesses,
                                 [id](const Process &p) { return p.id == id; });
   }
 
-  std::vector<Process> processes; // List of processes with their priorities
-  std::mt19937 rng{std::random_device{}()}; // Random number generator for
+  std::vector<Process> mProcesses; // List of processes with their priorities
+  std::mt19937 mRng{std::random_device{}()}; // Random number generator for
                                             // weighted random selection
 
 public:
@@ -51,72 +51,67 @@ public:
     // Prevent duplicate IDs
     assert(!HasProcess(id) && "Process already exists in Scheduler");
 
-    processes.push_back({id, priority});
+    mProcesses.push_back({id, priority});
   }
 
   // Returns the ID of the next process to schedule
   ProcessID Next() {
-    assert(!processes.empty() && "Scheduler is empty");
+    assert(!mProcesses.empty() && "Scheduler is empty");
 
-    // Determines next process to run based on weighted random selection using
-    // priorities
-    float totalPriority = std::ranges::fold_left(
-        processes |
-            std::views::transform([](const Process &p) { return p.priority; }),
-        0.0f, // Starting value of the accumulator
-        [](float acc, float priority) { return acc + priority; });
+    const float totalPriority = std::accumulate(
+        mProcesses.begin(), mProcesses.end(), 0.0f,
+        [](float total, const Process& process) {
+          return total + process.priority;
+        });
 
-    // Checks that total priority is positive
     assert(totalPriority > 0.0f && "Total priority must be > 0");
 
     std::uniform_real_distribution<float> dist(0.0f, totalPriority);
-    float r = dist(rng);
+    float r = dist(mRng);
 
-    // Iterate through processes and return the first one where the cumulative
-    // priority exceeds r
     float cumulative = 0.0f;
-    for (const auto &p : processes) {
-      cumulative += p.priority;
+    for (const auto& [id, priority] : mProcesses) {
+      cumulative += priority;
       if (r <= cumulative) {
-        return p.id;
+        return id;
       }
     }
 
     // Floating-point safety fallback, just in case
-    return processes.back().id;
+    return mProcesses.back().id;
   }
 
   // Check whether a process exists
   bool HasProcess(ProcessID id) const {
-    return FindProcess(id) != processes.end();
+    return FindProcess(id) != mProcesses.end();
   }
 
   // Remove a process; returns false if not found
   bool RemoveProcess(ProcessID id) {
     auto it = FindProcess(id);
-    if (it == processes.end()) {
+    if (it == mProcesses.end()) {
       return false;
     }
 
-    processes.erase(it);
+    mProcesses.erase(it);
     return true;
   }
 
   // Update the priority of an existing process
   void UpdatePriority(ProcessID id, float newPriority) {
-    assert(newPriority > 0.0f);
+    assert(newPriority > 0.0f && "Scheduler priority must be positive");
 
     auto it = FindProcess(id);
-    assert(it != processes.end() && "Process not found in Scheduler");
+    assert(it != mProcesses.end() && "Process not found in Scheduler");
 
     it->priority = newPriority;
   }
 
   // Remove all processes
-  void Clear() { processes.clear(); }
+  void Clear() { mProcesses.clear(); }
 
   // Check if there are no processes in the scheduler
-  bool Empty() const { return processes.empty(); }
+  bool Empty() const { return mProcesses.empty(); }
 };
 
 } // namespace cse498
