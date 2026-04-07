@@ -1,10 +1,11 @@
 /**
- * FunctionSet: A container that holds a collection of functions, all with the exact same signature.
+* FunctionSet: FunctionSet: A container that holds functions with the same parameter types
+ * and a void return type. Functions can be added, removed by ID, and invoked
+ * together with CallAll.
  */
 
 #pragma once
 
-#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <ranges>
@@ -14,11 +15,8 @@
 
 namespace cse498 {
 
-  template <typename Signature>
-  class FunctionSet;
-
   template <typename... Args>
-  class FunctionSet<void(Args...)> {
+  class FunctionSet {
   public:
     using FunctionID = std::uint64_t;
     using FunctionType = std::function<void(Args...)>;
@@ -58,23 +56,19 @@ namespace cse498 {
       return mFunctions.empty();
     }
 
-    // Call every stored function
+    // Call every stored function.
     void CallAll(Args... args) const {
       for (const Entry& entry : mFunctions) {
         entry.fn(args...);
       }
     }
 
-    //range access to all entries.
-    auto Entries() {
-      return std::views::all(mFunctions);
-    }
-
+    // Read-only range access to all entries.
     auto Entries() const {
       return std::views::all(mFunctions);
     }
 
-    // View of the stored IDs
+    // View of the stored IDs.
     auto IDs() const {
       return mFunctions | std::views::transform([](const Entry& e) { return e.id; });
     }

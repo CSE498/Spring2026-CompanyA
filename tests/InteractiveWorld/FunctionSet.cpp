@@ -7,7 +7,7 @@ using namespace cse498;
 
 TEST_CASE("FunctionSet starts empty")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   CHECK(fs.Size() == 0);
   CHECK(fs.Empty() == true);
@@ -15,7 +15,7 @@ TEST_CASE("FunctionSet starts empty")
 
 TEST_CASE("AddFunction increases size")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   auto id0 = fs.AddFunction([] {});
   auto id1 = fs.AddFunction([] {});
@@ -27,7 +27,7 @@ TEST_CASE("AddFunction increases size")
 
 TEST_CASE("RemoveFunction removes the correct function")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   auto id0 = fs.AddFunction([] {});
   auto id1 = fs.AddFunction([] {});
@@ -43,7 +43,7 @@ TEST_CASE("RemoveFunction removes the correct function")
 
 TEST_CASE("Clear removes all functions")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   fs.AddFunction([] {});
   fs.AddFunction([] {});
@@ -58,7 +58,7 @@ TEST_CASE("Clear removes all functions")
 
 TEST_CASE("CallAll calls functions in insertion order")
 {
-  FunctionSet<void(int)> fs;
+  FunctionSet<int> fs;
   std::vector<int> out;
 
   fs.AddFunction([&](int x) { out.push_back(x); });
@@ -75,7 +75,7 @@ TEST_CASE("CallAll calls functions in insertion order")
 
 TEST_CASE("Removed functions are not called")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
   int called = 0;
 
   auto id0 = fs.AddFunction([&] { ++called; });
@@ -92,7 +92,7 @@ TEST_CASE("Removed functions are not called")
 
 TEST_CASE("Function IDs keep increasing after Clear")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   auto id0 = fs.AddFunction([] {});
   fs.Clear();
@@ -103,13 +103,13 @@ TEST_CASE("Function IDs keep increasing after Clear")
 
 TEST_CASE("IDs view returns stored IDs in order")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   auto id0 = fs.AddFunction([] {});
   auto id1 = fs.AddFunction([] {});
   auto id2 = fs.AddFunction([] {});
 
-  std::vector<FunctionSet<void()>::FunctionID> ids;
+  std::vector<FunctionSet<>::FunctionID> ids;
   for (auto id : fs.IDs()) {
     ids.push_back(id);
   }
@@ -122,12 +122,12 @@ TEST_CASE("IDs view returns stored IDs in order")
 
 TEST_CASE("Entries view exposes ids in insertion order")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   auto id0 = fs.AddFunction([] {});
   auto id1 = fs.AddFunction([] {});
 
-  std::vector<FunctionSet<void()>::FunctionID> ids;
+  std::vector<FunctionSet<>::FunctionID> ids;
   for (const auto& entry : fs.Entries()) {
     ids.push_back(entry.id);
   }
