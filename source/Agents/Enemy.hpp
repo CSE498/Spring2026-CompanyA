@@ -16,7 +16,7 @@ namespace cse498
     class Enemy : public AgentBase
     {
     private:
-        double mAttackRange = 3; // 3 block units
+        // Stats live in AgentBase
 
         std::size_t mGoldDrop = 5; // Gold amount rewarded upon defeat
         bool mGoldClaimed = false; // Whether gold has been claimed
@@ -24,9 +24,15 @@ namespace cse498
     public:
         Enemy(size_t id, const std::string & name, const WorldBase & world) : AgentBase(id, name, world) {}
 
+        /**
+         * Carries out the action of the enemy -- Triggers the behavior tree and allows a turn
+         * of the enemy to progress
+         * @param grid - unused variable as agents have access to WorldBase --> GetGrid.
+         * @return the action to be carried out -- ONLY "wasd, stay" -- Attacks handled internally
+         *          (unless demo world)
+         */
         [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
 
-        [[nodiscard]] double GetAttackRange() const { return mAttackRange; }
 
         /**
          * Sets how much currency the enemy awards when defeated.

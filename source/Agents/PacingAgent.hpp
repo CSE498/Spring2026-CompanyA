@@ -20,7 +20,7 @@ namespace cse498 {
   public:
     PacingAgent(size_t id, const std::string & name, const WorldBase & world)
       : AgentBase(id, name, world) { }
-    ~PacingAgent() = default;
+    ~PacingAgent() override = default;
 
     PacingAgent & SetHorizontal() { mVertical = false; return *this; }
     PacingAgent & SetVertical() { mVertical = true; return *this; }

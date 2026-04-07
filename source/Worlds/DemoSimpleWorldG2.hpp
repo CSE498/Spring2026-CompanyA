@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "DemoSimpleWorldG2Actions.hpp"
 #include "../core/WorldBase.hpp"
 
 

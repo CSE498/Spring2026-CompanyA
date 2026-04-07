@@ -24,10 +24,10 @@ public:
      */
     static constexpr AgentStats GetSkeletonStats(size_t level)
     {
-        double hp = 100 + 20 * level;
-        double atk = 5 + 2 * level;
-        double def = 5 + level;
-        size_t range = 3 + static_cast<int>(level / 5);
+        double hp = 100 + 20 * static_cast<double>(level);
+        double atk = 5 + 2 * static_cast<double>(level);
+        double def = 5 + static_cast<double>(level);
+        size_t range = 3 + level / 5;
         return {hp, atk, def, range, level};
     }
 

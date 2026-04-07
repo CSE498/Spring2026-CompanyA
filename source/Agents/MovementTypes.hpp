@@ -3,6 +3,11 @@
  * @author Logan Rimarcik
  *
  * Defines some movement maps or other movement information
+ *
+ * This doesn't define every possible action but is handy for getting the action ids
+ * and action names of the movement actions
+ *
+ * TL;DR - Defines how MOVEMENTS map to IDS/Action Names
  */
 
 #pragma once

@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "WorldActions.hpp"
 #include "../Agents/Enemy.hpp"
 #include "../Agents/FarmingAgent.hpp"
 #include "../Agents/PlayerAgent.hpp"
@@ -15,6 +16,7 @@
 #include "Agents/AgentFactory.hpp"
 
 namespace cse498 {
+
 
 bool DemoSimpleWorldG2::IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const {
     for (size_t i = 0; i < GetNumAgents(); ++i) {
@@ -106,12 +108,17 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
         const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
         const double dx = std::abs(actor_pos.X() - other_pos.X());
         const double dy = std::abs(actor_pos.Y() - other_pos.Y());
+        // Interaction should commence between the two parties
+        // To move this into the behavior tree of agents we need a way to find enemies in radius R
+        // In practice this will be moved and handled by us, not the world.
         if (dx <= 1.0 && dy <= 1.0) {
-            if (other.GetID() == mFarmerId && HasAgent(mEnemyId) && &actor == &GetAgent(mEnemyId)) {
+            // if farmer <-> enemy ignore.
+            if (other.GetID() == mFarmerId && HasAgent(mEnemyId) && actor.GetID() == GetAgent(mEnemyId).GetID()) {
                 continue;
             }
+            // Otherwise interaction happens
             interacted = true;
-            if (other.GetID() == mFarmerId) {
+            if (other.GetID() == mFarmerId) { // If farmer then do -->
                 auto &farmer = dynamic_cast<FarmingAgent &>(other);
                 if (&actor == GetPlayer()) {
                     return HandleMerchantTrade(farmer);
@@ -123,7 +130,8 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                 } else {
                     std::cout << farmer.GetTradeClosedMessage() << '\n';
                 }
-            } else if (other.GetID() == mPlayerId && HasAgent(mEnemyId) && &actor == &GetAgent(mEnemyId)) {
+                // If player and Enemy -->
+            } else if (other.GetID() == mPlayerId && HasAgent(mEnemyId) && actor.GetID() == GetAgent(mEnemyId).GetID()) {
                 auto &player = dynamic_cast<PlayerAgent &>(other);
                 auto &enemy = dynamic_cast<Enemy &>(actor);
 
@@ -134,7 +142,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                           << static_cast<int>(dealt) << " damage.\n";
                 if (!player.IsAlive()) {
                     std::cout << player.GetName() << " has fallen.\n";
-                    run_over = true;
+                    mRunOver = true;
                     return 1;
                 }
                 const double retaliate =
@@ -146,6 +154,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                     HandleEnemyDefeat(enemy, player);
                     return 1;
                 }
+                //
             } else if (other.GetID() == mEnemyId) {
                 const double dealt =
                     DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
@@ -164,7 +173,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                 std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
                 if (!actor.IsAlive()) {
                     std::cout << actor.GetName() << " has fallen.\n";
-                    run_over = true;
+                    mRunOver = true;
                     return 1;
                 }
             }
@@ -279,14 +288,13 @@ void DemoSimpleWorldG2::HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player)
 }
 
 void DemoSimpleWorldG2::ConfigAgent(AgentBase &agent) {
-    namespace A = DemoSimpleWorldG2Actions;
-    agent.AddAction("w", A::MOVE_UP);
-    agent.AddAction("s", A::MOVE_DOWN);
-    agent.AddAction("a", A::MOVE_LEFT);
-    agent.AddAction("d", A::MOVE_RIGHT);
-    agent.AddAction("e", A::INTERACT);
-    agent.AddAction("q", A::QUIT);
-    agent.AddAction("stay", A::REMAIN_STILL);
+    agent.AddAction(WorldActions::MOVE_UP_STRING, WorldActions::MOVE_UP);
+    agent.AddAction(WorldActions::MOVE_DOWN_STRING, WorldActions::MOVE_DOWN);
+    agent.AddAction(WorldActions::MOVE_LEFT_STRING, WorldActions::MOVE_LEFT);
+    agent.AddAction(WorldActions::MOVE_RIGHT_STRING, WorldActions::MOVE_RIGHT);
+    agent.AddAction(WorldActions::INTERACT_STRING, WorldActions::INTERACT);
+    agent.AddAction(WorldActions::QUIT_STRING, WorldActions::QUIT);
+    agent.AddAction(WorldActions::REMAIN_STILL_STRING, WorldActions::REMAIN_STILL);
 }
 
 DemoSimpleWorldG2::DemoSimpleWorldG2() {
@@ -332,32 +340,31 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
 }
 
 int DemoSimpleWorldG2::DoAction(AgentBase &agent, size_t action_id) {
-    namespace A = DemoSimpleWorldG2Actions;
-    if (action_id == A::QUIT) {
-        run_over = true;
+    if (action_id == WorldActions::QUIT) {
+        mRunOver = true;
         std::cout << "Quitting demo.\n";
         return 1;
     }
     switch (action_id) {
-    case A::MOVE_UP:
+    case WorldActions::MOVE_UP:
         return MoveAgentBy(agent, 0.0, -1.0);
-    case A::MOVE_DOWN:
+    case WorldActions::MOVE_DOWN:
         return MoveAgentBy(agent, 0.0, 1.0);
-    case A::MOVE_LEFT:
+    case WorldActions::MOVE_LEFT:
         return MoveAgentBy(agent, -1.0, 0.0);
-    case A::MOVE_RIGHT:
+    case WorldActions::MOVE_RIGHT:
         return MoveAgentBy(agent, 1.0, 0.0);
-    case A::INTERACT:
+    case WorldActions::INTERACT:
         return HandleInteraction(agent);
-    case A::REMAIN_STILL:
+    case WorldActions::REMAIN_STILL:
     default:
         return 0;
     }
 }
 
 void DemoSimpleWorldG2::Run() {
-    run_over = false;
-    while (!run_over) {
+    mRunOver = false;
+    while (!mRunOver) {
         PrintWorldState();
         PlayerAgent* player = GetPlayer();
         if (player == nullptr) return;
@@ -374,7 +381,7 @@ void DemoSimpleWorldG2::Run() {
         player->SetActionResult(result);
         RemoveDeadAgents();
 
-        if (run_over) {
+        if (mRunOver) {
             break;
         }
 

@@ -40,7 +40,7 @@ namespace cse498 {
     /// The main player stored separately from the agents and has id = 0
     PlayerAgent* mPlayer;
 
-    bool run_over = false;  ///< Are we finished executing and now shutting down?
+    bool mRunOver = false;  ///< Are we finished executing and now shutting down?
 
 
 
@@ -156,7 +156,7 @@ namespace cse498 {
     [[nodiscard]] virtual const WorldGrid & GetGrid() const { return main_grid; }
 
     /// Determine if the run has ended.
-    [[nodiscard]] virtual bool IsRunOver() const { return run_over; }
+    [[nodiscard]] virtual bool IsRunOver() const { return mRunOver; }
 
     size_t GetNextAgentId() { return mAgentIdIndex++; }
 
@@ -236,8 +236,8 @@ namespace cse498 {
 
     /// @brief Run all agents repeatedly until an end condition is met.
     virtual void Run() {
-      run_over = false;
-      while (!run_over) {
+      mRunOver = false;
+      while (!mRunOver) {
         RunAgents();
         RemoveDeadAgents();
         UpdateWorld();

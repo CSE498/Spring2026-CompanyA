@@ -9,8 +9,9 @@
 #include "../core/WorldBase.hpp"
 #include "../tools/PathGenerator.hpp"
 #include "../tools/PathVector.hpp"
-#include "Worlds/DemoSimpleWorldG2Actions.hpp"
+#include "Worlds/WorldActions.hpp"
 #include "../tools/DamageCalculator.hpp"
+
 #include <cmath>
 
 #include "MovementTypes.hpp"
@@ -18,7 +19,6 @@
 using cse498::BehaviorTrees::TreeBuilder;
 using cse498::BehaviorTrees::ExecutionContext;
 using cse498::BehaviorTrees::Node;
-namespace DemoAct = cse498::DemoSimpleWorldG2Actions;
 using Node::Status::Success;
 using Node::Status::Failure;
 
@@ -85,15 +85,14 @@ std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldB
         WorldPosition curPos  = Round(enemyPos);
         auto dir = nextPos - curPos;
 
-        auto action_name = ToDirection(dir);
+        auto action_name = MovementTypes::GetActionName(dir);
         // Just checks that the next position is indeed in the 8 diagonal positions
         // otherwise action_name will be false from std::optional
-        assert(action_name && "Something went wrong with path generation");
 
         // Sanity check: ensure the destination tile is walkable.
         assert(grid.IsWalkable(nextPos));
 
-        size_t action_id = enemy.GetActionID(action_name.value());
+        size_t action_id = enemy.GetActionID(action_name);
         if (action_id == 0)
             return Failure;
 
@@ -130,8 +129,6 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const
 
 
     // Chase action: when not in range, move one step toward the player using PathGenerator.
-
-
     selector->AddChild(std::move(attackSeq));
     selector->AddChild(ChasePlayer(enemy, world));
 
@@ -143,15 +140,15 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const
 std::unique_ptr<Node> AgentFactory::CreatePatrolTree(AgentBase* agent)
 {
     return TreeBuilder::Act("Walk Back And Forth", [agent](ExecutionContext& ctx) {
-        if (!agent) return Node::Status::Failure;
-        auto dir = ctx.mBlackboard.Get<std::string>("patrol_direction", "left");
+        if (!agent) return Failure;
+        auto dir = ctx.mBlackboard.Get<std::string>("patrol_direction", WorldActions::MOVE_LEFT_STRING);
         size_t actionId;
-        if (dir == "left") {
-            actionId = agent->GetActionID("left");
-            ctx.mBlackboard.Set<std::string>("patrol_direction", "right");
+        if (dir == WorldActions::MOVE_LEFT_STRING) {
+            actionId = agent->GetActionID(WorldActions::MOVE_LEFT_STRING);
+            ctx.mBlackboard.Set<std::string>("patrol_direction", WorldActions::MOVE_RIGHT_STRING);
         } else {
-            actionId = agent->GetActionID("right");
-            ctx.mBlackboard.Set<std::string>("patrol_direction", "left");
+            actionId = agent->GetActionID(WorldActions::MOVE_RIGHT_STRING);
+            ctx.mBlackboard.Set<std::string>("patrol_direction", WorldActions::MOVE_LEFT_STRING);
         }
         if (actionId != 0)
             ctx.mBlackboard.Set<size_t>("selected_action", actionId);
@@ -163,7 +160,6 @@ std::unique_ptr<Enemy> AgentFactory::CreatePatrolAgent(WorldBase& world, const W
 {
     auto patrol = std::make_unique<Enemy>(world.GetNextAgentId(), "Patrol", world);
     patrol->SetLocation(spawn);
-    patrol->AddAction("left", 1).AddAction("right", 2);
     patrol->SetBehaviorTree(CreatePatrolTree(patrol.get()));
     return patrol;
 }
@@ -173,25 +169,29 @@ std::unique_ptr<Node> AgentFactory::CreateEnemyFollowPlayerTree(Enemy *enemy,
     const WorldBase &world,
     std::size_t targetAgentIndex)
 {
+    /*
+     * This is a demo tree because the demo works slightly different than practice due to not having all the
+     * requests complete from the world groups. It is a compact version of the more detailed trees
+     */
     auto chase = TreeBuilder::Act(
         "ChaseOneStepTowardTarget",
         [enemy, &world, targetAgentIndex](ExecutionContext &ctx) {
             if (enemy == nullptr || !enemy->IsAlive()) {
-                ctx.mBlackboard.Set<std::size_t>("selected_action", DemoAct::REMAIN_STILL);
-                return Node::Status::Failure;
+                ctx.mBlackboard.Set<std::size_t>("selected_action", WorldActions::REMAIN_STILL);
+                return Failure;
             }
             const WorldPosition epos = enemy->GetLocation().AsWorldPosition();
             const WorldPosition ppos = world.GetAgent(targetAgentIndex).GetLocation().AsWorldPosition();
             if (IsAdjacentForCombat(epos, ppos)) {
-                ctx.mBlackboard.Set<std::size_t>("selected_action", DemoAct::INTERACT);
-                return Node::Status::Success;
+                ctx.mBlackboard.Set<std::size_t>("selected_action", WorldActions::INTERACT);
+                return Success;
             }
             const WorldPosition next = PathGenerator::NextCardinalToward(epos, ppos);
             const double dx = next.X() - epos.X();
             const double dy = next.Y() - epos.Y();
             const std::size_t aid = MovementTypes::GetActionID(dx, dy);
             ctx.mBlackboard.Set<std::size_t>("selected_action", aid);
-            return Node::Status::Success;
+            return Success;
         });
     return chase;
 
@@ -230,7 +230,7 @@ bool AgentFactory::IsInRange(const Enemy &enemy, const WorldPosition &entityPosi
     {
         // then we are pretty much good. Just check Euclidean Distance is less than range with respect to the player
         // hitbox. TODO: update once hitbox information is more well-defined
-        if ((p1 - p2).GetMagnitude() < enemy.GetAttackRange())
+        if ((p1 - p2).GetMagnitude() < static_cast<double>(enemy.GetAtkRange()))
             return true;
     }
     return false;

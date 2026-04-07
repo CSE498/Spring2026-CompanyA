@@ -27,21 +27,25 @@ size_t PlayerAgent::SelectPlayerAction(const char input)
     // This CANNOT be done here because world is const& and DoAction is not const method.
     // I wish it was... too late now :/
 
-    char lower = std::tolower(input);
-    switch (lower)
+    switch (input)
     {
         case 'a':
+        case 'A':
             return GetActionID("a");
-            break;
         case 'w':
+        case 'W':
             return GetActionID("w");
         case 's':
+        case 'S':
             return GetActionID("s");
         case 'd':
+        case 'D':
             return GetActionID("d");
         case 'e':
+        case 'E':
             return GetActionID("e");
         case 'q':
+        case 'Q':
             return GetActionID("q");
         default:
             return GetActionID("stay");

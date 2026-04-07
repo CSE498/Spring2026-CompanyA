@@ -43,37 +43,6 @@ private:
     static std::unique_ptr<BehaviorTrees::Node> ChasePlayer(const Enemy& enemy, const WorldBase& world);
 
 
-    static constexpr std::optional<std::string> ToDirection(const PathVector& v)
-    {
-        // edge case.
-        if (v.X() == 0 && v.Y() == 0) return "stay";
-
-        // X direction
-        std::string xStr;
-        if (v.X() == 1)      xStr = "right";
-        else if (v.X() == -1) xStr = "left";
-
-        // Y direction
-        std::string yStr;
-        if (v.Y() == 1)      yStr = "down";
-        else if (v.Y() == -1) yStr = "up";
-
-        // This case is blocked out because we only have 4D movement right now
-        // If we do 8D then reenable this case and account for it.
-        // if (!xStr.empty() && !yStr.empty())
-        //     return yStr + "-" + xStr;  // "up-right", etc.
-
-        // if 'x' only has stuff
-        if (!xStr.empty())
-            return xStr;
-        // if y only has stuff
-        if (!yStr.empty())
-            return yStr;
-
-        // Fallback -- all cases for other strings
-        return {};
-    }
-
     /**
      * Creates the tree for the skeleton
      * @param enemy the skeleton that will own this tree
@@ -100,6 +69,12 @@ private:
      * @return true if in range
      */
     static bool IsInRange(const Enemy &enemy, const WorldPosition &entityPosition, const WorldGrid & grid);
+    /**
+     * Demo function - Checks two positions are adjacent
+     * @param a
+     * @param b
+     * @return
+     */
     [[nodiscard]] static  bool IsAdjacentForCombat(const WorldPosition& a, const WorldPosition& b) {
         const double dx = std::abs(a.X() - b.X());
         const double dy = std::abs(a.Y() - b.Y());
@@ -109,10 +84,20 @@ private:
 
 
 public:
-    /// Create a skeleton enemy from a definition and spawn position.
+    /**
+     * Create a skeleton enemy from a definition and spawn position.
+     * @param def - agent definition
+     * @param world - world
+     * @return enemy object
+     */
     static std::unique_ptr<Enemy> CreateEnemySkeleton(const AgentDefinition& def, WorldBase & world);
 
-    /// Create an agent that walks left then right, repeatedly. Uses action names "left" and "right".
+    /**
+     * Create an agent that walks left then right, repeatedly.
+     * @param world - world
+     * @param spawn - spawn loc
+     * @return the enemy
+     */
     static std::unique_ptr<Enemy> CreatePatrolAgent(WorldBase& world, const WorldPosition& spawn);
 
     static std::unique_ptr<BehaviorTrees::Node> CreateEnemyFollowPlayerTree(Enemy *enemy,

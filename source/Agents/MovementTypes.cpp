@@ -6,27 +6,26 @@
 #include "MovementTypes.hpp"
 
 #include "tools/PathVector.hpp"
-#include "Worlds/DemoSimpleWorldG2Actions.hpp"
+#include "Worlds/WorldActions.hpp"
 
-namespace G2 = cse498::DemoSimpleWorldG2Actions;
 
 namespace cse498
 {
 
 std::size_t MovementTypes::GetActionID(double dx, double dy) {
     if (dx == 0.0 && dy == -1.0) {
-        return G2::MOVE_UP;
+        return WorldActions::MOVE_UP;
     }
     if (dx == 0.0 && dy == 1.0) {
-        return G2::MOVE_DOWN;
+        return WorldActions::MOVE_DOWN;
     }
     if (dx == -1.0 && dy == 0.0) {
-        return G2::MOVE_LEFT;
+        return WorldActions::MOVE_LEFT;
     }
     if (dx == 1.0 && dy == 0.0) {
-        return G2::MOVE_RIGHT;
+        return WorldActions::MOVE_RIGHT;
     }
-    return G2::REMAIN_STILL;
+    return WorldActions::REMAIN_STILL;
 }
 
 
@@ -38,18 +37,18 @@ size_t MovementTypes::GetActionID(const PathVector &path)
 std::string MovementTypes::GetActionName(double dx, double dy)
 {
     if (dx == 0.0 && dy == -1.0) {
-        return "w";
+        return WorldActions::MOVE_UP_STRING;
     }
     if (dx == 0.0 && dy == 1.0) {
-        return "s";
+        return WorldActions::MOVE_DOWN_STRING;
     }
     if (dx == -1.0 && dy == 0.0) {
-        return "a";
+        return WorldActions::MOVE_LEFT_STRING;
     }
     if (dx == 1.0 && dy == 0.0) {
-        return "d";
+        return WorldActions::MOVE_RIGHT_STRING;
     }
-    return "stay";
+    return WorldActions::REMAIN_STILL_STRING;
 
 }
 std::string MovementTypes::GetActionName(const PathVector &path)

@@ -85,10 +85,8 @@ namespace cse498 {
     [[nodiscard]] double GetMaxHealth() const { return mStats.mMaxHp; }
     [[nodiscard]] double GetAtk() const { return mStats.mAtk; }
     [[nodiscard]] double GetDef() const { return mStats.mDef; }
-    [[nodiscard]] size_t GetRange() const { return mStats.mRange; }
+    [[nodiscard]] size_t GetAtkRange() const { return mStats.mRange; }
     [[nodiscard]] size_t GetLevel() const { return mStats.mLevel; }
-
-
 
     /**
      * sets hp and forces within proper range [0, mMaxHp]

@@ -18,8 +18,11 @@ namespace cse498
  */
 struct AgentDefinition
 {
+    /// Name of agent
     std::string mName;
+    /// Level of agent
     size_t mLevel;
+    /// Position of agent
     WorldPosition mSpawn;
 
     AgentDefinition(std::string name, const size_t level, const WorldPosition &spawn) : mName(std::move(name)),
