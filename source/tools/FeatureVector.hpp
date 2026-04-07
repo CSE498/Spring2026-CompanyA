@@ -37,7 +37,8 @@ namespace cse498 {
 //
 // double health = fv.get(AgentFeature::Health);
 
-template <typename FeatureEnum> class FeatureVector {
+template <typename FeatureEnum> 
+class FeatureVector {
 
   static constexpr std::size_t feature_count =
       static_cast<std::size_t>(FeatureEnum::COUNT);
