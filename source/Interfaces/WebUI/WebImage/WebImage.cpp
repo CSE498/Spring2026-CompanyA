@@ -21,46 +21,7 @@ using emscripten::val;
 
 namespace {
 
-// Registry maps integer IDs to WebImage pointers, avoiding unsafe pointer-to-int casts
-// when forwarding events from JavaScript back to C++.
-std::unordered_map<int, cse498::WebImage*> sImageRegistry;
-int sNextRegistryId = 0;
-
-/// @brief Registers a WebImage instance and returns its unique integer id.
-/// @param img Pointer to the WebImage to register.
-/// @return Integer id that can be passed to JS event listeners.
-int RegisterImage(cse498::WebImage* img) {
-  int id = sNextRegistryId++;
-  sImageRegistry[id] = img;
-  return id;
-}
-
-/// @brief Removes the registry entry for the given id.
-/// @param id Registry id previously returned by RegisterImage().
-void UnregisterImage(int id) {
-  sImageRegistry.erase(id);
-}
-
-/// @brief Updates the registry entry for @p id to point to @p img (used after move).
-/// @param id  Registry id of the entry to update.
-/// @param img New WebImage pointer to store.
-void UpdateRegistryEntry(int id, cse498::WebImage* img) {
-  sImageRegistry[id] = img;
-}
-
-/// @brief Looks up the WebImage registered under @p id.
-/// @param id Registry id to look up.
-/// @return Pointer to the registered WebImage, or nullptr if not found.
-cse498::WebImage* LookupImage(int id) {
-  auto it = sImageRegistry.find(id);
-  return it != sImageRegistry.end() ? it->second : nullptr;
-}
-
 /// @brief Returns true when the DOM element is usable; otherwise logs a warning.
-/// @param element DOM handle to validate.
-/// @param id      Logical WebImage id used in the warning.
-/// @param action  Description of the skipped action.
-/// @return True if the DOM element is neither null nor undefined.
 bool EnsureElementAvailable(const val& element,
                             const std::string& id,
                             const char* action) {
@@ -89,6 +50,29 @@ namespace cse498 {
 static constexpr int kDefaultPlaceholderPx = 100;
 
 int WebImage::mNextIdCounter = 1;
+std::unordered_map<int, WebImage*> WebImage::sImageRegistry;
+int WebImage::sNextRegistryId = 0;
+
+// ----- Registry methods -----
+
+int WebImage::RegisterImage(WebImage* img) {
+  int id = sNextRegistryId++;
+  sImageRegistry[id] = img;
+  return id;
+}
+
+void WebImage::UnregisterImage(int id) {
+  sImageRegistry.erase(id);
+}
+
+void WebImage::UpdateRegistryEntry(int id, WebImage* img) {
+  sImageRegistry[id] = img;
+}
+
+WebImage* WebImage::LookupImage(int id) {
+  auto it = sImageRegistry.find(id);
+  return it != sImageRegistry.end() ? it->second : nullptr;
+}
 
 // ----- Private static helpers -----
 
@@ -100,6 +84,16 @@ val WebImage::GetDocument() {
 /// Converts an integer to a CSS pixel string, e.g. 42 -> "42px".
 std::string WebImage::ToPx(int value) {
   return std::to_string(value) + "px";
+}
+
+void WebImage::ApplyDimensionStyle(emscripten::val& style, const char* prop, int value) {
+  if (value > 0) {
+    style.set(prop, ToPx(value));
+  }
+}
+
+void WebImage::ApplyPlaceholderDimensionStyle(emscripten::val& style, const char* prop, int value) {
+  style.set(prop, ToPx(value > 0 ? value : kDefaultPlaceholderPx));
 }
 
 // ----- Private helpers -----
@@ -247,14 +241,8 @@ void WebImage::SetSize(int width_px, int height_px) {
   mHeight = height_px;
   if (!mElement.isNull()) {
     val style = mElement["style"];
-    const auto apply_dimension = [&](const char* property, int value) {
-      if (value > 0) {
-        style.set(property, ToPx(value));
-      }
-    };
-
-    apply_dimension("width", width_px);
-    apply_dimension("height", height_px);
+    ApplyDimensionStyle(style, "width", width_px);
+    ApplyDimensionStyle(style, "height", height_px);
     style.set("objectFit", std::string("fill"));
   }
 }
@@ -267,13 +255,9 @@ void WebImage::Resize(int width_px, int height_px, bool maintain_aspect_ratio) {
   mHeight = height_px;
   if (!mElement.isNull()) {
     val style = mElement["style"];
-    const auto set_style = [&](const char* property, const std::string& value) {
-      style.set(property, value);
-    };
-
-    set_style("width", ToPx(width_px));
-    set_style("height", ToPx(height_px));
-    set_style("objectFit", maintain_aspect_ratio ? "contain" : "fill");
+    style.set("width", ToPx(width_px));
+    style.set("height", ToPx(height_px));
+    style.set("objectFit", maintain_aspect_ratio ? std::string("contain") : std::string("fill"));
   }
 }
 
@@ -377,19 +361,10 @@ void WebImage::SyncFromModel() {
   mElement.set("src", mSrc);
   mElement.set("alt", mAltText);
   val style = mElement["style"];
-  const auto set_style = [&](const char* property, const std::string& value) {
-    style.set(property, value);
-  };
-  const auto apply_dimension = [&](const char* property, int value) {
-    if (value > 0) {
-      set_style(property, ToPx(value));
-    }
-  };
-
-  apply_dimension("width", mWidth);
-  apply_dimension("height", mHeight);
-  set_style("opacity", std::to_string(mOpacity));
-  set_style("display", mIsVisible ? "" : "none");
+  ApplyDimensionStyle(style, "width", mWidth);
+  ApplyDimensionStyle(style, "height", mHeight);
+  style.set("opacity", std::to_string(mOpacity));
+  style.set("display", mIsVisible ? std::string("") : std::string("none"));
 }
 
 // ----- ICanvasElement Interface -----
@@ -476,17 +451,10 @@ void WebImage::ApplyPlaceholder() {
   mElement.set("src", std::string(""));
 
   val style = mElement["style"];
-  const auto set_style = [&](const char* property, const std::string& value) {
-    style.set(property, value);
-  };
-  const auto apply_placeholder_dimension = [&](const char* property, int value) {
-    set_style(property, ToPx(value > 0 ? value : kDefaultPlaceholderPx));
-  };
-
-  set_style("backgroundColor", mPlaceholderColor);
-  set_style("display", "inline-block");
-  apply_placeholder_dimension("width", mWidth);
-  apply_placeholder_dimension("height", mHeight);
+  style.set("backgroundColor", mPlaceholderColor);
+  style.set("display", std::string("inline-block"));
+  ApplyPlaceholderDimensionStyle(style, "width", mWidth);
+  ApplyPlaceholderDimensionStyle(style, "height", mHeight);
 }
 
 }  // namespace cse498
@@ -497,7 +465,7 @@ extern "C" {
   /// @param registry_id Integer id of the WebImage to notify.
   EMSCRIPTEN_KEEPALIVE
   void WebImage_handleLoad(int registry_id) {
-    auto* img = LookupImage(registry_id);
+    auto* img = cse498::WebImage::LookupImage(registry_id);
     if (img) {
       img->HandleLoad();
     }
@@ -507,7 +475,7 @@ extern "C" {
   /// @param registry_id Integer id of the WebImage to notify.
   EMSCRIPTEN_KEEPALIVE
   void WebImage_handleError(int registry_id) {
-    auto* img = LookupImage(registry_id);
+    auto* img = cse498::WebImage::LookupImage(registry_id);
     if (img) {
       img->HandleError();
     }
@@ -518,6 +486,6 @@ extern "C" {
   /// @return 1 if the registry id maps to a live image; otherwise 0.
   EMSCRIPTEN_KEEPALIVE
   int WebImage_registryContains(int registry_id) {
-    return LookupImage(registry_id) != nullptr ? 1 : 0;
+    return cse498::WebImage::LookupImage(registry_id) != nullptr ? 1 : 0;
   }
 }

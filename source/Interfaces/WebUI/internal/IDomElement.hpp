@@ -60,15 +60,15 @@ class IDomElement {
 
   /// Returns the unique identifier of this DOM element.
   /// @return Const reference to the element's unique ID string
-  const std::string& Id() const { return mId; };
+  [[nodiscard]] const std::string& Id() const { return mId; };
 
   /// @brief Get a reference to DOM Element for this element
   /// @return a reference to DOM Element for this element
-  emscripten::val GetElement() { return mElement; }
+  [[nodiscard]] emscripten::val GetElement() { return mElement; }
 
   /// @brief Get a pointer to the parent element of this element
   /// @return a pointer to the parent element of this element or nullptr if no parent
-  IDomElement * GetParent() { return mParent; }
+  [[nodiscard]] IDomElement * GetParent() { return mParent; }
 
   /// @brief Set the parent of this element
   /// @param parent a pointer to the parent element
@@ -120,11 +120,11 @@ class IDomElement {
 
   /// Returns the grid row position for this element.
   /// @return Grid row index, or -1 if not set
-  int GridRow() const { return mGridRow; }
+  [[nodiscard]] int GridRow() const { return mGridRow; }
 
   /// Returns the grid column position for this element.
   /// @return Grid column index, or -1 if not set
-  int GridCol() const { return mGridCol; }
+  [[nodiscard]] int GridCol() const { return mGridCol; }
 
   /// Clears the grid position, allowing auto-placement in parent grid.
   void ClearGridPosition() { mGridRow = mGridCol = -1; }
@@ -142,11 +142,11 @@ class IDomElement {
 
   /// Returns the top offset for this element in free layout.
   /// @return Top offset in pixels, or -1 if not set
-  int FreeTop() const { return mTop; }
+  [[nodiscard]] int FreeTop() const { return mTop; }
 
   /// Returns the left offset for this element in free layout.
   /// @return Left offset in pixels, or -1 if not set
-  int FreeLeft() const { return mLeft; }
+  [[nodiscard]] int FreeLeft() const { return mLeft; }
 
   /// Clears the free position offsets for this element.
   void ClearFreePosition() { mTop = mLeft = -1; }

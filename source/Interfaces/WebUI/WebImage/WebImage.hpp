@@ -14,6 +14,7 @@
 
 #include <string>
 #include <functional>
+#include <unordered_map>
 #include <emscripten/val.h>
 
 #include "../../../tools/Color.hpp"
@@ -154,8 +155,26 @@ class WebImage : public IDomElement, public ICanvasElement {
   /// Handle error event (called when image fails to load).
   void HandleError();
 
+ public:
+  /// @brief Looks up the WebImage registered under the given registry id.
+  /// @param id Registry id to look up.
+  /// @return Pointer to the registered WebImage, or nullptr if not found.
+  [[nodiscard]] static WebImage* LookupImage(int id);
+
  private:
   friend struct WebImageTestAccessor;
+
+  // ----- Image registry (maps integer IDs to WebImage pointers) -----
+  static std::unordered_map<int, WebImage*> sImageRegistry;
+  static int sNextRegistryId;
+
+  static int RegisterImage(WebImage* img);
+  static void UnregisterImage(int id);
+  static void UpdateRegistryEntry(int id, WebImage* img);
+
+  // ----- Style helper methods (eliminate repeated lambda definitions) -----
+  static void ApplyDimensionStyle(emscripten::val& style, const char* prop, int value);
+  static void ApplyPlaceholderDimensionStyle(emscripten::val& style, const char* prop, int value);
 
   std::string mSrc;                         ///< Image source URL or asset path.
   std::string mAltText;                     ///< Alternative text for accessibility.

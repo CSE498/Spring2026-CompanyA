@@ -65,7 +65,7 @@ public:
     /// @brief Unmounts this canvas from its parent layout.
     void Unmount() override;
 
-    /// @brief Synchronizes canvas state with the DOM (currently a no-op).
+    /// @brief Synchronizes canvas state with the DOM by calling RenderFrame().
     void SyncFromModel() override;
 
     // ---- Canvas content management ----
