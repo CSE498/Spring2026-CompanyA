@@ -85,7 +85,7 @@ TEST_CASE("HeatMap: uneven grid/world some invalid values", "[HeatMap]") {
   CHECK(map6.GetInvalidInputs().size() == 5);
 }
 
-TEST_CASE("HeatMap: negative grid/world some invalid values", "[HeatMap]") {
+TEST_CASE("HeatMap: negative grid/world dimensions throw", "[HeatMap]") {
   cse498::ActionLog test_log;
 
   test_log.LogAction(1, "move", cse498::WorldPosition{4, 4},
@@ -101,10 +101,10 @@ TEST_CASE("HeatMap: negative grid/world some invalid values", "[HeatMap]") {
   test_log.LogAction(1, "move", cse498::WorldPosition{11, 1},
                      cse498::WorldPosition{0, 0});
 
-  cse498::HeatMap map8(test_log, std::pair<int, int>{-5, -5},
-                       std::pair<int, int>{-10, -10});
-  CHECK(GetAllValidGridValues(map8.OutPutHeatMap(output_stream)) == 4);
-  CHECK(map8.GetInvalidInputs().size() == 2);
+  REQUIRE_THROWS_AS(
+      cse498::HeatMap(test_log, std::pair<int, int>{-5, -5},
+                      std::pair<double, double>{-10, -10}),
+      std::invalid_argument);
 }
 
 TEST_CASE("HeatMap: Adding second log to Heatmap", "[HeatMap]") {
