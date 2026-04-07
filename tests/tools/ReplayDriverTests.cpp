@@ -90,3 +90,18 @@ TEST_CASE("ReplayDriver ReplayFullGame handles empty logs",
 
   REQUIRE_NOTHROW(driver.ReplayFullGame());
 }
+
+
+TEST_CASE("ReplayDriver SetActionLog replaces the current log",
+          "[ReplayDriver]") {
+  auto empty_log = std::make_shared<cse498::ActionLog>();
+  auto full_log = MakeFullGameLog();
+
+  cse498::ReplayDriver driver(empty_log, 0);
+
+  REQUIRE_NOTHROW(driver.ReplayFullGame());
+
+  driver.SetActionLog(full_log);
+
+  REQUIRE_NOTHROW(driver.ReplayFullGame());
+}

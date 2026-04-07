@@ -135,3 +135,27 @@ TEST_CASE("HeatMap: Adding second log to Heatmap", "[HeatMap]") {
   CHECK(GetAllValidGridValues(map9.OutPutHeatMap(output_stream)) == 2);
   CHECK(map9.GetInvalidInputs().size() == 4);
 }
+
+
+TEST_CASE("HeatMap: positions far outside map bounds", "[HeatMap]") {
+  cse498::ActionLog test_log;
+
+  test_log.LogAction(1, "move", cse498::WorldPosition{4, 4},
+                     cse498::WorldPosition{0, 0});
+  test_log.LogAction(1, "move", cse498::WorldPosition{9, 9},
+                     cse498::WorldPosition{0, 0});
+
+  test_log.LogAction(1, "move", cse498::WorldPosition{1000, 1000},
+                     cse498::WorldPosition{0, 0});
+  test_log.LogAction(1, "move", cse498::WorldPosition{-500, 4},
+                     cse498::WorldPosition{0, 0});
+  test_log.LogAction(1, "move", cse498::WorldPosition{4, -750},
+                     cse498::WorldPosition{0, 0});
+  test_log.LogAction(1, "move", cse498::WorldPosition{9999, -9999},
+                     cse498::WorldPosition{0, 0});
+
+  cse498::HeatMap map10(test_log, std::pair<int, int>{5, 5},
+                        std::pair<int, int>{10, 10});
+  CHECK(GetAllValidGridValues(map10.OutPutHeatMap(output_stream)) == 2);
+  CHECK(map10.GetInvalidInputs().size() == 4);
+}
