@@ -3,6 +3,8 @@
 
 #include <string>
 
+/// used codex for some testcase generations
+
 TEST_CASE("Test Building Constructor", "[core][InteractiveWorld][Building]") {
   std::string farmStr = "Farm";
   std::string blacksmithStr = "Blacksmith";
@@ -27,6 +29,25 @@ TEST_CASE("Test Building Setters and Getters",
   blacksmith.SetName("Blacksmith2");
   CHECK(farm.GetName() == "Farm2");
   CHECK(blacksmith.GetName() == "Blacksmith2");
+}
+
+TEST_CASE("Test Building GetAllUpgrades",
+          "[core][InteractiveWorld][Building]") {
+  cse498::Building farm("Farm");
+
+  farm.AddUpgrade(cse498::ItemType::Wood, 25);
+  farm.AddUpgrade(cse498::ItemType::Stone, 35);
+  farm.AddUpgrade(cse498::ItemType::Metal, 50);
+
+  const auto &upgrades = farm.GetAllUpgrades();
+
+  REQUIRE(upgrades.size() == 3);
+  CHECK(upgrades[0].item == cse498::ItemType::Wood);
+  CHECK(upgrades[0].quantity == 25);
+  CHECK(upgrades[1].item == cse498::ItemType::Stone);
+  CHECK(upgrades[1].quantity == 35);
+  CHECK(upgrades[2].item == cse498::ItemType::Metal);
+  CHECK(upgrades[2].quantity == 50);
 }
 
 TEST_CASE("Test Building One Upgrade", "[core][InteractiveWorld][Building]") {

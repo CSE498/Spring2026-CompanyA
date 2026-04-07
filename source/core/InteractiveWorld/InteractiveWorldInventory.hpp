@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Building.hpp"
+#include "ItemType.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -115,4 +115,3 @@ public:
 };
 
 } // namespace cse498
-
