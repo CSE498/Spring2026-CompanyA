@@ -141,6 +141,24 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const
     return root;
 }
 
+std::unique_ptr<Node> AgentFactory::CreateGoblinTree(const Enemy& enemy, const WorldBase & world)
+{
+    auto root = TreeBuilder::Repeat("Goblin Root");
+
+    auto selector = TreeBuilder::Sel("Goblin Behavior");
+
+    auto attackSeq = TreeBuilder::Seq("Goblin Attack Seq");
+    attackSeq->AddChild(IsPlayerInRange(enemy, world));
+    attackSeq->AddChild(Attack(enemy, world));
+
+    selector->AddChild(std::move(attackSeq));
+    selector->AddChild(ChasePlayer(enemy, world));
+
+    root->SetChild(std::move(selector));
+
+    return root;
+}
+
 std::unique_ptr<Node> AgentFactory::CreatePatrolTree(AgentBase* agent)
 {
     return TreeBuilder::Act("Walk Back And Forth", [agent](ExecutionContext& ctx) {
@@ -212,6 +230,14 @@ std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const AgentDefinition& 
     AgentStats stats = AgentLevels::GetSkeletonStats(def.mLevel);
     auto enemy = CreateAgent(def, stats, world); // createAgent can't return nullptr
     enemy->SetBehaviorTree(CreateSkeletonTree(*enemy, world));
+    return enemy;
+}
+
+std::unique_ptr<Enemy> AgentFactory::CreateEnemyGoblin(const AgentDefinition& def, WorldBase & world)
+{
+    AgentStats stats = AgentLevels::GetGoblinStats(def.mLevel);
+    auto enemy = CreateAgent(def, stats, world); // createAgent can't return nullptr
+    enemy->SetBehaviorTree(CreateGoblinTree(*enemy, world));
     return enemy;
 }
 

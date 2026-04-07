@@ -51,7 +51,13 @@ private:
      */
     static std::unique_ptr<BehaviorTrees::Node> CreateSkeletonTree(const Enemy& enemy, const WorldBase & world);
 
-
+    /**
+     * Creates the behavior tree for the goblin (attack in range, else chase).
+     * @param enemy the goblin that will own this tree
+     * @param world - the world from the enemy
+     * @return root node for the tree
+     */
+    static std::unique_ptr<BehaviorTrees::Node> CreateGoblinTree(const Enemy& enemy, const WorldBase & world);
 
 
     /// Tree that alternates left/right every tick (for patrol agent).
@@ -91,6 +97,14 @@ public:
      * @return enemy object
      */
     static std::unique_ptr<Enemy> CreateEnemySkeleton(const AgentDefinition& def, WorldBase & world);
+
+    /**
+     * Create a goblin enemy from a definition and spawn position.
+     * @param def - agent definition
+     * @param world - world
+     * @return enemy object
+     */
+    static std::unique_ptr<Enemy> CreateEnemyGoblin(const AgentDefinition& def, WorldBase & world);
 
     /**
      * Create an agent that walks left then right, repeatedly.
