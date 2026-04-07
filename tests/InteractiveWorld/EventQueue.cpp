@@ -3,7 +3,7 @@
 
 using namespace cse498;
 
-TEST_CASE("Empty Event") {
+TEST_CASE("EventQueue starts empty", "[core][InteractiveWorld][EventQueue]") {
   EventQueue q;
 
   CHECK(q.Empty() == true);
@@ -15,7 +15,8 @@ TEST_CASE("Empty Event") {
   CHECK(q.Empty() == true);
 }
 
-TEST_CASE("ScheduleEvent adds events") {
+TEST_CASE("ScheduleEvent adds events with unique ids",
+          "[core][InteractiveWorld][EventQueue]") {
   EventQueue q;
 
   auto id1 = q.ScheduleEvent(10, []() {});
@@ -25,7 +26,8 @@ TEST_CASE("ScheduleEvent adds events") {
   CHECK(q.Empty() == false);
 }
 
-TEST_CASE("PeekNextEvent returns smallest time (and next is correct too)") {
+TEST_CASE("PeekNextEvent returns smallest time and does not remove event",
+          "[core][InteractiveWorld][EventQueue]") {
   EventQueue q;
 
   q.ScheduleEvent(10, []() {});
@@ -33,15 +35,16 @@ TEST_CASE("PeekNextEvent returns smallest time (and next is correct too)") {
 
   CHECK(q.PeekNextEvent().time == 5);
 
-  // After peek, it should still exist
+  // After peek, the event should still exist.
   CHECK(q.Empty() == false);
 
-  // Pop the 1st (time=5), now the next should be time=10
+  // Pop the first event (time = 5), now the next should be time = 10.
   CHECK(q.PopNextEvent().time == 5);
   CHECK(q.PeekNextEvent().time == 10);
 }
 
-TEST_CASE("PopNextEvent removes in order") {
+TEST_CASE("PopNextEvent removes events in time order",
+          "[core][InteractiveWorld][EventQueue]") {
   EventQueue q;
 
   q.ScheduleEvent(10, []() {});
@@ -54,7 +57,22 @@ TEST_CASE("PopNextEvent removes in order") {
   CHECK(q.Empty() == true);
 }
 
-TEST_CASE("CancelEvent skips cancelled event and returns next event (id2)") {
+TEST_CASE("Events with same time are returned in FIFO order",
+          "[core][InteractiveWorld][EventQueue]") {
+  EventQueue q;
+
+  auto id1 = q.ScheduleEvent(5, []() {});
+  auto id2 = q.ScheduleEvent(5, []() {});
+  auto id3 = q.ScheduleEvent(5, []() {});
+
+  CHECK(q.PopNextEvent().id == id1);
+  CHECK(q.PopNextEvent().id == id2);
+  CHECK(q.PopNextEvent().id == id3);
+  CHECK(q.Empty() == true);
+}
+
+TEST_CASE("CancelEvent skips cancelled event and returns next valid event",
+          "[core][InteractiveWorld][EventQueue]") {
   EventQueue q;
 
   auto id1 = q.ScheduleEvent(5, []() {});
@@ -63,7 +81,7 @@ TEST_CASE("CancelEvent skips cancelled event and returns next event (id2)") {
   CHECK(q.CancelEvent(id1) == true);
   CHECK(q.CancelEvent(id1) == false); // already cancelled
 
-  // cancelling id1 => next should be id2 (time=6)
+  // Cancelling id1 means the next valid event should be id2 (time = 6).
   CHECK(q.PeekNextEvent().time == 6);
   CHECK(q.PeekNextEvent().id == id2);
 
@@ -74,14 +92,27 @@ TEST_CASE("CancelEvent skips cancelled event and returns next event (id2)") {
   CHECK(q.Empty() == true);
 }
 
-TEST_CASE("CancelEvent returns false for non-existent id (edge case)") {
+TEST_CASE("CancelEvent returns false for non-existent id",
+          "[core][InteractiveWorld][EventQueue]") {
   EventQueue q;
 
-  // cancel when queue is empty
+  // Cancel when queue is empty.
   CHECK(q.CancelEvent(12345) == false);
 
-  // schedule one event, but cancel a different id
+  // Schedule one event, but cancel a different id.
   auto id1 = q.ScheduleEvent(10, []() {});
   (void)id1;
   CHECK(q.CancelEvent(99999) == false);
+}
+
+TEST_CASE("Const EventQueue supports PeekNextEvent and Empty",
+          "[core][InteractiveWorld][EventQueue]") {
+  EventQueue q;
+  q.ScheduleEvent(3, []() {});
+  q.ScheduleEvent(8, []() {});
+
+  const EventQueue& cq = q;
+
+  CHECK(cq.Empty() == false);
+  CHECK(cq.PeekNextEvent().time == 3);
 }
