@@ -14,8 +14,11 @@ namespace cse498 {
 
 class ReplayDriver {
 private:
+  //action log of all actions to be replayed
   std::shared_ptr<const ActionLog> m_actionLog;
+  //delay for how long each move in the replay should take (in milliseconds)
   int m_delay;
+  //helper function to replay a single action
   void ReplayAction(const cse498::Action &action, cse498::TrashInterface &agent, MazeWorld &world);
   
 public:
@@ -31,7 +34,7 @@ public:
    * Set a different action Log if wanted
    * ActionLog log to be added
    */
-  void setActionLog(std::shared_ptr<const ActionLog> log) {
+  void SetActionLog(std::shared_ptr<const ActionLog> log) {
     m_actionLog = std::move(log);
   }
   /**

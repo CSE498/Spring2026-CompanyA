@@ -16,13 +16,12 @@ namespace cse498 {
  */
 class HeatMap {
 private:
-  std::vector<std::pair<double, double>> m_locations;   // Locations inputted into the heatmap
+  std::vector<std::pair<double, double>> m_locations;   // Locations to be inputted into the heatmap
   std::vector<std::pair<double, double>> m_invalid_locations;  // Invalid locations from the inputs based on total grid size
-  std::vector<std::vector<int>> m_grid_values;   // Values of how often player was inside grid
-  std::pair<int, int> m_ideal_gridsize;   // Grid size user wants smaller squares / larger squares
-  std::pair<double, double> m_total_gridsize;   // World map size
-  std::pair<double, double> m_single_grid_size;   // Used only for internal calculations
-  void FillGrid();   // Internal function used to fill out grid when needed
+  std::vector<std::vector<int>> m_grid_values;   // Values of how often player was inside each grid
+  std::pair<int, int> m_ideal_heatmap_size;   // Grid size user wants smaller square
+  std::pair<double, double> m_map_size;   // World map size
+  std::pair<double, double> m_single_grid_size;   // Internally used to determine how much space in the world map one grid should equate to
   std::vector<std::pair<double, double>> ParseActionLog(cse498::ActionLog log); //Private function that parses the action log for its values
 
 public:
@@ -48,6 +47,13 @@ public:
    * Outputs any invalid inputs (i.e. character glitches out of map)
    */
   std::vector<std::pair<double, double>> GetInvalidInputs();
+
+/**
+ * Fills the grid values based on the locations and grid sizes,
+ * Removes invalid locations (locations from outside the inputted map size)
+ * from the heatmap and adds them to the invalid location vector
+ */
+  std::vector<std::vector<int>> FillGrid();  
 };
 
 } // namespace cse498
