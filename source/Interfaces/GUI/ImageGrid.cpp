@@ -3,7 +3,6 @@
  * @author Deni Tepic
  */
 
-
 #include "ImageGrid.hpp"
 #include "ImageManager.hpp"
 
@@ -37,7 +36,7 @@ ImageGrid::ImageGrid(size_t width, size_t height,
  * @param y Y coordinate in grid space
  * @return Image name stored at the given cell
  */
-const std::string& ImageGrid::GetCell(size_t x, size_t y) const
+const std::string &ImageGrid::GetCell(size_t x, size_t y) const
 {
     assert(IsValid(x, y));
     return mCells[ToIndex(x, y)];
@@ -49,7 +48,7 @@ const std::string& ImageGrid::GetCell(size_t x, size_t y) const
  * @param y Y coordinate in grid space
  * @param image_name Image name to store
  */
-void ImageGrid::SetCell(size_t x, size_t y, const std::string& image_name)
+void ImageGrid::SetCell(size_t x, size_t y, const std::string &image_name)
 {
     assert(IsValid(x, y));
     mCells[ToIndex(x, y)] = image_name;
@@ -59,7 +58,7 @@ void ImageGrid::SetCell(size_t x, size_t y, const std::string& image_name)
  * Fill every cell in the grid with the same image name.
  * @param image_name Image name to place in all cells
  */
-void ImageGrid::Fill(const std::string& image_name)
+void ImageGrid::Fill(const std::string &image_name)
 {
     std::fill(mCells.begin(), mCells.end(), image_name);
 }
@@ -89,8 +88,10 @@ void ImageGrid::Resize(size_t new_width, size_t new_height)
         return x + y * new_width;
     };
 
-    for (size_t y = 0; y < min_height; ++y) {
-        for (size_t x = 0; x < min_width; ++x) {
+    for (size_t y = 0; y < min_height; ++y)
+    {
+        for (size_t x = 0; x < min_width; ++x)
+        {
             new_cells[newIndex(x, y)] = mCells[ToIndex(x, y)];
         }
     }
@@ -106,12 +107,13 @@ void ImageGrid::Resize(size_t new_width, size_t new_height)
  * configured tile dimensions.
  * @param image_manager Image manager used for rendering
  */
-void ImageGrid::Draw(const ImageManager& image_manager) const
+void ImageGrid::Draw(const ImageManager &image_manager) const
 {
     auto drawCell = [&](size_t x, size_t y)
     {
-        const std::string& image_name = mCells[ToIndex(x, y)];
-        if (image_name.empty()) {
+        const std::string &image_name = mCells[ToIndex(x, y)];
+        if (image_name.empty())
+        {
             return;
         }
 
@@ -125,8 +127,10 @@ void ImageGrid::Draw(const ImageManager& image_manager) const
                                 static_cast<int>(mTileHeight));
     };
 
-    for (size_t y = 0; y < mHeight; ++y) {
-        for (size_t x = 0; x < mWidth; ++x) {
+    for (size_t y = 0; y < mHeight; ++y)
+    {
+        for (size_t x = 0; x < mWidth; ++x)
+        {
             drawCell(x, y);
         }
     }
@@ -140,7 +144,7 @@ void ImageGrid::Draw(const ImageManager& image_manager) const
  * @param viewport_w Viewport width in pixels
  * @param viewport_h Viewport height in pixels
  */
-void ImageGrid::DrawViewport(const ImageManager& image_manager,
+void ImageGrid::DrawViewport(const ImageManager &image_manager,
                              int cam_x, int cam_y,
                              int viewport_w, int viewport_h) const
 {
@@ -154,10 +158,11 @@ void ImageGrid::DrawViewport(const ImageManager& image_manager,
 
     auto drawCell = [&](int x, int y)
     {
-        const std::string& image_name =
+        const std::string &image_name =
             mCells[ToIndex(static_cast<size_t>(x), static_cast<size_t>(y))];
 
-        if (image_name.empty()) {
+        if (image_name.empty())
+        {
             return;
         }
 
@@ -167,8 +172,10 @@ void ImageGrid::DrawViewport(const ImageManager& image_manager,
         image_manager.DrawImage(image_name, pixel_x, pixel_y, tile_width, tile_height);
     };
 
-    for (int y = start_y; y < end_y; ++y) {
-        for (int x = start_x; x < end_x; ++x) {
+    for (int y = start_y; y < end_y; ++y)
+    {
+        for (int x = start_x; x < end_x; ++x)
+        {
             drawCell(x, y);
         }
     }
