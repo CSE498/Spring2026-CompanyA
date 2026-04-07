@@ -35,6 +35,7 @@ TEST_CASE("Test Building One Upgrade", "[core][InteractiveWorld][Building]") {
 
   CHECK(farm.GetCurrentLevel() == 0);
   CHECK(farm.GetMaxLevel() == 0);
+  CHECK(farm.GetNextUpgradeInfo() == std::nullopt);
 
   farm.AddUpgrade(cse498::ItemType::Wood, 25);
 
@@ -42,8 +43,10 @@ TEST_CASE("Test Building One Upgrade", "[core][InteractiveWorld][Building]") {
   CHECK(farm.GetMaxLevel() == 1);
   CHECK(farm.IsMaxLevel() == false);
   CHECK(farm.GetNextUpgradeLevel() == 1);
-  CHECK(farm.GetNextUpgradeQuantity() == 25);
-  CHECK(farm.GetNextUpgradeType() == cse498::ItemType::Wood);
+  const auto next_upgrade = farm.GetNextUpgradeInfo();
+  REQUIRE(next_upgrade.has_value());
+  CHECK(next_upgrade->quantity == 25);
+  CHECK(next_upgrade->item == cse498::ItemType::Wood);
   // We need 25 wood, testing with too few items
   int currentWood = 5;
 
@@ -64,6 +67,7 @@ TEST_CASE("Test Building One Upgrade", "[core][InteractiveWorld][Building]") {
 
   CHECK(farm.GetCurrentLevel() == 1);
   CHECK(farm.IsMaxLevel() == true);
+  CHECK(farm.GetNextUpgradeInfo() == std::nullopt);
 
   // Check for upgrading already max level building
   auto status4 = farm.Upgrade(cse498::ItemType::Wood, currentWood);
@@ -118,4 +122,5 @@ TEST_CASE("Test Building Multiple Upgrades",
   CHECK(status5.error() == cse498::Building::UpgradeRejectionType::AlreadyMaxLevel);
   CHECK(farm.GetCurrentLevel() == 3);
   CHECK(farm.IsMaxLevel() == true);
+  CHECK(farm.GetNextUpgradeInfo() == std::nullopt);
 }

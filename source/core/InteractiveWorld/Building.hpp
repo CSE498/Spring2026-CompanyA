@@ -10,6 +10,7 @@
 #include <expected>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace cse498 {
@@ -41,28 +42,29 @@ private:
   std::vector<BuildingUpgrade> m_upgrades{}; // The upgrade cost per level
 
   /**
-   * Get a reference to the next upgrade BuildingUpgrade struct
-   * @return BuildingUpgrade struct for the next upgrade (holds type of items
-   * and quantity needed)
+   * Get the next upgrade BuildingUpgrade struct without checking if one exists.
+   * Internal helper for callers that have already verified the building is not
+   * at max level.
+   * @return reference to the next upgrade BuildingUpgrade struct
    */
-  const BuildingUpgrade &GetNextUpgrade() const {
+  const BuildingUpgrade &GetNextUpgradeUnchecked() const {
     assert(m_level < GetMaxLevel() && "Building already max level!");
     return m_upgrades[m_level];
   }
 
   /**
-   * Checks if an upgrade is able to be applied to the building.
+   * Validate whether an upgrade can be applied to the building.
    * @param itemType The type of item for for the upgrade
    * @param quantity The quantity of items the player has available
    * @return void if the upgrade is successful, UpgradeRejectionType describing
    * why it failed
    */
   std::expected<void, UpgradeRejectionType>
-  IsUpgradeValid(const ItemType &itemType, const int &quantity) const {
+  ValidateUpgrade(const ItemType &itemType, int quantity) const {
     if (m_level >= GetMaxLevel())
       return std::unexpected(UpgradeRejectionType::AlreadyMaxLevel);
 
-    const auto &cost = GetNextUpgrade();
+    const auto &cost = GetNextUpgradeUnchecked();
 
     if (itemType != cost.item)
       return std::unexpected(UpgradeRejectionType::IncorrectItemType);
@@ -79,7 +81,7 @@ public:
    * Constructor
    * @param name name of the building
    */
-  Building(std::string name) : m_name{name} {};
+  Building(std::string name) : m_name{std::move(name)} {};
   /**
    * Get Max level for this building
    * @return max level as an int
@@ -92,10 +94,12 @@ public:
   int GetCurrentLevel() const { return m_level; }
   /**
    * Get Next Upgrade level
-   * @return
+   * For UI. Returns the level the next upgrade would reach. If the building is
+   * already max level, returns the current level.
+   * @return next upgrade level as an int
    */
   int GetNextUpgradeLevel() const {
-    if (m_level == GetMaxLevel())
+    if (m_level >= GetMaxLevel())
       return m_level;
     return m_level + 1;
   }
@@ -105,20 +109,10 @@ public:
    */
   bool IsMaxLevel() const { return m_level >= GetMaxLevel(); }
   /**
-   * Get the quantity of resources needed for the next upgrade
-   * @return Quantity of resources as int
-   */
-  int GetNextUpgradeQuantity() const { return GetNextUpgrade().quantity; }
-  /**
-   * Get the type of resource needed for the next upgrade
-   * @return type of resource needed as ItemType (type TBD)
-   */
-  ItemType GetNextUpgradeType() const { return GetNextUpgrade().item; }
-  /**
    * Set the name of the building
    * @param newName new name of the building
    */
-  void SetName(std::string newName) { m_name = newName; }
+  void SetName(std::string newName) { m_name = std::move(newName); }
   /**
    * Set the rate modifier
    * @param rate rate to set to
@@ -128,7 +122,7 @@ public:
    * Get the rate modifier
    * @return rate modifier
    */
-  float GetRateModifier() { return m_rateModifier; }
+  float GetRateModifier() const { return m_rateModifier; }
   /**
    * Get the name of the building
    * @return name of the building
@@ -151,14 +145,14 @@ public:
    * successful
    */
   std::expected<void, UpgradeRejectionType> Upgrade(const ItemType &itemType,
-                                                    int &quantity) {
-    auto result = IsUpgradeValid(itemType, quantity);
+                                                    int quantity) {
+    auto result = ValidateUpgrade(itemType, quantity);
 
     if (!result)
       return std::unexpected(result.error());
 
     // TODO: Have the player inventory change itself, not the building change it
-    // const auto& cost = GetNextUpgrade();
+    // const auto& cost = GetNextUpgradeUnchecked();
     // quantity -= cost.quantity;
     m_level++;
     return {};
@@ -172,13 +166,14 @@ public:
     return m_upgrades;
   }
   /**
-   * Get the BuildingUpgrade struct for the next upgrade. For UI.
+   * Get the BuildingUpgrade struct for the next upgrade. Safe accessor for UI
+   * and other callers that may query a max-level building.
    * @return the next BuildingUpgrade struct if it exists
    */
   std::optional<BuildingUpgrade> GetNextUpgradeInfo() const {
     if (m_level >= GetMaxLevel())
       return std::nullopt;
-    return m_upgrades[m_level];
+    return GetNextUpgradeUnchecked();
   }
 };
 } // namespace cse498
