@@ -19,7 +19,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace cse498 {
@@ -83,23 +82,8 @@ public:
 
     if (const auto next_upgrade = m_building->GetNextUpgradeInfo();
         next_upgrade.has_value()) {
-
-      std::string_view item_name = "Unknown";
-
-      switch (next_upgrade->item) {
-      case ItemType::Wood:
-        item_name = "Wood";
-        break;
-      case ItemType::Stone:
-        item_name = "Stone";
-        break;
-      case ItemType::Metal:
-        item_name = "Metal";
-        break;
-      }
-
       output << " | next upgrade: " << next_upgrade->quantity << ' '
-             << item_name << " for level "
+             << ItemTypeToString(next_upgrade->item) << " for level "
              << m_building->GetNextUpgradeLevel();
     } else {
       output << " | max level reached";
@@ -121,6 +105,7 @@ public:
    * @param inventory Inventory supplying resources for the upgrade
    * @return void if successful, UpgradeRejectionType if the upgrade fails
    */
+  [[nodiscard]]
   std::expected<void, Building::UpgradeRejectionType>
   AttemptUpgrade(InteractiveWorldInventory &inventory) {
     if (m_building->IsMaxLevel()) {

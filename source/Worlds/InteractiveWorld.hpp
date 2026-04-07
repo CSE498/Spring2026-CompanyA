@@ -10,8 +10,10 @@
 #include "../core/InteractiveWorld/NPC.hpp"
 #include "../core/InteractiveWorld/ResourceProducer.hpp"
 #include "../core/WorldBase.hpp"
+#include <array>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 namespace cse498 {
@@ -53,41 +55,48 @@ private:
    * Update world logic
    */
   void UpdateWorld() override {
-    for (auto producer : m_producers) {
+    for (const auto& producer : m_producers) {
       producer->Update();
     }
 
-    PrintInventory();
-  }
-  /**
-   * Turn item type into string for printing
-   * @param itemType type of item
-   * @return String of item
-   */
-  std::string ItemTypeToString(const ItemType &itemType) {
-    if (itemType == ItemType::Wood)
-      return "Wood";
-    else if (itemType == ItemType::Stone)
-      return "Stone";
-    else if (itemType == ItemType::Metal)
-      return "Metal";
-    return "";
+    PrintInventory(); // Shows inventory status, for demo/simple game purposes
   }
 
   /**
    * Print the world inventory
    */
   void PrintInventory() {
-    std::string inv{};
+    std::ostringstream output;
+    output << m_inventory.GetAmount(ItemType::Wood) << ' '
+           << ItemTypeToString(ItemType::Wood) << " | "
+           << m_inventory.GetAmount(ItemType::Stone) << ' '
+           << ItemTypeToString(ItemType::Stone) << " | "
+           << m_inventory.GetAmount(ItemType::Metal) << ' '
+           << ItemTypeToString(ItemType::Metal);
 
-    inv += std::to_string(m_inventory.GetAmount(ItemType::Wood)) + " " +
-           ItemTypeToString(ItemType::Wood) + " | ";
-    inv += std::to_string(m_inventory.GetAmount(ItemType::Stone)) + " " +
-           ItemTypeToString(ItemType::Stone) + " | ";
-    inv += std::to_string(m_inventory.GetAmount(ItemType::Metal)) + " " +
-           ItemTypeToString(ItemType::Metal);
+    std::cout << output.str() << std::endl;
+  }
 
-    std::cout << inv << std::endl;
+  template <typename Func>
+  void ForEachAdjacentNPC(const std::array<WorldPosition, 4> &neighbors,
+                          Func &&func) {
+    for (const auto &neighbor : neighbors) {
+      for (auto &npc : m_npcs) {
+        if (npc->GetPosition() == neighbor) {
+          func(*npc);
+        }
+      }
+    }
+  }
+
+  bool IsNPCAt(const WorldPosition &position) const {
+    for (const auto &npc : m_npcs) {
+      if (npc->GetPosition() == position) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
 public:
@@ -126,6 +135,9 @@ public:
   int DoAction(AgentBase &agent, size_t action_id) override {
     // Determine where the agent is trying to move.
     WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
+    const std::array<WorldPosition, 4> neighbors = {
+        cur_position.Up(), cur_position.Down(), cur_position.Left(),
+        cur_position.Right()};
     WorldPosition new_position;
     switch (action_id) {
     case REMAIN_STILL:
@@ -144,49 +156,36 @@ public:
       new_position = cur_position.Right();
       break;
     case INTERACT: {
-      std::array<WorldPosition, 4> neighbors = {
-          cur_position.Up(), cur_position.Down(), cur_position.Left(),
-          cur_position.Right()};
-
-      for (const auto &neighbor : neighbors) {
-        for (auto &npc : m_npcs) {
-          if (npc->GetPosition() == neighbor) {
-            npc->AttemptUpgrade(m_inventory);
-          }
+      ForEachAdjacentNPC(neighbors, [this](NPC &npc) {
+        const auto upgrade_status = npc.AttemptUpgrade(m_inventory);
+        if (!upgrade_status) {
+          std::cout
+              << "Upgrade failed: "
+              << Building::UpgradeRejectionTypeToString(
+                     upgrade_status.error())
+              << std::endl;
+          return;
         }
-      }
+
+        std::cout << "Upgrade succeeded: " << npc.GetUpgradeUI() << std::endl;
+      });
       return true;
     }
     }
 
-    // Don't let the agent move off the world or into a wall.
-    if (!main_grid.IsValid(new_position)) {
+    // Don't let the agent move off the world or into a non-walkable tile.
+    if (!main_grid.IsWalkable(new_position)) {
       return false;
     }
-    if (main_grid[new_position] == wall_id) {
-      return false;
-    }
-    // Check Neighbors
-    std::array<WorldPosition, 4> neighbors = {
-        cur_position.Up(), cur_position.Down(), cur_position.Left(),
-        cur_position.Right()};
 
-    // Open NPC ui for player only
-    if (dynamic_cast<InterfaceBase *>(&agent)) {
-      for (const auto &neighbor : neighbors) {
-        for (auto &npc : m_npcs) {
-          if (npc->GetPosition() == neighbor) {
-            npc->Interact();
-          }
-        }
-      }
+    // Open NPC UI for interface-controlled agents only.
+    if (agent.IsInterface()) {
+      ForEachAdjacentNPC(neighbors, [](NPC &npc) { npc.Interact(); });
     }
 
     // Don't walk on NPCs
-    for (const auto &npc : m_npcs) {
-      if (npc->GetPosition() == new_position) {
-        return false;
-      }
+    if (IsNPCAt(new_position)) {
+      return false;
     }
 
     // Set the agent to its new position.

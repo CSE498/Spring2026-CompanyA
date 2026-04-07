@@ -72,11 +72,8 @@ public:
       break;
     }
 
-    // Don't let the agent move off the world or into a wall.
-    if (!main_grid.IsValid(new_position)) {
-      return false;
-    }
-    if (main_grid[new_position] == wall_id) {
+    // Don't let the agent move off the world or into a non-walkable tile.
+    if (!main_grid.IsWalkable(new_position)) {
       return false;
     }
 

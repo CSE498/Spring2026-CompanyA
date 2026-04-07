@@ -10,6 +10,7 @@
 #include <expected>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -17,6 +18,19 @@ namespace cse498 {
 // TODO: This is temporary. Figure out what items will be and how to structure
 // them in code
 enum class ItemType { Wood, Stone, Metal };
+
+constexpr std::string_view ItemTypeToString(ItemType itemType) {
+  switch (itemType) {
+  case ItemType::Wood:
+    return "Wood";
+  case ItemType::Stone:
+    return "Stone";
+  case ItemType::Metal:
+    return "Metal";
+  }
+
+  return "Unknown";
+}
 
 /// @class Building
 /// @brief Upgradable building. Starts at level 0.
@@ -34,6 +48,20 @@ public:
     IncorrectItemType,
     NotEnoughItems
   };
+
+  static constexpr std::string_view
+  UpgradeRejectionTypeToString(UpgradeRejectionType rejection) {
+    switch (rejection) {
+    case UpgradeRejectionType::AlreadyMaxLevel:
+      return "building is already at max level";
+    case UpgradeRejectionType::IncorrectItemType:
+      return "incorrect item type for this upgrade";
+    case UpgradeRejectionType::NotEnoughItems:
+      return "not enough items for this upgrade";
+    }
+
+    return "unknown upgrade failure";
+  }
 
 private:
   std::string m_name{};        // Name of the building
