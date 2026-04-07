@@ -134,7 +134,8 @@ namespace cse498
     }
 
     // Overload version of DrawImage
-    bool ImageManager::DrawImage(const std::string& name, int x, int y, int w, int h) const {
+    bool ImageManager::DrawImage(const std::string& name, int x, int y, int w, int h) const
+    {
         auto it = mTextures.find(name);
         if (it == mTextures.end()) return false;
 
