@@ -19,23 +19,15 @@
 using namespace cse498;
 
 int main() {
-  AIWorld world;
+    AIWorld world;
 
-  world.AddAgent<TrailblazerAgent>("Trailblazer")
-      .SetSymbol('T')
-      .SetLocation(WorldPosition{1, 1});
+    world.AddAgent<TrailblazerAgent>("Trailblazer").SetSymbol('T').SetLocation(WorldPosition{1, 1});
 
-  world.AddAgent<LearningExplorerAgent>("Explorer")
-      .SetSymbol('E')
-      .SetLocation(WorldPosition{3, 1});
+    world.AddAgent<LearningExplorerAgent>("Explorer").SetSymbol('E').SetLocation(WorldPosition{3, 1});
 
-  world.AddAgent<SmartEnemyAgent>("Boss")
-      .SetSymbol('B')
-      .SetLocation(WorldPosition{7, 1});
+    world.AddAgent<SmartEnemyAgent>("Boss").SetSymbol('B').SetLocation(WorldPosition{7, 1});
 
-  world.AddAgent<EnemyAgent>("Enemy")
-      .SetSymbol('X')
-      .SetLocation(WorldPosition{8, 1});
+    world.AddAgent<EnemyAgent>("Enemy").SetSymbol('X').SetLocation(WorldPosition{8, 1});
 
-  world.Run();
+    world.Run();
 }

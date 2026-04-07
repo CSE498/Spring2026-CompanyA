@@ -22,16 +22,16 @@ namespace cse498 {
         void NotifyAdded(std::string_view tag) noexcept;
         void NotifyRemoved(std::string_view tag) noexcept;
 
-        
-        TagManager* mManager{nullptr};
+
+        TagManager *mManager{nullptr};
         std::unordered_set<std::string> mTags;
 
     public:
         using ObjectId = std::uint64_t;
 
-        explicit AnnotationSet(ObjectId owner, TagManager* manager = nullptr) : mManager(manager), mOwner(owner) {}
+        explicit AnnotationSet(ObjectId owner, TagManager *manager = nullptr) : mManager(manager), mOwner(owner) {}
 
-        void AttachManager(TagManager* manager) noexcept { mManager = manager; }
+        void AttachManager(TagManager *manager) noexcept { mManager = manager; }
 
         ObjectId Owner() const noexcept { return mOwner; }
         std::size_t Size() const noexcept { return mTags.size(); }
@@ -54,7 +54,8 @@ namespace cse498 {
         std::vector<std::string> ToVector() const {
             std::vector<std::string> out;
             out.reserve(mTags.size());
-            for (const auto& t : mTags) out.push_back(t);
+            for (const auto &t: mTags)
+                out.push_back(t);
             return out;
         }
 
@@ -62,9 +63,9 @@ namespace cse498 {
         /// Apply a function to each tag.
         /// @tparam Func  Callable taking const std::string&.
         /// @param func   The function to apply.
-        template <typename Func>
-        void ForEach(Func && func) const {
-            for (const auto& tag : mTags) {
+        template<typename Func>
+        void ForEach(Func &&func) const {
+            for (const auto &tag: mTags) {
                 func(tag);
             }
         }
@@ -73,8 +74,8 @@ namespace cse498 {
         /// @tparam Pred  Callable taking const std::string& and returning bool.
         /// @param pred   The predicate to test.
         /// @return Vector of matching tags.
-        template <typename Pred>
-        [[nodiscard]] std::vector<std::string> Filter(Pred && pred) const {
+        template<typename Pred>
+        [[nodiscard]] std::vector<std::string> Filter(Pred &&pred) const {
             std::vector<std::string> result;
             std::copy_if(mTags.begin(), mTags.end(), std::back_inserter(result), pred);
             return result;
@@ -84,10 +85,11 @@ namespace cse498 {
         /// @tparam Pred  Callable taking const std::string& and returning bool.
         /// @param pred   The predicate to test.
         /// @return True if at least one tag matches.
-        template <typename Pred>
-        [[nodiscard]] bool AnyOf(Pred && pred) const {
-            for (const auto& tag : mTags) {
-                if (pred(tag)) return true;
+        template<typename Pred>
+        [[nodiscard]] bool AnyOf(Pred &&pred) const {
+            for (const auto &tag: mTags) {
+                if (pred(tag))
+                    return true;
             }
             return false;
         }
@@ -96,10 +98,11 @@ namespace cse498 {
         /// @tparam Pred  Callable taking const std::string& and returning bool.
         /// @param pred   The predicate to test.
         /// @return True if all tags match (or set is empty).
-        template <typename Pred>
-        [[nodiscard]] bool AllOf(Pred && pred) const {
-            for (const auto& tag : mTags) {
-                if (!pred(tag)) return false;
+        template<typename Pred>
+        [[nodiscard]] bool AllOf(Pred &&pred) const {
+            for (const auto &tag: mTags) {
+                if (!pred(tag))
+                    return false;
             }
             return true;
         }
@@ -108,8 +111,8 @@ namespace cse498 {
         /// @tparam Pred  Callable taking const std::string& and returning bool.
         /// @param pred   The predicate to test.
         /// @return True if no tags match.
-        template <typename Pred>
-        [[nodiscard]] bool NoneOf(Pred && pred) const {
+        template<typename Pred>
+        [[nodiscard]] bool NoneOf(Pred &&pred) const {
             return !AnyOf(std::forward<Pred>(pred));
         }
 
@@ -117,10 +120,10 @@ namespace cse498 {
         /// @tparam Pred  Callable taking const std::string& and returning bool.
         /// @param pred   The predicate to test.
         /// @return Number of tags removed.
-        template <typename Pred>
-        std::size_t RemoveIf(Pred && pred) {
+        template<typename Pred>
+        std::size_t RemoveIf(Pred &&pred) {
             std::size_t removed = 0;
-            for (auto it = mTags.begin(); it != mTags.end(); ) {
+            for (auto it = mTags.begin(); it != mTags.end();) {
                 if (pred(*it)) {
                     NotifyRemoved(*it);
                     it = mTags.erase(it);
@@ -138,6 +141,5 @@ namespace cse498 {
 
     private:
         ObjectId mOwner{};
-
     };
-};
+}; // namespace cse498

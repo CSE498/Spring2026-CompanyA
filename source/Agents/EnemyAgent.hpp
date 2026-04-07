@@ -16,8 +16,7 @@
 
 #include "../core/AgentBase.hpp"
 
-namespace cse498
-{
+namespace cse498 {
     /**
      * @class EnemyAgent
      * @brief An AI-controlled agent that selects actions based on heuristic evaluation.
@@ -30,8 +29,7 @@ namespace cse498
      *
      * @inherits AgentBase
      */
-    class EnemyAgent : public AgentBase
-    {
+    class EnemyAgent : public AgentBase {
     private:
         // Predict where this move would place the enemy.
         [[nodiscard]] WorldPosition PredictMove(WorldPosition pos, size_t action_id) const;
@@ -53,6 +51,6 @@ namespace cse498
         ~EnemyAgent() override = default;
         bool Initialize() override;
         [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
-};
+    };
 
 } // namespace cse498

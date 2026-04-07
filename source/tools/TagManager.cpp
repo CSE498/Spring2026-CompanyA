@@ -4,20 +4,16 @@
 #include <stdexcept>
 #include <utility>
 
-namespace cse498
-{
+namespace cse498 {
     /**
-    * Validates that a tag is non-empty.
-    *
-    * In debug builds, triggers an assertion if the tag is empty.
-    *
-    * @param tag The tag string to validate.
-    */
-    std::expected<void, TagManager::FindSetError>
-    TagManager::AssertValidTag(std::string_view tag)
-    {
-        if (tag.empty())
-        {
+     * Validates that a tag is non-empty.
+     *
+     * In debug builds, triggers an assertion if the tag is empty.
+     *
+     * @param tag The tag string to validate.
+     */
+    std::expected<void, TagManager::FindSetError> TagManager::AssertValidTag(std::string_view tag) {
+        if (tag.empty()) {
             return std::unexpected(FindSetError::EmptyTag);
         }
 
@@ -32,17 +28,14 @@ namespace cse498
      * @param tag The tag to search for.
      * @return Reference to the ObjectSet associated with the tag.
      */
-    std::expected<const TagManager::ObjectSet*, TagManager::FindSetError>
-    TagManager::FindSet(std::string_view tag) const
-    {
-        if (tag.empty())
-        {
+    std::expected<const TagManager::ObjectSet *, TagManager::FindSetError>
+    TagManager::FindSet(std::string_view tag) const {
+        if (tag.empty()) {
             return std::unexpected(FindSetError::EmptyTag);
         }
 
         auto it = mTagToObjects.find(tag);
-        if (it == mTagToObjects.end())
-        {
+        if (it == mTagToObjects.end()) {
             return std::unexpected(FindSetError::TagNotFound);
         }
 
@@ -55,60 +48,57 @@ namespace cse498
      * @param tag The tag name.
      * @return true if owner is associated with tag; false otherwise.
      */
-    bool TagManager::Contains(ObjectId owner, std::string_view tag) const
-    {
+    bool TagManager::Contains(ObjectId owner, std::string_view tag) const {
         auto setResult = FindSet(tag);
         if (!setResult)
             return false;
 
-        const ObjectSet* setPtr = setResult.value();
+        const ObjectSet *setPtr = setResult.value();
         return setPtr->find(owner) != setPtr->end();
     }
 
     /**
-    * Adds an object to a tag.
-    *
-    * Inserts the object into the tag's object set. If the tag does not already exist, it is created. The object is also added to the universe of known objects.
-    *
-    * @param owner The object identifier.
-    * @param tag The tag to associate with the object.
-    */
-    void TagManager::OnTagAdded(ObjectId owner, std::string_view tag)
-    {
+     * Adds an object to a tag.
+     *
+     * Inserts the object into the tag's object set. If the tag does not already exist, it is created. The object is
+     * also added to the universe of known objects.
+     *
+     * @param owner The object identifier.
+     * @param tag The tag to associate with the object.
+     */
+    void TagManager::OnTagAdded(ObjectId owner, std::string_view tag) {
         if (!IsValid(AssertValidTag(tag)))
             return;
 
         mAllObjects.insert(owner);
 
         // Insertion requires owning key storage => std::string construction is expected here.
-        auto& setForTag = mTagToObjects[std::string(tag)];
+        auto &setForTag = mTagToObjects[std::string(tag)];
         setForTag.insert(owner);
     }
 
     /**
      * Removes a tag from an object.
      *
-     * If the tag exists, the object is removed from its associated set. If the tag's set becomes empty, the tag entry is removed entirely. The object remains in the global object set.
+     * If the tag exists, the object is removed from its associated set. If the tag's set becomes empty, the tag entry
+     * is removed entirely. The object remains in the global object set.
      *
      * @param owner The object identifier.
      * @param tag The tag to remove.
      */
-    void TagManager::OnTagRemoved(ObjectId owner, std::string_view tag)
-    {
+    void TagManager::OnTagRemoved(ObjectId owner, std::string_view tag) {
         if (!IsValid(AssertValidTag(tag)))
             return;
 
         auto it = mTagToObjects.find(tag);
-        if (it == mTagToObjects.end())
-        {
+        if (it == mTagToObjects.end()) {
             return;
         }
 
         it->second.erase(owner);
 
         // Remove empty tag buckets
-        if (it->second.empty())
-        {
+        if (it->second.empty()) {
             mTagToObjects.erase(it);
         }
 
@@ -128,33 +118,26 @@ namespace cse498
      * @param excludeTags Tags that objects must not contain.
      * @return A vector of object IDs matching the query conditions.
      */
-    std::vector<TagManager::ObjectId>
-    TagManager::Query(
-        const std::vector<std::string_view>& includeTags,
-        const std::vector<std::string_view>& excludeTags) const
-    {
+    std::vector<TagManager::ObjectId> TagManager::Query(const std::vector<std::string_view> &includeTags,
+                                                        const std::vector<std::string_view> &excludeTags) const {
         if (!IsValid(ValidateTags(includeTags)))
             return {};
 
         std::vector<std::string_view> filteredExcludeTags;
         filteredExcludeTags.reserve(excludeTags.size());
-        for (auto tag : excludeTags)
-        {
-            if (!tag.empty())
-            {
+        for (auto tag: excludeTags) {
+            if (!tag.empty()) {
                 filteredExcludeTags.push_back(tag);
             }
         }
 
         const auto excludeSets = CollectExistingSets(excludeTags);
-        if (includeTags.empty())
-        {
+        if (includeTags.empty()) {
             return QueryFromAllObjects(excludeSets);
         }
 
         const auto base = FindSmallestIncludeSet(includeTags);
-        if (!base)
-        {
+        if (!base) {
             return {};
         }
 
@@ -169,10 +152,8 @@ namespace cse498
      * @return An empty expected on success, or an unexpected error message if the tag is empty.
      */
     std::expected<void, TagManager::FindSetError>
-    TagManager::ValidateTags(const std::vector<std::string_view>& tags) const
-    {
-        for (auto tag : tags)
-        {
+    TagManager::ValidateTags(const std::vector<std::string_view> &tags) const {
+        for (auto tag: tags) {
             auto result = AssertValidTag(tag);
             if (!result)
                 return result;
@@ -189,16 +170,13 @@ namespace cse498
      * @return A vector of references to existing ObjectSets.
      */
     std::vector<std::reference_wrapper<const TagManager::ObjectSet>>
-    TagManager::CollectExistingSets(const std::vector<std::string_view>& tags) const
-    {
+    TagManager::CollectExistingSets(const std::vector<std::string_view> &tags) const {
         std::vector<std::reference_wrapper<const ObjectSet>> sets;
         sets.reserve(tags.size());
 
-        for (auto tag : tags)
-        {
+        for (auto tag: tags) {
             auto setResult = FindSet(tag);
-            if (setResult)
-            {
+            if (setResult) {
                 sets.push_back(*setResult.value());
             }
         }
@@ -215,21 +193,17 @@ namespace cse498
      * @return An optional reference to the smallest ObjectSet, or std::nullopt if any tag is missing.
      */
     std::optional<std::reference_wrapper<const TagManager::ObjectSet>>
-    TagManager::FindSmallestIncludeSet(const std::vector<std::string_view>& includeTags) const
-    {
+    TagManager::FindSmallestIncludeSet(const std::vector<std::string_view> &includeTags) const {
         std::optional<std::reference_wrapper<const ObjectSet>> base;
 
-        for (auto tag : includeTags)
-        {
+        for (auto tag: includeTags) {
             auto setResult = FindSet(tag);
-            if (!setResult)
-            {
+            if (!setResult) {
                 return std::nullopt;
             }
 
-            const auto& currentSet = *setResult.value();
-            if (!base || currentSet.size() < base->get().size())
-            {
+            const auto &currentSet = *setResult.value();
+            if (!base || currentSet.size() < base->get().size()) {
                 base = currentSet;
             }
         }
@@ -245,13 +219,11 @@ namespace cse498
      * @param excludeSets The collection of object sets to exclude.
      * @return True if the object is found in any exclude set, false otherwise.
      */
-    bool TagManager::IsExcluded(ObjectId id, const std::vector<std::reference_wrapper<const ObjectSet>>& excludeSets) const
-    {
-        for (const auto& setRef : excludeSets)
-        {
-            const auto& set = setRef.get();
-            if (set.find(id) != set.end())
-            {
+    bool TagManager::IsExcluded(ObjectId id,
+                                const std::vector<std::reference_wrapper<const ObjectSet>> &excludeSets) const {
+        for (const auto &setRef: excludeSets) {
+            const auto &set = setRef.get();
+            if (set.find(id) != set.end()) {
                 return true;
             }
         }
@@ -266,12 +238,9 @@ namespace cse498
      * @param includeTags The list of required tags.
      * @return True if the object contains all include tags, false otherwise.
      */
-    bool TagManager::MatchesIncludeTags(ObjectId id, const std::vector<std::string_view>& includeTags) const
-    {
-        for (auto tag : includeTags)
-        {
-            if (!Contains(id, tag))
-            {
+    bool TagManager::MatchesIncludeTags(ObjectId id, const std::vector<std::string_view> &includeTags) const {
+        for (auto tag: includeTags) {
+            if (!Contains(id, tag)) {
                 return false;
             }
         }
@@ -286,15 +255,12 @@ namespace cse498
      * @return A vector of object IDs that are not excluded.
      */
     std::vector<TagManager::ObjectId>
-    TagManager::QueryFromAllObjects(const std::vector<std::reference_wrapper<const ObjectSet>>& excludeSets) const
-    {
+    TagManager::QueryFromAllObjects(const std::vector<std::reference_wrapper<const ObjectSet>> &excludeSets) const {
         std::vector<ObjectId> out;
         out.reserve(mAllObjects.size());
 
-        for (auto id : mAllObjects)
-        {
-            if (!IsExcluded(id, excludeSets))
-            {
+        for (auto id: mAllObjects) {
+            if (!IsExcluded(id, excludeSets)) {
                 out.push_back(id);
             }
         }
@@ -312,23 +278,17 @@ namespace cse498
      * @return A vector of object IDs that satisfy all query conditions.
      */
     std::vector<TagManager::ObjectId>
-    TagManager::QueryFromBaseSet(
-        const ObjectSet& baseSet,
-        const std::vector<std::string_view>& includeTags,
-        const std::vector<std::reference_wrapper<const ObjectSet>>& excludeSets) const
-    {
+    TagManager::QueryFromBaseSet(const ObjectSet &baseSet, const std::vector<std::string_view> &includeTags,
+                                 const std::vector<std::reference_wrapper<const ObjectSet>> &excludeSets) const {
         std::vector<ObjectId> out;
         out.reserve(baseSet.size());
 
-        for (auto id : baseSet)
-        {
-            if (IsExcluded(id, excludeSets))
-            {
+        for (auto id: baseSet) {
+            if (IsExcluded(id, excludeSets)) {
                 continue;
             }
 
-            if (MatchesIncludeTags(id, includeTags))
-            {
+            if (MatchesIncludeTags(id, includeTags)) {
                 out.push_back(id);
             }
         }
@@ -343,8 +303,7 @@ namespace cse498
      * @param tag The tag to check.
      * @return true if the object has the tag; false otherwise.
      */
-    bool TagManager::HasTag(ObjectId owner, std::string_view tag) const
-    {
+    bool TagManager::HasTag(ObjectId owner, std::string_view tag) const {
         if (!IsValid(AssertValidTag(tag)))
             return false;
         return Contains(owner, tag);
@@ -353,8 +312,7 @@ namespace cse498
     /**
      * Removes all tags and objects from the Tagmanager.
      */
-    void TagManager::Clear()
-    {
+    void TagManager::Clear() {
         mTagToObjects.clear();
         mAllObjects.clear();
     }

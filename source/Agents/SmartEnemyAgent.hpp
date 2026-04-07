@@ -18,28 +18,18 @@ namespace cse498 {
         [[nodiscard]] std::optional<WorldPosition> GetTargetPlayerPosition() const;
         [[nodiscard]] std::optional<size_t> AttackActionForAdjacentPlayer() const;
 
-        [[nodiscard]] bool HasLineOfSight(
-            const WorldGrid &grid,
-            WorldPosition from,
-            WorldPosition to) const;
+        [[nodiscard]] bool HasLineOfSight(const WorldGrid &grid, WorldPosition from, WorldPosition to) const;
 
-        [[nodiscard]] std::optional<size_t> LineOfSightPursuitMove(
-            const WorldGrid &grid,
-            WorldPosition target) const;
+        [[nodiscard]] std::optional<size_t> LineOfSightPursuitMove(const WorldGrid &grid, WorldPosition target) const;
 
-        [[nodiscard]] std::optional<size_t> NextMoveToward(
-            const WorldGrid &grid,
-            WorldPosition target) const;
+        [[nodiscard]] std::optional<size_t> NextMoveToward(const WorldGrid &grid, WorldPosition target) const;
 
-        [[nodiscard]] std::optional<size_t> ShortestAttackLaneMove(
-            const WorldGrid &grid,
-            WorldPosition target) const;
+        [[nodiscard]] std::optional<size_t> ShortestAttackLaneMove(const WorldGrid &grid, WorldPosition target) const;
 
         [[nodiscard]] std::optional<size_t> ExploreMove(const WorldGrid &grid) const;
 
     public:
-        SmartEnemyAgent(size_t id, const std::string &name, const WorldBase &world)
-            : AgentBase(id, name, world) {}
+        SmartEnemyAgent(size_t id, const std::string &name, const WorldBase &world) : AgentBase(id, name, world) {}
 
         bool Initialize() override;
         [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
