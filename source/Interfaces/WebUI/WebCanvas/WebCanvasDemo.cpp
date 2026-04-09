@@ -34,29 +34,29 @@
 static cse498::WebCanvas* g_canvas = nullptr;
 
 namespace {
-constexpr std::string_view kBgColor = "#111318";
-constexpr std::string_view kAxisColor = "#2a2f3a";
-constexpr std::string_view kHeaderRectColor = "#1e2230";
-constexpr std::string_view kSectionATextColor = "#6a8faf";
-constexpr std::string_view kPulseStrokeColor = "#00d1ff";
-constexpr std::string_view kPulseFillColor = "#002733";
-constexpr std::string_view kWhiteColor = "#ffffff";
-constexpr std::string_view kTriangleStrokeColor = "#ffd166";
-constexpr std::string_view kTriangleFillColor = "#3a2b12";
-constexpr std::string_view kSineTrailColor = "#7bf1a8";
-constexpr std::string_view kMovingLineColor = "#ff4d6d";
-constexpr std::string_view kSectionBTextColor = "#af8f6a";
-constexpr std::string_view kImagePlaceholderA = "#1a5276";
-constexpr std::string_view kImagePlaceholderB = "#145a32";
-constexpr std::string_view kImagePlaceholderC = "#6e2f1a";
-constexpr std::string_view kButtonStartColor = "#1e8449";
-constexpr std::string_view kButtonPauseColor = "#1a5276";
-constexpr std::string_view kScoreTextColor = "#ffd166";
-constexpr std::string_view kLevelTextColor = "#7bf1a8";
-constexpr std::string_view kStatusTextColor = "#aaaaaa";
-constexpr std::string_view kCanvasBorderColor = "#444444";
+constexpr std::string kBgColor = "#111318";
+constexpr std::string kAxisColor = "#2a2f3a";
+constexpr std::string kHeaderRectColor = "#1e2230";
+constexpr std::string kSectionATextColor = "#6a8faf";
+constexpr std::string kPulseStrokeColor = "#00d1ff";
+constexpr std::string kPulseFillColor = "#002733";
+constexpr std::string kWhiteColor = "#ffffff";
+constexpr std::string kTriangleStrokeColor = "#ffd166";
+constexpr std::string kTriangleFillColor = "#3a2b12";
+constexpr std::string kSineTrailColor = "#7bf1a8";
+constexpr std::string kMovingLineColor = "#ff4d6d";
+constexpr std::string kSectionBTextColor = "#af8f6a";
+constexpr std::string kImagePlaceholderA = "#1a5276";
+constexpr std::string kImagePlaceholderB = "#145a32";
+constexpr std::string kImagePlaceholderC = "#6e2f1a";
+constexpr std::string kButtonStartColor = "#1e8449";
+constexpr std::string kButtonPauseColor = "#1a5276";
+constexpr std::string kScoreTextColor = "#ffd166";
+constexpr std::string kLevelTextColor = "#7bf1a8";
+constexpr std::string kStatusTextColor = "#aaaaaa";
+constexpr std::string kCanvasBorderColor = "#444444";
 
-constexpr std::array<std::string_view, 21> kHexColors{
+constexpr std::array<std::string, 21> kHexColors{
     kBgColor,          kAxisColor,         kHeaderRectColor,  kSectionATextColor,
     kPulseStrokeColor, kPulseFillColor,    kWhiteColor,       kTriangleStrokeColor,
     kTriangleFillColor, kSineTrailColor,   kMovingLineColor,  kSectionBTextColor,
@@ -93,8 +93,10 @@ static void demo_frame(void* /*arg*/) {
 
     g_canvas->DrawRect(10.0f, 4.0f, 260.0f, 22.0f, kHeaderRectColor);
     g_canvas->DrawText(14.0f, 20.0f,
-                       "Section A: immediate-mode primitives", kSectionATextColor, 13.0f);
-
+                    "Section A: immediate-mode primitives",
+                    kSectionATextColor,
+                    13.0f,
+                    "sans-serif");
     // Pulsing circle
     {
         const float r = 20.0f + 10.0f * std::sin(t * 2.0f);
@@ -130,7 +132,10 @@ static void demo_frame(void* /*arg*/) {
 
     g_canvas->DrawRect(500.0f, 4.0f, 390.0f, 22.0f, kHeaderRectColor);
     g_canvas->DrawText(504.0f, 20.0f,
-                       "Section B: real WebImage / WebButton / WebTextbox", kSectionBTextColor, 13.0f);
+                   "Section B: real WebImage / WebButton / WebTextbox",
+                   kSectionBTextColor,
+                   13.0f,
+                   "sans-serif");
 
     g_canvas->RenderFrame();
 }

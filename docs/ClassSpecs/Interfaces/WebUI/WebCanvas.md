@@ -88,6 +88,13 @@ em++ -std=c++23 -Wall -Wextra -Wpedantic -O2 \
   -o source/Interfaces/WebUI/WebCanvas/WebCanvasDemo.js
 ```
 
+After compiling, run the following commands and then open `WebCanvasDemo.html`
+
+```
+cd source/Interfaces/WebUI/WebCanvas/
+python3 -m http.server 8000
+```
+
 **Run Tests with**
 
 Powershell + Docker (under repo root):
