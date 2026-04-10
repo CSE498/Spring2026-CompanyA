@@ -1,7 +1,14 @@
-/// Build command from root: cmake --build build --target group18_demo
+/// Build command from root: 
+///   cmake -S . -B build
+///   cmake --build build --target group18_demo
+///
 /// Run this command from root to open the demo:
-/// emrun source/index.html --browser chrome --serve-root .
-/// images use absolute paths from the project root so you must use --serve-root .
+///   emrun source/index.html --browser chrome --serve-root .
+/// Images use absolute paths from the project root so you must use --serve-root .
+/// Alternatively, run:
+///   emrun /source/index.html --no_browser --serve-root .
+/// The open in browser:
+///   http://localhost:6931/source/index.html
 
 #ifdef __EMSCRIPTEN__
 
