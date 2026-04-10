@@ -64,6 +64,15 @@ emrun /source/index.html --browser <chrome | edge | ...> --serve-root .
 ```
 The --serve-root argument is important for loading image assets.
 
+Alternative, run
+```bash
+emrun /source/index.html --no_browser --serve-root .
+```
+then open in browser
+```bash
+http://localhost:6931/source/index.html
+```
+
 ## Running Tests
 
 WebUI tests are **excluded** from the default target because they
