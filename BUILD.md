@@ -6,7 +6,7 @@ From the project root, run:
 
 ```bash
 cmake -S . -B build
-````
+```
 
 This generates a new `build` folder.
 
@@ -23,6 +23,8 @@ or, from the project root:
 cmake --build build
 ```
 
+---
+
 ## Running the `simple` Executable
 
 After building, go to `source` and run:
@@ -31,13 +33,7 @@ After building, go to `source` and run:
 ./simple
 ```
 
-## Running the `gameview` Executable
-
-After building, run:
-
-```bash
-./source/gameview
-```
+---
 
 ## Running Non-Web Tests
 
@@ -47,34 +43,116 @@ After building, go to `tests/build` and run:
 ./run_tests
 ```
 
+---
+
 ## Running Web Tests
 
-### Prerequisites
+Web tests require the **Emscripten toolchain**. Complete the one-time setup below before building.
 
-1. Install and activate the Emscripten SDK:
+### Setup
 
 ```bash
-emsdk install latest
-emsdk activate latest
+# 1. Clone and enter the Emscripten SDK (one-time)
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+
+# 2. Install & activate
+./emsdk install latest
+./emsdk activate latest
+
+# 3. Source the environment (run every new shell session)
+source ./emsdk_env.sh     # Linux / macOS
+# emsdk_env.bat            # Windows
 ```
 
-2. Source the environment:
+Verify the installation:
 
 ```bash
-source emsdk_env.sh
+em++ --version
+```
+
+### Build
+
+WebUI tests are **excluded** from the default target because they require the Emscripten toolchain. A dedicated CMake target compiles all WebUI tests:
+
+```bash
+cmake --build build --target web_test
 ```
 
 ### Serve the Web Test Files
 
-After building, serve the generated HTML files and open them in a browser:
+After building, serve the generated HTML files and open them in a browser. The web test files are output to `tests/build/web_tests`.
 
 ```bash
 cd tests/build/web_tests
 python3 -m http.server 8000
 ```
 
-Then visit:
+or
 
-```text
-http://localhost:8000/<TestName>.html
+```bash
+emrun tests/build/web_tests --browser <chrome | edge | ...>
+```
+
+Then open any of the following in your browser:
+
+| Test | URL |
+|---|---|
+| Textbox | `http://localhost:8000/WebTextboxTest.html` |
+| Image | `http://localhost:8000/WebImageTest.html` |
+| Button | `http://localhost:8000/WebButtonTest.html` |
+| Canvas | `http://localhost:8000/WebCanvasTest.html` |
+| Layout | `http://localhost:8000/WebLayoutTest.html` |
+
+---
+
+## Group Demos
+
+Each group has a dedicated CMake target. These demos are **excluded** from the default target. Group 18's demo uses Emscripten and runs in the browser.
+
+### Build
+
+Build a specific group's demo from the project root:
+
+```bash
+cmake --build build --target groupXX_demo
+```
+
+Replace `XX` with the zero-padded group number, e.g. `group07_demo`, `group12_demo`.
+
+### Non-Web Demos
+Run it from the project root:
+
+```bash
+./demos/groupXX_demo
+```
+
+### Group 18 Demo (Emscripten)
+
+Group 18's demo requires the Emscripten toolchain. See the [Web Tests setup](#setup) section above if you haven't installed it yet.
+
+
+> **Note:** Images use absolute paths from the project root, so `--serve-root .` is required for all `emrun` commands.
+
+Open automatically in Chrome:
+
+```bash
+emrun demos/WebUI/index.html --browser chrome --serve-root .
+```
+
+Or start the server without opening a browser:
+
+```bash
+emrun demos/WebUI/index.html --no_browser --serve-root .
+```
+
+Then navigate to:
+```
+http://localhost:6931/demos/WebUI/index.html
+```
+
+Alternatively, run:
+```bash
+cd demos/WebUI
+python3 -m http.server 8000
 ```
