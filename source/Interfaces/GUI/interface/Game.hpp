@@ -13,11 +13,12 @@
 #include <memory>
 #include <string>
 
-#include "../Interfaces/GUI/GameView.hpp"
-#include "../Interfaces/GUI/ImageGrid.hpp"
-#include "../Interfaces/GUI/ImageManager.hpp"
-#include "../Interfaces/GUI/Menu.hpp"
-#include "../Interfaces/GUI/Text.hpp"
+
+#include "../GameView.hpp"
+#include "../ImageGrid.hpp"
+#include "../ImageManager.hpp"
+#include "../Menu.hpp"
+#include "../Text.hpp"
 #include "DungeonWorld.hpp"
 #include "OverWorld.hpp"
 

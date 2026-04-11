@@ -8,7 +8,8 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
-#include "core/AgentBase.hpp"
+#include "../../../core/AgentBase.hpp"
+
 namespace cse498
 {
 

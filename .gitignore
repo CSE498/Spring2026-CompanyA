@@ -55,6 +55,11 @@ third-party/SDL2/
 /tests/build/run_tests
 /tests/build
 
+/demos/WebUI/*.data
+/demos/WebUI/*.js
+/demos/WebUI/*.wasm
+/demos/WebUI/*.wasm.map
+
 # ====== Doxygen Output ======
 # The folder where the result reports generated after each Doxygen scan are stored
 # (config this in your Doxyfile: OUTPUT_DIRECTORY = ./doxygen-output)

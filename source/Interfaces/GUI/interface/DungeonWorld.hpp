@@ -2,14 +2,14 @@
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
  * @brief A procedurally generated dungeon world using BSP room placement.
  * @author Group 17
- * @note Status: PROPOSAL
+ * @note Status: PROPOSAL (PLACEHOLDER WORLD)
  * Made via reference to Claude Sonnet 4.6
  */
 
 #pragma once
 
-#include "../../group_specific_content/Group-15/WorldGeneration.hpp"
-#include "WorldBase.hpp"
+#include "../../../../group_specific_content/Group-15/WorldGeneration.hpp"
+#include "../../../core/WorldBase.hpp"
 
 namespace cse498
 {

@@ -25,7 +25,8 @@ namespace cse498 {
     protected:
         std::vector<std::string> current_room;
         //std::string mFilePath = "../source/core/rooms/Dungeon_";
-        std::string mFilePath = "source/assets/rooms/Dungeon_";
+        // std::string mFilePath = "source/Assets/rooms/Dungeon_";
+        std::string mFilePath = std::string(ASSETS_DIR) + "rooms/Dungeon_";
 
         cse498::Random mRng;
 

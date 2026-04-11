@@ -38,6 +38,9 @@ set(COMPANYA_FONT_DIR
 set(COMPANYA_IMAGE_DIR
     "${COMPANYA_TEST_DIR}/Interfaces/GUI/images"
 )
+set(COMPANYA_ASSETS_DIR
+        "${COMPANYA_SOURCE_DIR}/Assets/"
+)
 
 # ===========================================
 # HELPER FUNCTIONS
@@ -66,7 +69,6 @@ function(companya_collect_native_sources out_var)
     file(GLOB_RECURSE native_sources CONFIGURE_DEPENDS "${COMPANYA_SOURCE_DIR}/*.cpp")
     list(FILTER native_sources EXCLUDE REGEX "/Interfaces/WebUI/")
     list(REMOVE_ITEM native_sources "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
-    list(REMOVE_ITEM native_sources "${COMPANYA_SOURCE_DIR}/Group17_Main.cpp")
     list(SORT native_sources)
     set(${out_var} "${native_sources}" PARENT_SCOPE)
 endfunction()
@@ -215,8 +217,8 @@ target_include_directories(companya_native
 target_compile_definitions(companya_native
     PUBLIC
         DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
-        ASSETS_DIR="${COMPANYA_ASSETS_DIR}"
         TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
+        ASSETS_DIR="${COMPANYA_ASSETS_DIR}"
 )
 companya_apply_native_profile(companya_native)
 
@@ -296,8 +298,31 @@ foreach(demo_main IN LISTS COMPANYA_NATIVE_DEMOS)
     # Lowercase -> "group18"
     string(TOLOWER "${demo_name}" demo_name)
 
+    # Group 18 uses Emscripten, handled separately below
     if(demo_name STREQUAL "group18")
-        # Group 18 uses Emscripten, handled separately below
+        continue()
+    endif()
+ 
+    # Group 17 uses SDL, has two demos
+    if(demo_name STREQUAL "group17")
+        add_executable(group17_demo "${demo_main}")
+        target_link_libraries(group17_demo PRIVATE companya_native ${COMPANYA_SDL_LIBRARIES})
+        target_include_directories(group17_demo PRIVATE "${COMPANYA_SDL_INCLUDE_DIR}")
+        set_target_properties(group17_demo PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_DEMOS_DIR}"
+        )
+        
+
+        add_executable(group17_demo2 "${demo_main}")
+        target_link_libraries(group17_demo2 PRIVATE companya_native ${COMPANYA_SDL_LIBRARIES})
+        target_include_directories(group17_demo2 PRIVATE "${COMPANYA_SDL_INCLUDE_DIR}")
+        set_target_properties(group17_demo2 PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_DEMOS_DIR}"
+        )
+
+        # Only built when explicitly requested with --target groupXX_demo
+        set_target_properties("group17_demo" PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        set_target_properties("group17_demo2" PROPERTIES EXCLUDE_FROM_ALL TRUE)
         continue()
     endif()
 
@@ -311,6 +336,7 @@ foreach(demo_main IN LISTS COMPANYA_NATIVE_DEMOS)
     # Only built when explicitly requested with --target groupXX_demo
     set_target_properties("${demo_name}_demo" PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endforeach()
+
 
 
 # Emscripten targets

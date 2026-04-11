@@ -108,11 +108,7 @@ Then open any of the following in your browser:
 
 ## Group Demos
 
-Each group has a dedicated CMake target. These demos are **excluded** from the default target. Group 18's demo uses Emscripten and runs in the browser.
-
-### Build
-
-Build a specific group's demo from the project root:
+Each group has a dedicated CMake target, **excluded** from the default build. Build a specific group's demo from the project root:
 
 ```bash
 cmake --build build --target groupXX_demo
@@ -121,10 +117,25 @@ cmake --build build --target groupXX_demo
 Replace `XX` with the zero-padded group number, e.g. `group07_demo`, `group12_demo`.
 
 ### Non-Web Demos
-Run it from the project root:
+After building, run from the project root:
 
 ```bash
 ./demos/groupXX_demo
+```
+
+### Group 17 Demo (SDL)
+
+Group 17's demo requires SDL. Install it by running:
+
+```bash
+make install
+```
+
+Two demo targets are available:
+
+```bash
+cmake --build build --target group17_demo   # standard demo
+cmake --build build --target group17_demo2  # extended step-by-step walkthrough
 ```
 
 ### Group 18 Demo (Emscripten)

@@ -2,7 +2,7 @@
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
  * @brief A flat interactive overworld with a dungeon entrance.
  * @author: Group 17
- * @note Status: PROPOSAL
+ * @note Status: PROPOSAL (PLACEHOLDER WORLD)
  * Made via reference to Claude Sonnet 4.6
  */
 
@@ -10,8 +10,8 @@
 
 #include <cassert>
 
-#include "../core/WorldBase.hpp"
-#include "../Agents/PacingAgent.hpp"
+#include "../../../core/WorldBase.hpp"
+#include "../../../Agents/PacingAgent.hpp"
 
 namespace cse498 {
 

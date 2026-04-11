@@ -25,7 +25,7 @@
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-#include "core/Game.hpp"
+#include "../../source/Interfaces/GUI/interface/Game.hpp"
 
 int main()
 {

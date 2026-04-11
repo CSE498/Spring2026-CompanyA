@@ -8,9 +8,9 @@
  */
 
 #define SDL_MAIN_HANDLED
-#include "../source/core/Game.hpp"
-#include "../source/Interfaces/GUI/GameView.hpp"
-#include "../source/Interfaces/GUI/ErrorManager.hpp"
+#include "../../source/Interfaces/GUI/interface/Game.hpp"
+#include "../../source/Interfaces/GUI/GameView.hpp"
+#include "../../source/Interfaces/GUI/ErrorManager.hpp"
 #include <iostream>
 #include <SDL2/SDL.h>
 
