@@ -23,7 +23,7 @@ using namespace cse498;
 Menu::Menu() : mSelectedIndex(std::nullopt) {}
 
 /**
- *  Adds a new menu option with its assoicated action
+ *  Adds a new menu option with its associated action
  * @param label what the user sees (e.g. "start game")
  * @param callback what happens when activates
  * @return
@@ -106,7 +106,7 @@ size_t Menu::GetOptionCount() const { return mOptions.size(); }
 std::optional<size_t> Menu::GetSelectedIndex() const { return mSelectedIndex; }
 
 /**
- * Moves the selection dwon to the next option, wrapping around to first option if current at last
+ * Moves the selection down to the next option, wrapping around to first option if current at last
  */
 void Menu::SelectNext()
 {

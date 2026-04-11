@@ -20,11 +20,11 @@ namespace cse498
     struct MenuStyle
     {
 
-        static constexpr int kDefaulFontSize = 24;
-        static constexpr bool kDefautlBoldSelected = true;
+        static constexpr int kDefaultFontSize = 24;
+        static constexpr bool kDefaultBoldSelected = true;
 
-        int font_size = kDefaulFontSize;
-        bool bold_selected = kDefautlBoldSelected;
+        int font_size = kDefaultFontSize;
+        bool bold_selected = kDefaultBoldSelected;
 
 
         Color selected_color = {255, 255, 0, 255}; // yellow
