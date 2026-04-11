@@ -59,6 +59,7 @@ third-party/SDL2/
 /demos/WebUI/*.js
 /demos/WebUI/*.wasm
 /demos/WebUI/*.wasm.map
+/demos/*_demo*
 
 # ====== Doxygen Output ======
 # The folder where the result reports generated after each Doxygen scan are stored
