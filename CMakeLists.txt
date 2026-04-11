@@ -21,17 +21,27 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(COMPANYA_PROFILE "default" CACHE STRING "Build profile used by compatibility Makefiles")
 set_property(CACHE COMPANYA_PROFILE PROPERTY STRINGS default debug opt quick grumpy)
 
+
+# ===========================================
+# DIRECTORY VARIABLES
+# ===========================================
 set(COMPANYA_SOURCE_DIR "${PROJECT_SOURCE_DIR}/source")
 set(COMPANYA_TEST_DIR "${PROJECT_SOURCE_DIR}/tests")
+set(COMPANYA_DEMOS_DIR "${PROJECT_SOURCE_DIR}/demos")
 set(COMPANYA_THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third-party")
 
+# Font directory for GUI only
 set(COMPANYA_FONT_DIR
     "${COMPANYA_SOURCE_DIR}/Interfaces/GUI/fonts"
 )
+# Images directory for GUI tests only
 set(COMPANYA_IMAGE_DIR
     "${COMPANYA_TEST_DIR}/Interfaces/GUI/images"
 )
 
+# ===========================================
+# HELPER FUNCTIONS
+# ===========================================
 function(companya_read_brew_prefix formula out_var)
     set(${out_var} "" PARENT_SCOPE)
     find_program(COMPANYA_BREW_EXECUTABLE brew)
@@ -77,6 +87,12 @@ function(companya_collect_native_test_sources out_var)
     set(${out_var} "${native_test_sources}" PARENT_SCOPE)
 endfunction()
 
+function(companya_collect_native_demo_sources out_var)
+    file(GLOB demo_mains CONFIGURE_DEPENDS "${COMPANYA_DEMOS_DIR}/*/Group*_main.cpp")
+    list(SORT demo_mains)
+    set(${out_var} "${demo_mains}" PARENT_SCOPE)
+endfunction()
+
 function(companya_apply_native_profile target_name)
     target_compile_options(${target_name} PRIVATE
         -Wall
@@ -100,6 +116,10 @@ function(companya_apply_native_profile target_name)
     endif()
 endfunction()
 
+
+# ===========================================
+# SDL2 DISCOVERY
+# ===========================================
 set(COMPANYA_LOCAL_SDL_PREFIX "${PROJECT_SOURCE_DIR}/third-party/SDL2")
 set(COMPANYA_SDL_INCLUDE_DIR "")
 if(EXISTS "${COMPANYA_LOCAL_SDL_PREFIX}/include")
@@ -176,8 +196,12 @@ foreach(sdl_library IN LISTS COMPANYA_SDL_LIBRARIES)
 endforeach()
 list(REMOVE_DUPLICATES COMPANYA_SDL_LIBRARY_DIRS)
 
+# ===========================================
+# CORE LIBRARY
+# ===========================================
 companya_collect_native_sources(COMPANYA_NATIVE_SOURCES)
-companya_collect_native_test_sources(COMPANYA_NATIVE_TEST_SOURCES)
+companya_collect_native_test_sources(COMPANYA_NATIVE_TEST_SOURCES) 
+companya_collect_native_demo_sources(COMPANYA_NATIVE_DEMOS)
 
 add_library(companya_native STATIC ${COMPANYA_NATIVE_SOURCES})
 target_compile_features(companya_native PUBLIC cxx_std_23)
@@ -194,16 +218,22 @@ target_compile_definitions(companya_native
 )
 companya_apply_native_profile(companya_native)
 
+# ===========================================
+# EXECUTABLES
+# ===========================================
+# `simple` executable
 add_executable(simple "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
 target_link_libraries(simple PRIVATE companya_native)
 set_target_properties(simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_SOURCE_DIR}"
 )
 
+# Collect all test files (excluding WebUI's) that should be compiled into `run_tests`
 file(GLOB_RECURSE COMPANYA_NATIVE_TEST_FILES CONFIGURE_DEPENDS "${COMPANYA_TEST_DIR}/*.cpp")
 list(FILTER COMPANYA_NATIVE_TEST_FILES EXCLUDE REGEX "/Interfaces/WebUI/")
 list(SORT COMPANYA_NATIVE_TEST_FILES)
 
+# `run_tests` executable, excludes WebUI
 add_executable(run_tests
     ${COMPANYA_NATIVE_TEST_FILES}
     ${COMPANYA_NATIVE_TEST_SOURCES}
@@ -230,6 +260,7 @@ set_target_properties(run_tests PROPERTIES
     BUILD_RPATH "${COMPANYA_SDL_LIBRARY_DIRS}"
 )
 
+# CTest integration (run `ctest`)
 enable_testing()
 add_test(
     NAME native_tests
@@ -252,8 +283,36 @@ if(EXISTS "${COMPANYA_LOCAL_SDL_PREFIX}/lib")
     endif()
 endif()
 
+
+# Create one target PER demo
+foreach(demo_main IN LISTS COMPANYA_NATIVE_DEMOS)
+    # Strips extension -> "Group18_main"
+    get_filename_component(demo_filename "${demo_main}" NAME_WE)
+    # Strips "_main" -> "Group18"
+    string(REGEX REPLACE "_main$" "" demo_name "${demo_filename}")
+    # Lowercase -> "group18"
+    string(TOLOWER "${demo_name}" demo_name)
+
+    if(demo_name STREQUAL "group18")
+        # Group 18 uses Emscripten, handled separately below
+        continue()
+    endif()
+
+    add_executable("${demo_name}_demo" "${demo_main}")
+    target_link_libraries("${demo_name}_demo" PRIVATE companya_native)
+    target_compile_features("${demo_name}_demo" PRIVATE cxx_std_23)
+    companya_apply_native_profile("${demo_name}_demo")
+    set_target_properties("${demo_name}_demo" PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${COMPANYA_DEMOS_DIR}"
+    )
+    # Only built when explicitly requested with --target groupXX_demo
+    set_target_properties("${demo_name}_demo" PROPERTIES EXCLUDE_FROM_ALL TRUE)
+endforeach()
+
+
+# Emscripten targets
 find_program(COMPANYA_EMPP_EXECUTABLE em++)
-set(COMPANYA_WEB_DEMO_OUTPUT_DIR "${COMPANYA_SOURCE_DIR}")
+set(COMPANYA_WEB_DEMO_OUTPUT_DIR "${COMPANYA_DEMOS_DIR}/WebUI")
 set(COMPANYA_WEB_SOURCE "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI")
 set(COMPANYA_WEB_DEMO_COMMON_ARGS
     --bind
@@ -300,8 +359,8 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
             "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
             "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
-            "${COMPANYA_SOURCE_DIR}/Group18_main.cpp"
-            -o "${COMPANYA_SOURCE_DIR}/Group18_main.js"
+            "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.cpp"
+            -o "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
         DEPENDS
             "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
@@ -310,7 +369,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
             "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
             "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
-            "${COMPANYA_SOURCE_DIR}/Group18_main.cpp"
+            "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.cpp"
             "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
     )
 
@@ -452,7 +511,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
 
     add_custom_target(group18_demo
         DEPENDS
-            "${COMPANYA_SOURCE_DIR}/Group18_main.js"
+            "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
     )
 
     add_custom_target(web_test

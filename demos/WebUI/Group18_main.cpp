@@ -3,20 +3,20 @@
 ///   cmake --build build --target group18_demo
 ///
 /// Run this command from root to open the demo:
-///   emrun source/index.html --browser chrome --serve-root .
+///   emrun demos/WebUI/index.html --browser chrome --serve-root .
 /// Images use absolute paths from the project root so you must use --serve-root .
 /// Alternatively, run:
-///   emrun /source/index.html --no_browser --serve-root .
+///   emrun demos/WebUI/index.html --no_browser --serve-root .
 /// The open in browser:
-///   http://localhost:6931/source/index.html
+///   http://localhost:6931/demos/WebUI/index.html
 
 #ifdef __EMSCRIPTEN__
 
 #include <algorithm>
 #include <emscripten/emscripten.h>
-#include "Interfaces/WebUI/interface/MockWorld.hpp"
-#include "Interfaces/WebUI/interface/WebInterface.hpp"
-#include "./Agents/PacingAgent.hpp"
+#include "../../source/Interfaces/WebUI/interface/MockWorld.hpp"
+#include "../../source/Interfaces/WebUI/interface/WebInterface.hpp"
+#include "../../source/Agents/PacingAgent.hpp"
 
 namespace {
 
