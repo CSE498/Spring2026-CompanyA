@@ -14,11 +14,11 @@
 #include "BSP-Dungeon.hpp"
 #include <cmath>
 
-struct Point {
+struct LegacyPoint {
     int x, y; // x-y points of a room
 };
 
-struct LinkedRooms {
+struct LegacyLinkedRooms {
     int x1, y1; //first room's coordinates
     int x2, y2; //second room's coordinates
 };
@@ -26,12 +26,12 @@ struct LinkedRooms {
 namespace cse498 {
     
 
-    class WorldGeneration {
+    class LegacyWorldGeneration {
     protected:
-        BSP mBSP; // BSP_Tree that contains information on the grid and it's dimensions
-        RoomHolder mRoomHolder; //
+        LegacyBSP mBSP; // BSP_Tree that contains information on the grid and it's dimensions
+        LegacyRoomHolder mRoomHolder; //
         std::vector<std::string> mGrid; //Grid we're rasterizing information from mBSP_Tree too
-        std::vector<LinkedRooms> mConnectedRooms; //The x-y coord pairs of two rooms used for connecting the room pair
+        std::vector<LegacyLinkedRooms> mConnectedRooms; //The x-y coord pairs of two rooms used for connecting the room pair
 
         int mOffsetX; //x offset of room placement
         int mOffsetY; //y offset of room placement
@@ -39,7 +39,7 @@ namespace cse498 {
     public: 
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
-        WorldGeneration() 
+        LegacyWorldGeneration() 
             : mBSP(), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
               mRoomHolder(), 
               mGrid(mBSP.GetHeight(), std::string(mBSP.GetWidth(), '#')) 
@@ -59,7 +59,7 @@ namespace cse498 {
 
         /// @brief takes the leaf node's (x,y) coordinates and room information from the BSP_Tree and translates it onto mGrid
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
-        void RasterizeGrid(const BSPNode& node) { 
+        void RasterizeGrid(const LegacyBSPNode& node) { 
             int room_height = node.vector_room.size();
             std::cout << room_height << std::endl;
              
@@ -92,18 +92,18 @@ namespace cse498 {
         /// @brief DFS to go through the populated BSP tree in order to connect rooms together
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         /// @return (x,y) pair coordinate struct of room's location in the grid
-        Point PostOrderRoomConnect(BSPNode node) { //Need to change Node node to idx int later 
+        LegacyPoint PostOrderRoomConnect(LegacyBSPNode node) { //Need to change Node node to idx int later 
             if (node.left_child == -1 && node.right_child == -1) {
                 auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
 
-                return (Point{node.x + pair.x, node.y + pair.y});
+                return (LegacyPoint{node.x + pair.x, node.y + pair.y});
             }
 
-            Point left = PostOrderRoomConnect(mBSP.GetBSPTree()[node.left_child]);
-            Point right = PostOrderRoomConnect(mBSP.GetBSPTree()[node.right_child]);
+            LegacyPoint left = PostOrderRoomConnect(mBSP.GetBSPTree()[node.left_child]);
+            LegacyPoint right = PostOrderRoomConnect(mBSP.GetBSPTree()[node.right_child]);
             
 
-            mConnectedRooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
+            mConnectedRooms.push_back(LegacyLinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
 
             return left; //need to send a node upwards, allowing connectivity between nodes for linking 
         }
@@ -111,15 +111,15 @@ namespace cse498 {
         /// @brief Calculate center of room placed in grid
         /// @param room we're inputting the BSP_Tree Node's room value
         /// @return pair of coordinates 
-        [[nodiscard]] Point CalcRoomCenter(std::vector<std::string>& room) {
+        [[nodiscard]] LegacyPoint CalcRoomCenter(std::vector<std::string>& room) {
             auto width = room[0].length();
             auto height = room.size();
 
-            return Point(width / 2 , height / 2);
+            return LegacyPoint(width / 2 , height / 2);
         }
 
         /// @brief Calculates the distance (x-y) between two rooms) 
-        void ConnectTunnel(LinkedRooms RoomCoordinates) {
+        void ConnectTunnel(LegacyLinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
 
             std::cout << x1_value << " " << x2_value << " " << y1_value << " " << y2_value << std::endl;
@@ -193,19 +193,19 @@ namespace cse498 {
 
         /// @brief 
         /// @return 
-        [[nodiscard]] BSP GetBSP() const {
+        [[nodiscard]] LegacyBSP GetBSP() const {
             return mBSP;
         }
 
         /// @brief 
         /// @return 
-        [[nodiscard]] RoomHolder GetRoomholder() const { 
+        [[nodiscard]] LegacyRoomHolder GetRoomholder() const { 
             return mRoomHolder;
         }
 
         /// @brief 
         /// @return 
-        [[nodiscard]] std::vector<LinkedRooms> GetConnectedRooms() const { 
+        [[nodiscard]] std::vector<LegacyLinkedRooms> GetConnectedRooms() const { 
             return mConnectedRooms;
         }
 

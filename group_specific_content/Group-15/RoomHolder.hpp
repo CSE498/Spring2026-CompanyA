@@ -19,20 +19,21 @@
 
 
 namespace cse498 {
-    class BSPTree;
-    class RoomHolder { 
+    class LegacyBSPTree;
+
+    class LegacyRoomHolder { 
 
     protected:
         std::vector<std::string> current_room;
         //std::string mFilePath = "../source/core/rooms/Dungeon_";
         // std::string mFilePath = "source/Assets/rooms/Dungeon_";
-        std::string mFilePath = std::string(ASSETS_DIR) + "rooms/Dungeon_";
+        std::string mFilePath = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_";
 
         cse498::Random mRng;
 
     public:
 
-        RoomHolder() : mRng() { 
+        LegacyRoomHolder() : mRng() { 
 
         }
 
@@ -79,21 +80,21 @@ namespace cse498 {
             auto room_select = mRng.GetValue(1,3);
             std::string file_path = "";
 
-            switch(dungeon_select) {
+            switch(dungeon_select.value()) {
                 case 1:
-                    file_path += "one_pool/room_" + std::to_string(room_select) + ".txt";
+                    file_path += "one_pool/room_" + std::to_string(room_select.value()) + ".txt";
                     
                     break;
                 case 2:
-                    file_path += "two_pool/room_" + std::to_string(room_select) + ".txt";
+                    file_path += "two_pool/room_" + std::to_string(room_select.value()) + ".txt";
                     break;
                 case 3:
-                    file_path += "three_pool/room_" + std::to_string(room_select) + ".txt";
+                    file_path += "three_pool/room_" + std::to_string(room_select.value()) + ".txt";
                     break;
 
                 default:
                     std::cout << "Error has occurred, deafulting to Dungeon One Pool!" << std::endl;
-                    file_path += "one_pool/room_" + std::to_string(room_select) + ".txt";
+                    file_path += "one_pool/room_" + std::to_string(room_select.value()) + ".txt";
             }
 
             assert(file_path != "");

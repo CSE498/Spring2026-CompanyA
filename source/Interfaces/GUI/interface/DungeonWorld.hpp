@@ -31,7 +31,7 @@ namespace cse498
         size_t dot_id; ///< '.' — open floor (dot character)
         size_t door_id; ///< '+' — door, treated as walkable
 
-        WorldGen mWorldGen; ///< BSP dungeon generator
+        LegacyWorldGeneration mWorldGen; ///< BSP dungeon generator
 
         /// Provide agents with movement actions
         void ConfigAgent(AgentBase &agent) override
@@ -69,7 +69,7 @@ namespace cse498
         /// Regenerate the dungeon — call when entering a new level
         void Regenerate()
         {
-            mWorldGen = WorldGen();
+            mWorldGen = LegacyWorldGeneration();
             mWorldGen.CreateDungeon();
             main_grid.Load(mWorldGen.GetDungeon());
         }

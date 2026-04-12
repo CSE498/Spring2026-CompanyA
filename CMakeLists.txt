@@ -219,6 +219,7 @@ target_compile_definitions(companya_native
         DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
         TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
         ASSETS_DIR="${COMPANYA_ASSETS_DIR}"
+        DUNGEON_ROOMS_DIR="${COMPANYA_SOURCE_DIR}/Worlds/Dungeon/rooms"
 )
 companya_apply_native_profile(companya_native)
 
@@ -254,6 +255,7 @@ target_compile_definitions(run_tests
         DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
         TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
         ASSETS_DIR="${COMPANYA_ASSETS_DIR}"
+        DUNGEON_ROOMS_DIR="${COMPANYA_SOURCE_DIR}/Worlds/Dungeon/rooms"
 )
 target_compile_options(run_tests PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-O2 -g -Wall -Wextra -Wpedantic -Werror>

@@ -25,7 +25,7 @@
 
 namespace cse498 {
     /// @brief Holds basic information of the grids
-    struct BSPNode {
+    struct LegacyBSPNode {
         
         int left_child = -1; //Left node of the tree
         int right_child = -1; //right node of the tree
@@ -36,19 +36,19 @@ namespace cse498 {
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
         
 
-        BSPNode() = default;
-        BSPNode(int l, int r, int x, int y, int width, int height, std::string name) 
+        LegacyBSPNode() = default;
+        LegacyBSPNode(int l, int r, int x, int y, int width, int height, std::string name) 
            : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {}
 
     };
     
 
     ///   
-    class BSP {
+    class LegacyBSP {
     protected:
-        RoomHolder mRoomHolder;
-        std::vector<BSPNode> mBSP_Tree; //The entire tree
-        std::vector<BSPNode> mLeafNodes; //the split region tile rooms
+        LegacyRoomHolder mRoomHolder;
+        std::vector<LegacyBSPNode> mBSP_Tree; //The entire tree
+        std::vector<LegacyBSPNode> mLeafNodes; //the split region tile rooms
 
         int mWidth = 150; //width of the grid (MAY NEED TO MAKE CONST)
         int mHeight = 150; //hegiht of the grid (MAY NEED TO MAKE CONST)
@@ -60,7 +60,7 @@ namespace cse498 {
 
 
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
-        BSP() : mRoomHolder() { 
+        LegacyBSP() : mRoomHolder() { 
             insert_split(mIterations);
             PostOrderDFS();
         }
@@ -73,7 +73,7 @@ namespace cse498 {
         /// @param iter number of iterations desired in the grid 
         /// @return 
         int insert_split(int iter) {
-            BSPNode root_node = BSPNode{-1, -1, 0 , 0, mWidth, mHeight, std::string("Container")}; // creation of root node
+            LegacyBSPNode root_node = LegacyBSPNode{-1, -1, 0 , 0, mWidth, mHeight, std::string("Container")}; // creation of root node
 
             return insert_split(root_node, iter);
         }
@@ -81,7 +81,7 @@ namespace cse498 {
 
         /// @brief Grabs all the leaf nodes of the BSP_Tree using Post-Order DFS, for map generation
         /// @param node root_node 
-        void PostOrderDFS(BSPNode &node) {
+        void PostOrderDFS(LegacyBSPNode &node) {
             if (node.left_child == -1 && node.right_child == -1) {
                 mRoomHolder.SetCurrentRoom();
                 node.vector_room = mRoomHolder.GetCurrentRoom();
@@ -213,12 +213,12 @@ namespace cse498 {
         }
 
         //Returns the BSP_Tree's leaf nodes
-        [[nodiscard]] std::vector<BSPNode> GetLeafNodes() const {
+        [[nodiscard]] std::vector<LegacyBSPNode> GetLeafNodes() const {
             return mLeafNodes;
         }
 
         //Returns the entirety of the created BSP_Tree
-        [[nodiscard]] std::vector<BSPNode> GetBSPTree() const {
+        [[nodiscard]] std::vector<LegacyBSPNode> GetBSPTree() const {
             return mBSP_Tree;
         }
 
@@ -227,7 +227,7 @@ namespace cse498 {
 
         /// @brief Continuously populates the BSP tree until iter base case reaches 0
         /// @param iter number of iterations to split
-        [[nodiscard]] int insert_split(BSPNode node, int iter) {
+        [[nodiscard]] int insert_split(LegacyBSPNode node, int iter) {
             int node_index = mBSP_Tree.size();
             mBSP_Tree.push_back(node);
 
@@ -261,7 +261,7 @@ namespace cse498 {
         /// @brief Given an inputted struct root Node, splits the width/height randomly into  
         /// @param node 
         /// @return returns a tuple pair of Nodes, other returning nullopt if threshold width/height not met
-        [[nodiscard]] std::optional<std::tuple<BSPNode, BSPNode>> random_split(BSPNode &node, int& iter) {
+        [[nodiscard]] std::optional<std::tuple<LegacyBSPNode, LegacyBSPNode>> random_split(LegacyBSPNode &node, int& iter) {
 
             //bool split_width = true;
             //bool split_height = true;
@@ -277,7 +277,7 @@ namespace cse498 {
             std::uniform_int_distribution<int> height_distributor(mThresholdValue, node.height - mThresholdValue);
             std::uniform_int_distribution<int> directional_splitter(0,10);
 
-            BSPNode left_split, right_split;
+            LegacyBSPNode left_split, right_split;
 
             //storing random values to ensure stable numbers throughout all calls
             // std::cout << "NODE WIDTH/HEIGHT: " << node.width << " " << node.height << std::endl; 
