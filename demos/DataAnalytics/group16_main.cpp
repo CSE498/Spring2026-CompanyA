@@ -1,10 +1,10 @@
 #include <memory>
 
-#include "../tools/ActionLog.hpp"
-#include "../tools/DataLog.hpp"
-#include "AnalyticsManager.hpp"
-#include "HeatMap.hpp"
-#include "ReplayDriver.hpp"
+#include "../../source/tools/ActionLog.hpp"
+#include "../../source/tools/DataLog.hpp"
+#include "../../source/Analyze/AnalyticsManager.hpp"
+#include "../../source/Analyze/HeatMap.hpp"
+#include "../../source/Analyze/ReplayDriver.hpp"
 
 // #include "../tools/ActionLog.hpp"
 int main() {
