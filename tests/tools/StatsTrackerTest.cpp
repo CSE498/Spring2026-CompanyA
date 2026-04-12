@@ -1,6 +1,6 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/DataAnalytics/StatsTracker.hpp"
+#include "../../source/Analyze/StatsTracker.hpp"
 
 // StatsTracker
 TEST_CASE("Build Series Summary", "[StatsTracker]") {

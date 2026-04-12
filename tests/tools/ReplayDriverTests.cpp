@@ -9,7 +9,7 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/ActionLog.hpp"
-#include "../../source/DataAnalytics/ReplayDriver.hpp"
+#include "../../source/Analyze/ReplayDriver.hpp"
 #include "../../source/core/WorldPosition.hpp"
 
 namespace {

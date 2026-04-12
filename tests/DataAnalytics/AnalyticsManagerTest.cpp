@@ -1,4 +1,4 @@
-#include "../../source/DataAnalytics/AnalyticsManager.hpp"
+#include "../../source/Analyze/AnalyticsManager.hpp"
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 /*

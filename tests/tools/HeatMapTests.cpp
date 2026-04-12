@@ -1,4 +1,4 @@
-#include "../../source/DataAnalytics/HeatMap.hpp"
+#include "../../source/Analyze/HeatMap.hpp"
 #include "../../source/core/WorldPosition.hpp"
 #include "../../source/tools/ActionLog.hpp"
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"

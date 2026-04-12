@@ -7,7 +7,7 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/tools/ActionMap/ActionMap.hpp"
+#include "../../source/tools/ActionMap.hpp"
 
 #include <algorithm>
 #include <string>
