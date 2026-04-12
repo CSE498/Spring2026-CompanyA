@@ -5,7 +5,7 @@
 
 # Group 18's Write-up for Initial C++ Class (WebUI)
 
-*Last updated: Jan 30, 2026*
+*Last updated: Mar 21, 2026*
 
 ## 3.4 `WebCanvas` Class Specification
 
@@ -42,65 +42,94 @@ While there is no direct standard library equivalent to an HTML5 canvas, the fol
 
 ---
 
-### 3.4.3 Key Functions
+### 3.4.3 Stand Alone Demo & Test
 
-```cpp
-// Construction & Initialization
-WebCanvas(const std::string& canvasId);  // logical ID or DOM id for the canvas
-~WebCanvas();
+**Run Demo with**
 
-// Canvas Size & Coordinate System
-void SetSize(int widthPx, int heightPx);   // logical pixel size
-int GetWidth() const;
-int GetHeight() const;
+Powershell + Docker (under repo root):
 
-void SetWorldBounds(float worldWidth, float worldHeight); // for world-to-screen mapping
-void SetCameraCenter(float worldX, float worldY);         // camera position in world space;
-                                                          // WebCanvas will map to screen
-
-// Frame Control
-void BeginFrame();   // prepare canvas for a new frame (clear buffers, reset transforms)
-void EndFrame();     // flush any pending draw calls; present the frame
-
-// Basic Drawing Primitives
-void Clear(const std::string& cssColor = "#000000");  // clear with color
-void DrawRect(float x, float y, float width, float height,
-              const std::string& fillColor);
-void DrawLine(float x1, float y1, float x2, float y2,
-              float lineWidth,
-              const std::string& strokeColor);
-void DrawCircle(float centerX, float centerY, float radius,
-                const std::string& fillColor);
-
-// Drawing Web Interface Items
-void DrawImage(const WebImage& image,
-               float x, float y,
-               float width, float height);
-
-void DrawTextbox(const WebTextbox& textbox,
-                 float x, float y,
-                 float maxWidth = -1.0f); // -1 => use intrinsic width
-
-void DrawButton(const WebButton& button,
-                float x, float y,
-                bool isPressed = false);
-
-// Advanced / Optional Features
-void SetBackgroundColor(const std::string& cssColor);
-std::string GetBackgroundColor() const;
-
-void EnableSmoothing(bool enabled);   // turn anti-aliasing on/off if supported
-bool IsSmoothingEnabled() const;
-
-void SetOnFrameRendered(std::function<void()> callback);  // optional post-frame hook
-
-// Status & Diagnostics
-bool IsInitialized() const;   // true if canvas & context are ready
-bool HasError() const;        // indicates a persistent canvas/context issue
-std::string GetLastError() const;
+```powershell
+docker run --rm -it -v ${PWD}:/work -w /work emscripten/emsdk:latest bash -lc "em++ -std=c++23 -Wall -Wextra -Wpedantic -O2 \
+source/Interfaces/WebUI/WebCanvas/WebCanvas.cpp \
+source/Interfaces/WebUI/WebCanvas/WebCanvasDemo.cpp \
+source/Interfaces/WebUI/WebImage/WebImage.cpp \
+source/Interfaces/WebUI/WebButton/WebButton.cpp \
+source/Interfaces/WebUI/WebTextbox/WebTextbox.cpp \
+source/Interfaces/WebUI/WebLayout/WebLayout.cpp \
+--js-library source/Interfaces/WebUI/WebCanvas/WebCanvas.js \
+--bind \
+-s WASM=1 \
+-s ENVIRONMENT=web \
+-s MODULARIZE=1 \
+-s EXPORT_ES6=1 \
+-s ALLOW_MEMORY_GROWTH=1 \
+-s EXIT_RUNTIME=0 \
+-o source/Interfaces/WebUI/WebCanvas/WebCanvasDemo.js"
 ```
 
-The exact implementation (e.g., Canvas 2D API vs. WebGL, use of batching, etc.) is left open for later design, but the above interface is intended to provide a clean, C++-centric abstraction of an HTML5 canvas that integrates tightly with the rest of the Web Interface module.
+Local (under repo root):
+
+```powershell
+em++ -std=c++23 -Wall -Wextra -Wpedantic -O2 \
+  source/Interfaces/WebUI/WebCanvas/WebCanvas.cpp \
+  source/Interfaces/WebUI/WebCanvas/WebCanvasDemo.cpp \
+  source/Interfaces/WebUI/WebImage/WebImage.cpp \
+  source/Interfaces/WebUI/WebButton/WebButton.cpp \
+  source/Interfaces/WebUI/WebTextbox/WebTextbox.cpp \
+  source/Interfaces/WebUI/WebLayout/WebLayout.cpp \
+  --js-library source/Interfaces/WebUI/WebCanvas/WebCanvas.js \
+  --bind \
+  -s WASM=1 \
+  -s ENVIRONMENT=web \
+  -s MODULARIZE=1 \
+  -s EXPORT_ES6=1 \
+  -s ALLOW_MEMORY_GROWTH=1 \
+  -s EXIT_RUNTIME=0 \
+  -o source/Interfaces/WebUI/WebCanvas/WebCanvasDemo.js
+```
+
+After compiling, run the following commands and then open `WebCanvasDemo.html`
+
+```
+cd source/Interfaces/WebUI/WebCanvas/
+python3 -m http.server 8000
+```
+
+**Run Tests with**
+
+Powershell + Docker (under repo root):
+
+```powershell
+docker run --rm -it -v ${PWD}:/work -w /work emscripten/emsdk:latest bash -lc "em++ -std=c++23 -Wall -Wextra -Wpedantic -g -O0 -pthread \
+-I third-party/Catch/single_include \
+source/Interfaces/WebUI/WebCanvas/WebCanvas.cpp \
+source/Interfaces/WebUI/WebImage/WebImage.cpp \
+source/Interfaces/WebUI/WebButton/WebButton.cpp \
+source/Interfaces/WebUI/WebTextbox/WebTextbox.cpp \
+source/Interfaces/WebUI/WebLayout/WebLayout.cpp \
+tests/Interfaces/WebUI/WebCanvasTest.cpp \
+-D CATCH_CONFIG_MAIN \
+--js-library source/Interfaces/WebUI/WebCanvas/WebCanvas.js \
+--bind \
+-o run_tests && node run_tests"
+```
+
+Local (under repo root):
+
+```powershell
+em++ -std=c++23 -Wall -Wextra -Wpedantic -g -O0 -pthread \
+  -I third-party/Catch/single_include \
+  source/Interfaces/WebUI/WebCanvas/WebCanvas.cpp \
+  source/Interfaces/WebUI/WebImage/WebImage.cpp \
+  source/Interfaces/WebUI/WebButton/WebButton.cpp \
+  source/Interfaces/WebUI/WebTextbox/WebTextbox.cpp \
+  source/Interfaces/WebUI/WebLayout/WebLayout.cpp \
+  tests/Interfaces/WebUI/WebCanvasTest.cpp \
+  -D CATCH_CONFIG_MAIN \
+  --js-library source/Interfaces/WebUI/WebCanvas/WebCanvas.js \
+  --bind \
+  -o run_tests && node run_tests
+```
 
 ------
 
