@@ -10,10 +10,10 @@
  **/
 
 // Include the modules that we will be using.
-#include "../source/Agents/PacingAgent.hpp"
-#include "../source/Interfaces/TrashInterface.hpp"
-#include "../source/Worlds/MazeWorld.hpp"
-#include "../source/Worlds/DungeonOne.hpp"
+#include "../../source/Agents/PacingAgent.hpp"
+#include "../../source/Interfaces/TrashInterface.hpp"
+#include "../../source/Worlds/MazeWorld.hpp"
+#include "../../source/Worlds/Dungeon/DungeonOne.hpp"
 
 using namespace cse498;
 

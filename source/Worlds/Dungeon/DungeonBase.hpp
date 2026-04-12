@@ -8,9 +8,9 @@
 
 #include <cassert>
 
-#include "WorldBase.hpp"
+#include "../../core/WorldBase.hpp"
 #include "WorldGeneration.hpp"
-#include "../tools/WeightedSet.hpp"
+#include "../../tools/WeightedSet.hpp"
 
 namespace cse498 {
 

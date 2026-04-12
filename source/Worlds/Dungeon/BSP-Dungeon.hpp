@@ -21,7 +21,7 @@
 #include <cassert>
 #include <print>
 #include "RoomHolder.hpp"
-#include "../tools/Random.hpp"
+#include "../../tools/Random.hpp"
 
 
 
@@ -70,7 +70,7 @@ namespace cse498 {
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
         /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
         BSP(const cse498::WeightedSet<std::string>& room_pool,
-			const std::string& file_path = "../source/core/rooms/Dungeon_") 
+			const std::string& file_path = "./rooms/Dungeon_") 
 			: m_room_holder(room_pool, file_path)
 		{ 
             insert_split(m_iterations); //Creates BSP Tree
@@ -83,7 +83,7 @@ namespace cse498 {
         /// @param seed Set int value to determine room generation layout
         BSP(const cse498::WeightedSet<std::string>& room_pool, 
 			uint64_t seed,
-			const std::string& file_path = "../source/core/rooms/Dungeon_")  
+			const std::string& file_path = "./rooms/Dungeon_")  
             : m_room_holder(room_pool, file_path)
         {
             m_rng.SetSeed(seed);

@@ -1,7 +1,7 @@
 
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../../source/core/BSP-Dungeon.hpp"
+#include "../../../source/Worlds/Dungeon/BSP-Dungeon.hpp"
 
 /// @brief Brought over from DungeonOne for test case purposes
 /// @return vector of 
@@ -60,7 +60,7 @@ const uint64_t SEED_VALUE_SEVEN = 1;
 const uint64_t SEED_VALUE_EIGHT = 1023987435908;
 const uint64_t SEED_VALUE_NINE = 10923810957;
 const uint64_t SEED_VALUE_TEN = 10297834198;
-const std::string FILE_PATH = "../../source/core/rooms/Dungeon_";
+const std::string FILE_PATH = "../../../source/Worlds/Dungeon/rooms/Dungeon_";
 
 
 TEST_CASE("BSP-Dungeon Constructor", "[core]") { 

@@ -9,7 +9,7 @@
 
 #include <cassert>
 
-#include "../core/DungeonBase.hpp"
+#include "DungeonBase.hpp"
 
 namespace cse498 {
 

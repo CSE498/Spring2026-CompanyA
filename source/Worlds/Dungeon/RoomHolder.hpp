@@ -11,8 +11,8 @@
 #include <string>
 #include <cmath>
 #include <fstream>
-#include "../tools/Random.hpp"
-#include "../tools/WeightedSet.hpp"
+#include "../../tools/Random.hpp"
+#include "../../tools/WeightedSet.hpp"
 
 namespace cse498 {
 
@@ -26,7 +26,7 @@ namespace cse498 {
     protected:
         std::vector<std::string> m_current_room; //Holds the currently selected/stored room
         std::string m_file_path; //File path used to access the directory of different .txt rooms
-        std::string m_image_path = "../assets/";  //File path location for images
+        std::string m_image_path = "../../../assets/";  //File path location for images
 
         cse498::Random m_rng; //Random
 		cse498::WeightedSet<std::string> m_room_pool;

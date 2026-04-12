@@ -124,7 +124,7 @@ struct LinkedRooms {
             return Point(width / 2 , height / 2);
         }
 
-        /// @brief Parses through the list of Room Nodes (BSPNodes) that hava relation with each other and connects those
+        /// @brief Parses through the list of Room Nodes (BSPNodes) that have a relation with each other and connects those
         void TunnelConnectDungeon() {
             for(auto &i : m_connected_rooms) {
                 ConnectTunnel(i);
