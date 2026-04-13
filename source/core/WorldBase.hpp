@@ -52,10 +52,13 @@ namespace cse498 {
   public:
     WorldBase()
     {
-      auto player = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
-      AddAgent(std::move(player));
-      mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
-      assert(mPlayer);
+      // KAREN: Temporarily commented out to avoid interfering with other groups' demos
+      // This has moved to DemoSimpleWorldG2.cpp's constructor
+
+      // auto player = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+      // AddAgent(std::move(player));
+      // mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+      // assert(mPlayer);
     }
     virtual ~WorldBase() = default;
 
@@ -155,6 +158,8 @@ namespace cse498 {
        * Player object shouldn't need to be recreated, if so then design a function for that
        * or check whole project for UB
        */
+      // KAREN: It is now possible for the player to be nullptr,
+      // since WorldBase no longer creates a default player.
       assert(mPlayer != nullptr && "Player got set to nullptr somehow?");
       return mPlayer;
     }

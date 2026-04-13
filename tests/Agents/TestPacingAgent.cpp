@@ -33,6 +33,12 @@ namespace {
 
   public:
     PacingTestWorld() {
+      // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+      auto p = std::make_unique<cse498::PlayerAgent>(GetNextAgentId(), "Player", *this);
+      AddAgent(std::move(p));
+      mPlayer = dynamic_cast<cse498::PlayerAgent*>(agent_set[0].get());
+      assert(mPlayer);
+
       // Simple open 5x5 grid with outer walls.
       floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
       wall_id  = main_grid.AddCellType("wall",  "Impenetrable wall.",             '#');

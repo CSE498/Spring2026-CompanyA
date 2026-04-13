@@ -37,10 +37,18 @@ namespace cse498
         SkeletonTestWorld()
             : WorldBase()
         {
+            
+            // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+            auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+            AddAgent(std::move(p));
+            mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+            assert(mPlayer);
+
+
             mFloorId = main_grid.AddCellType("floor", "Walkable floor", ' ');
             mWallId = main_grid.AddCellType("wall", "Blocking wall", '#');
 
-            SkeletonTestWorld::ConfigAgent(*GetPlayer());
+            // SkeletonTestWorld::ConfigAgent(*GetPlayer());
             GetPlayer()->SetStats(AgentStats(40.0, 7.0, 2.0, 1, 0));
             GetPlayer()->SetLocation(WorldPosition(0, 0));
             main_grid.Load(std::vector<std::string>{

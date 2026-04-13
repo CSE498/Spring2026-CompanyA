@@ -19,7 +19,14 @@ namespace cse498
     class TestWorld : public WorldBase
     {
     public:
-        TestWorld() : WorldBase() {}
+        TestWorld() : WorldBase() {
+            // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+            auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+            AddAgent(std::move(p));
+            mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+            assert(mPlayer);
+
+        }
         ~TestWorld() override = default;
 
         int DoAction([[maybe_unused]] AgentBase& agent, [[maybe_unused]] size_t action_id) override

@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "core/ItemBase.hpp"
-#include "../../core/item/Item.hpp"
+#include "../../../core/ItemBase.hpp"
+#include "../../../core/item/Item.hpp"
 #include <optional>
 #include <array>
 #include <unordered_map>

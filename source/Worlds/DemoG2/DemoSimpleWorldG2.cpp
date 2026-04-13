@@ -298,6 +298,12 @@ void DemoSimpleWorldG2::ConfigAgent(AgentBase &agent) {
 }
 
 DemoSimpleWorldG2::DemoSimpleWorldG2() {
+    // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+    auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+    AddAgent(std::move(p));
+    mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+    assert(mPlayer);
+
     mFloorId = main_grid.AddCellType("floor", "Walkable floor", '.');
     mWallId = main_grid.AddCellType("wall", "Solid wall", '#');
     main_grid.Load({
@@ -313,7 +319,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     auto* player = GetPlayer();
     mPlayerId = player->GetID();
     // Need to call this function to ensure player is set up for this world.
-    DemoSimpleWorldG2::ConfigAgent(*player);
+    // DemoSimpleWorldG2::ConfigAgent(*player);
     player->SetSymbol('@');
     player->SetStats(AgentStats(100, 14, 5, 3, 0));
     player->SetLocation(Location(WorldPosition{2, 2}));

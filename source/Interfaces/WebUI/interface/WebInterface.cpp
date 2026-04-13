@@ -131,18 +131,45 @@ size_t WebInterface::SelectAction(const WorldGrid & grid) {
 
   if (mPaused && userAction != InputManager::ActiveAction::Pause && userAction != InputManager::ActiveAction::Quit) return 0;
 
-  // action_map is populated with all available actions in ConfigAgent()
+  // mActionMap is populated with all available actions in ConfigAgent()
   // and all these values are checked in Initialize();
-  switch (userAction) {
-    case InputManager::ActiveAction::Up:       return action_map.at("up");
-    case InputManager::ActiveAction::Left:     return action_map.at("left");
-    case InputManager::ActiveAction::Down:     return action_map.at("down");
-    case InputManager::ActiveAction::Right:    return action_map.at("right");
-    case InputManager::ActiveAction::Interact: ++mPoints; return action_map.at("interact");
-    case InputManager::ActiveAction::Quit:     return action_map.at("quit");
-    case InputManager::ActiveAction::Pause:    return 0;
-    case InputManager::ActiveAction::None:     return 0;
-    default: return 0;
+  // switch (userAction) {
+  //   case InputManager::ActiveAction::Up:       return mActionMap.at("up");
+  //   case InputManager::ActiveAction::Left:     return mActionMap.at("left");
+  //   case InputManager::ActiveAction::Down:     return mActionMap.at("down");
+  //   case InputManager::ActiveAction::Right:    return mActionMap.at("right");
+  //   case InputManager::ActiveAction::Interact: ++mPoints; return mActionMap.at("interact");
+  //   case InputManager::ActiveAction::Quit:     return mActionMap.at("quit");
+  //   case InputManager::ActiveAction::Pause:    return 0;
+  //   case InputManager::ActiveAction::None:     return 0;
+  //   default: return 0;
+  // }
+
+  // KAREN: Modified since things changed in AgentBase
+    switch (userAction) {
+    case InputManager::ActiveAction::Up:
+      return GetActionID("up");
+
+    case InputManager::ActiveAction::Left:
+      return GetActionID("left");
+
+    case InputManager::ActiveAction::Down:
+      return GetActionID("down");
+
+    case InputManager::ActiveAction::Right:
+      return GetActionID("right");
+
+    case InputManager::ActiveAction::Interact:
+      ++mPoints;
+      return GetActionID("interact");
+
+    case InputManager::ActiveAction::Quit:
+      return GetActionID("quit");
+
+    case InputManager::ActiveAction::Pause:
+    case InputManager::ActiveAction::None:
+    default:
+      return 0;
   }
 }
 

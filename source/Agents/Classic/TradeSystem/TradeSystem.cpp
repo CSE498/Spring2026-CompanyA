@@ -5,7 +5,7 @@
 
 #include "TradeSystem.hpp"
 
-#include "../../core/WorldBase.hpp"
+#include "../../../core/WorldBase.hpp"
 #include "../MerchantAgent.hpp"
 #include "../PlayerAgent.hpp"
 

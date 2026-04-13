@@ -17,6 +17,12 @@ namespace cse498
     public:
         TestWorld() : WorldBase()
         {
+            // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+            auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+            AddAgent(std::move(p));
+            mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+            assert(mPlayer);
+
         }
 
         ~TestWorld() override = default;

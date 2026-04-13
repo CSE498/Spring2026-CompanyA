@@ -383,6 +383,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
             ${COMPANYA_WEB_DEMO_COMMON_ARGS}
             --preload-file "assets"
             --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+            "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
             "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
             "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
@@ -520,6 +521,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
           -sALLOW_MEMORY_GROWTH=1
           --preload-file "assets"
           --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+          "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
           "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
           "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
           "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
