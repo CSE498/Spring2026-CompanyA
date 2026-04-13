@@ -1,4 +1,4 @@
-#include "../../../source/core/InteractiveWorld/Building.hpp"
+#include "../../source/Worlds/Hub/Building.hpp"
 #include "catch2/catch.hpp"
 
 #include <string>

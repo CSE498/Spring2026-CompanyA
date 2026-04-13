@@ -1,5 +1,5 @@
-#include "../../../source/core/InteractiveWorld/ResourceProducer.hpp"
-#include "../../../source/core/InteractiveWorld/InteractiveWorldInventory.hpp"
+#include "../../source/Worlds/Hub/ResourceProducer.hpp"
+#include "../../source/Worlds/Hub/InteractiveWorldInventory.hpp"
 #include "catch2/catch.hpp"
 
 #include <string>

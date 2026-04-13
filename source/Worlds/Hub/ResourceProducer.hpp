@@ -9,7 +9,7 @@
 #include <chrono>
 #include <memory>
 
-#include "../InteractiveWorld/InteractiveWorldInventory.hpp"
+#include "InteractiveWorldInventory.hpp"
 #include "Building.hpp"
 
 namespace cse498 {

@@ -5,11 +5,11 @@
  **/
 
 #pragma once
-#include "../core/InteractiveWorld/Building.hpp"
-#include "../core/InteractiveWorld/InteractiveWorldInventory.hpp"
-#include "../core/InteractiveWorld/NPC.hpp"
-#include "../core/InteractiveWorld/ResourceProducer.hpp"
-#include "../core/WorldBase.hpp"
+#include "Building.hpp"
+#include "InteractiveWorldInventory.hpp"
+#include "NPC.hpp"
+#include "ResourceProducer.hpp"
+#include "../../core/WorldBase.hpp"
 #include <array>
 #include <iostream>
 #include <memory>

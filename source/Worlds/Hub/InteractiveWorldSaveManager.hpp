@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 
-#include "../../Worlds/InteractiveWorld.hpp"
+#include "InteractiveWorld.hpp"
 #include "../../../third-party/json/json.hpp"
 
 namespace cse498 {

@@ -1,6 +1,6 @@
 #include "catch2/catch.hpp"
 
-#include "../../../source/core/InteractiveWorld/NPC.hpp"
+#include "../../source/Worlds/Hub/NPC.hpp"
 
 #include <iostream>
 #include <memory>

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../WorldGrid.hpp"
+#include "../../core/WorldGrid.hpp"
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
 
