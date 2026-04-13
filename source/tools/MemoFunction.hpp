@@ -8,19 +8,19 @@
 
 #pragma once
 
-#include <deque>
-#include <functional>
-#include <map>
 #include <optional>
 #include <unordered_map>
+#include <map>
+#include <functional>
+#include <deque>
 
 namespace cse498 {
 
-// Template for return and input types
-template <typename R, typename... I>
+ // Template for return and input types
+ template <typename R, typename... I>
 
-class MemoFunction {
-private:
+ class MemoFunction {
+ private:
   // Key type so multiple inputs can be used as a cache key
   using Key = std::tuple<I...>;
 
@@ -38,51 +38,44 @@ private:
   std::optional<size_t> mLimit = std::nullopt;
 
   // Removes oldest items until size limit is no longer exceeded
-  void EvictCache() {
-    while (mLimit && CacheSize() > *mLimit) {
-      Key oldest = mQueue.front();
-      mQueue.pop_front();
-      mCache.erase(oldest);
-    }
+  void EvictCache()
+  {
+   while (mLimit && CacheSize() > *mLimit)
+   {
+    Key oldest = mQueue.front();
+    mQueue.pop_front();
+    mCache.erase(oldest);
+   }
   }
 
-public:
-  // Constructor, instantiated as MemoFunction<R, I1, I2, ... , IN>
-  // name(function)
-  explicit MemoFunction(std::function<R(I...)> mWrappedFunction)
-      : mWrappedFunction(mWrappedFunction) {}
+ public:
+  // Constructor, instantiated as MemoFunction<R, I1, I2, ... , IN> name(function)
+  explicit MemoFunction(std::function<R(I...)> mWrappedFunction) : mWrappedFunction(mWrappedFunction) {}
 
   // Main memoization function with cache eviction when size limit is reached
-  R operator()(I... inputs) {
-    Key key(inputs...);
+  R operator()(I... inputs)
+  {
+   Key key(inputs...);
 
-    if (mCache.contains(key)) {
-      return mCache[key];
-    }
+   if (mCache.contains(key)){ return mCache[key]; }
 
-    R output = mWrappedFunction(inputs...);
-    mCache[key] = output;
-    mQueue.push_back(key);
+   R output = mWrappedFunction(inputs...);
+   mCache[key] = output;
+   mQueue.push_back(key);
 
-    EvictCache();
+   EvictCache();
 
-    return output;
+   return output;
   }
 
   [[nodiscard]] size_t CacheSize() const { return mCache.size(); }
 
-  void CacheClear() {
-    mCache.clear();
-    mQueue.clear();
-  }
+  void CacheClear() { mCache.clear(); mQueue.clear(); }
 
-  void SetLimit(size_t limit) {
-    mLimit = limit;
-    EvictCache();
-  }
+  void SetLimit(size_t limit) { mLimit = limit; EvictCache(); }
 
   void RemoveLimit() { mLimit = std::nullopt; }
 
   bool IsCached(Key key) const { return mCache.contains(key); }
-};
-} // namespace cse498
+ };
+}

@@ -14,110 +14,124 @@
 
 using namespace cse498;
 
-TEST_CASE("AddFunction and Trigger for void()", "[ActionMap]") {
-  ActionMap map;
 
-  bool called = false;
-  REQUIRE(map.AddFunction(
-      "Jump", [&]() { called = true; }, "Makes the player jump"));
+TEST_CASE("AddFunction and Trigger for void()", "[ActionMap]")
+{
+    ActionMap map;
 
-  REQUIRE(map.Size() == 1);
-  REQUIRE(map.Has("Jump"));
+    bool called = false;
+    REQUIRE(map.AddFunction("Jump", [&](){ called = true; }, "Makes the player jump"));
 
-  REQUIRE(map.GetDescription("Jump").has_value());
-  REQUIRE(*map.GetDescription("Jump") == "Makes the player jump");
+    REQUIRE(map.Size() == 1);
+    REQUIRE(map.Has("Jump"));
 
-  REQUIRE(map.Trigger("Jump"));
-  REQUIRE(called);
+    REQUIRE(map.GetDescription("Jump").has_value());
+    REQUIRE(*map.GetDescription("Jump") == "Makes the player jump");
+
+    REQUIRE(map.Trigger("Jump"));
+    REQUIRE(called);
 }
 
-TEST_CASE("AddFunction rejects duplicates and invalid names", "[ActionMap]") {
-  ActionMap map;
+TEST_CASE("AddFunction rejects duplicates and invalid names", "[ActionMap]")
+{
+    ActionMap map;
 
-  REQUIRE(map.AddFunction("A", [] {}));
-  REQUIRE_FALSE(map.AddFunction("A", [] {})); // duplicate
-  REQUIRE_FALSE(map.AddFunction("", [] {}));  // invalid name
+    REQUIRE(map.AddFunction("A", []{}));
+    REQUIRE_FALSE(map.AddFunction("A", []{})); // duplicate
+    REQUIRE_FALSE(map.AddFunction("", []{})); // invalid name
 }
 
-TEST_CASE("RemoveFunction works and fails predictably", "[ActionMap]") {
-  ActionMap map;
-  REQUIRE(map.AddFunction("OpenChest", [] {}));
+TEST_CASE("RemoveFunction works and fails predictably", "[ActionMap]")
+{
+    ActionMap map;
+    REQUIRE(map.AddFunction("OpenChest", []{}));
 
-  REQUIRE(map.RemoveFunction("OpenChest"));
-  REQUIRE_FALSE(map.RemoveFunction("OpenChest")); // already removed
-  REQUIRE_FALSE(map.RemoveFunction(""));          // invalid name
+    REQUIRE(map.RemoveFunction("OpenChest"));
+    REQUIRE_FALSE(map.RemoveFunction("OpenChest")); // already removed
+    REQUIRE_FALSE(map.RemoveFunction("")); // invalid name
 }
 
-TEST_CASE("Rename works and avoids overwriting", "[ActionMap]") {
-  ActionMap map;
-  REQUIRE(map.AddFunction("Old", [] {}));
-  REQUIRE(map.AddFunction("Existing", [] {}));
+TEST_CASE("Rename works and avoids overwriting", "[ActionMap]")
+{
+    ActionMap map;
+    REQUIRE(map.AddFunction("Old", []{}));
+    REQUIRE(map.AddFunction("Existing", []{}));
 
-  REQUIRE(map.Rename("Old", "New"));
-  REQUIRE_FALSE(map.Has("Old"));
-  REQUIRE(map.Has("New"));
+    REQUIRE(map.Rename("Old", "New"));
+    REQUIRE_FALSE(map.Has("Old"));
+    REQUIRE(map.Has("New"));
 
-  REQUIRE_FALSE(map.Rename("New", "Existing")); // would overwrite
-  REQUIRE_FALSE(map.Rename("Missing", "X"));    // old missing
+    REQUIRE_FALSE(map.Rename("New", "Existing")); // would overwrite
+    REQUIRE_FALSE(map.Rename("Missing", "X")); // old missing
 }
 
-TEST_CASE("ListActions returns all names (order not guaranteed)",
-          "[ActionMap]") {
-  ActionMap map;
-  REQUIRE(map.AddFunction("A", [] {}));
-  REQUIRE(map.AddFunction("B", [] {}));
-  REQUIRE(map.AddFunction("C", [] {}));
+TEST_CASE("ListActions returns all names (order not guaranteed)", "[ActionMap]")
+{
+    ActionMap map;
+    REQUIRE(map.AddFunction("A", []{}));
+    REQUIRE(map.AddFunction("B", []{}));
+    REQUIRE(map.AddFunction("C", []{}));
 
-  auto list = map.ListActions();
-  REQUIRE(list.size() == 3);
+    auto list = map.ListActions();
+    REQUIRE(list.size() == 3);
 
-  REQUIRE(std::find(list.begin(), list.end(), "A") != list.end());
-  REQUIRE(std::find(list.begin(), list.end(), "B") != list.end());
-  REQUIRE(std::find(list.begin(), list.end(), "C") != list.end());
+    REQUIRE(std::find(list.begin(), list.end(), "A") != list.end());
+    REQUIRE(std::find(list.begin(), list.end(), "B") != list.end());
+    REQUIRE(std::find(list.begin(), list.end(), "C") != list.end());
 }
 
-TEST_CASE("Typed actions: arguments + return values", "[ActionMap]") {
-  ActionMap map;
+TEST_CASE("Typed actions: arguments + return values", "[ActionMap]")
+{
+    ActionMap map;
 
-  // Add typed function (int,int)->int
-  REQUIRE(map.AddFunction<int, int, int>(
-      "Add", std::function<int(int, int)>([](int a, int b) { return a + b; }),
-      "Adds two ints"));
+    // Add typed function (int,int)->int
+    REQUIRE(map.AddFunction<int, int, int>(
+                "Add",
+                std::function<int(int,int)>([](int a, int b){ return a + b; }),
+                "Adds two ints"
+            ));
 
-  auto out = map.Trigger<int, int, int>("Add", 2, 5);
-  REQUIRE(out.has_value());
-  REQUIRE(*out == 7);
+    auto out = map.Trigger<int, int, int>("Add", 2, 5);
+    REQUIRE(out.has_value());
+    REQUIRE(*out == 7);
 
-  // Add typed void(int) action
-  int sink = 0;
-  REQUIRE(map.AddFunction<void, int>(
-      "SetSink", std::function<void(int)>([&](int v) { sink = v; })));
+    // Add typed void(int) action
+    int sink = 0;
+    REQUIRE(map.AddFunction<void, int>(
+                "SetSink",
+                std::function<void(int)>([&](int v){ sink = v; })
+            ));
 
-  REQUIRE(map.Trigger<void>("SetSink", 99));
-  REQUIRE(sink == 99);
+    REQUIRE(map.Trigger<void>("SetSink", 99));
+    REQUIRE(sink == 99);
 }
 
-TEST_CASE("Typed trigger fails cleanly on signature mismatch", "[ActionMap]") {
-  ActionMap map;
+TEST_CASE("Typed trigger fails cleanly on signature mismatch", "[ActionMap]")
+{
+    ActionMap map;
 
-  REQUIRE(map.AddFunction<int, int, int>(
-      "Add", std::function<int(int, int)>([](int a, int b) { return a + b; })));
+    REQUIRE(map.AddFunction<int, int, int>(
+                "Add",
+                std::function<int(int,int)>([](int a, int b){ return a + b; })
+            ));
 
-  // Wrong signature: trying to trigger as void(int,int)
-  REQUIRE_FALSE(map.Trigger<void, int, int>("Add", 1, 2));
+    // Wrong signature: trying to trigger as void(int,int)
+    REQUIRE_FALSE(map.Trigger<void, int, int>("Add", 1, 2));
 
-  // Wrong signature: trying to trigger with different arg types
-  auto out = map.Trigger<int, std::string, std::string>("Add", "1", "2");
-  REQUIRE_FALSE(out.has_value());
+    // Wrong signature: trying to trigger with different arg types
+    auto out = map.Trigger<int, std::string, std::string>("Add", "1", "2");
+    REQUIRE_FALSE(out.has_value());
 }
 
-TEST_CASE("TriggerVoid fails when action doesn't exist", "[ActionMap]") {
-  ActionMap map;
-  REQUIRE_FALSE(map.TriggerVoid<>("MissingAction"));
+TEST_CASE("TriggerVoid fails when action doesn't exist", "[ActionMap]")
+{
+    ActionMap map;
+    REQUIRE_FALSE(map.TriggerVoid<>("MissingAction"));
 }
 
-TEST_CASE("TriggerTyped fails when action doesn't exist", "[ActionMap]") {
-  ActionMap map;
-  auto out = map.Trigger<int, int, int>("MissingAction", 1, 2);
-  REQUIRE_FALSE(out.has_value());
+TEST_CASE("TriggerTyped fails when action doesn't exist", "[ActionMap]")
+{
+    ActionMap map;
+    auto out = map.Trigger<int, int, int>("MissingAction", 1, 2);
+    REQUIRE_FALSE(out.has_value());
 }

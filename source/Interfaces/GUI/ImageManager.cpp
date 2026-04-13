@@ -13,15 +13,18 @@
 #include <stdexcept>
 #include <expected>
 
-namespace cse498 {
-/**
- * Constructor
- * @param renderer used to create & render textures
- */
-ImageManager::ImageManager(SDL_Renderer *renderer) : mRenderer(renderer) {
-  // if a renderer DNE, message will be output
-  assert(mRenderer && "ImageManager requires a valid SDL_Renderer");
-}
+namespace cse498
+{
+    /**
+     * Constructor
+     * @param renderer used to create & render textures
+     */
+    ImageManager::ImageManager(SDL_Renderer* renderer)
+        : mRenderer(renderer)
+    {
+        // if a renderer DNE, message will be output
+        assert(mRenderer && "ImageManager requires a valid SDL_Renderer");
+    }
 
     /**
      * Loads images & stores them with a name
@@ -115,10 +118,10 @@ ImageManager::ImageManager(SDL_Renderer *renderer) : mRenderer(renderer) {
             return false;
         }
 
-  // set bounds of image using a rectangle
-  SDL_Rect rect;
-  rect.x = x;
-  rect.y = y;
+        // set bounds of image using a rectangle
+        SDL_Rect rect;
+        rect.x = x;
+        rect.y = y;
 
         // query the texture's width and height, storing them in rect (returns 0 on success)
         if (SDL_QueryTexture(texture, nullptr, nullptr, &rect.w, &rect.h) != 0)

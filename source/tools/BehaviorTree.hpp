@@ -15,12 +15,12 @@ Implements:
 
 #pragma once
 
-#include <any>
-#include <functional>
+#include <vector>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <any>
+#include <functional>
 
 namespace Pathfinding {
 namespace BehaviorTrees {
@@ -33,33 +33,34 @@ namespace BehaviorTrees {
 // Uses std::any to support arbitrary data types.
 class Blackboard {
 public:
-  // Store a typed value under a key.
-  template <typename T> void Set(const std::string &key, const T &value) {
-    data[key] = value;
-  }
-
-  // Retrieve a typed value.
-  // Returns defaultValue if key not found or type mismatch.
-  template <typename T>
-  T Get(const std::string &key, const T &defaultValue = T{}) const {
-    auto it = data.find(key);
-    if (it != data.end()) {
-      try {
-        return std::any_cast<T>(it->second);
-      } catch (...) {
-        return defaultValue;
-      }
+    // Store a typed value under a key.
+    template<typename T>
+    void Set(const std::string& key, const T& value) {
+        data[key] = value;
     }
-    return defaultValue;
-  }
 
-  bool Has(const std::string &key) const;
-  void Remove(const std::string &key);
-  void Clear();
-  std::vector<std::string> GetKeys() const;
+    // Retrieve a typed value.
+    // Returns defaultValue if key not found or type mismatch.
+    template<typename T>
+    T Get(const std::string& key, const T& defaultValue = T{}) const {
+        auto it = data.find(key);
+        if (it != data.end()) {
+            try {
+                return std::any_cast<T>(it->second);
+            } catch (...) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+
+    bool Has(const std::string& key) const;
+    void Remove(const std::string& key);
+    void Clear();
+    std::vector<std::string> GetKeys() const;
 
 private:
-  std::unordered_map<std::string, std::any> data;
+    std::unordered_map<std::string, std::any> data;
 };
 
 // ============================================================
@@ -69,8 +70,8 @@ private:
 // Runtime context passed into every node Tick().
 // Currently only exposes the Blackboard but is extensible.
 struct ExecutionContext {
-  Blackboard &blackboard;
-  explicit ExecutionContext(Blackboard &bb);
+    Blackboard& blackboard;
+    explicit ExecutionContext(Blackboard& bb);
 };
 
 // ============================================================
@@ -81,24 +82,24 @@ struct ExecutionContext {
 // Uses Template Method pattern via Tick().
 class Node {
 public:
-  enum class Status { Success, Failure, Running };
+    enum class Status { Success, Failure, Running };
 
-  virtual ~Node() = default;
+    virtual ~Node() = default;
 
-  // Main execution entry point.
-  // Calls OnEnter → OnUpdate → OnExit.
-  Status Tick(ExecutionContext &context);
+    // Main execution entry point.
+    // Calls OnEnter → OnUpdate → OnExit.
+    Status Tick(ExecutionContext& context);
 
-  // Reset node state.
-  virtual void Reset() = 0;
+    // Reset node state.
+    virtual void Reset() = 0;
 
-  // Human-readable name (useful for debugging).
-  virtual std::string GetName() const = 0;
+    // Human-readable name (useful for debugging).
+    virtual std::string GetName() const = 0;
 
 protected:
-  virtual void OnEnter(ExecutionContext &context);
-  virtual Status OnUpdate(ExecutionContext &context) = 0;
-  virtual void OnExit(ExecutionContext &context, Status status);
+    virtual void OnEnter(ExecutionContext& context);
+    virtual Status OnUpdate(ExecutionContext& context) = 0;
+    virtual void OnExit(ExecutionContext& context, Status status);
 };
 
 // ============================================================
@@ -108,15 +109,15 @@ protected:
 // Base class for nodes that manage multiple children.
 class Composite : public Node {
 public:
-  void AddChild(std::unique_ptr<Node> child);
-  void Reset() override;
+    void AddChild(std::unique_ptr<Node> child);
+    void Reset() override;
 
-  // Read-only access to children.
-  const std::vector<std::unique_ptr<Node>> &GetChildren() const;
+    // Read-only access to children.
+    const std::vector<std::unique_ptr<Node>>& GetChildren() const;
 
 protected:
-  std::vector<std::unique_ptr<Node>> children;
-  size_t currentChild = 0; // Tracks active child during execution
+    std::vector<std::unique_ptr<Node>> children;
+    size_t currentChild = 0;  // Tracks active child during execution
 };
 
 // ============================================================
@@ -126,13 +127,13 @@ protected:
 // Base class for nodes that wrap exactly one child.
 class Decorator : public Node {
 public:
-  void SetChild(std::unique_ptr<Node> child);
-  void Reset() override;
+    void SetChild(std::unique_ptr<Node> child);
+    void Reset() override;
 
-  const std::unique_ptr<Node> &GetChild() const;
+    const std::unique_ptr<Node>& GetChild() const;
 
 protected:
-  std::unique_ptr<Node> child;
+    std::unique_ptr<Node> child;
 };
 
 // ============================================================
@@ -143,18 +144,18 @@ protected:
 // Uses Strategy pattern for flexible behavior definition.
 class Action : public Node {
 public:
-  using ActionFunc = std::function<Status(ExecutionContext &)>;
+    using ActionFunc = std::function<Status(ExecutionContext&)>;
 
-  Action(const std::string &name, ActionFunc action);
-  std::string GetName() const override;
-  void Reset() override;
+    Action(const std::string& name, ActionFunc action);
+    std::string GetName() const override;
+    void Reset() override;
 
 protected:
-  Status OnUpdate(ExecutionContext &context) override;
+    Status OnUpdate(ExecutionContext& context) override;
 
 private:
-  std::string name;
-  ActionFunc action;
+    std::string name;
+    ActionFunc action;
 };
 
 // ============================================================
@@ -166,14 +167,14 @@ private:
 // Fails only if all children fail.
 class Selector : public Composite {
 public:
-  explicit Selector(const std::string &name);
-  std::string GetName() const override;
+    explicit Selector(const std::string& name);
+    std::string GetName() const override;
 
 protected:
-  Status OnUpdate(ExecutionContext &context) override;
+    Status OnUpdate(ExecutionContext& context) override;
 
 private:
-  std::string name;
+    std::string name;
 };
 
 // Sequence:
@@ -181,14 +182,14 @@ private:
 // Succeeds only if all children succeed.
 class Sequence : public Composite {
 public:
-  explicit Sequence(const std::string &name);
-  std::string GetName() const override;
+    explicit Sequence(const std::string& name);
+    std::string GetName() const override;
 
 protected:
-  Status OnUpdate(ExecutionContext &context) override;
+    Status OnUpdate(ExecutionContext& context) override;
 
 private:
-  std::string name;
+    std::string name;
 };
 
 // ============================================================
@@ -200,14 +201,14 @@ private:
 // Running passes through unchanged.
 class Invert : public Decorator {
 public:
-  explicit Invert(const std::string &name);
-  std::string GetName() const override;
+    explicit Invert(const std::string& name);
+    std::string GetName() const override;
 
 protected:
-  Status OnUpdate(ExecutionContext &context) override;
+    Status OnUpdate(ExecutionContext& context) override;
 
 private:
-  std::string name;
+    std::string name;
 };
 
 // ContinuallyRepeat:
@@ -215,14 +216,14 @@ private:
 // Always returns Running.
 class ContinuallyRepeat : public Decorator {
 public:
-  explicit ContinuallyRepeat(const std::string &name);
-  std::string GetName() const override;
+    explicit ContinuallyRepeat(const std::string& name);
+    std::string GetName() const override;
 
 protected:
-  Status OnUpdate(ExecutionContext &context) override;
+    Status OnUpdate(ExecutionContext& context) override;
 
 private:
-  std::string name;
+    std::string name;
 };
 
 // ============================================================
@@ -232,12 +233,11 @@ private:
 // Convenience factory methods for constructing trees.
 class TreeBuilder {
 public:
-  static std::unique_ptr<Sequence> Seq(const std::string &name);
-  static std::unique_ptr<Selector> Sel(const std::string &name);
-  static std::unique_ptr<Action> Act(const std::string &name,
-                                     Action::ActionFunc func);
-  static std::unique_ptr<Invert> Inv(const std::string &name);
-  static std::unique_ptr<ContinuallyRepeat> Repeat(const std::string &name);
+    static std::unique_ptr<Sequence> Seq(const std::string& name);
+    static std::unique_ptr<Selector> Sel(const std::string& name);
+    static std::unique_ptr<Action> Act(const std::string& name, Action::ActionFunc func);
+    static std::unique_ptr<Invert> Inv(const std::string& name);
+    static std::unique_ptr<ContinuallyRepeat> Repeat(const std::string& name);
 };
 
 } // namespace BehaviorTrees

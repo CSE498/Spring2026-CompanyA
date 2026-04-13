@@ -146,7 +146,7 @@ void Text::ResetStyle() {
     mBold = false;
     mItalic = false;
 
-  ReloadFont();
+    ReloadFont();
 }
 
 bool Text::Draw(int x, int y) {
@@ -165,8 +165,8 @@ bool Text::Draw(int x, int y) {
         return false;
     }
 
-  // Convert Color to SDL_Color
-  SDL_Color sdl_color = {mColor.r, mColor.g, mColor.b, mColor.a};
+    // Convert Color to SDL_Color
+    SDL_Color sdl_color = {mColor.r, mColor.g, mColor.b, mColor.a};
 
     // Render text to surface
     SDL_Surface* surface = TTF_RenderUTF8_Blended(mFont.get(), mContent.c_str(), sdl_color);
@@ -183,15 +183,15 @@ bool Text::Draw(int x, int y) {
         return false;
     }
 
-  // Set up destination rectangle
-  SDL_Rect dest_rect;
-  dest_rect.x = x;
-  dest_rect.y = y;
-  dest_rect.w = surface->w;
-  dest_rect.h = surface->h;
+    // Set up destination rectangle
+    SDL_Rect dest_rect;
+    dest_rect.x = x;
+    dest_rect.y = y;
+    dest_rect.w = surface->w;
+    dest_rect.h = surface->h;
 
-  // Copy texture to renderer
-  SDL_RenderCopy(mRenderer, texture, nullptr, &dest_rect);
+    // Copy texture to renderer
+    SDL_RenderCopy(mRenderer, texture, nullptr, &dest_rect);
 
     // Clean up
     SDL_DestroyTexture(texture);
@@ -201,9 +201,9 @@ bool Text::Draw(int x, int y) {
 }
 
 Text::Dimensions Text::GetDimensions() const {
-  if (mContent.empty() || !mFont) {
-    return {0, 0};
-  }
+    if (mContent.empty() || !mFont) {
+        return {0, 0};
+    }
 
     int width = 0, height = 0;
     TTF_SizeUTF8(mFont.get(), mContent.c_str(), &width, &height);
@@ -211,9 +211,9 @@ Text::Dimensions Text::GetDimensions() const {
 }
 
 int Text::GetWidth() const {
-  if (mContent.empty() || !mFont) {
-    return 0;
-  }
+    if (mContent.empty() || !mFont) {
+        return 0;
+    }
 
     int width = 0;
     TTF_SizeUTF8(mFont.get(), mContent.c_str(), &width, nullptr);
@@ -221,9 +221,9 @@ int Text::GetWidth() const {
 }
 
 int Text::GetHeight() const {
-  if (mContent.empty() || !mFont) {
-    return 0;
-  }
+    if (mContent.empty() || !mFont) {
+        return 0;
+    }
 
     int height = 0;
     TTF_SizeUTF8(mFont.get(), mContent.c_str(), nullptr, &height);

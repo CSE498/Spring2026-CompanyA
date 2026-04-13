@@ -125,8 +125,7 @@ void Menu::SelectNext()
 }
 
 /**
- * Moves selection up to prev. option, wrapping around to the last option if
- * currently at the first
+ * Moves selection up to prev. option, wrapping around to the last option if currently at the first
  */
 void Menu::SelectPrevious()
 {

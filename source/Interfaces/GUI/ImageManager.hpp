@@ -16,7 +16,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <memory>
@@ -48,24 +47,24 @@ namespace cse498 {
     // type alias for readability
     using SurfacePtr = std::unique_ptr<SDL_Surface, SurfaceDeleter>;
 
-class ImageManager {
-private:
-  // renderer for images
-  SDL_Renderer *mRenderer;
+    class ImageManager {
+    private:
+        // renderer for images
+        SDL_Renderer* mRenderer;
 
         // map to store & associate images names to textures
         std::unordered_map<std::string, TexturePtr> mTextures;
 
-public:
-  // constructor
-  explicit ImageManager(SDL_Renderer *renderer);
+    public:
+        // constructor
+        explicit ImageManager(SDL_Renderer* renderer);
 
-  // cannot be copied, default destructor & move operations
-  ~ImageManager() = default;
-  ImageManager(const ImageManager &) = delete;
-  ImageManager &operator=(const ImageManager &) = delete;
-  ImageManager(ImageManager &&) = default;
-  ImageManager &operator=(ImageManager &&) = default;
+        // cannot be copied, default destructor & move operations
+        ~ImageManager() = default;
+        ImageManager(const ImageManager&) = delete;
+        ImageManager& operator=(const ImageManager&) = delete;
+        ImageManager(ImageManager&&) = default;
+        ImageManager& operator=(ImageManager&&) = default;
 
         // class functions
         std::expected<void, std::string> LoadImage(const std::string& name, const std::string& file_path);
@@ -82,6 +81,6 @@ public:
 
     };
 
-} // namespace cse498
+}
 
 #endif
