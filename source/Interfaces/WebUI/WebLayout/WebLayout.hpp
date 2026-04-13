@@ -1,9 +1,22 @@
+/**
+ * @file WebLayout.hpp
+ * @brief Declaration of WebLayout, a DOM container supporting Flexbox, Grid,
+ *        and Free positioning of IDomElement children.
+ *
+ * WebLayout creates and manages a single root <div> element in the browser
+ * DOM and exposes a high-level C++ API for configuring its layout model,
+ * styling, and child elements. It also implements IDomElement so that layouts
+ * can be nested inside other layouts.
+ *
+ */
+
 #pragma once
 
 #include <emscripten/val.h>
 
 #include <cassert>
 #include <functional>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -19,7 +32,7 @@ using ElementID = std::string;
 /// - Horizontal: Flex row layout
 /// - Vertical: Flex column layout
 /// - Grid: CSS Grid layout
-enum class LayoutType { Free, Horizontal, Vertical, Grid };
+enum class LayoutType { Free, Horizontal, Vertical, Grid, None };
 
 /// Enum defining justification (main axis alignment) for layout items.
 /// - Start: Align items to the start of the main axis
@@ -34,7 +47,8 @@ enum class Justification {
   End,
   SpaceBetween,
   SpaceAround,
-  SpaceEvenly
+  SpaceEvenly,
+  None
 };
 
 /// WebLayout manages a DOM container element and arranges child IDomElements
@@ -50,18 +64,18 @@ enum class Justification {
 /// The WebLayout also implements the IDomElement interface, allowing it to be
 /// nested within other WebLayout instances.
 class WebLayout : public IDomElement {
-public:
+ public:
   /// Constructs a WebLayout with an optional root element ID.
   /// If rootId is provided and exists in the DOM, that element is used as root.
   /// Otherwise, a new div is created and appended to the document body.
   /// @param rootId Optional ID of an existing DOM element or desired ID for new
   /// element
-  explicit WebLayout(const std::string &rootId = "") noexcept;
+  explicit WebLayout(const std::string& rootId = "") noexcept;
 
   /// Deleted copy constructor and assignment operator to prevent copying.
-  WebLayout(const WebLayout &) = delete;
-  WebLayout &operator=(const WebLayout &) = delete;
-  WebLayout(WebLayout &&) = delete;
+  WebLayout(const WebLayout&) = delete;
+  WebLayout& operator=(const WebLayout&) = delete;
+  WebLayout(WebLayout&&) = delete;
 
   /// Destructor: Removes the root element from the DOM if present.
   ~WebLayout() noexcept;
@@ -71,17 +85,13 @@ public:
   /// Mounts this layout as a child within a parent layout.
   /// @param parent The parent layout to mount into
   /// @param align Alignment setting for this layout within the parent
-  void MountToLayout(WebLayout &parent,
+  void MountToLayout(WebLayout& parent,
                      Alignment align = Alignment::None) noexcept override;
 
-  /// Unmounts this layout from its parent in the DOM.
-  void Unmount() noexcept override;
+  void RemoveChild(IDomElement* elem) override;
 
   /// Synchronizes the layout state with the DOM. Calls Apply() to refresh.
   void SyncFromModel() noexcept override;
-
-  /// Returns the unique identifier of this layout's root element.
-  const std::string &Id() const noexcept override { return mId; }
 
   // ===== Layout Configuration =====
 
@@ -103,19 +113,19 @@ public:
   /// @param elem Pointer to the child IDomElement
   /// @param align Optional alignment for this specific child
   /// @return true if successfully added, false if elem is null or invalid
-  bool AddElement(IDomElement *elem,
+  bool AddElement(IDomElement* elem,
                   Alignment align = Alignment::None) noexcept;
 
   /// Removes a child element from this layout and the DOM.
   /// it cannot be added again until re-added to the DOM.
   /// @param elem Pointer to the child element to remove
   /// @return true if successfully removed, false if elem not found
-  bool RemoveElement(IDomElement *elem) noexcept;
+  bool RemoveElement(IDomElement* elem) noexcept;
 
   /// Updates the alignment of a specific child element.
   /// @param elem Pointer to the child element
   /// @param a The new Alignment value for this child
-  void SetAlignment(IDomElement *elem, Alignment a) noexcept;
+  void SetAlignment(IDomElement* elem, Alignment a) noexcept;
 
   // ===== Styling Methods =====
 
@@ -125,11 +135,11 @@ public:
 
   /// Sets the background color.
   /// @param color CSS color string (e.g., "#ffffff", "red", "rgb(255,0,0)")
-  void SetBackgroundColor(const std::string &color) noexcept;
+  void SetBackgroundColor(const std::string& color) noexcept;
 
   /// Sets the border color.
   /// @param color CSS color string
-  void SetBorderColor(const std::string &color) noexcept;
+  void SetBorderColor(const std::string& color) noexcept;
 
   /// Sets the border width in pixels.
   /// @param width Border width (must be >= 0)
@@ -161,10 +171,14 @@ public:
 
   /// Sets the box shadow CSS property.
   /// @param shadow CSS box-shadow string (e.g., "0 4px 6px rgba(0,0,0,0.1)")
-  void SetBoxShadow(const std::string &shadow) noexcept;
+  void SetBoxShadow(const std::string& shadow) noexcept;
 
   /// Toggles the visibility of this layout.
   void ToggleVisibility() noexcept;
+
+  /// @brief check if the layout is visible
+  /// @return true if visible, false if hidden
+  bool IsVisible() const noexcept { return mIsVisible; }
 
   // ===== DOM Synchronization =====
 
@@ -176,48 +190,46 @@ public:
   /// Clears all child elements from the layout and removes them from the DOM.
   void Clear() noexcept;
 
-private:
+ private:
   // ===== DOM References =====
-  emscripten::val mRoot;     ///< Reference to the root DOM element
-  emscripten::val mDocument; ///< Reference to the document object
+  emscripten::val mDocument;  ///< Reference to the document object
 
   // ===== Element Tracking =====
-  std::string mId; ///< Unique identifier of the root element
-  std::vector<IDomElement *> mChildren{}; ///< Pointers to child elements
-  std::unordered_map<IDomElement *, Alignment>
-      mParams{}; ///< Alignment per child
+  std::vector<IDomElement*> mChildren{};  ///< Pointers to child elements
+  std::unordered_map<IDomElement*, Alignment>
+      mParams{};  ///< Alignment per child
 
   // ===== Layout State =====
-  LayoutType mType = LayoutType::Free;                 ///< Current layout type
-  Justification mJustification = Justification::Start; ///< Main axis alignment
-  Alignment mAlignItems = Alignment::None;             ///< Cross axis alignment
+  LayoutType mType = LayoutType::Free;                  ///< Current layout type
+  Justification mJustification = Justification::Start;  ///< Main axis alignment
+  Alignment mAlignItems = Alignment::None;              ///< Cross axis alignment
 
   // ===== Styling Properties =====
-  std::string mBackgroundColor;
-  std::string mBorderColor;
-  int mSpacing = 0;
-  int mBorderWidth = 0;
-  int mBorderRadius = 0;
-  int mPadding = 0;
-  int mMargin = 0;
-  int mWidth = -1;
-  int mHeight = -1;
-  double mOpacity = 1.0;
+  std::string mBackgroundColor{};
+  std::string mBorderColor{};
+  std::optional<int> mSpacing{};
+  std::optional<int> mBorderWidth{};
+  std::optional<int> mBorderRadius{};
+  std::optional<int> mPadding{};
+  std::optional<int> mMargin{};
+  std::optional<int> mWidth{};
+  std::optional<int> mHeight{};
+  std::optional<double> mOpacity{};
+  std::string mBoxShadow{};
   bool mIsVisible = true;
-  std::string mBoxShadow;
 
-  static int mNextIdCounter; ///< Counter for auto-generated element IDs
+  static int mNextIdCounter;  ///< Counter for auto-generated element IDs
 
   /// Apply styling options to root layout
   /// @param style the style object for the root layout
-  void ApplyStyling(emscripten::val &style) noexcept;
+  void ApplyStyling(emscripten::val style) noexcept;
 
   /// Apply layout options to root layout
   /// @param style the style object for the root layout
-  void ApplyLayout(emscripten::val &style) noexcept;
+  void ApplyLayout(emscripten::val style) noexcept;
 
   /// Apply children style and layout
   void ApplyChildren() noexcept;
 };
 
-} // namespace cse498
+}  // namespace cse498

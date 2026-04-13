@@ -9,243 +9,222 @@
 
 #pragma once
 
+#include <cstdint>  // This defined the size of uint64_t
 #include <chrono>    // Used to get the current time off of the computer
-#include <stdexcept> // Allows the program to throw runtime errors
-#include <stdint.h>  // This defined the size of uint64_t
+#include <expected>  // Allows the program to have errors for input
+#include <array>     // Allows the program to use std::array
+#include <concepts>  // Allows for greater template functionality
+
 
 namespace cse498 {
 
-// Constants
-constexpr int STATE_NUMBER = 4;
-constexpr int NUM_BITS = 64;
+    class Random {
+        private:
+            // Constants
+            static constexpr int STATE_NUMBER = 4; // The number of states being used to generate values
+            static constexpr int NUM_BITS = 64;    // The number of bits per state
 
-constexpr int RIGHT_SHIFT1 = 30;
-constexpr int RIGHT_SHIFT2 = 27;
-constexpr int RIGHT_SHIFT3 = 31;
-constexpr uint64_t GOLDEN_RATIO = 0x9E3779B97F4A7C15ULL;
-constexpr uint64_t FIRST_MIXING = 0xBF58476D1CE4E5B9;
-constexpr uint64_t SECOND_MIXING = 0x94D049BB133111EB;
+            static constexpr int RIGHT_SHIFT1 = 30;
+            static constexpr int RIGHT_SHIFT2 = 27;
+            static constexpr int RIGHT_SHIFT3 = 31;
+            static constexpr uint64_t GOLDEN_RATIO = 0x9E3779B97F4A7C15ULL;
+            static constexpr uint64_t FIRST_MIXING = 0xBF58476D1CE4E5B9;
+            static constexpr uint64_t SECOND_MIXING = 0x94D049BB133111EB;
+            
+            static constexpr int LEFT_SHIFT = 23;
+            static constexpr int MIX_SHIFT = 17;
+            static constexpr int NUM_STATE_VALUES = 45;
+            
+            static constexpr int D_LOWER_11 = 11;
+            static constexpr double DOUBLE_CONVERSION_FACTOR = 1.0 / 9007199254740992.0;
+            static constexpr int F_LOWER_41 = 41;
+            static constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
 
-constexpr int LEFT_SHIFT = 23;
-constexpr int MIX_SHIFT = 17;
-constexpr int NUM_STATE_VALUES = 45;
+            uint64_t m_seed;  // The seed used for random generation
 
-constexpr int D_LOWER_11 = 11;
-constexpr double DOUBLE_CONVERSION_FACTOR = 1.0 / 9007199254740992.0;
-constexpr int F_LOWER_41 = 41;
-constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
 
-class Random {
-private:
-  uint64_t m_seed;
+            ////////////////////////////////////////////////////////////
+            ///
+            /// Xoshiro generation functions
+            /// adapted from the credited source above
+            ///
 
-  ////////////////////////////////////////////////////////////
-  ///
-  /// Xoshiro generation functions
-  /// adapted from the credited source above
-  ///
+            // keeps an internal state of 4 64 unsigned 64-bit ints
+            // changes each time a number is generated
+            struct Xoshiro256ppState {
+                std::array<uint64_t, STATE_NUMBER> state;
+            };
 
-  // keeps an internal state of 4 64 unsigned 64-bit ints
-  // changes each time a number is generated
-  struct xoshiro256pp_state {
-    uint64_t s[STATE_NUMBER];
-  };
+            struct Splitmix64State {
+                uint64_t state;
+            };
 
-  struct splitmix64_state {
-    uint64_t s;
-  };
+            /* @brief Ensures state values are non-zero and well-mixed.
+            *  @param The splitmix state being mixed
+            *  @return A well-mixed, non-zero uint64_t value
+            */
+            uint64_t Splitmix64(struct Splitmix64State &state) {
+                uint64_t result = (state.state += GOLDEN_RATIO);
+                result = (result ^ (result >> RIGHT_SHIFT1)) * FIRST_MIXING;
+                result = (result ^ (result >> RIGHT_SHIFT2)) * SECOND_MIXING;
+                return result ^ (result >> RIGHT_SHIFT3);
+            }
 
-  // Ensursed state values are non-zero and well-mixed.
-  uint64_t splitmix64(struct splitmix64_state &state) {
-    uint64_t result = (state.s += GOLDEN_RATIO);
-    result = (result ^ (result >> RIGHT_SHIFT1)) * FIRST_MIXING;
-    result = (result ^ (result >> RIGHT_SHIFT2)) * SECOND_MIXING;
-    return result ^ (result >> RIGHT_SHIFT3);
-  }
+            /* @brief Uses m_seed to generate the state positions
+            *  @param The xoshiro state being initialize
+            */
+            void Xoshiro256ppInit(struct Xoshiro256ppState &state) {
+                struct Splitmix64State sm = {m_seed};
 
-  // Uses m_seed to generate the state positions
-  void xoshiro256pp_init(struct xoshiro256pp_state &state) {
-    struct splitmix64_state sm = {m_seed};
+                for (auto &value : state.state) {
+                    value = Splitmix64(sm);
+                }
+            }
 
-    state.s[0] = splitmix64(sm);
-    state.s[1] = splitmix64(sm);
-    state.s[2] = splitmix64(sm);
-    state.s[3] = splitmix64(sm);
-  }
+            /* @brief Performs a left rotation on x by k bits
+            *  @param x and k, x is the value being rotated and k is how much it is rotated by
+            *  @return A rotated x value
+            */
+            uint64_t RotateLeft64(uint64_t x, int k) {
+                return (x<<k) | (x >> (NUM_BITS-k));
+            }
 
-  // Performs a left rotation on x by k bits
-  uint64_t rol64(uint64_t x, int k) {
-    // Undefined behavior should never trigger due to constant values
-    // If this triggers, function was used incorrectly.
-    if (k == 0) {
-      throw std::runtime_error(
-          "cse498::Random::rol64(): k = 0 is undefined behavior");
-    } else if (k == 64) {
-      throw std::runtime_error(
-          "cse498::Random::rol64(): k = 64 is undefined behavior");
-    }
+            /* @brief Generates a random number
+            *  @param the xoshiro state being used to generated the number
+            *  @return a randomly generated uint64_t value
+            */
+            uint64_t Xoshiro256pp(struct Xoshiro256ppState &state) {
+                auto &new_state = state.state;
 
-    return (x << k) | (x >> (NUM_BITS - k));
-  }
+                // Adds parts 0 and 3 of the state, rotates the sum left by 23 bits
+                // then adds part 0 back into the sum
+                uint64_t result = RotateLeft64(new_state[0] + new_state[3], LEFT_SHIFT) + new_state[0];
 
-  // Generates a random number
-  uint64_t xoshiro256pp(struct xoshiro256pp_state &state) {
-    uint64_t *s = state.s;
+                // shifts state 1 by 17 bits
+                // helps with state mixing
+                uint64_t temp_state = new_state[1] << MIX_SHIFT;
+                
+                // Mix all 4 state values
+                new_state[2] ^= new_state[0];
+                new_state[3] ^= new_state[1];
+                new_state[1] ^= new_state[2];
+                new_state[0] ^= new_state[3];
+                new_state[2] ^= temp_state;
+                new_state[3] = RotateLeft64(new_state[3], NUM_STATE_VALUES);
+                return result;
+            }
 
-    // Adds parts 0 and 3 of the state, rotates the sum left by 23 bits
-    // then adds part 0 back into the sum
-    uint64_t result = rol64(s[0] + s[3], LEFT_SHIFT) + s[0];
+            ///
+            ////////////////////////////////////////////////////////////
 
-    // shifts state 1 by 17 bits
-    // helps with state mixing
-    uint64_t t = s[1] << MIX_SHIFT;
 
-    // Mix all 4 state values
-    s[2] ^= s[0];
-    s[3] ^= s[1];
-    s[1] ^= s[2];
-    s[0] ^= s[3];
-    s[2] ^= t;
-    s[3] = rol64(s[3], NUM_STATE_VALUES);
-    return result;
-  }
+            /* @brief Generates a double
+            *  @param the xoshiro state being used to generated the number
+            *  @return a randomly generated double
+            */
+            double DoubleXoshiro(struct Xoshiro256ppState &state) {
+                uint64_t random_bits = Xoshiro256pp(state);
+                return (random_bits >> D_LOWER_11) * (DOUBLE_CONVERSION_FACTOR); // Using the top 53 bits
+            }
 
-  ///
-  ////////////////////////////////////////////////////////////
+            struct Xoshiro256ppState m_rng;
+            bool m_used = false;
 
-  // Generates a double
-  double double_xoshiro(struct xoshiro256pp_state &state) {
-    uint64_t r = xoshiro256pp(state);
-    return (r >> D_LOWER_11) *
-           (DOUBLE_CONVERSION_FACTOR); // Using the top 53 bits
-  }
+            /* @brief Checks if the rng has been initialize or not */
+            void CheckRng() {
+                if (!m_used) {
+                    Xoshiro256ppInit(m_rng);
+                    m_used = true;
+                }
+            }
 
-  // Generates a float
-  float float_xoshiro(struct xoshiro256pp_state &state) {
-    uint64_t r = xoshiro256pp(state);
-    return static_cast<float>(r >> F_LOWER_41) *
-           (FLOAT_CONVERSION_FACTOR); // Using the top 23 bits
-  }
+        public:
+            /* @brief The constructor for a Random object */
+            Random() {
+                m_seed =  std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            }
+            
+            /* @brief An overloaded contructor to take an optional seed
+            *  @param seed - a optional parameter to set the seed of the generator
+            */
+            Random(uint64_t seed) {
+                m_seed =  seed;
+            }
 
-  struct xoshiro256pp_state m_rng;
-  bool m_used = false;
+            /* @brief Public setter for the current seed.
+            *  @param the desired seed
+            */
+            void SetSeed(uint64_t seed) {
+                m_seed = seed;
+                m_used = false;
+            }
+            /* @brief Public getter for the current seed
+            *  @return the current seed
+            */
+            uint64_t GetSeed() const {return m_seed;}
 
-  void check_rng() {
-    if (m_used == false) {
-      xoshiro256pp_init(m_rng);
-      m_used = true;
-    }
-  }
+            /* @brief Templated function to generate and return values for integral values
+            * @param The range of values(inclusive) to generate a number between. min must be <= max.
+            * @return A random value in range of the specified type
+            */
+            template <std::integral T>
+            std::expected<T, std::string> GetValue(T min, T max) {
+                if (min > max){
+                    return std::unexpected("cse498::Random::GetValue(): min must be less than or equal to max.");
+                }
 
-protected:
-public:
-  Random() {
-    m_seed = std::chrono::duration_cast<std::chrono::microseconds>(
-                 std::chrono::system_clock::now().time_since_epoch())
-                 .count();
-  }
+                CheckRng();
 
-  // Public getter and setter for the current seed.
-  void SetSeed(uint64_t seed) {
-    m_seed = seed;
-    m_used = false;
-  }
-  uint64_t GetSeed() const { return m_seed; }
+                // generate the bits
+                uint64_t r = Xoshiro256pp(m_rng);
+                
+                // Handle int type values: ints, bools, chars
+                //return min + static_cast<T> (r % static_cast<uint64_t>(max-min+1));
+                uint64_t range = static_cast<uint64_t>(max) - static_cast<uint64_t>(min) + 1;
+                __uint128_t product = static_cast<__uint128_t>(r) * range;
+                uint64_t scaled = static_cast<uint64_t>(product >> 64);
+                return min + static_cast<T>(scaled);
+            }
 
-  // Generate and return a random int
-  int GetInt(int i_min = 0, int i_max = 100) {
-    // Error handling: i_min must be less than i_max
-    if (i_min > i_max) {
-      throw std::runtime_error(
-          "cse498::Random::GetInt(): i_min must be less than i_max.");
-    }
+            /* @brief Templated function to generate and return values for floating point values
+            *  @param The range of values(inclusive) to generate a number between. min must be <= max.
+            *  @return A random value in range of the specified type
+            */
+            template <std::floating_point T>
+            std::expected<T, std::string> GetValue(T min, T max) {
+                if (min > max){
+                    return std::unexpected("cse498::Random::GetValue(): min must be less than or equal to max.");
+                }
 
-    check_rng();
+                CheckRng();
 
-    // generate the bits
-    uint64_t r = xoshiro256pp(m_rng);
-    // make use of the bits useful for a integer
-    int return_i =
-        i_min + static_cast<int>(r % static_cast<uint64_t>(i_max - i_min + 1));
+                // generate the bits
+                uint64_t r = Xoshiro256pp(m_rng);
+                
+                // Handle decimal type values: doubles, floats
+                double decimal_value = static_cast<double>(r)/static_cast<double>(UINT64_MAX);
+                return static_cast<T>(min + decimal_value * (max-min));
+            }
 
-    return return_i;
-  }
+            /* @brief Generates based off of a given probability, and returns a bool
+            *  @param the desired probaility of a true value
+            *  @return a weighted generated bool
+            */
+            [[nodiscard]] std::expected<bool, std::string> P(double probability = 0.5){
+                // Error handling: probability must be between 0 and 1
+                if (0 > probability){
+                    return std::unexpected("cse498::Random::P(): probability must be greater than or equal to 0");
+                }
+                if (1 < probability){
+                    return std::unexpected("cse498::Random::P(): probability must be less than or equal to 1");
+                }
 
-  // Generate and return a random double
-  double GetDouble(double d_min = 0.0, double d_max = 100.0) {
-    // Error handling: d_min must be less than d_max
-    if (d_min > d_max) {
-      throw std::runtime_error(
-          "cse498::Random::GetDouble(): d_min must be less than d_max.");
-    }
+                CheckRng();
 
-    check_rng();
+                // Uses the double generation to determine true/false
+                bool return_p = DoubleXoshiro(m_rng) < probability;
 
-    // for doubles use the 53 bits
-    double return_d = d_min + (d_max - d_min) * double_xoshiro(m_rng);
-
-    return return_d;
-  }
-
-  // Generate and return a random float
-  float GetFloat(float f_min = 0.0f, float f_max = 100.0f) {
-    // Error handling: f_min must be less than f_max
-    if (f_min > f_max) {
-      throw std::runtime_error(
-          "cse498::Random::GetFloat(): f_min must be less than f_max.");
-    }
-
-    check_rng();
-
-    // for floats use the top 23 bits
-    float return_f = f_min + (f_max - f_min) * float_xoshiro(m_rng);
-
-    return return_f;
-  }
-
-  // Generate and return a random char
-  char GetChar(char c_min = 'A', char c_max = 'Z') {
-    // Error handling: c_min must be less than c_max
-    if (c_min > c_max) {
-      throw std::runtime_error(
-          "cse498::Random::GetChar(): c_min must be less than c_max.");
-    }
-
-    check_rng();
-
-    // Treat chars as ints
-    uint64_t r = xoshiro256pp(m_rng);
-    char return_c = static_cast<char>(
-        c_min + (r % static_cast<uint64_t>(c_max - c_min + 1)));
-
-    return return_c;
-  }
-
-  // Generate and return a random bool
-  bool GetBool() {
-    // Generate between 0 and 1 using an int
-    int i = GetInt(0, 1);
-
-    if (i == 0) {
-      return false;
-    }
-    return true;
-  }
-
-  // Generates based off of a given probability, and returns a bool
-  bool P(double probability = 0.5) {
-    // Error handling: probability must be between 0 and 1
-    if (0 > probability || 1 < probability) {
-      throw std::runtime_error("cse498::Random::P(): parameter probability "
-                               "must be between 0 and 1.");
-    }
-
-    check_rng();
-
-    // Uses the double generation to determine true/false
-    bool return_p = double_xoshiro(m_rng) < probability;
-
-    return return_p;
-  }
-};
-} // namespace cse498
+                return return_p;
+            }
+    };
+}

@@ -5,90 +5,160 @@
 
 #include "Timer.hpp"
 
-double NANOSECONDS_IN_SECOND = 1000000000.0;
+// The elapsed time is calculated internally in nanoseconds.
+// This variable allows for simple conversion in methods that return a value in
+// seconds.
+constexpr double NS_TO_S_CONVERSION = 1000000000.0;
+
+// Variable to help convert seconds to minutes in calculations.
+constexpr double SECONDS_IN_MINUTE = 60.0;
 
 /**
- * Constructor for a Timer.
+ * Timer constructor.
+ * @param name The name of the Timer.
+ * @param startRunning Whether the Timer should start running. Defaults to true.
  */
-cse498::Timer::Timer() {}
+cse498::Timer::Timer(std::string name, bool startRunning) {
+  mName = name;
+  mRunning = startRunning;
+  mStart = std::chrono::steady_clock::now();
+  mLapStart = std::chrono::steady_clock::now();
+}
 
 /**
- * Starts a timer, adding it to the map of timers using the provided
- * timer name as the key, and the current time as the value.
+ * Start the Timer.
+ * If the Timer is already running, it won't do anything.
  */
-void cse498::Timer::start(std::string timerName) {
-  if (mTimers.find(timerName) != mTimers.end()) {
-    if (!mTimers[timerName].isRunning) {
-      // If the timer already exists and is stopped, start it back up and keep
-      // the accumulated duration.
-      mTimers[timerName].startTime = std::chrono::steady_clock::now();
-      mTimers[timerName].isRunning = true;
+void cse498::Timer::start() {
+  if (!mRunning) {
+    mRunning = true;
+    mStart = std::chrono::steady_clock::now();
+    mLapStart = std::chrono::steady_clock::now();
+  }
+}
+
+/**
+ * Stop the Timer and update the elapsed time and current lap time.
+ * If the Timer is already stopped, it won't do anything.
+ */
+void cse498::Timer::stop() {
+  if (mRunning) {
+    mRunning = false;
+    mElapsed += (std::chrono::steady_clock::now() - mStart);
+    mLaps.at(mLaps.size() - 1) +=
+        (std::chrono::steady_clock::now() - mLapStart).count() /
+        NS_TO_S_CONVERSION;
+  }
+}
+
+/**
+ * Reset the Timer, turning it off, setting its elapsed time back to 0, and
+ * resetting the laps.
+ */
+void cse498::Timer::reset() {
+  mRunning = false;
+  mElapsed = std::chrono::duration<double>::zero();
+  mLaps.clear();
+  mLaps.push_back(0.0);
+}
+
+/**
+ * Restart the Timer, resetting its elapsed time back to 0 and resetting the
+ * laps, but starting it up immediately.
+ */
+void cse498::Timer::restart() {
+  mElapsed = std::chrono::duration<double>::zero();
+  mLaps.clear();
+  mLaps.push_back(0.0);
+  mRunning = true;
+  mStart = std::chrono::steady_clock::now();
+  mLapStart = std::chrono::steady_clock::now();
+}
+
+/**
+ * Lap the Timer, stopping the previous lap and immediately starting a new one.
+ */
+void cse498::Timer::lap() {
+  if (mRunning) {
+    mLaps.at(mLaps.size() - 1) +=
+        (std::chrono::steady_clock::now() - mLapStart).count() /
+        NS_TO_S_CONVERSION;
+    mLaps.push_back(0.0);
+    mLapStart = std::chrono::steady_clock::now();
+  }
+}
+
+/**
+ * Gets and calculates the total time (in seconds) that the Timer has run for.
+ * @return Total run time of Timer (seconds).
+ */
+double cse498::Timer::elapsed() const {
+  if (mRunning) {
+    // Subtracts the starting time point from the current time and adds that
+    // duration to any already accumulated duration.
+    return (mElapsed + (std::chrono::steady_clock::now() - mStart)).count() /
+           NS_TO_S_CONVERSION;
+  }
+  return mElapsed.count() / NS_TO_S_CONVERSION;
+}
+
+/**
+ * Checks whether the Timer is currently running.
+ * @return Whether the Timer is running or not.
+ */
+bool cse498::Timer::isRunning() const { return mRunning; }
+
+/**
+ * Returns the vector containing the lap times for the Timer.
+ * If the Timer is running, add the elapsed time into the current lap time to
+ * get an accurate lap time, and adjust the starting point as necessary for
+ * future calculations.
+ */
+std::vector<double> cse498::Timer::getLaps() {
+  if (mRunning) {
+    mLaps.at(mLaps.size() - 1) +=
+        (std::chrono::steady_clock::now() - mLapStart).count() /
+        NS_TO_S_CONVERSION;
+    mLapStart = std::chrono::steady_clock::now();
+  }
+  return mLaps;
+}
+
+/**
+ * Mock an advance of time by the given interval (in seconds).
+ * This method should only be used for testing purposes, and has no use outside
+ * of making sure elapsed() works properly.
+ * @param seconds The amount of time to advance by.
+ */
+void cse498::Timer::advanceTime(double seconds) {
+  if (mRunning) {
+    mElapsed += std::chrono::duration<double>(seconds);
+    mLaps.at(mLaps.size() - 1) +=
+        std::chrono::duration<double>(seconds).count();
+  }
+}
+
+/**
+ * Returns a string containing the state of the timer in xx:xx.xxx format
+ * (minutes, seconds, milliseconds)
+ * @param withLaps Should the string include lap information or not
+ */
+std::string cse498::Timer::toString(bool withLaps) const {
+  double time = elapsed();
+  std::ostringstream oss;
+  oss << mName << " [" << (mRunning ? "RUNNING" : "STOPPED")
+      << "]: " << std::setfill('0') << std::setw(2)
+      << static_cast<int>(time / SECONDS_IN_MINUTE) << ":" << std::setw(6)
+      << std::fixed << std::setprecision(3)
+      << std::fmod(time, SECONDS_IN_MINUTE);
+
+  if (withLaps) {
+    for (auto [i, lapTime] : std::ranges::views::enumerate(mLaps)) {
+      oss << "\n  Lap " << (i + 1) << ": " << std::setfill('0') << std::setw(2)
+          << static_cast<int>(lapTime / SECONDS_IN_MINUTE) << ":"
+          << std::setw(6) << std::fixed << std::setprecision(3)
+          << std::fmod(lapTime, SECONDS_IN_MINUTE);
     }
-  } else {
-    // If the timer doesn't exist, create it and start it.
-    mTimers[timerName].startTime = std::chrono::steady_clock::now();
-    mTimers[timerName].isRunning = true;
-    mTimers[timerName].accumulatedDuration =
-        std::chrono::duration<double>::zero();
   }
-}
-
-/**
- * Stops the timer with the provided name, addings it's elapsed time to the
- * accumulated duration and marking it as stopped. Does nothing if the timer
- * doesn't exist.
- */
-void cse498::Timer::stop(std::string timerName) {
-  if (mTimers.find(timerName) != mTimers.end() &&
-      mTimers[timerName].isRunning) {
-    // If the timer exists, calculate how long it ran for, add that to the
-    // accumulated duration, and mark it as stopped.
-    auto startTime = mTimers[timerName].startTime;
-    auto endTime = std::chrono::steady_clock::now();
-    mTimers[timerName].accumulatedDuration += endTime - startTime;
-    mTimers[timerName].isRunning = false;
-  }
-}
-
-/**
- * Restarts the timer with the provided name, resetting its accumulated duration
- * to 0 and starting it again.
- */
-void cse498::Timer::restart(std::string timerName) {
-  mTimers[timerName].startTime = std::chrono::steady_clock::now();
-  mTimers[timerName].isRunning = true;
-  mTimers[timerName].accumulatedDuration =
-      std::chrono::duration<double, std::nano>::zero();
-}
-
-/**
- * Get the duration the timer has run for, adding in the current running time if
- * the timer is still running. Returns a duration of 0 if the timer doesn't
- * exist.
- */
-double cse498::Timer::getTime(std::string timerName) {
-  if (mTimers.find(timerName) != mTimers.end()) {
-    if (mTimers.at(timerName).isRunning) {
-      // If the timer exists, return the accumulated duration plus
-      // the current running time if it's still running.
-      auto startTime = mTimers.at(timerName).startTime;
-      auto currentTime = std::chrono::steady_clock::now();
-      auto elapsed =
-          mTimers.at(timerName).accumulatedDuration + (currentTime - startTime);
-      return elapsed.count() /
-             NANOSECONDS_IN_SECOND; // Convert from nanoseconds to seconds.
-    } else {
-      return mTimers.at(timerName).accumulatedDuration.count() /
-             NANOSECONDS_IN_SECOND; // Convert from nanoseconds to seconds.
-    }
-  } else {
-    // If the timer doesn't exist, return a duration of 0.
-    return 0.0;
-  }
-}
-
-bool cse498::Timer::isRunning(const std::string &timerName) const {
-  return mTimers.find(timerName) != mTimers.end()
-             ? mTimers.at(timerName).isRunning
-             : false;
+  return oss.str();
 }

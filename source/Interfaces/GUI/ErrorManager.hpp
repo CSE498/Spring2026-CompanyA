@@ -8,8 +8,8 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <map>
-#include <string>
+#include <cstdlib>
+#include <SDL2/SDL.h>
 
 #ifdef _WIN32
 #include <io.h>
@@ -25,11 +25,14 @@ private:
   // sharedptr to mGameUI -- will be used to throw sub-window errors once that
   // class is created
 
-  std::string mFatalErrorColor = ErrorColor::BOLD_RED;
-  std::string mTerminalErrorColor = ErrorColor::RED;
-  std::string mTerminalWarningColor = ErrorColor::YELLOW;
-  std::string mLogErrorColor = ErrorColor::CYAN;
-  std::string mLogWarningColor = ErrorColor::MAGENTA;
+    std::string mFatalErrorColor      = ErrorColor::BOLD_RED;
+    std::string mTerminalErrorColor   = ErrorColor::RED;
+    std::string mTerminalWarningColor = ErrorColor::YELLOW;
+    std::string mLogErrorColor        = ErrorColor::CYAN;
+    std::string mLogWarningColor      = ErrorColor::MAGENTA;
+
+    /// Optional window to parent the SDL message box to (can be nullptr)
+    SDL_Window* mWindow = nullptr;
 
   bool mColorEnabled = false;
 
@@ -72,23 +75,26 @@ public:
     static constexpr const char *BOLD_RED = "\033[1m\033[91m";
   };
 
-  ErrorManager() : mColorEnabled(SupportsColor()) {}
-  ~ErrorManager() = default;
+    ErrorManager() : mColorEnabled(SupportsColor()) {}
+    ~ErrorManager() = default;
 
-  // --- Color setters ---
-  void SetFatalErrorColor(const std::string &color) {
-    mFatalErrorColor = color;
-  }
-  void SetTerminalErrorColor(const std::string &color) {
-    mTerminalErrorColor = color;
-  }
-  void SetTerminalWarningColor(const std::string &color) {
-    mTerminalWarningColor = color;
-  }
-  void SetLogErrorColor(const std::string &color) { mLogErrorColor = color; }
-  void SetLogWarningColor(const std::string &color) {
-    mLogWarningColor = color;
-  }
+    /// Optionally attach a window so GUI popups are parented to it.
+    /// If not set, the popup appears as a standalone dialog.
+    void SetWindow(SDL_Window* window) { mWindow = window; }
+
+    // --- Color setters ---
+    void SetFatalErrorColor(const std::string& color)      { mFatalErrorColor = color; }
+    void SetTerminalErrorColor(const std::string& color)   { mTerminalErrorColor = color; }
+    void SetTerminalWarningColor(const std::string& color) { mTerminalWarningColor = color; }
+    void SetLogErrorColor(const std::string& color)        { mLogErrorColor = color; }
+    void SetLogWarningColor(const std::string& color)      { mLogWarningColor = color; }
+
+    // --- Color getters ---
+    [[nodiscard]] const std::string& GetFatalErrorColor()      const { return mFatalErrorColor; }
+    [[nodiscard]] const std::string& GetTerminalErrorColor()   const { return mTerminalErrorColor; }
+    [[nodiscard]] const std::string& GetTerminalWarningColor() const { return mTerminalWarningColor; }
+    [[nodiscard]] const std::string& GetLogErrorColor()        const { return mLogErrorColor; }
+    [[nodiscard]] const std::string& GetLogWarningColor()      const { return mLogWarningColor; }
 
   /// Prints message and immediately terminates the program.
   /// Use for unrecoverable states (e.g. failed memory allocation, corrupt game
@@ -110,12 +116,22 @@ public:
     PrintInColor(mTerminalWarningColor, "[WARNING] " + message);
   }
 
-  /// Use case - "You died", "Ran out of Time", "Not enough money", etc. TO DO
-  static void GUIError(const std::string &message) {
-    // TO DO with main game UI class, this line avoids "unused variable" in the
-    // meantime
-    (void)message;
-  }
+    /// Shows an SDL popup dialog for in-game user-facing errors.
+    /// Use case - "You died", "Ran out of Time", "Not enough money", etc.
+    /// Falls back to terminal output if SDL is not initialized.
+    void GUIError(const std::string& message) const
+    {
+        // Also print to terminal for logging purposes
+        PrintInColor(mTerminalErrorColor, "[GUI ERROR] " + message);
+
+        // Show SDL popup, will work even without a window attached
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_WARNING,
+            "Game Error",
+            message.c_str(),
+            mWindow
+        );
+    }
 
   /// Logs an error message and continues execution.
   void LogError(const std::string &message) const {

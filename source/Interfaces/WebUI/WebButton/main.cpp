@@ -1,35 +1,61 @@
-#include "../WebLayout/WebLayout.hpp"
+/**
+ * @file main.cpp
+ * @brief Demo entry point for the WebButton WebUI component.
+ *
+ * Creates a vertical layout and three buttons (one active, one disabled,
+ * one hidden) to demonstrate WebButton features in an Emscripten/WASM build.
+ *
+ */
+
 #include "WebButton.hpp"
+#include "../WebLayout/WebLayout.hpp"
+#include "../../../tools/Color.hpp"
 #include <iostream>
 #include <memory>
+
+using namespace cse498;
+
+namespace {
 
 static constexpr int DEFAULT_SPACING = 10;
 static constexpr int BUTTON_WIDTH = 150;
 static constexpr int BUTTON_HEIGHT = 40;
 
+// Keep DOM-backed demo objects alive after main() returns under Emscripten.
+std::unique_ptr<WebLayout> sLayout;
+std::unique_ptr<WebButton> sBtn1;
+std::unique_ptr<WebButton> sBtn2;
+std::unique_ptr<WebButton> sBtn3;
+
+}  // namespace
+
+/// @brief Entry point; constructs the button demo layout and mounts three buttons.
+/// @return 0 on success.
 int main() {
-  auto layout = std::make_unique<WebLayout>("button-demo");
-  layout->SetLayoutType(LayoutType::Vertical);
-  layout->SetSpacing(DEFAULT_SPACING);
+  sLayout = std::make_unique<WebLayout>("button-demo");
+  sLayout->SetLayoutType(LayoutType::Vertical);
+  sLayout->SetSpacing(DEFAULT_SPACING);
 
-  auto btn1 = std::make_unique<WebButton>("Click Me");
-  btn1->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-  btn1->SetBackgroundColor("#4CAF50");
-  btn1->SetTextColor("white");
-  btn1->SetCallback([]() { std::cout << "Button was clicked!" << std::endl; });
-  btn1->MountToLayout(*layout);
+  sBtn1 = std::make_unique<WebButton>("Click Me");
+  sBtn1->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+  sBtn1->SetBackgroundColor(Color::FromRGB255(76, 175, 80).ToHex());
+  sBtn1->SetTextColor(Color::FromRGB255(255, 255, 255).ToHex());
+  sBtn1->SetCallback([]() {
+    std::cout << "Button was clicked!" << std::endl;
+  });
+  sBtn1->MountToLayout(*sLayout);
 
-  auto btn2 = std::make_unique<WebButton>("Disabled Button");
-  btn2->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-  btn2->Disable();
-  btn2->MountToLayout(*layout);
+  sBtn2 = std::make_unique<WebButton>("Disabled Button");
+  sBtn2->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+  sBtn2->Disable();
+  sBtn2->MountToLayout(*sLayout);
 
-  auto btn3 = std::make_unique<WebButton>("Hidden Button");
-  btn3->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-  btn3->Hide();
-  btn3->MountToLayout(*layout);
+  sBtn3 = std::make_unique<WebButton>("Hidden Button");
+  sBtn3->SetSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+  sBtn3->Hide();
+  sBtn3->MountToLayout(*sLayout);
 
-  layout->Apply();
+  sLayout->Apply();
 
   std::cout << "WebButton demo loaded" << std::endl;
   return 0;

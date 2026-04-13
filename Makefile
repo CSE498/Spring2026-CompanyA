@@ -22,7 +22,7 @@
 # orchestration now live in the root CMake project.
 
 .PHONY: default all build test clean debug opt quick grumpy \
-        src-% test-% help web_test
+        src-% test-% help web_test group18_main
 
 # ---------- High-level targets ----------
 
@@ -43,10 +43,15 @@ all: build test
 debug opt quick grumpy:
 	$(MAKE) -C source $@
 
+# Build the Group15 demo
+Group15_demo:
+	cmake --build build --target Group15_demo
+
 # Clean everything
 clean:
 	$(MAKE) -C source clean
 	$(MAKE) -C tests clean
+	$(MAKE) -C demo clean
 
 # Forward anything to source/ by prefixing with src-
 #   make src-simple
@@ -65,6 +70,9 @@ test-%:
 # Build + run WebUI unit tests (requires Emscripten SDK / em++)
 web_test:
 	$(MAKE) -C tests web_test
+
+group18_main:
+	$(MAKE) -C source group18_main
 
 help:
 	@echo "Top-level targets:"

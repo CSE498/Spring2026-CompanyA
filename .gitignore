@@ -52,4 +52,22 @@ third-party/SDL2/
 /interactive_world_save.json
 
 /source/simple
+/source/gameview
 /tests/build/run_tests
+/tests/build
+
+/demos/WebUI/*.data
+/demos/WebUI/*.js
+/demos/WebUI/*.wasm
+/demos/WebUI/*.wasm.map
+/demos/*_demo*
+
+# ====== Doxygen Output ======
+# The folder where the result reports generated after each Doxygen scan are stored
+# (config this in your Doxyfile: OUTPUT_DIRECTORY = ./doxygen-output)
+doxygen-output
+
+# ====== Doxygen Warnings ======
+# The file where Doxygen warnings are logged
+# (config this in your Doxyfile: WARN_LOGFILE = ./doxygen-warnings.log)
+doxygen-warnings.log

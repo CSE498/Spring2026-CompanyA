@@ -1,16 +1,17 @@
 /**
- * * @file OutputManager.hpp
- * * @author Tyler Murray
- * * @brief Logging system for game engine
- * * @version 1.3
+ * @file OutputManager.hpp
+ * @author Tyler Murray
+ * @brief Simple logging system for debugging and status output.
  *
- * OutputManager is a category based logging system used across each module. It
- * will support logging levels, timestamps, and pluggable output sings. It will
- * also log things to a csv file.
+ * OutputManager provides level-based logging, optional timestamps, configurable
+ * sinks, and optional file output. It supports a built-in enum of common game
+ * categories while also allowing callers to supply category names at runtime.
  */
 
 #pragma once
-#include <chrono>
+
+#include "Timer.hpp"
+
 #include <cstdint>
 #include <fstream>
 #include <functional>
@@ -20,155 +21,194 @@
 #include <string_view>
 #include <vector>
 
-namespace cse498 {
+namespace cse498
+{
+    /*@enum LogLevel
+    * @brief Different levels of logging severity.
+    */
+    enum class LogLevel : uint8_t
+    {
+        Debug = 0,
+        Verbose = 1,
+        Info = 2,
+        Warn = 3,
+        Error = 4,
+        Silent = 5
+    };
 
-/*@enum LogLevel
- * @brief Different levels of logging severity
- * @details
- * DEBUG: Detailed information, typically of interest only when diagnosing
- * problems. Verbose: More detailed than Info, but less than Debug. Info:
- * Confirmation that things are working as expected. Warn: An indication that
- * something unexpected happened, or indicative of some problem in the near
- * future. Error: Due to a more serious problem, the software has not been able
- * to perform some function. Silent: No logging output.
- */
+    /*@enum LogCategory
+    * @brief Common built-in categories for game logging.
+    * @details
+    * Callers may also provide categories at runtime through the string overload of Log().
+    */
+    enum class LogCategory : uint8_t
+    {
+        System,
+        WorldGen,
+        World,
+        Combat,
+        AI,
+        Items,
+        Trade,
+        Puzzle,
+        Replay,
+        Performance,
+        UI,
+        Network
+    };
 
-enum class LogLevel : uint8_t {
-  Debug = 0,
-  Verbose = 1,
-  Info = 2,
-  Warn = 3,
-  Error = 4,
-  Silent = 5
-};
+    /*@brief Type alias for output callbacks.
+    * @details
+    * A LogSink receives one already-formatted log line.
+    */
+    using LogSink = std::function<void(std::string_view)>;
 
-/*
- *@enum LogCategory
- *@brief Different categories for logging so teams can filter or search output
- * easily
- *@details
- * System: Logs related to system operations and events
- * WorldGen: Logs related to world generation
- * World: Logs related to world state and changes
- * Combat: Logs related to combat mechanics and events
- * AI: Logs related to AI behavior and events
- * Items: Logs related to item usage and events
- * Trade: Logs related to trading and events
- * Puzzle: Logs related to puzzle solving and events
- * Replay: Logs related to replay and events
- * Performance: Logs related to performance and events
- * UI: Logs related to UI and events
- * Network: Logs related to network and events
- */
-enum class LogCategory : uint8_t {
-  System,
-  WorldGen,
-  World,
-  Combat,
-  AI,
-  Items,
-  Trade,
-  Puzzle,
-  Replay,
-  Performance,
-  UI,
-  Network
-};
+    /*@class OutputManager
+    * @brief Simple logging system for debugging and status output.
+    */
+    class OutputManager
+    {
+    public:
+        OutputManager();
+        ~OutputManager() = default;
 
-/*@brief Type alias for log sink callback functions
- * @details
- * A LogSink is a callback function that takes a formatted log line as input.
- * Sinks can be added to the OutputManager to receive log output, allowing for
- * flexible logging destinations (e.g., console, file, network).
- */
-using LogSink = std::function<void(std::string_view)>;
+        /*@brief Sets the minimum log level for the manager.
+        * @param level The minimum level that will be emitted.
+        */
+        void SetMinLogLevel(LogLevel level);
 
-/*@class OutputManager
- * @brief Logging system for game engine
- */
-class OutputManager {
-public:
-  OutputManager();
-  ~OutputManager() = default;
+        /*@brief Gets the current minimum log level.
+        * @return The active minimum log level.
+        */
+        LogLevel GetMinLogLevel() const;
 
-  /*@brief Sets the minimum log level for output
-   * @param level The minimum log level to set
-   */
-  void SetMinLogLevel(LogLevel level);
+        /*@brief Checks if a level would be emitted by the manager.
+        * @param level The level to test.
+        * @return True if the manager would allow the message through.
+        */
+        bool ShouldLog(LogLevel level) const;
 
-  /*@brief Gets the minimum log level for output
-   * @return The minimum log level
-   */
-  LogLevel GetMinLogLevel() const;
+        /*@brief Enables or disables timestamps in the formatted output.
+        * @param enabled True to include elapsed milliseconds in each line.
+        */
+        void EnableTimestamps(bool enabled);
 
-  /*@brief Checks if a message at a given level should be logged
-   * @param level The log level to check
-   */
-  bool ShouldLog(LogLevel level) const;
+        /*@brief Reports whether timestamps are currently enabled.
+        * @return True when timestamps are enabled.
+        */
+        bool TimestampsEnabled() const;
 
-  /*@brief Enables or disables timestamps in log output
-   * @param enabled True to enable timestamps, false to disable
-   */
-  void EnableTimestamps(bool enabled);
+        /*@brief Resets the timer used for timestamped log output.
+        * @details
+        * After calling this, future timestamped log lines start again near 0 ms.
+        */
+        void ResetTimestampClock();
 
-  /*@brief Logs a message at a given level and category
-   * @param level The log level of the message
-   * @param category The log category of the message
-   * @param message The message to log
-   */
-  void Log(LogLevel level, LogCategory category, std::string_view message);
+        /*@brief Logs a message using the built-in category enum.
+        * @param level The log level for the message.
+        * @param category The built-in category for the message.
+        * @param message The text to log.
+        */
+        void Log
+        (
+            LogLevel level = LogLevel::Info,
+            LogCategory category = LogCategory::System,
+            std::string_view message = ""
+        );
 
-  /*@brief returns uppercase string view of log level for output
-   * @param level The log level to convert
-   * @return A string view representing the log level
-   */
-  std::string_view LevelName(LogLevel level) const;
+        /*@brief Logs a message using a runtime-provided category name.
+        * @param level The log level for the message.
+        * @param category The category name to show in the output.
+        * @param message The text to log.
+        */
+        void Log
+        (
+            LogLevel level,
+            std::string_view category,
+            std::string_view message
+        );
 
-  /*@brief returns uppercase string view of log category for output
-   * @param category The log category to convert
-   * @return A string view representing the log category
-   */
-  std::string_view CategoryName(LogCategory category) const;
+        /*@brief Logs a message with convenient defaults.
+        * @param message The text to log at Info level with the GENERAL category.
+        */
+        void Log(std::string_view message);
 
-  /*@brief Adds a sink that receives each formatted log line
-   * @param sink The sink callback to add
-   */
-  void AddSink(LogSink sink);
+        /*@brief Converts a log level to its display name.
+        * @param level The level to convert.
+        * @return Uppercase text for the level.
+        */
+        static std::string_view LevelName(LogLevel level);
 
-  /*@brief Clears all registered sinks
-   * @details
-   * After clearing sinks, Log() will not output anywhere until a sink is added.
-   */
-  void ClearSinks();
+        /*@brief Converts a built-in category to its display name.
+        * @param category The category to convert.
+        * @return Uppercase text for the category.
+        */
+        static std::string_view CategoryName(LogCategory category);
 
-  /*@brief Enables or disables CSV logging
-   * @param enabled True to enable CSV logging, false to disable
-   */
-  void EnableCsv(bool enabled);
+        /*@brief Adds a sink that receives formatted log lines.
+        * @param sink The callback to invoke for each accepted line.
+        * @param minLevel The minimum level this sink will receive.
+        */
+        void AddSink(LogSink sink, LogLevel minLevel = LogLevel::Debug);
 
-  /*@brief Sets the CSV output file path
-   * @param path File path to write CSV rows to
-   * @param append True to append, false to overwrite
-   */
-  void SetCsvPath(const std::string &path, bool append = true);
+        /*@brief Removes all registered sinks.
+        * @details
+        * After this, no console or custom sink output will occur until a sink is added.
+        */
+        void ClearSinks();
 
-private:
-  mutable std::mutex m_mutex;     /// Mutex for thread operations
-  LogLevel m_min{LogLevel::Info}; /// Minimum log level
+        /*@brief Enables or disables file logging.
+        * @param enabled True to write formatted lines to the configured file path.
+        */
+        void EnableCsv(bool enabled);
 
-  bool m_timestamps{false};                          /// Flag for timestamps
-  std::chrono::steady_clock::time_point m_startTime; /// Start time
-  std::vector<LogSink> m_sinks;                      /// Registered output sinks
+        /*@brief Reports whether file logging is currently enabled.
+        * @return True when file logging is enabled.
+        */
+        bool CsvEnabled() const;
 
-  bool m_csvEnabled{false};       /// CSV enabled flag
-  std::string m_csvPath;          /// CSV output file path
-  std::ofstream m_csv;            /// CSV stream
-  bool m_csvHeaderWritten{false}; /// Header written flag
-  bool m_csvAppend{true};
+        /*@brief Sets the file path used for file logging.
+        * @param path File path to write log lines to.
+        * @param append True to append, false to overwrite.
+        */
+        void SetCsvPath(const std::string& path, bool append = true);
 
-  void OpenCsvLocked();
-  void CloseCsvLocked();
-};
+    private:
+        // Each sink carries its own minimum level so sinks can filter independently.
+        struct SinkEntry
+        {
+            LogSink sink;
+            LogLevel minLevel{LogLevel::Debug};
+        };
 
-// end of namespace cse498
-} // namespace cse498
+        mutable std::mutex m_mutex;
+        LogLevel m_min{LogLevel::Info};
+        bool m_timestamps{false};
+        Timer m_timer;
+        std::vector<SinkEntry> m_sinks;
+
+        bool m_csvEnabled{false};
+        std::string m_csvPath;
+        std::ofstream m_csv;
+        bool m_csvAppend{true};
+
+        // Internal helper that assumes the caller already holds the mutex.
+        bool ShouldLogUnlocked(LogLevel level) const;
+
+        // Elapsed time is measured by the shared Timer class relative to construction.
+        long long ElapsedMilliseconds() const;
+
+        // Builds the single standard line format used by all sinks and file output.
+        std::string FormatLine
+        (
+            LogLevel level,
+            std::string_view category,
+            std::string_view message,
+            bool includeTimestamp,
+            long long elapsedMs
+        ) const;
+
+        void OpenCsvLocked();
+        void CloseCsvLocked();
+    };
+}

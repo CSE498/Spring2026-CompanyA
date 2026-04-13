@@ -14,74 +14,77 @@
 
 #include "Text.hpp"
 
-namespace cse498 {
+namespace cse498
+{
 
-class Menu {
-private:
-  struct MenuOption {
-    std::string label;
-    std::function<void()> callback;
-  };
+    struct MenuStyle
+    {
 
-  std::vector<MenuOption> options;
-  std::optional<size_t> selected_index; // holds -1 if nothing is chosen
+        static constexpr int kDefaultFontSize = 24;
+        static constexpr bool kDefaultBoldSelected = true;
 
-public:
-  Menu();
+        int font_size = kDefaultFontSize;
+        bool bold_selected = kDefaultBoldSelected;
 
-  /**
-   * add new option to menu
-   * label The display text for option
-   * callback Function to call when option is chosen
-   */
-  void add_option(const std::string &label, std::function<void()> callback);
 
-  bool remove_option(const std::string &label);
+        Color selected_color = {255, 255, 0, 255}; // yellow
+        Color unselected_color = {255, 255, 255, 255}; // white
+    };
 
-  // get the number of options in th menu
-  // return # of options
-  size_t get_option_count() const;
+    class Menu
+    {
+    private:
+        struct MenuOption
+        {
+            std::string label;
+            std::function<void()> callback;
+        };
 
-  // get index of selected option
-  // returns index of selected option, or -1 if nothing is chosen
-  std::optional<size_t> get_selected_index() const;
+        std::vector<MenuOption> mOptions;
+        std::optional<size_t> mSelectedIndex; // holds -1 if nothing is chosen
 
-  // move selection to the next option
-  void select_next();
+    public:
+        Menu();
 
-  // move selection to the previous option
-  void select_previous();
+        enum class InputCode
+        {
+            up = 1,
+            down = 2,
+            enter = 3
+        };
 
-  // selects option by it's index
-  // index: index to select
-  void select_option(size_t index);
+        bool AddOption(const std::string &label, std::function<void()> callback);
 
-  // activates selected options, triggers its callback
-  void activate_selected();
+        bool RemoveOption(const std::string &label);
 
-  // gets the label of an option by index
-  // index The option's index
-  // returns the label's string
-  // std::out_of_range if index is invalid
-  std::string get_option_label(size_t index) const;
+        size_t GetOptionCount() const;
 
-  // check if menu has options
-  // true if menu empty
-  bool is_empty() const noexcept;
+        std::optional<size_t> GetSelectedIndex() const;
 
-  // clear all options from the menu
-  void clear();
+        void SelectNext();
 
-  enum class InputCode { up = 1, down = 2, enter = 3 };
-  // handles keyboard/mouse selection
-  // input_code: int representing user input (1 = up, 2 = down, 3 = enter)
-  void handle_input(InputCode input_code);
+        void SelectPrevious();
 
-  // draw function for menu button
-  void draw(SDL_Renderer *renderer, int x, int y, int width, int height);
+        bool SelectOption(size_t index);
 
-  ~Menu() = default;
-};
+        bool ActivateSelected() const;
+
+        std::optional<std::string> GetOptionLabel(size_t index) const;
+
+        bool IsEmpty() const noexcept;
+
+        void Clear();
+
+        void HandleInput(InputCode input_code);
+
+        void DrawMenu(SDL_Renderer *renderer, int x, int y, int width, int height,
+                      const MenuStyle &style = MenuStyle{});
+
+        void HandleSDLInput(const SDL_KeyboardEvent &key_event);
+
+
+        ~Menu() = default;
+    };
 
 } // namespace cse498
 
