@@ -3,19 +3,15 @@
  * @author Kiana May
  * Implementation of the Text class for styled text rendering.
  * Disclaimer: Code clean up and comments utilized Claude Sonnet 4.5
- **/
+ */
 
 #include "Text.hpp"
-
-#include <stdexcept>
 #include <cassert>
+#include <iostream>
 
 using namespace cse498;
 
-//default font path
-const std::string Text::DEFAULT_FONT = DEFAULT_FONT_PATH; // defined through CMake
-const Color Text::DEFAULT_COLOR{255, 255, 255, 255};
-
+const std::string Text::DEFAULT_FONT = DEFAULT_FONT_PATH;
 /**
  * Constructor
  * @param renderer SDL renderer for drawing
@@ -23,38 +19,34 @@ const Color Text::DEFAULT_COLOR{255, 255, 255, 255};
 Text::Text(SDL_Renderer* renderer)
     : mContent("")
     , mFontPath(DEFAULT_FONT)
-    , mColor(DEFAULT_COLOR)  // White
+    , mColor(DEFAULT_COLOR)
     , mFontSize(DEFAULT_SIZE)
     , mBold(false)
     , mItalic(false)
+    , mInitialized(false)
     , mRenderer(renderer)
     , mFont(nullptr)
 {
     // Initialize SDL_ttf if not already initialized
+    // Static bool ensures TTF_Init() is called only once across ALL Text objects
+    // This is necessary because TTF_Init() initializes global SDL_ttf state
     static bool ttf_initialized = false;
     if (!ttf_initialized) {
         if (TTF_Init() == -1) {
-            throw std::runtime_error(std::string("Failed to initialize SDL_ttf: ") + TTF_GetError());
+            std::cerr << "Error: Failed to initialize SDL_ttf: " << TTF_GetError() << std::endl;
+            return;  // mInitialized remains false
         }
         ttf_initialized = true;
     }
 
     // Load default font
-    try {
-        ReloadFont();
-    } catch (const std::runtime_error& e) {
-        // If default font fails, we'll try to load it again later
+    if (!ReloadFont()) {
+        std::cerr << "Warning: Failed to load default font in constructor" << std::endl;
+        // mInitialized remains false, but object is still usable (can try SetFont later)
+        return;
     }
-}
 
-/**
- * Destructor
- */
-Text::~Text() {
-    if (mFont) {
-        TTF_CloseFont(mFont);
-        mFont = nullptr;
-    }
+    mInitialized = true;
 }
 
 /**
@@ -67,11 +59,12 @@ Text::Text(Text&& other) noexcept
     , mFontSize(other.mFontSize)
     , mBold(other.mBold)
     , mItalic(other.mItalic)
+    , mInitialized(other.mInitialized)
     , mRenderer(other.mRenderer)
-    , mFont(other.mFont)
+    , mFont(std::move(other.mFont))
 {
-    other.mFont = nullptr;
     other.mRenderer = nullptr;
+    other.mInitialized = false;
 }
 
 /**
@@ -79,108 +72,115 @@ Text::Text(Text&& other) noexcept
  */
 Text& Text::operator=(Text&& other) noexcept {
     if (this != &other) {
-        if (mFont) {
-            TTF_CloseFont(mFont);
-        }
-
         mContent = std::move(other.mContent);
         mFontPath = std::move(other.mFontPath);
         mColor = other.mColor;
         mFontSize = other.mFontSize;
         mBold = other.mBold;
         mItalic = other.mItalic;
+        mInitialized = other.mInitialized;
         mRenderer = other.mRenderer;
-        mFont = other.mFont;
+        mFont = std::move(other.mFont);
 
-        other.mFont = nullptr;
         other.mRenderer = nullptr;
+        other.mInitialized = false;
     }
     return *this;
 }
 
-void Text::SetContent(const std::string& text) {
-    mContent = text;
-}
-
-void Text::SetColor(Color c) {
-    mColor = c;
-}
-
-void Text::SetColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-    mColor.r = r;
-    mColor.g = g;
-    mColor.b = b;
-    mColor.a = a;
-}
-
-void Text::SetFont(const std::string& font_name) {
+bool Text::SetFont(const std::string& font_name) {
+    std::string old_path = mFontPath;
     mFontPath = font_name;
-    ReloadFont();  // May throw if font doesn't exist
+
+    if (!ReloadFont()) {
+        // Revert to old font on failure
+        mFontPath = old_path;
+        ReloadFont();  // Try to restore old font
+        std::cerr << "Warning: Failed to set font '" << font_name
+                  << "', keeping previous font" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-void Text::SetSize(int point_size) {
-    assert(point_size > 0 && "Font size must be positive");
-
+bool Text::SetSize(int point_size) {
+    // Validate input
     if (point_size <= 0) {
-        return;  // Assert should catch this in debug mode
+        std::cerr << "Error: Font size must be positive, got " << point_size << std::endl;
+        return false;
     }
 
+    int old_size = mFontSize;
     mFontSize = point_size;
-    ReloadFont();  // Reload font with new size
+
+    if (!ReloadFont()) {
+        // Revert to old size on failure
+        mFontSize = old_size;
+        ReloadFont();  // Try to restore
+        std::cerr << "Warning: Failed to set size " << point_size << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-void Text::SetBold(bool b) {
-    mBold = b;
+void Text::SetBold(bool bold) {
+    mBold = bold;
     if (mFont) {
-        TTF_SetFontStyle(mFont, GetFontStyle());
+        TTF_SetFontStyle(mFont.get(), GetFontStyle());
     }
 }
 
-void Text::SetItalic(bool i) {
-    mItalic = i;
+void Text::SetItalic(bool italic) {
+    mItalic = italic;
     if (mFont) {
-        TTF_SetFontStyle(mFont, GetFontStyle());
+        TTF_SetFontStyle(mFont.get(), GetFontStyle());
     }
 }
 
 void Text::ResetStyle() {
     mFontPath = DEFAULT_FONT;
     mFontSize = DEFAULT_SIZE;
-    mColor = DEFAULT_COLOR;   // White
+    mColor = DEFAULT_COLOR;
     mBold = false;
     mItalic = false;
 
     ReloadFont();
 }
 
-void Text::Draw(int x, int y) {
-    // User error: empty content - silently return
+bool Text::Draw(int x, int y) {
+    // Validate state
     if (mContent.empty()) {
-        return;
+        return true;  // Nothing to draw is not an error
     }
 
     if (!mRenderer) {
-        throw std::runtime_error("Cannot draw text: renderer not set");
+        std::cerr << "Error: Cannot draw text: renderer not set" << std::endl;
+        return false;
     }
 
     if (!mFont) {
-        throw std::runtime_error("Cannot draw text: font not loaded");
+        std::cerr << "Error: Cannot draw text: font not loaded" << std::endl;
+        return false;
     }
 
     // Convert Color to SDL_Color
     SDL_Color sdl_color = {mColor.r, mColor.g, mColor.b, mColor.a};
 
     // Render text to surface
-    SDL_Surface* surface = TTF_RenderUTF8_Blended(mFont, mContent.c_str(), sdl_color);
+    SDL_Surface* surface = TTF_RenderUTF8_Blended(mFont.get(), mContent.c_str(), sdl_color);
     if (!surface) {
-        throw std::runtime_error(std::string("Failed to render text: ") + TTF_GetError());
+        std::cerr << "Error: Failed to render text: " << TTF_GetError() << std::endl;
+        return false;
     }
 
     // Create texture from surface
     SDL_Texture* texture = SDL_CreateTextureFromSurface(mRenderer, surface);
     if (!texture) {
         SDL_FreeSurface(surface);
-        throw std::runtime_error(std::string("Failed to create texture: ") + SDL_GetError());
+        std::cerr << "Error: Failed to create texture: " << SDL_GetError() << std::endl;
+        return false;
     }
 
     // Set up destination rectangle
@@ -196,6 +196,8 @@ void Text::Draw(int x, int y) {
     // Clean up
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
+
+    return true;
 }
 
 Text::Dimensions Text::GetDimensions() const {
@@ -204,7 +206,7 @@ Text::Dimensions Text::GetDimensions() const {
     }
 
     int width = 0, height = 0;
-    TTF_SizeUTF8(mFont, mContent.c_str(), &width, &height);
+    TTF_SizeUTF8(mFont.get(), mContent.c_str(), &width, &height);
     return {width, height};
 }
 
@@ -214,7 +216,7 @@ int Text::GetWidth() const {
     }
 
     int width = 0;
-    TTF_SizeUTF8(mFont, mContent.c_str(), &width, nullptr);
+    TTF_SizeUTF8(mFont.get(), mContent.c_str(), &width, nullptr);
     return width;
 }
 
@@ -224,45 +226,43 @@ int Text::GetHeight() const {
     }
 
     int height = 0;
-    TTF_SizeUTF8(mFont, mContent.c_str(), nullptr, &height);
+    TTF_SizeUTF8(mFont.get(), mContent.c_str(), nullptr, &height);
     return height;
 }
 
-void Text::SetRenderer(SDL_Renderer* r) {
-    mRenderer = r;
-}
-
-void Text::ReloadFont() {
-    // Close existing font if any
-    if (mFont) {
-        TTF_CloseFont(mFont);
-        mFont = nullptr;
-    }
+bool Text::ReloadFont() {
+    // Reset existing font (unique_ptr handles cleanup automatically)
+    mFont.reset();
 
     // Try to load the font
-    mFont = TTF_OpenFont(mFontPath.c_str(), mFontSize);
-    if (!mFont) {
+    TTF_Font* raw_font = TTF_OpenFont(mFontPath.c_str(), mFontSize);
+    if (!raw_font) {
         // Try default font as fallback
         if (mFontPath != DEFAULT_FONT) {
-            mFont = TTF_OpenFont(DEFAULT_FONT.c_str(), mFontSize);
-            if (mFont) {
-                // Successfully loaded default font, update mFontPath
+            raw_font = TTF_OpenFont(DEFAULT_FONT.c_str(), mFontSize);
+            if (raw_font) {
                 mFontPath = DEFAULT_FONT;
+                std::cerr << "Warning: Using default font as fallback" << std::endl;
             }
         }
 
-        // If still no font, throw exception
-        if (!mFont) {
-            throw std::runtime_error(std::string("Failed to load font '") + mFontPath +
-                                   "': " + TTF_GetError());
+        // If still no font, return false
+        if (!raw_font) {
+            std::cerr << "Error: Failed to load font '" << mFontPath
+                      << "': " << TTF_GetError() << std::endl;
+            return false;
         }
     }
 
+    mFont.reset(raw_font);
+
     // Apply style
-    TTF_SetFontStyle(mFont, GetFontStyle());
+    TTF_SetFontStyle(mFont.get(), GetFontStyle());
+
+    return true;
 }
 
-int Text::GetFontStyle() const {
+constexpr int Text::GetFontStyle() const {
     int style = TTF_STYLE_NORMAL;
     if (mBold) {
         style |= TTF_STYLE_BOLD;

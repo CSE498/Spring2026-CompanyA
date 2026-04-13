@@ -18,6 +18,7 @@ namespace cse498 {
   
   class InterfaceBase : public AgentBase {
   protected:
+    bool mPaused{false};
 
   public:
     InterfaceBase(size_t id, const std::string & name, const WorldBase & world)
@@ -28,6 +29,9 @@ namespace cse498 {
 
     bool IsInterface() const override { return true; }
 
+    virtual void RenderFrame() {};
+
+    virtual bool IsPaused() const { return mPaused; }
 
     // -- AgentBase overrides --
     //

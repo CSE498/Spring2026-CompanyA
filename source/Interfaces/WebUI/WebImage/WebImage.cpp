@@ -1,4 +1,16 @@
+/**
+ * @file WebImage.cpp
+ * @brief Implementation of WebImage, a DOM-backed HTML \<img\> element for WebUI.
+ *
+ * Manages DOM creation, event listener attachment, loading/error state
+ * tracking, placeholder rendering, and lifecycle management (mount/unmount/sync)
+ * for HTML \<img\> elements. An integer registry is used to safely forward
+ * JavaScript load and error events back to C++ without unsafe pointer casts.
+ *
+ */
+
 #include "WebImage.hpp"
+#include "../WebCanvas/WebCanvas.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #include <cassert>
 #include <iostream>
@@ -9,29 +21,27 @@ using emscripten::val;
 
 namespace {
 
-// Registry maps integer IDs to WebImage pointers, avoiding unsafe pointer-to-int casts
-// when forwarding events from JavaScript back to C++.
-std::unordered_map<int, cse498::WebImage*> sImageRegistry;
-int sNextRegistryId = 0;
+/// @brief Returns true when the DOM element is usable; otherwise logs a warning.
+bool EnsureElementAvailable(const val& element,
+                            const std::string& id,
+                            const char* action) {
+  if (!element.isNull() && !element.isUndefined()) {
+    return true;
+  }
 
-int RegisterImage(cse498::WebImage* img) {
-  int id = sNextRegistryId++;
-  sImageRegistry[id] = img;
-  return id;
+  const std::string resolved_id = id.empty() ? "<uninitialized>" : id;
+  cse498::GetConsole().call<void>(
+      "warn",
+      std::string("WebImage '") + resolved_id
+          + "' skipped " + action + " because its DOM element is unavailable.");
+  return false;
 }
 
-void UnregisterImage(int id) {
-  sImageRegistry.erase(id);
-}
-
-void UpdateRegistryEntry(int id, cse498::WebImage* img) {
-  sImageRegistry[id] = img;
-}
-
-cse498::WebImage* LookupImage(int id) {
-  auto it = sImageRegistry.find(id);
-  return it != sImageRegistry.end() ? it->second : nullptr;
-}
+const auto InvokeIfSet = [](const std::function<void()>& callback) {
+  if (callback) {
+    callback();
+  }
+};
 
 }  // anonymous namespace
 
@@ -40,6 +50,29 @@ namespace cse498 {
 static constexpr int kDefaultPlaceholderPx = 100;
 
 int WebImage::mNextIdCounter = 1;
+std::unordered_map<int, WebImage*> WebImage::sImageRegistry;
+int WebImage::sNextRegistryId = 0;
+
+// ----- Registry methods -----
+
+int WebImage::RegisterImage(WebImage* img) {
+  int id = sNextRegistryId++;
+  sImageRegistry[id] = img;
+  return id;
+}
+
+void WebImage::UnregisterImage(int id) {
+  sImageRegistry.erase(id);
+}
+
+void WebImage::UpdateRegistryEntry(int id, WebImage* img) {
+  sImageRegistry[id] = img;
+}
+
+WebImage* WebImage::LookupImage(int id) {
+  auto it = sImageRegistry.find(id);
+  return it != sImageRegistry.end() ? it->second : nullptr;
+}
 
 // ----- Private static helpers -----
 
@@ -53,20 +86,21 @@ std::string WebImage::ToPx(int value) {
   return std::to_string(value) + "px";
 }
 
-// ----- Private helpers -----
-
-/// Removes the element from its parent DOM node if currently attached.
-void WebImage::RemoveFromDom() {
-  if (mElement.isNull()) return;
-  val parent = mElement["parentNode"];
-  if (!parent.isNull() && !parent.isUndefined()) {
-    parent.call<void>("removeChild", mElement);
+void WebImage::ApplyDimensionStyle(emscripten::val& style, const char* prop, int value) {
+  if (value > 0) {
+    style.set(prop, ToPx(value));
   }
 }
 
+void WebImage::ApplyPlaceholderDimensionStyle(emscripten::val& style, const char* prop, int value) {
+  style.set(prop, ToPx(value > 0 ? value : kDefaultPlaceholderPx));
+}
+
+// ----- Private helpers -----
+
 /// Removes element from DOM, deregisters from the event registry, and nulls the element.
 void WebImage::CleanupElement() {
-  RemoveFromDom();
+  Unmount();
   if (mRegistryId >= 0) {
     UnregisterImage(mRegistryId);
     mRegistryId = -1;
@@ -76,11 +110,11 @@ void WebImage::CleanupElement() {
 
 // ----- Construction / Destruction -----
 
-/// Constructs a WebImage, creates the <img> DOM element, and attaches event listeners.
+/// Constructs a detached WebImage, creates the <img> DOM element, and attaches
+/// event listeners without mounting the element into the document body.
 WebImage::WebImage(const std::string& src, const std::string& alt_text)
     : mSrc(src),
-      mAltText(alt_text),
-      mElement(val::null()) {
+      mAltText(alt_text) {
   mId = "webimage-" + std::to_string(mNextIdCounter++);
   mRegistryId = RegisterImage(this);
 
@@ -89,7 +123,6 @@ WebImage::WebImage(const std::string& src, const std::string& alt_text)
   mElement.set("id", mId);
   mElement.set("src", mSrc);
   mElement.set("alt", mAltText);
-  doc["body"].call<void>("appendChild", mElement);
 
   AttachListeners();
 }
@@ -113,9 +146,9 @@ WebImage::WebImage(WebImage&& other) noexcept
       mPlaceholderColor(std::move(other.mPlaceholderColor)),
       mOnLoadCallback(std::move(other.mOnLoadCallback)),
       mOnErrorCallback(std::move(other.mOnErrorCallback)),
-      mElement(other.mElement),
-      mId(std::move(other.mId)),
       mRegistryId(other.mRegistryId) {
+  mId = std::move(other.mId);
+  mElement = std::move(other.mElement);
   other.mElement = val::null();
   other.mRegistryId = -1;
   other.mWidth = 0;
@@ -207,13 +240,10 @@ void WebImage::SetSize(int width_px, int height_px) {
   mWidth = width_px;
   mHeight = height_px;
   if (!mElement.isNull()) {
-    if (width_px > 0) {
-      mElement["style"].set("width", ToPx(width_px));
-    }
-    if (height_px > 0) {
-      mElement["style"].set("height", ToPx(height_px));
-    }
-    mElement["style"].set("objectFit", std::string("fill"));
+    val style = mElement["style"];
+    ApplyDimensionStyle(style, "width", width_px);
+    ApplyDimensionStyle(style, "height", height_px);
+    style.set("objectFit", std::string("fill"));
   }
 }
 
@@ -224,10 +254,10 @@ void WebImage::Resize(int width_px, int height_px, bool maintain_aspect_ratio) {
   mWidth = width_px;
   mHeight = height_px;
   if (!mElement.isNull()) {
-    mElement["style"].set("width", ToPx(width_px));
-    mElement["style"].set("height", ToPx(height_px));
-    mElement["style"].set("objectFit",
-        std::string(maintain_aspect_ratio ? "contain" : "fill"));
+    val style = mElement["style"];
+    style.set("width", ToPx(width_px));
+    style.set("height", ToPx(height_px));
+    style.set("objectFit", maintain_aspect_ratio ? std::string("contain") : std::string("fill"));
   }
 }
 
@@ -324,40 +354,51 @@ void WebImage::MountToLayout(WebLayout& parent, Alignment align) {
   parent.AddElement(this, align);
 }
 
-/// Removes this image from its parent DOM node.
-void WebImage::Unmount() {
-  RemoveFromDom();
-}
-
 /// Re-applies all tracked properties to the underlying DOM element.
 void WebImage::SyncFromModel() {
-  if (mElement.isNull()) return;
+  if (!EnsureElementAvailable(mElement, mId, "SyncFromModel")) return;
 
   mElement.set("src", mSrc);
   mElement.set("alt", mAltText);
-
-  if (mWidth > 0) {
-    mElement["style"].set("width", ToPx(mWidth));
-  }
-  if (mHeight > 0) {
-    mElement["style"].set("height", ToPx(mHeight));
-  }
-
-  mElement["style"].set("opacity", std::to_string(mOpacity));
-  mElement["style"].set("display",
-      std::string(mIsVisible ? "" : "none"));
-}
-
-/// Returns this element's unique DOM id.
-const std::string& WebImage::Id() const {
-  return mId;
+  val style = mElement["style"];
+  ApplyDimensionStyle(style, "width", mWidth);
+  ApplyDimensionStyle(style, "height", mHeight);
+  style.set("opacity", std::to_string(mOpacity));
+  style.set("display", mIsVisible ? std::string("") : std::string("none"));
 }
 
 // ----- ICanvasElement Interface -----
 
-/// Draws the image on a WebCanvas (stub; primary rendering is DOM-based).
+/// Stores the canvas-space rectangle used by Draw().
+void WebImage::SetCanvasRect(float x, float y, float w, float h) {
+  mCanvasX = x;
+  mCanvasY = y;
+  mCanvasW = w;
+  mCanvasH = h;
+}
+
+float WebImage::CanvasX() const { return mCanvasX; }
+float WebImage::CanvasY() const { return mCanvasY; }
+float WebImage::CanvasW() const { return mCanvasW; }
+float WebImage::CanvasH() const { return mCanvasH; }
+
+/// Draws the image onto @p canvas at the position set by SetCanvasRect().
+/// If the image failed to load and the error mode is BlankRect, a colored
+/// rectangle is drawn as a placeholder instead.
 void WebImage::Draw(WebCanvas& canvas) {
-  (void)canvas;
+  if (mHasError && mErrorMode == ImageErrorMode::BlankRect) {
+    const auto resolve_draw_size = [](float canvas_size, int dom_size) {
+      return canvas_size > 0.0f
+          ? canvas_size
+          : static_cast<float>(dom_size > 0 ? dom_size : kDefaultPlaceholderPx);
+    };
+
+    float w = resolve_draw_size(mCanvasW, mWidth);
+    float h = resolve_draw_size(mCanvasH, mHeight);
+    canvas.DrawRect(mCanvasX, mCanvasY, w, h, mPlaceholderColor);
+    return;
+  }
+  canvas.DrawImage(mSrc, mCanvasX, mCanvasY, mCanvasW, mCanvasH);
 }
 
 // ----- Event Handlers -----
@@ -366,9 +407,7 @@ void WebImage::Draw(WebCanvas& canvas) {
 void WebImage::HandleLoad() {
   mIsLoaded = true;
   mHasError = false;
-  if (mOnLoadCallback) {
-    mOnLoadCallback();
-  }
+  InvokeIfSet(mOnLoadCallback);
 }
 
 /// Called when the image fails to load; applies placeholder if configured and fires the error callback.
@@ -382,16 +421,14 @@ void WebImage::HandleError() {
     ApplyPlaceholder();
   }
 
-  if (mOnErrorCallback) {
-    mOnErrorCallback();
-  }
+  InvokeIfSet(mOnErrorCallback);
 }
 
 // ----- Private Helpers -----
 
 /// Attaches JS load/error event listeners that forward to HandleLoad/HandleError via registry ID.
 void WebImage::AttachListeners() {
-  if (mElement.isNull()) return;
+  if (!EnsureElementAvailable(mElement, mId, "AttachListeners")) return;
 
   int regId = mRegistryId;
 
@@ -409,43 +446,46 @@ void WebImage::AttachListeners() {
 
 /// Replaces the broken image with a colored rectangle of the configured placeholder color.
 void WebImage::ApplyPlaceholder() {
-  if (mElement.isNull()) return;
+  if (!EnsureElementAvailable(mElement, mId, "ApplyPlaceholder")) return;
 
   mElement.set("src", std::string(""));
 
   val style = mElement["style"];
   style.set("backgroundColor", mPlaceholderColor);
   style.set("display", std::string("inline-block"));
-
-  if (mWidth > 0) {
-    style.set("width", ToPx(mWidth));
-  } else {
-    style.set("width", ToPx(kDefaultPlaceholderPx));
-  }
-  if (mHeight > 0) {
-    style.set("height", ToPx(mHeight));
-  } else {
-    style.set("height", ToPx(kDefaultPlaceholderPx));
-  }
+  ApplyPlaceholderDimensionStyle(style, "width", mWidth);
+  ApplyPlaceholderDimensionStyle(style, "height", mHeight);
 }
 
 }  // namespace cse498
 
 // C functions invoked from JS event listeners via the integer registry ID.
 extern "C" {
+  /// @brief C trampoline called by the JS load event listener.
+  /// @param registry_id Integer id of the WebImage to notify.
   EMSCRIPTEN_KEEPALIVE
   void WebImage_handleLoad(int registry_id) {
-    auto* img = LookupImage(registry_id);
+    auto* img = cse498::WebImage::LookupImage(registry_id);
     if (img) {
       img->HandleLoad();
     }
   }
 
+  /// @brief C trampoline called by the JS error event listener.
+  /// @param registry_id Integer id of the WebImage to notify.
   EMSCRIPTEN_KEEPALIVE
   void WebImage_handleError(int registry_id) {
-    auto* img = LookupImage(registry_id);
+    auto* img = cse498::WebImage::LookupImage(registry_id);
     if (img) {
       img->HandleError();
     }
+  }
+
+  /// @brief Testing hook that reports whether a registry id is still registered.
+  /// @param registry_id Integer id to look up in the image registry.
+  /// @return 1 if the registry id maps to a live image; otherwise 0.
+  EMSCRIPTEN_KEEPALIVE
+  int WebImage_registryContains(int registry_id) {
+    return cse498::WebImage::LookupImage(registry_id) != nullptr ? 1 : 0;
   }
 }

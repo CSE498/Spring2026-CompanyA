@@ -26,19 +26,57 @@ struct StderrCapture {
 };
 
 
+// /// Meant only to run see the GUIError function work, not meant for normal test suite running
+// TEST_CASE("ErrorManager GUIError shows SDL popup without crashing", "[ErrorManager]") {
+//
+//     // SDL must be initialized for SDL_ShowSimpleMessageBox to work
+//     REQUIRE(SDL_Init(0) == 0);
+//
+//     cse498::ErrorManager manager;
+//
+//     SECTION("GUIError with a basic message") {
+//         SDL_ClearError();
+//         manager.GUIError("Test error message");
+//         std::string sdl_error = SDL_GetError();
+//         CHECK(sdl_error.empty());
+//     }
+//
+//     SECTION("GUIError with an empty message") {
+//         SDL_ClearError();
+//         manager.GUIError("");
+//         std::string sdl_error = SDL_GetError();
+//         CHECK(sdl_error.empty());
+//     }
+//
+//     SDL_Quit();
+// }
+
+
 TEST_CASE("Test ErrorManager Color Setters", "[ErrorManager]")
 {
     cse498::ErrorManager em;
 
-    CHECK_NOTHROW(em.SetFatalErrorColor(cse498::ErrorManager::ErrorColor::BOLD));
-    CHECK_NOTHROW(em.SetTerminalErrorColor(cse498::ErrorManager::ErrorColor::RED));
-    CHECK_NOTHROW(em.SetTerminalWarningColor(cse498::ErrorManager::ErrorColor::YELLOW));
-    CHECK_NOTHROW(em.SetLogErrorColor(cse498::ErrorManager::ErrorColor::CYAN));
-    CHECK_NOTHROW(em.SetLogWarningColor(cse498::ErrorManager::ErrorColor::MAGENTA));
+    em.SetFatalErrorColor(cse498::ErrorManager::ErrorColor::BOLD);
+    CHECK(em.GetFatalErrorColor() == cse498::ErrorManager::ErrorColor::BOLD);
+
+    em.SetTerminalErrorColor(cse498::ErrorManager::ErrorColor::RED);
+    CHECK(em.GetTerminalErrorColor() == cse498::ErrorManager::ErrorColor::RED);
+
+    em.SetTerminalWarningColor(cse498::ErrorManager::ErrorColor::YELLOW);
+    CHECK(em.GetTerminalWarningColor() == cse498::ErrorManager::ErrorColor::YELLOW);
+
+    em.SetLogErrorColor(cse498::ErrorManager::ErrorColor::CYAN);
+    CHECK(em.GetLogErrorColor() == cse498::ErrorManager::ErrorColor::CYAN);
+
+    em.SetLogWarningColor(cse498::ErrorManager::ErrorColor::MAGENTA);
+    CHECK(em.GetLogWarningColor() == cse498::ErrorManager::ErrorColor::MAGENTA);
 
     // Custom ANSI code
-    CHECK_NOTHROW(em.SetFatalErrorColor("\033[38;5;208m"));
-    CHECK_NOTHROW(em.SetTerminalErrorColor("\033[38;5;208m"));
+    em.SetFatalErrorColor("\033[38;5;208m");
+    CHECK(em.GetFatalErrorColor() == "\033[38;5;208m");
+
+    em.SetTerminalErrorColor("\033[38;5;208m");
+    CHECK(em.GetTerminalErrorColor() == "\033[38;5;208m");
 }
 
 

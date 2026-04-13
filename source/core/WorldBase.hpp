@@ -15,7 +15,7 @@
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
-#include "../Agents/PlayerAgent.hpp"
+#include "../Agents/Classic/PlayerAgent.hpp"
 
 namespace cse498 {
 
@@ -40,7 +40,7 @@ namespace cse498 {
     /// The main player stored separately from the agents and has id = 0
     PlayerAgent* mPlayer;
 
-    bool run_over = false;  ///< Are we finished executing and now shutting down?
+    bool mRunOver = false;  ///< Are we finished executing and now shutting down?
 
 
 
@@ -52,10 +52,13 @@ namespace cse498 {
   public:
     WorldBase()
     {
-      auto player = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
-      AddAgent(std::move(player));
-      mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
-      assert(mPlayer);
+      // KAREN: Temporarily commented out to avoid interfering with other groups' demos
+      // This has moved to DemoSimpleWorldG2.cpp's constructor
+
+      // auto player = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+      // AddAgent(std::move(player));
+      // mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+      // assert(mPlayer);
     }
     virtual ~WorldBase() = default;
 
@@ -93,13 +96,13 @@ namespace cse498 {
       return *agent;
     }
 
-      /**
-       *Finds the current vector index for an agent with the given stable ID.
-       *
-       * Agent IDs do not change when dead agents are erased from agent_set,
-       * so ID lookup must not assume ID == vector index.
-       */
-      [[nodiscard]] size_t FindAgentIndexById(size_t id) const {
+    /**
+     * Finds the current vector index for an agent with the given stable ID.
+     *
+     * Agent IDs do not change when dead agents are erased from agent_set,
+     * so ID lookup must not assume ID == vector index.
+     */
+    [[nodiscard]] size_t FindAgentIndexById(size_t id) const {
       for (size_t i = 0; i < agent_set.size(); ++i) {
         if (agent_set[i] && agent_set[i]->GetID() == id) {
           return i;
@@ -128,13 +131,13 @@ namespace cse498 {
       return agent_set[index].get();
     }
 
-      /**
-       * Accesses an agent by its current storage position in agent_set.
-       *
-       * This is intended for safe iteration over the internal agent container.
-       * It should not be used when stable ID lookup is required.
-       */
-      [[nodiscard]] AgentBase & GetAgentByIndex(size_t index) {
+    /**
+     * Accesses an agent by its current storage position in agent_set.
+     *
+     * This is intended for safe iteration over the internal agent container.
+     * It should not be used when stable ID lookup is required.
+     */
+    [[nodiscard]] AgentBase & GetAgentByIndex(size_t index) {
       assert(index < agent_set.size());
       return *agent_set[index];
     }
@@ -144,10 +147,31 @@ namespace cse498 {
       return *agent_set[index];
     }
 
-    [[nodiscard]] PlayerAgent* GetPlayer() const { return mPlayer; }
-    /// TODO: I'm not sure whether to check player == nullptr or not. It is technically possible to delete player agent
-    /// But this will cause other issues. so we can assume he always exists?
-    [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayer->GetLocation().AsWorldPosition(); }
+      /**
+       * Gets the player. Player shouldn't be nullptr (it is asserted)
+       * @return actual player pointer
+       */
+      [[nodiscard]] PlayerAgent* GetPlayer() const
+    {
+      /*
+       * It shouldn't be possible for player to ever be null. Dead ==> IsAlive is false
+       * Player object shouldn't need to be recreated, if so then design a function for that
+       * or check whole project for UB
+       */
+      // KAREN: It is now possible for the player to be nullptr,
+      // since WorldBase no longer creates a default player.
+      assert(mPlayer != nullptr && "Player got set to nullptr somehow?");
+      return mPlayer;
+    }
+
+      /**
+       * Gets player position -- Will return even if player is dead (like minecraft)
+       * @return Player position
+       */
+      [[nodiscard]] WorldPosition GetPlayerPosition() const
+    {
+        return mPlayer->GetLocation().AsWorldPosition();
+    }
 
     /// Return an editable version of the current grid for this world (main_grid by default) 
     virtual WorldGrid & GetGrid() { return main_grid; }
@@ -156,7 +180,7 @@ namespace cse498 {
     [[nodiscard]] virtual const WorldGrid & GetGrid() const { return main_grid; }
 
     /// Determine if the run has ended.
-    [[nodiscard]] virtual bool IsRunOver() const { return run_over; }
+    [[nodiscard]] virtual bool IsRunOver() const { return mRunOver; }
 
     size_t GetNextAgentId() { return mAgentIdIndex++; }
 
@@ -219,7 +243,8 @@ namespace cse498 {
       while (it != agent_set.end()) {
         if (!(*it)->IsAlive()) {
           if (it->get() == mPlayer) {
-            mPlayer = nullptr;
+            it++; // we can declare the player dead but not null.
+            continue;
           }
           (*it)->OnDestroy();
           it = agent_set.erase(it);
@@ -236,8 +261,8 @@ namespace cse498 {
 
     /// @brief Run all agents repeatedly until an end condition is met.
     virtual void Run() {
-      run_over = false;
-      while (!run_over) {
+      mRunOver = false;
+      while (!mRunOver) {
         RunAgents();
         RemoveDeadAgents();
         UpdateWorld();

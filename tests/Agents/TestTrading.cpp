@@ -5,9 +5,9 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/Agents/Enemy.hpp"
-#include "../../source/Agents/MerchantAgent.hpp"
-#include "../../source/Agents/PlayerAgent.hpp"
+#include "../../source/Agents/Classic/Enemy.hpp"
+#include "../../source/Agents/Classic/MerchantAgent.hpp"
+#include "../../source/Agents/Classic/PlayerAgent.hpp"
 #include "../../source/core/WorldBase.hpp"
 
 namespace cse498
@@ -17,6 +17,12 @@ namespace cse498
     public:
         TestWorld() : WorldBase()
         {
+            // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+            auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+            AddAgent(std::move(p));
+            mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+            assert(mPlayer);
+
         }
 
         ~TestWorld() override = default;

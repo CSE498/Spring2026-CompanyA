@@ -6,7 +6,7 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/Agents/FarmingAgent.hpp"
+#include "../../source/Agents/Classic/FarmingAgent.hpp"
 #include "../../source/core/WorldBase.hpp"
 
 
@@ -19,7 +19,14 @@ namespace cse498
     class TestWorld : public WorldBase
     {
     public:
-        TestWorld() : WorldBase() {}
+        TestWorld() : WorldBase() {
+            // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+            auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+            AddAgent(std::move(p));
+            mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+            assert(mPlayer);
+
+        }
         ~TestWorld() override = default;
 
         int DoAction([[maybe_unused]] AgentBase& agent, [[maybe_unused]] size_t action_id) override
@@ -125,4 +132,16 @@ TEST_CASE("FarmingAgent can be configured with expected offers", "[FarmingAgent]
         REQUIRE(carrot->mSellPrice == 2);
         REQUIRE(carrot->mItemValue == 1);
     }
+}
+
+TEST_CASE("Trade Greeting Setting and Getting")
+{
+    TestWorld world;
+    FarmingAgent farmer(5, "Farmer", world);
+    farmer.SetTradeGreeting("TestFun");
+    farmer.SetTradeClosedMessage("Test1");
+    CHECK(farmer.GetTradeGreeting() == "TestFun");
+    CHECK(farmer.GetTradeClosedMessage() == "Test1");
+
+
 }

@@ -4,9 +4,9 @@
  */
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "Agents/PlayerFeatures/Inventory.hpp"
+#include "../../source/Agents/Classic/PlayerFeatures/Inventory.hpp"
 #include "../../source/core/item/Item.hpp"
-#include "core/WorldBase.hpp"
+#include "../../source/core/WorldBase.hpp"
 
 namespace cse498
 {
@@ -15,6 +15,11 @@ class MockWorldBase : public WorldBase
 public:
     MockWorldBase() : WorldBase()
     {
+        // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+        auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+        AddAgent(std::move(p));
+        mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+        assert(mPlayer);
     }
     ~MockWorldBase() override = default;
     int DoAction([[maybe_unused]] AgentBase &agent, [[maybe_unused]] size_t action_id) override { return 0; }
@@ -209,12 +214,7 @@ TEST_CASE("Swap Slots simple", "[inventory, swap]")
     CHECK(inv.GetHand() == nullptr);
     inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 3);
 
-    // std::cout << "Inventory before swap";
-    // std::cout << inv;
-
     inv.SwapSlots(0, Inventory::HOTBAR_SIZE);
-    // std::cout << "Inventory after swap";
-    // std::cout << inv;
 
     CHECK(inv.GetHandSlotIndex() == 0);
     CHECK(inv.GetHand()->GetName() == "TestItem");
@@ -235,32 +235,43 @@ TEST_CASE("Inventory Add and Remove", "[add, remove, inventory]")
     inv.RemoveUniqueItem(4);
     auto result = inv.GetTotal("RealUItem");
     CHECK(result == 0);
+
+    inv.ClearInventory();
+    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 3);
+    CHECK(inv.GetTotal("TestItem") == 3);
+    inv.RemoveItem("TestItem", 5);
+    result = inv.GetTotal("TestItem");
+    CHECK(result == 0);
+    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 3);
+    result = inv.GetTotal("TestItem");
+    CHECK(result == 3);
+
 }
 
 TEST_CASE("Inventory RemoveItem all-or-nothing flag behavior", "[inventory, remove, all-or-nothing]")
 {
     Inventory inv;
-    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 10);
+    inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 15);
 
-    SECTION("True flag leaves inventory unchanged when amount exceeds total")
+    SECTION("True flag leaves inventory unchanged when amount is less than total")
     {
         const auto remaining = inv.RemoveItem("TestItem", 12, true);
-        CHECK(remaining == 12);
-        CHECK(inv.GetTotal("TestItem") == 10);
+        CHECK(remaining == 12); // amount tried to remove is returned
+        CHECK(inv.GetTotal("TestItem") == 15);
     }
 
-    SECTION("False flag removes what is available when amount exceeds total")
+    SECTION("False flag removes what is available")
     {
         const auto remaining = inv.RemoveItem("TestItem", 12, false);
-        CHECK(remaining == 2);
-        CHECK(inv.GetTotal("TestItem") == 0);
+        CHECK(remaining == 0); // everything was removed
+        CHECK(inv.GetTotal("TestItem") == 3);
     }
 
-    SECTION("True flag removes exactly requested amount when enough stock exists")
+    SECTION("Check again with different number")
     {
         const auto remaining = inv.RemoveItem("TestItem", 10, true);
-        CHECK(remaining == 0);
-        CHECK(inv.GetTotal("TestItem") == 0);
+        CHECK(remaining == 10);
+        CHECK(inv.GetTotal("TestItem") == 15);
     }
 }
 

@@ -1,8 +1,8 @@
 /**
- * 
+ *
  * @author Aneesh Joshi
  * @note Status: PROPOSAL
- * 
+ *
  * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
  * Samples are stored in the format of (Value, timestamp/seconds since start)
  * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
@@ -12,32 +12,38 @@
 #include <vector>
 #include <cstddef>
 #include <optional>
-#include <utility>
-#include <chrono>
+#include "Timer.hpp"
 
-namespace cse498{
-    class DataLog{
-    private:
-        //(data_value, timestamp)
-        std::vector<std::pair<double, double>> data_values;
-
-        std::chrono::steady_clock::time_point start_timestamp;
-
+namespace cse498
+{
+    class DataLog
+    {
     public:
         /*
-        Constructs a Datalog class and sets the start_timestamp to now
+        A struct to represent a recorded sample in the log
+        - value: the numeric value of the sample
+        - timestamp: seconds since the datalog instance was constructed
+        */
+        struct DataSample
+        {
+            double value;
+            double timestamp;
+        };
+
+        /*
+        Constructor for DataLog
         */
         DataLog();
 
         /*
-        Adds a new data value and the fuction associates a timestamp with the data
+        Adds a new data value and the function associates a timestamp with the data
         */
         void Add(double value);
 
         /*
-        Function returns a reference to the collection of data samples in the format (data_value, timestamp)
+        Function returns a const reference to the collection of data samples
         */
-        const std::vector<std::pair<double,double>>& DataSamples() const;
+        const std::vector<DataSample> &DataSamples() const;
 
         /*
         Function clears all samples from the data log
@@ -61,7 +67,7 @@ namespace cse498{
         std::optional<double> Max() const;
 
         /*
-        Function returns the average of the values in the data log
+        Function returns the average of the values in the data log/Arithmetic mean
         */
         std::optional<double> Mean() const;
 
@@ -70,5 +76,25 @@ namespace cse498{
         */
         std::optional<double> Median() const;
 
-    }; 
+        /*
+        Function returns the total time that the values in datalog were under a specific threshold
+        */
+        double TimeUnderThreshold(double threshold) const;
+
+        /*
+        Function returns the total time that the values in datalog were over a specific threshold
+        */
+        double TimeOverThreshold(double threshold) const;
+
+        /*
+        Helper function whose purpose is to advance the Timer for timestamp testing purposes without manually waiting
+        */
+        void advanceTimeForTesting(double seconds);
+
+    private:
+        std::vector<DataSample> mDataValues;
+
+        // Timer to measure elapsed time since datalog was constructed
+        Timer mTimer{"DataLog"};
+    };
 }
