@@ -14,17 +14,17 @@ namespace cse498 {
 
   class PacingAgent : public AgentBase {
   protected:
-    bool vertical=true; ///< Is this agent moving down&up?  False = right&left.
-    bool reverse=false;  ///< Is this agent on their way back? (up/left?)
+    bool mVertical = true; ///< Is this agent moving down&up?  False = right&left.
+    bool mReverse = false;  ///< Is this agent on their way back? (up/left?)
 
   public:
     PacingAgent(size_t id, const std::string & name, const WorldBase & world)
       : AgentBase(id, name, world) { }
-    ~PacingAgent() = default;
+    ~PacingAgent() override = default;
 
-    PacingAgent & SetHorizontal() { vertical = false; return *this; }
-    PacingAgent & SetVertical() { vertical = true; return *this; }
-    PacingAgent & ToggleDirection() { reverse = !reverse; return *this; }
+    PacingAgent & SetHorizontal() { mVertical = false; return *this; }
+    PacingAgent & SetVertical() { mVertical = true; return *this; }
+    PacingAgent & ToggleDirection() { mReverse = !mReverse; return *this; }
 
     /// @brief This agent needs a specific set of actions to function.
     /// @return Success: are required actions available?
@@ -36,15 +36,15 @@ namespace cse498 {
     size_t SelectAction(const WorldGrid & /* grid*/) override
     {
       // If the last step failed, try going in the other direction.
-      if (action_result == 0) ToggleDirection();
+      if (mActionResult == 0) ToggleDirection();
 
       // Take a step in the direction we are trying to go in.
-      if (vertical) {
-        if (reverse) return action_map["up"];
-        else         return action_map["down"];
+      if (mVertical) {
+        if (mReverse) return mActionMap["up"];
+        else         return mActionMap["down"];
       } else {
-        if (reverse) return action_map["left"];
-        else         return action_map["right"];
+        if (mReverse) return mActionMap["left"];
+        else         return mActionMap["right"];
       }
       return 0;  // Should never actually get here...
     }

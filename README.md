@@ -1,2 +1,4 @@
 # Spring2026-CompanyA
 Course repository for Spring 2026 session of CSE 498, Section 2 (Company A)
+
+For unified build instructions, see `BUILD.md`.

@@ -1,5 +1,5 @@
 /**
-* @file WorldPath.h
+* @file WorldPath.hpp
  * @author Luke Antone
  *
  * WorldPath stores an ordered sequence of 2D positions for an agent to follow.
@@ -22,60 +22,83 @@
 namespace cse498
 {
 
-    class WorldPath
+class WorldPath
+{
+public:
+    WorldPath() = default;
+
+    /**
+     * Constructs a path from an existing span of world positions.
+     */
+    explicit WorldPath(std::span<const WorldPosition> path);
+
+    /**
+     * Removes all points from the path.
+     */
+    void Clear();
+
+    /**
+     * Adds a point to the end of the path.
+     */
+    void AddPoint(const WorldPosition& p);
+
+    /**
+     * Returns the number of points in the path.
+     */
+    std::size_t Size() const;
+
+    /**
+     * Returns true if the path contains no points.
+     */
+    bool Empty() const;
+
+    /**
+     * Returns the point at the given index.
+     */
+    const WorldPosition& At(std::size_t index) const;
+
+    /**
+     * Returns a read-only span view of the path's points.
+     */
+    std::span<const WorldPosition> Span() const noexcept;
+
+    /**
+     * Returns the total length of the path.
+     */
+    double Length() const;
+
+    /**
+     * Returns true if the path intersects itself.
+     */
+    bool SelfIntersects() const;
+
+    /**
+     * Returns indices of the two furthest points in the path.
+     */
+    std::optional<std::pair<std::size_t, std::size_t>> FurthestPointPair() const;
+
+    /**
+     * Reverses the world path in place.
+     */
+    WorldPath& Reverse() noexcept
     {
-    public:
-        WorldPath() = default;
-        explicit WorldPath(std::span<const WorldPosition> path);
+        std::ranges::reverse(mPoints);
+        return *this;
+    }
 
-        void Clear();
-        void AddPoint(const WorldPosition& p);
+    /**
+     * Appends points from another path to this path.
+     */
+    WorldPath& Extend(const WorldPath& other);
 
-        std::size_t Size() const;
-        bool Empty() const;
+    bool operator==(const WorldPath&) const = default;
 
-        const WorldPosition& At(std::size_t index) const;
+    friend std::ostream& operator<<(std::ostream& os, const WorldPath& path);
 
-        // Direct read-only access (legacy/compat).
-        const std::vector<WorldPosition>& Points() const;
-
-        // Preferred read-only view that does not expose the storage type.
-        std::span<const WorldPosition> Span() const noexcept;
-
-        double Length() const;
-
-        bool SelfIntersects() const;
-
-        // Returns indices of the two furthest points in the path.
-        std::optional<std::pair<std::size_t, std::size_t>> FurthestPointPair() const;
-        /**
-         * Reverses the world path in place.
-         */
-        WorldPath& Reverse() noexcept
-        {
-            std::ranges::reverse(mPoints);
-            return *this;
-        }
-
-        // Backwards-compatible alias.
-        WorldPath& reverse() noexcept { return Reverse(); }
-
-
-        bool operator==(const WorldPath&) const = default;
-        friend std::ostream& operator<<(std::ostream& os, const WorldPath& path);
-        /**
-         * Appends points from another path to this path.
-         */
-        WorldPath& Extend(const WorldPath& other);
-
-        // Backwards-compatible alias.
-        WorldPath& extend(const WorldPath& other) { return Extend(other); }
-    private:
-        std::vector<WorldPosition> mPoints;
-    };
+private:
+    std::vector<WorldPosition> mPoints;
+};
 
 } // namespace cse498
-
-
 
 #endif // SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H

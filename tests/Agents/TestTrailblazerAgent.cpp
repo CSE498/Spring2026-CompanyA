@@ -5,8 +5,8 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/Agents/TrailblazerAgent.hpp"
-#include "../../source/Worlds/AIWorld.hpp"
+#include "../../source/Agents/AI/TrailblazerAgent.hpp"
+#include "../../source/Worlds/DemoG1/AIWorld.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 
 using namespace cse498;

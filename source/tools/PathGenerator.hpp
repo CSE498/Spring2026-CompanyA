@@ -20,9 +20,8 @@
  * want because we have yet to design what it is that we are doing. This will have to be changed when teams start
  * working together.
  */
+#pragma once
 
-#ifndef SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHGENERATOR_H
-#define SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHGENERATOR_H
 
 #include <span>
 #include <optional>
@@ -44,7 +43,6 @@
 namespace cse498
 {
 struct CirclePath;
-class AgentAbility;
 struct PathRequest;
 struct ANode;
 enum class PathFlag
@@ -82,7 +80,7 @@ private:
     {
         const double x_x = p1.X() - p2.X();
         const double y_y = p1.Y() - p2.Y();
-        return std::sqrt(x_x * x_x + y_y * y_y);
+        return std::sqrt(x_x * x_x + y_y * y_y); // can't be constexpr but c++26 is nearby
     }
 
     /**
@@ -94,16 +92,17 @@ private:
         double mg = 0; // cost from start position (total distance traveled)
         double mf = 0; // g + h
         /// This is for reconstruction. Not sure what is best here maybe std::optional<WorldPosition> and just copy store it
-        std::shared_ptr<ANode> mPrev;
-        ANode(const WorldPosition& pos, double g, double f, std::shared_ptr<ANode> other) : mPos(pos), mg(g), mf(f), mPrev(std::move(other)) {}
+        /// This is for ANode.
+        ANode* mPrev = nullptr;
+        ANode(const WorldPosition& pos, double g, double f, ANode* prev) : mPos(pos), mg(g), mf(f), mPrev(prev) {}
     };
 
     /**
-     * comparison operaor for the priority queue
+     * comparison operator for the priority queue
      */
     struct ANodeCompare
     {
-        bool operator()(const std::shared_ptr<ANode> &a, const std::shared_ptr<ANode> &b) const
+        bool operator()(const ANode* a, const ANode* b) const
         {
             return a->mf > b->mf;
         }
@@ -137,7 +136,7 @@ private:
         bool equals(const WorldPosition &p1) const
         {
             assert(p1.IsValid()); // I think this is always true? Let Logan Rimarcik know if this fails
-            return mGoals.contains(round(p1));
+            return mGoals.contains(Round(p1));
         }
     };
 
@@ -156,7 +155,7 @@ private:
         {
             if (!mGoal.IsValid() || !p1.IsValid())
                 return false;
-            return round(mGoal) == round(p1);
+            return Round(mGoal) == Round(p1);
         }
     };
 
@@ -175,14 +174,14 @@ private:
     template<typename Heu> static std::vector<WorldPosition> AStarSearch(const WorldPosition &from,
                                                                          const PathRequest &request,
                                                                          Heu h,
-                                                                         double max_search_dist = MAX_SEARCH_DISTANCE,
+                                                                         double maxSearchDistance = MAX_SEARCH_DISTANCE,
                                                                          bool closest = false);
     /**
      * Rebuilds the path from a given node used exclusively in Astar search
-     * @param node - provided node to rebuild backwards path from
+     * @param end - start for reconstruction far down the tree (end of tree then climb up)
      * @return a path of world positions from path backwards to root
      */
-    static std::vector<WorldPosition> AStarReconstruction(const std::shared_ptr<ANode> &node);
+    static std::vector<WorldPosition> AStarReconstruction(const ANode* end);
 
     /**
      * Creates the next point circle step size in the direction on a circle
@@ -218,45 +217,46 @@ private:
                                            const PathRequest &request);
     /**
      * Determines if a point comes before another point on a circle during generation.
-     * @param test_pt - point to test or ask the question about
-     * @param relative_pt - relative to this point. this is the static point compared to
+     * @param testPt - point to test or ask the question about
+     * @param relativePt - relative to this point. this is the static point compared to
      * @param center - circle center
      * @param flag - direction of the circle generation
      * @return T/F
      */
-    static bool IsPointBefore(const WorldPosition &test_pt,
-                              const WorldPosition &relative_pt,
+    static bool IsPointBefore(const WorldPosition &testPt,
+                              const WorldPosition &relativePt,
                               const WorldPosition &center,
                               CircleDirectionFlag flag);
     /**
      * Finds only a path around the circle given that the start is on the circle whic which is a requirement
      * Start can be determined a lot of ways refer to FindCircle function to see how
      * @param start Should be a point on the circle. Can be a double
-     * @param circ_center - center of circle
-     * @param circ_radius - radius of circle
+     * @param circCenter - center of circle
+     * @param cRadius - radius of circle
      * @param request - request info
      * @param flag - flag for how to generate circle, expand pushes agent outwards, skip chops the circle if not available
-     * @param circle_flag - CCW or CW
+     * @param circleFlag - CCW or CW
      * @return
+     * can't be constexpr until c++26 for trig.
      */
     static WorldPath MakeCircle(const WorldPosition &start,
-                                const WorldPosition &circ_center,
-                                double circ_radius,
+                                const WorldPosition &circCenter,
+                                double cRadius,
                                 const PathRequest &request,
                                 PathFlag flag,
-                                CircleDirectionFlag circle_flag);
+                                CircleDirectionFlag circleFlag);
 
 
     /**
      * makes the loop itself []
-     * @param bot_left bottom left of loop
-     * @param top_right top right of the loop
+     * @param bottomLeft bottom left of loop
+     * @param topRight top right of the loop
      * @param request - request information about the world map
      * @param flag direction flag CCW or CW
      * @return a list of points for the loop
      */
-    static std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bot_left,
-                                                                        const WorldPosition &top_right,
+    static std::optional<std::vector<WorldPosition>> MakeRectangleLoop(const WorldPosition &bottomLeft,
+                                                                        const WorldPosition &topRight,
                                                                         const PathRequest &request,
                                                                         CircleDirectionFlag flag);
 
@@ -265,37 +265,39 @@ public:
     PathGenerator(const PathGenerator&) = delete;
     PathGenerator(PathGenerator&&) = delete;
 
+    // Note none of these can be constexpr because they all need to measure distance with sqrt()
+
     /**
      * This isn't *fully* functional intentionally because the correct world doesn't exist yet for this.
      * This is a _rough_ class ensuring the key components are done for adaptation:
      * TODO: Update upon new world implementation
-     * @param agent_pos - orients the resulting list of points so the first is the shortest path to this point
-     * @param circ_center - center point for the circle
-     * @param circ_radius - radius for the circle
+     * @param agentPos - orients the resulting list of points so the first is the shortest path to this point
+     * @param circleCenter - center point for the circle
+     * @param cRadius - radius for the circle
      * @param request - request information to make paths
      * @param flag - type of generation whether skipping points or trying to get close to those points
-     * @param circle_flag - generation direction
+     * @param circleFlag - generation direction
      * @return list of points with starting point closest to agent_pos
      */
-    static std::optional<CirclePath> FindCircularPath(const WorldPosition &agent_pos,
-                                                      const WorldPosition &circ_center,
-                                                      double circ_radius,
+    static std::optional<CirclePath> FindCircularPath(const WorldPosition &agentPos,
+                                                      const WorldPosition &circleCenter,
+                                                      double cRadius,
                                                       const PathRequest &request,
                                                       PathFlag flag = PathFlag::Skip,
-                                                      CircleDirectionFlag circle_flag = CircleDirectionFlag::CW);
+                                                      CircleDirectionFlag circleFlag = CircleDirectionFlag::CW);
 
     /**
      * Makes a loop from bot left to top right passed back separately from the provided path to get to the loop
      * It is the shortest path to any position in the loop
-     * @param agent_pos - agent position currently
-     * @param bot_left - loops bottom left corner
-     * @param top_right - loops top right corner
+     * @param agentPos - agent position currently
+     * @param bottomLeft - loops bottom left corner
+     * @param topRight - loops top right corner
      * @param request - other parameters to watch out for.
      * @return
      */
-    static std::optional<CirclePath> FindRectangularLoopPath(const WorldPosition &agent_pos,
-                                                             const WorldPosition &bot_left,
-                                                             const WorldPosition &top_right,
+    static std::optional<CirclePath> FindRectangularLoopPath(const WorldPosition &agentPos,
+                                                             const WorldPosition &bottomLeft,
+                                                             const WorldPosition &topRight,
                                                              const PathRequest &request,
                                                              CircleDirectionFlag flag = CircleDirectionFlag::CW);
 
@@ -322,6 +324,18 @@ public:
                                                       const WorldPosition &end,
                                                       const PathRequest &request,
                                                       CircleDirectionFlag flag = CircleDirectionFlag::CW);
+
+    /**
+     * from the start position follows the path vector returning all points
+     * @param start - start position
+     * @param path - path as vector to follow
+     * @param request - other information to verify path
+     * @return true if path is clear
+     */
+    static bool IsPathClear(const WorldPosition& start, const PathVector& path, const PathRequest& request);
+    static constexpr WorldPosition NextCardinalToward(const WorldPosition &from, const WorldPosition &to);
+    static constexpr WorldPosition Next8DirectionToward(const WorldPosition &from, const WorldPosition &to);
+
 };
 
 /*
@@ -338,20 +352,21 @@ struct PathRequest
 public:
     /// the points known to complete a path between and ensure valid
     std::unordered_set<WorldPosition> mAvoidTiles;
-    const AgentAbility &mAbility;
     const WorldGrid &mWorldGrid;
+    const double mMaxSearchDistance;
 
     /**
      *
-     * @param avoid_tiles pass in {} if there are no such tiles. Otherwise treated as
+     * @param avoidTiles pass in {} if there are no such tiles. Otherwise treated as
      * list of points to avoid default to entire tile. so given (1,1) == [0.5, 1.49) in x,y
-     * @param ability  reference as this path is bound and only valid for the created agent so its abilities follow
-     * @param world_grid
+     * @param worldGrid
+     * @param maxSearchDistance - max search distance for the function if it needs to be limited. (0 means ignored)
+     *                            only applicable when `finding` some path through A*
      */
-    PathRequest(std::unordered_set<WorldPosition> avoid_tiles,
-                const AgentAbility &ability,
-                const WorldGrid &world_grid) : mAvoidTiles(std::move(avoid_tiles)), mAbility(ability),
-                                               mWorldGrid(world_grid)
+    PathRequest(std::unordered_set<WorldPosition> avoidTiles,
+                const WorldGrid &worldGrid,
+                const double maxSearchDistance = 0) : mAvoidTiles(std::move(avoidTiles)),
+                                               mWorldGrid(worldGrid), mMaxSearchDistance(maxSearchDistance)
     {
     }
 };
@@ -379,43 +394,53 @@ template<typename Heu>
 std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
                                                       const PathRequest &request,
                                                       Heu h,
-                                                      const double max_search_dist,
+                                                      double maxSearchDistance,
                                                       const bool closest)
 {
     if (!request.mWorldGrid.IsWalkable(from))
         return {};
 
+    // check if user defined a search distance param:
+    double maxSearchDist = (request.mMaxSearchDistance <= 0) ? MAX_SEARCH_DISTANCE : request.mMaxSearchDistance;
+    // take the min viable search distance
+    maxSearchDist = std::min(maxSearchDistance, maxSearchDist);
+
     const auto directions = std::to_array<PathVector>({
         {STEP_SIZE, 0}, {0, STEP_SIZE}, {-STEP_SIZE, 0}, {0, -STEP_SIZE},
         {STEP_SIZE, STEP_SIZE}, {-STEP_SIZE, STEP_SIZE}, {STEP_SIZE, -STEP_SIZE}, {-STEP_SIZE, -STEP_SIZE}
     });
-    std::priority_queue<std::shared_ptr<ANode>, std::vector<std::shared_ptr<ANode> >, ANodeCompare> pq;
-    std::unordered_set<WorldPosition> visited = {};
-    double closest_distance = h(from); // Does heuristic calc to check distances
-    std::shared_ptr<ANode> closest_node;
+    ANode* closestNode = nullptr;
 
-    pq.push(std::make_shared<ANode>(from, 0, 0, nullptr));
+    // pq can't own these because you can't std::move pq.top() and don't get it from pq.pop
+    std::vector<std::unique_ptr<ANode>> storage;
+
+    std::priority_queue<ANode*, std::vector<ANode*>, ANodeCompare> pq;
+    std::unordered_set<WorldPosition> visited = {};
+    double closestDistance = h(from); // Does heuristic calc to check distances
+
+    storage.push_back(std::make_unique<ANode>(from, 0, 0, nullptr));
+    pq.push(storage.back().get());
     visited.insert({from.X(), from.Y()});
     while (!pq.empty())
     {
-        auto node = pq.top();
+        auto node = pq.top(); // at no point can these be null because storage is never manipulated and all comes from there
         pq.pop();
         // Just check if the node is too far away from the goal and this is our current best estimate then stop looking
-        if (node->mf > max_search_dist) // Could change this to distance traveled instead
+        if (node->mf > maxSearchDist) // Could change this to distance traveled instead
         {
-            if (closest && closest_node != nullptr)
+            if (closest && closestNode != nullptr)
             {
-                return AStarReconstruction(closest_node);
+                return AStarReconstruction(closestNode);
             }
             return {};
         }
         if (closest)
         {
-            double close_test = h(node->mPos);
-            if (close_test < closest_distance)
+            double closeTest = h(node->mPos);
+            if (closeTest < closestDistance)
             {
-                closest_distance = close_test;
-                closest_node = node;
+                closestDistance = closeTest;
+                closestNode = node;
             }
         }
 
@@ -433,10 +458,11 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
                 continue;
 
             // Order of arguments is Node, g, f, prev node
-            double g = node->mg + dir.getMagnitude();
+            double g = node->mg + dir.GetMagnitude();
             if (!visited.contains(neighbor))
             {
-                pq.push(std::make_shared<ANode>(neighbor, g, g + h(round(neighbor)), node));
+                storage.push_back(std::make_unique<ANode>(neighbor, g, g + h(Round(neighbor)), node));
+                pq.push(storage.back().get());
                 visited.insert(neighbor);
             }
         }
@@ -444,6 +470,39 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition &from,
     // Not possible to reach the goal.
     return {};
 }
+
+constexpr WorldPosition PathGenerator::NextCardinalToward(const WorldPosition& from, const WorldPosition& to)
+{
+    const double dx = to.X() - from.X();
+    const double dy = to.Y() - from.Y();
+    if (dx == 0.0 && dy == 0.0) {
+        return from;
+    }
+    if (std::abs(dx) >= std::abs(dy)) {
+        const double stepX = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
+        return from.GetOffset(stepX, 0.0); // made these constexpr
+    }
+    const double stepY = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
+    return from.GetOffset(0.0, stepY);
 }
 
-#endif //SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_PATHGENERATOR_H
+constexpr WorldPosition PathGenerator::Next8DirectionToward(const WorldPosition& from, const WorldPosition& to)
+{
+    const double dx = to.X() - from.X();
+    const double dy = to.Y() - from.Y();
+
+    if (dx == 0.0 && dy == 0.0) {
+        return from;
+    }
+
+    const double stepX = (dx == 0.0) ? 0.0 : (dx / std::abs(dx));
+    const double stepY = (dy == 0.0) ? 0.0 : (dy / std::abs(dy));
+
+    return from.GetOffset(stepX, stepY);
+}
+
+
+
+
+
+}

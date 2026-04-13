@@ -5,8 +5,8 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/Agents/EnemyAgent.hpp"
-#include "../../source/Agents/LearningExplorerAgent.hpp"
+#include "../../source/Agents/AI/EnemyAgent.hpp"
+#include "../../source/Agents/AI/LearningExplorerAgent.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 #include "../../source/core/WorldBase.hpp"
 
