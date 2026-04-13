@@ -4,13 +4,13 @@
  */
 
 #include "AgentFactory.hpp"
-#include "../core/AgentBase.hpp"
-#include "../tools/BehaviorTree/BehaviorTree.hpp"
-#include "../core/WorldBase.hpp"
-#include "../tools/PathGenerator.hpp"
-#include "../tools/PathVector.hpp"
-#include "Worlds/WorldActions.hpp"
-#include "../tools/DamageCalculator.hpp"
+#include "../../core/AgentBase.hpp"
+#include "../../tools/BehaviorTree.hpp"
+#include "../../core/WorldBase.hpp"
+#include "../../tools/PathGenerator.hpp"
+#include "../../tools/PathVector.hpp"
+#include "../../Worlds/DemoG2/WorldActions.hpp"
+#include "../../tools/DamageCalculator.hpp"
 
 #include <cmath>
 

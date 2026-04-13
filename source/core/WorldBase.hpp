@@ -15,7 +15,7 @@
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
-#include "../Agents/PlayerAgent.hpp"
+#include "../Agents/Classic/PlayerAgent.hpp"
 
 namespace cse498 {
 
@@ -93,13 +93,13 @@ namespace cse498 {
       return *agent;
     }
 
-      /**
-       *Finds the current vector index for an agent with the given stable ID.
-       *
-       * Agent IDs do not change when dead agents are erased from agent_set,
-       * so ID lookup must not assume ID == vector index.
-       */
-      [[nodiscard]] size_t FindAgentIndexById(size_t id) const {
+    /**
+     * Finds the current vector index for an agent with the given stable ID.
+     *
+     * Agent IDs do not change when dead agents are erased from agent_set,
+     * so ID lookup must not assume ID == vector index.
+     */
+    [[nodiscard]] size_t FindAgentIndexById(size_t id) const {
       for (size_t i = 0; i < agent_set.size(); ++i) {
         if (agent_set[i] && agent_set[i]->GetID() == id) {
           return i;
@@ -128,13 +128,13 @@ namespace cse498 {
       return agent_set[index].get();
     }
 
-      /**
-       * Accesses an agent by its current storage position in agent_set.
-       *
-       * This is intended for safe iteration over the internal agent container.
-       * It should not be used when stable ID lookup is required.
-       */
-      [[nodiscard]] AgentBase & GetAgentByIndex(size_t index) {
+    /**
+     * Accesses an agent by its current storage position in agent_set.
+     *
+     * This is intended for safe iteration over the internal agent container.
+     * It should not be used when stable ID lookup is required.
+     */
+    [[nodiscard]] AgentBase & GetAgentByIndex(size_t index) {
       assert(index < agent_set.size());
       return *agent_set[index];
     }

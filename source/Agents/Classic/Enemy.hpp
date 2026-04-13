@@ -9,7 +9,7 @@
 #pragma once
 
 
-#include "core/AgentBase.hpp"
+#include "../../core/AgentBase.hpp"
 
 namespace cse498
 {

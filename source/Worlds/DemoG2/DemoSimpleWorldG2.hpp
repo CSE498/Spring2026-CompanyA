@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../core/WorldBase.hpp"
+#include "../../core/WorldBase.hpp"
 
 
 namespace cse498

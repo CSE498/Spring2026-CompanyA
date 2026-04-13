@@ -9,7 +9,7 @@
 
 #pragma once
 #include <string>
-#include "core/WorldPosition.hpp"
+#include "../../core/WorldPosition.hpp"
 
 namespace cse498
 {

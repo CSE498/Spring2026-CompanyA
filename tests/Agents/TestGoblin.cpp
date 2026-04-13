@@ -6,9 +6,9 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/Agents/AgentDefinition.hpp"
-#include "../../source/Agents/AgentFactory.hpp"
-#include "../../source/Worlds/WorldActions.hpp"
+#include "../../source/Agents/Classic/AgentDefinition.hpp"
+#include "../../source/Agents/Classic/AgentFactory.hpp"
+#include "../../source/Worlds/DemoG2/WorldActions.hpp"
 #include "../../source/core/WorldBase.hpp"
 #include "../../source/tools/DamageCalculator.hpp"
 

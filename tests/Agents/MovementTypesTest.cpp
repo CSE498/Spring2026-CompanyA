@@ -4,8 +4,8 @@
  */
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../source/Agents/MovementTypes.hpp"
-#include "../../source/Worlds/WorldActions.hpp"
+#include "../../source/Agents/Classic/MovementTypes.hpp"
+#include "../../source/Worlds/DemoG2/WorldActions.hpp"
 #include "../../source/tools/PathVector.hpp"
 
 using cse498::MovementTypes;

@@ -13,11 +13,11 @@
 #include <optional>
 
 #include "Enemy.hpp"
-#include "../core/WorldPosition.hpp"
-#include "../tools/BehaviorTree/BehaviorTree.hpp"
+#include "../../core/WorldPosition.hpp"
+#include "../../tools/BehaviorTree.hpp"
 #include "AgentDefinition.hpp"
 #include "AgentLevels.hpp"
-#include "../tools/PathVector.hpp"
+#include "../../tools/PathVector.hpp"
 
 namespace cse498 {
 

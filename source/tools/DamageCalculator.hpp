@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Agents/AgentStats.hpp"
+#include "../Agents/Classic/AgentStats.hpp"
 #include <algorithm>
 
 namespace cse498

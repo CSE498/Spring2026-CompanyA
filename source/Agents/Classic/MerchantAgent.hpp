@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "../core/AgentBase.hpp"
+#include "../../core/AgentBase.hpp"
 #include "TradeSystem/TradeTypes.hpp"
 
 namespace cse498

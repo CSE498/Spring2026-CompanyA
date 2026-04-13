@@ -5,8 +5,8 @@
 
 #include "MovementTypes.hpp"
 
-#include "tools/PathVector.hpp"
-#include "Worlds/WorldActions.hpp"
+#include "../../tools/PathVector.hpp"
+#include "../../Worlds/DemoG2/WorldActions.hpp"
 
 
 namespace cse498

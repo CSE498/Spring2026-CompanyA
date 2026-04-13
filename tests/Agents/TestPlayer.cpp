@@ -5,8 +5,8 @@
 
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "Agents/PlayerAgent.hpp"
-#include "core/WorldBase.hpp"
+#include "../../source/Agents/Classic/PlayerAgent.hpp"
+#include "../../source/core/WorldBase.hpp"
 
 namespace cse498
 {

@@ -4,9 +4,9 @@
  */
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "Agents/PlayerFeatures/Inventory.hpp"
+#include "../../source/Agents/Classic/PlayerFeatures/Inventory.hpp"
 #include "../../source/core/item/Item.hpp"
-#include "core/WorldBase.hpp"
+#include "../../source/core/WorldBase.hpp"
 
 namespace cse498
 {

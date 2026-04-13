@@ -9,11 +9,11 @@
 #include <vector>
 
 #include "WorldActions.hpp"
-#include "../Agents/Enemy.hpp"
-#include "../Agents/FarmingAgent.hpp"
-#include "../Agents/PlayerAgent.hpp"
-#include "../tools/DamageCalculator.hpp"
-#include "Agents/AgentFactory.hpp"
+#include "../../Agents/Classic/Enemy.hpp"
+#include "../../Agents/Classic/FarmingAgent.hpp"
+#include "../../Agents/Classic/PlayerAgent.hpp"
+#include "../../tools/DamageCalculator.hpp"
+#include "../../Agents/Classic/AgentFactory.hpp"
 
 namespace cse498 {
 

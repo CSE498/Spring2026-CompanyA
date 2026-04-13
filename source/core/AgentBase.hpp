@@ -16,7 +16,7 @@
 #include "WorldGrid.hpp"
 #include "WorldPosition.hpp"
 #include "../tools/BehaviorTree/BehaviorTree.hpp"
-#include "Agents/AgentStats.hpp"
+#include "../Agents/Classic/AgentStats.hpp"
 
 namespace cse498 {
 

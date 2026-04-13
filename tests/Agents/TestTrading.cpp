@@ -5,9 +5,9 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/Agents/Enemy.hpp"
-#include "../../source/Agents/MerchantAgent.hpp"
-#include "../../source/Agents/PlayerAgent.hpp"
+#include "../../source/Agents/Classic/Enemy.hpp"
+#include "../../source/Agents/Classic/MerchantAgent.hpp"
+#include "../../source/Agents/Classic/PlayerAgent.hpp"
 #include "../../source/core/WorldBase.hpp"
 
 namespace cse498

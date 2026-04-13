@@ -4,7 +4,7 @@
  * @note Status: PROPOSAL
  **/
 
-#include "Worlds/DemoSimpleWorldG2.hpp"
+#include "../../source/Worlds/DemoG2/DemoSimpleWorldG2.hpp"
 
 int main() {
     cse498::DemoSimpleWorldG2 world;

@@ -3,7 +3,7 @@
  */
 
 #include "PlayerAgent.hpp"
-#include "../core/WorldBase.hpp"
+#include "../../core/WorldBase.hpp"
 #include <iostream>
 
 namespace cse498 {

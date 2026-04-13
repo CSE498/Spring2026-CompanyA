@@ -6,7 +6,7 @@
 #pragma once
 
 
-#include "../core/AgentBase.hpp"
+#include "../../core/AgentBase.hpp"
 #include "PlayerFeatures/Inventory.hpp"
 
 namespace cse498 {
