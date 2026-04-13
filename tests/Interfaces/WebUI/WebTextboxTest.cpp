@@ -1,19 +1,10 @@
 /**
- * WebTextboxTest.cpp
- * Unit tests for the WebTextbox class using the Catch2 testing framework.
+ * @file WebTextboxTest.cpp
+ * @brief Unit tests for the WebTextbox class using the Catch2 testing framework.
  *
  * These tests verify behavior including text updates, styling, visibility,
  * layout integration, DOM synchronization, bounding boxes, and move semantics
  * when compiled to WebAssembly using Emscripten.
- * 
- * Setup Instructions:
- *      1. Ensure Emscripten SDK is installed and activated.
- *      2. Go to cd emsdk directory and run `emsdk install latest` and `emsdk activate latest`.
- *      3. Run emsdk_env.bat to set up environment variables.
- *      4. cd "..\CSE 498\CompanyA\Spring2026-CompanyA\tests\Interfaces\WebUI"
- *      5. Compile with:`em++ WebTextboxTest.cpp ../../../source/Interfaces/WebUI/WebTextbox/WebTextbox.cpp ../../../source/Interfaces/WebUI/WebLayout/WebLayout.cpp -I../../../ -I../../../third-party/Catch/single_include --bind -std=c++23 -s WASM=1 -s ASSERTIONS=1 -o test.html`
- *      6. Run python -m http.server 8000 for local hosting 
- *      7. Open test.html in a browser to run the tests and view results in the console (http://localhost:8000/test.html)
  * 
  * Additional Note:
  *      Portions of formatting, documentation, and cleanup were assisted by
@@ -21,18 +12,18 @@
  *
  * All project classes and tests correspond to the cse498 WebUI subsystem.
  *
- * author Lance Motowski
- * date   Spring 2026
  */
 
 #ifdef __EMSCRIPTEN__
 
 // Generate Catch2 main
-#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../../source/Interfaces/WebUI/WebTextbox/WebTextbox.hpp"
 #include "../../../source/Interfaces/WebUI/WebLayout/WebLayout.hpp"
+#include "./SharedWebContext.hpp"
+#include "../../../source/Interfaces/WebUI/WebUtils.hpp"
 
 #include <string>
 #include <sstream>
@@ -47,19 +38,9 @@ using emscripten::val;
 
 // ---------- Helpers ----------
 
-static val GetDocument()
-{
-    return val::global("document");
-}
-
 static val GetWindow()
 {
     return val::global("window");
-}
-
-static val ById(const std::string& id)
-{
-    return GetDocument().call<val>("getElementById", id);
 }
 
 static std::string GetComputedStyleStr(val element, const std::string& prop)
@@ -331,10 +312,9 @@ TEST_CASE("SetMaxWidth / SetWrap do not crash", "[webtextbox][style]")
 // ========================================================
 // Test 18: MountToLayout creates DOM element
 // ========================================================
-TEST_CASE("MountToLayout makes element appear in DOM",
+TEST_CASE_METHOD(SharedWebContext, "MountToLayout makes element appear in DOM",
           "[webtextbox][dom]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.SetSpacing(5);
     root.Apply();
@@ -343,7 +323,7 @@ TEST_CASE("MountToLayout makes element appear in DOM",
     tb.MountToLayout(root, Alignment::Start);
     root.Apply();
 
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     CHECK((!el.isNull() && !el.isUndefined()),
           "element should exist in DOM after mount");
 }
@@ -351,9 +331,8 @@ TEST_CASE("MountToLayout makes element appear in DOM",
 // ========================================================
 // Test 19: Unmount removes DOM element
 // ========================================================
-TEST_CASE("Unmount removes element from DOM", "[webtextbox][dom]")
+TEST_CASE_METHOD(SharedWebContext, "Unmount removes element from DOM", "[webtextbox][dom]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -362,7 +341,7 @@ TEST_CASE("Unmount removes element from DOM", "[webtextbox][dom]")
     root.Apply();
 
     tb.Unmount();
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     CHECK((el.isNull() || el.isUndefined()),
           "element should not exist after unmount");
 }
@@ -370,9 +349,8 @@ TEST_CASE("Unmount removes element from DOM", "[webtextbox][dom]")
 // ========================================================
 // Test 20: SetText updates DOM textContent when mounted
 // ========================================================
-TEST_CASE("SetText updates DOM textContent", "[webtextbox][dom]")
+TEST_CASE_METHOD(SharedWebContext, "SetText updates DOM textContent", "[webtextbox][dom]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -381,7 +359,7 @@ TEST_CASE("SetText updates DOM textContent", "[webtextbox][dom]")
     root.Apply();
 
     tb.SetText("new text");
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     CHECK(el["textContent"].as<std::string>() == "new text",
           "textContent mismatch after SetText");
 }
@@ -389,9 +367,8 @@ TEST_CASE("SetText updates DOM textContent", "[webtextbox][dom]")
 // ========================================================
 // Test 21: AppendText updates DOM textContent when mounted
 // ========================================================
-TEST_CASE("AppendText updates DOM textContent", "[webtextbox][dom]")
+TEST_CASE_METHOD(SharedWebContext, "AppendText updates DOM textContent", "[webtextbox][dom]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -400,7 +377,7 @@ TEST_CASE("AppendText updates DOM textContent", "[webtextbox][dom]")
     root.Apply();
 
     tb.AppendText("B");
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     CHECK(el["textContent"].as<std::string>() == "AB",
           "textContent mismatch after AppendText");
 }
@@ -408,9 +385,8 @@ TEST_CASE("AppendText updates DOM textContent", "[webtextbox][dom]")
 // ========================================================
 // Test 22: Show/Hide affects computed display when mounted
 // ========================================================
-TEST_CASE("Show/Hide affects computed display", "[webtextbox][style]")
+TEST_CASE_METHOD(SharedWebContext, "Show/Hide affects computed display", "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -419,7 +395,7 @@ TEST_CASE("Show/Hide affects computed display", "[webtextbox][style]")
     root.Apply();
 
     tb.Hide();
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string disp1 = GetComputedStyleStr(el, "display");
     CHECK(disp1 == "none", "display should be none after Hide()");
 
@@ -431,10 +407,9 @@ TEST_CASE("Show/Hide affects computed display", "[webtextbox][style]")
 // ========================================================
 // Test 23: SetFontSize affects computed font-size
 // ========================================================
-TEST_CASE("SetFontSize changes computed font-size",
+TEST_CASE_METHOD(SharedWebContext, "SetFontSize changes computed font-size",
           "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -443,7 +418,7 @@ TEST_CASE("SetFontSize changes computed font-size",
     root.Apply();
 
     tb.SetFontSize(24.0f);
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string fs = GetComputedStyleStr(el, "font-size");
     CHECK(fs.find("24") != std::string::npos,
           "font-size should contain 24px");
@@ -452,10 +427,9 @@ TEST_CASE("SetFontSize changes computed font-size",
 // ========================================================
 // Test 24: Bold/Italic affect computed styles
 // ========================================================
-TEST_CASE("SetBold/SetItalic change computed font-weight/style",
+TEST_CASE_METHOD(SharedWebContext, "SetBold/SetItalic change computed font-weight/style",
           "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -466,7 +440,7 @@ TEST_CASE("SetBold/SetItalic change computed font-weight/style",
     tb.SetBold(true);
     tb.SetItalic(true);
 
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string fw = GetComputedStyleStr(el, "font-weight");
     std::string fs = GetComputedStyleStr(el, "font-style");
 
@@ -478,9 +452,8 @@ TEST_CASE("SetBold/SetItalic change computed font-weight/style",
 // ========================================================
 // Test 25: SetColor affects computed color
 // ========================================================
-TEST_CASE("SetColor changes computed color", "[webtextbox][style]")
+TEST_CASE_METHOD(SharedWebContext, "SetColor changes computed color", "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -489,7 +462,7 @@ TEST_CASE("SetColor changes computed color", "[webtextbox][style]")
     root.Apply();
 
     tb.SetColor("rgb(255, 0, 0)");
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string c = GetComputedStyleStr(el, "color");
 
     CHECK(c.find("255") != std::string::npos,
@@ -499,10 +472,9 @@ TEST_CASE("SetColor changes computed color", "[webtextbox][style]")
 // ========================================================
 // Test 26: SetAlignment affects computed text-align
 // ========================================================
-TEST_CASE("SetAlignment changes computed text-align",
+TEST_CASE_METHOD(SharedWebContext, "SetAlignment changes computed text-align",
           "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -511,7 +483,7 @@ TEST_CASE("SetAlignment changes computed text-align",
     root.Apply();
 
     tb.SetAlignment(WebTextbox::TextAlign::Center);
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string ta = GetComputedStyleStr(el, "text-align");
     CHECK(ta == "center", "text-align should be center");
 }
@@ -519,10 +491,9 @@ TEST_CASE("SetAlignment changes computed text-align",
 // ========================================================
 // Test 27: SetMaxWidth affects computed max-width
 // ========================================================
-TEST_CASE("SetMaxWidth changes computed max-width",
+TEST_CASE_METHOD(SharedWebContext, "SetMaxWidth changes computed max-width",
           "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -531,7 +502,7 @@ TEST_CASE("SetMaxWidth changes computed max-width",
     root.Apply();
 
     tb.SetMaxWidth(123.0f);
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string mw = GetComputedStyleStr(el, "max-width");
 
     CHECK(mw.find("123") != std::string::npos,
@@ -541,10 +512,9 @@ TEST_CASE("SetMaxWidth changes computed max-width",
 // ========================================================
 // Test 28: Wrap toggles white-space computed property
 // ========================================================
-TEST_CASE("SetWrap toggles computed white-space",
+TEST_CASE_METHOD(SharedWebContext, "SetWrap toggles computed white-space",
           "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -553,7 +523,7 @@ TEST_CASE("SetWrap toggles computed white-space",
     root.Apply();
 
     tb.SetWrap(true);
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string ws1 = GetComputedStyleStr(el, "white-space");
     CHECK((ws1.find("pre-wrap") != std::string::npos || ws1 == "pre-wrap"),
           "white-space should be pre-wrap when wrap enabled");
@@ -567,10 +537,9 @@ TEST_CASE("SetWrap toggles computed white-space",
 // ========================================================
 // Test 29: Background color applies via computed background-color
 // ========================================================
-TEST_CASE("Background color applies via computed background-color",
+TEST_CASE_METHOD(SharedWebContext, "Background color applies via computed background-color",
           "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -579,7 +548,7 @@ TEST_CASE("Background color applies via computed background-color",
     root.Apply();
 
     tb.SetBackgroundColor("rgb(1, 2, 3)");
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string bg = GetComputedStyleStr(el, "background-color");
     CHECK(bg.find("1") != std::string::npos,
           "background-color should contain 1");
@@ -588,10 +557,9 @@ TEST_CASE("Background color applies via computed background-color",
 // ========================================================
 // Test 30: Bounding box becomes non-zero when mounted
 // ========================================================
-TEST_CASE("Bounding box is non-zero after mount",
+TEST_CASE_METHOD(SharedWebContext, "Bounding box is non-zero after mount",
           "[webtextbox][bbox]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -607,9 +575,8 @@ TEST_CASE("Bounding box is non-zero after mount",
 // ========================================================
 // Test 31: Multi-line text increases height vs single line
 // ========================================================
-TEST_CASE("Multi-line text increases height", "[webtextbox][bbox]")
+TEST_CASE_METHOD(SharedWebContext, "Multi-line text increases height", "[webtextbox][bbox]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -629,9 +596,8 @@ TEST_CASE("Multi-line text increases height", "[webtextbox][bbox]")
 // ========================================================
 // Test 32: Layout alignment sets align-self on the child
 // ========================================================
-TEST_CASE("Alignment sets align-self style", "[webtextbox][layout]")
+TEST_CASE_METHOD(SharedWebContext, "Alignment sets align-self style", "[webtextbox][layout]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -639,7 +605,7 @@ TEST_CASE("Alignment sets align-self style", "[webtextbox][layout]")
     tb.MountToLayout(root, Alignment::End);
     root.Apply();
 
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string as = GetComputedStyleStr(el, "align-self");
 
     CHECK((as == "flex-end" || as == "end"),
@@ -649,10 +615,9 @@ TEST_CASE("Alignment sets align-self style", "[webtextbox][layout]")
 // ========================================================
 // Test 33: SyncFromModel repairs DOM if style is manually changed
 // ========================================================
-TEST_CASE("SyncFromModel repairs manual DOM style mutation",
+TEST_CASE_METHOD(SharedWebContext, "SyncFromModel repairs manual DOM style mutation",
           "[webtextbox][dom]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -661,7 +626,7 @@ TEST_CASE("SyncFromModel repairs manual DOM style mutation",
     tb.MountToLayout(root, Alignment::Start);
     root.Apply();
 
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     // Mutate DOM directly
     el["style"].set("fontSize", std::string("2px"));
     std::string fs_bad = GetComputedStyleStr(el, "font-size");
@@ -678,10 +643,9 @@ TEST_CASE("SyncFromModel repairs manual DOM style mutation",
 // ========================================================
 // Test 34: Move + mount keeps element accessible by same id
 // ========================================================
-TEST_CASE("Move then mount keeps element accessible",
+TEST_CASE_METHOD(SharedWebContext, "Move then mount keeps element accessible",
           "[webtextbox][move][dom]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -692,7 +656,7 @@ TEST_CASE("Move then mount keeps element accessible",
     b.MountToLayout(root, Alignment::Start);
     root.Apply();
 
-    val el = ById(id);
+    val el = GetElement(id);
     CHECK((!el.isNull() && !el.isUndefined()),
           "moved element should exist by same id after mount");
     CHECK(el["textContent"].as<std::string>() == "move-dom",
@@ -702,10 +666,9 @@ TEST_CASE("Move then mount keeps element accessible",
 // ========================================================
 // Test 35: Two textboxes mount and preserve ordering in layout
 // ========================================================
-TEST_CASE("Layout preserves order of mounted textboxes",
+TEST_CASE_METHOD(SharedWebContext, "Layout preserves order of mounted textboxes",
           "[webtextbox][layout]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -715,7 +678,7 @@ TEST_CASE("Layout preserves order of mounted textboxes",
     b.MountToLayout(root, Alignment::Start);
     root.Apply();
 
-    val rootEl = ById(root.Id());
+    val rootEl = GetElement(root.Id());
     val c0 = rootEl["children"][0];
     val c1 = rootEl["children"][1];
 
@@ -733,11 +696,6 @@ TEST_CASE("Textbox can be embedded inside an HTML button",
 {
     val doc = GetDocument();
 
-    // Layout root
-    WebLayout root(UniqueRootId("layout"));
-    root.SetLayoutType(LayoutType::Vertical);
-    root.Apply();
-
     // Make a real button in DOM
     std::string btn_id = UniqueRootId("btn");
     val btn = doc.call<val>("createElement", std::string("button"));
@@ -747,10 +705,8 @@ TEST_CASE("Textbox can be embedded inside an HTML button",
 
     // Mount textbox, then move its DOM node into the button
     WebTextbox tb("Label");
-    tb.MountToLayout(root, Alignment::Start);
-    root.Apply();
 
-    val tbEl = ById(tb.Id());
+    val tbEl = tb.GetElement();
     CHECK(!tbEl.isNull() && !tbEl.isUndefined(),
           "textbox element should exist");
 
@@ -773,10 +729,9 @@ TEST_CASE("Textbox can be embedded inside an HTML button",
 // ========================================================
 // Test 37: Clearing background returns transparent-ish
 // ========================================================
-TEST_CASE("ClearBackgroundColor results in transparent background",
+TEST_CASE_METHOD(SharedWebContext, "ClearBackgroundColor results in transparent background",
           "[webtextbox][style]")
 {
-    WebLayout root(UniqueRootId("layout"));
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -787,7 +742,7 @@ TEST_CASE("ClearBackgroundColor results in transparent background",
     tb.SetBackgroundColor("rgb(9, 9, 9)");
     tb.ClearBackgroundColor();
 
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     std::string bg = GetComputedStyleStr(el, "background-color");
 
     CHECK((bg.find("rgba") != std::string::npos || bg == "transparent"),
@@ -802,8 +757,7 @@ TEST_CASE("ClearBackgroundColor results in transparent background",
 // Test 38: WebTextbox handles empty strings safely
 // ========================================================
 
-TEST_CASE("WebTextbox handles empty strings safely", "[webtextbox][edge]") {
-    WebLayout root(UniqueRootId("layout-empty"));
+TEST_CASE_METHOD(SharedWebContext, "WebTextbox handles empty strings safely", "[webtextbox][edge]") {
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -813,7 +767,7 @@ TEST_CASE("WebTextbox handles empty strings safely", "[webtextbox][edge]") {
 
     // Set empty text
     tb.SetText("");
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     CHECK(el["textContent"].as<std::string>().empty(),
           "textContent should be empty after SetText(\"\")");
 
@@ -827,8 +781,7 @@ TEST_CASE("WebTextbox handles empty strings safely", "[webtextbox][edge]") {
 // Test 39: WebTextbox handles very long text without crashing
 // ========================================================
 
-TEST_CASE("WebTextbox handles very long text", "[webtextbox][edge]") {
-    WebLayout root(UniqueRootId("layout-long"));
+TEST_CASE_METHOD(SharedWebContext, "WebTextbox handles very long text", "[webtextbox][edge]") {
     root.SetLayoutType(LayoutType::Vertical);
     root.Apply();
 
@@ -844,12 +797,226 @@ TEST_CASE("WebTextbox handles very long text", "[webtextbox][edge]") {
     tb.SetText(longText);
     root.Apply();
 
-    val el = ById(tb.Id());
+    val el = GetElement(tb.Id());
     CHECK(el["textContent"].as<std::string>().size() == longText.size(),
           "DOM textContent should match long text size");
 
     double h2 = tb.GetHeightPx();
     CHECK(h2 >= h1, "height should not shrink after very long text");
+}
+
+// ========================================================
+// Test 40: SetLineHeight changes computed line-height
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "SetLineHeight changes computed line-height",
+          "[webtextbox][style]")
+{
+    root.SetLayoutType(LayoutType::Vertical);
+    root.Apply();
+
+    WebTextbox tb("line height");
+    tb.MountToLayout(root, Alignment::Start);
+    root.Apply();
+
+    tb.SetLineHeight(30.0f);
+    val el = GetElement(tb.Id());
+    std::string lh = GetComputedStyleStr(el, "line-height");
+
+    CHECK(lh.find("30") != std::string::npos,
+          "line-height should contain 30px");
+}
+
+// ========================================================
+// Test 41: Clear updates DOM textContent when mounted
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Clear updates DOM textContent when mounted",
+          "[webtextbox][dom]")
+{
+    root.SetLayoutType(LayoutType::Vertical);
+    root.Apply();
+
+    WebTextbox tb("hello");
+    tb.MountToLayout(root, Alignment::Start);
+    root.Apply();
+
+    tb.Clear();
+    val el = GetElement(tb.Id());
+
+    CHECK(el["textContent"].as<std::string>().empty(),
+          "textContent should be empty after Clear()");
+}
+
+// ========================================================
+// Test 42: SyncFromModel restores textContent from model
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "SyncFromModel restores textContent from model",
+          "[webtextbox][dom]")
+{
+    root.SetLayoutType(LayoutType::Vertical);
+    root.Apply();
+
+    WebTextbox tb("original");
+    tb.MountToLayout(root, Alignment::Start);
+    root.Apply();
+
+    val el = GetElement(tb.Id());
+    el.set("textContent", std::string("mutated"));
+
+    CHECK(el["textContent"].as<std::string>() == "mutated",
+          "DOM should reflect manual mutation first");
+
+    tb.SyncFromModel();
+
+    CHECK(el["textContent"].as<std::string>() == "original",
+          "SyncFromModel should restore original model text");
+}
+
+// ========================================================
+// Test 43: Mounting to a new layout removes textbox from old layout
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Mounting to a new layout removes textbox from old layout",
+          "[webtextbox][layout][dom]")
+{
+    WebLayout root2(UniqueRootId("root2"));
+
+    root.SetLayoutType(LayoutType::Vertical);
+    root2.SetLayoutType(LayoutType::Vertical);
+
+    root2.MountToLayout(root, Alignment::Start);
+    root.Apply();
+    root2.Apply();
+
+    WebTextbox tb("move layouts");
+    tb.MountToLayout(root, Alignment::Start);
+    root.Apply();
+
+    val rootEl1 = GetElement(root.Id());
+    val rootEl2 = GetElement(root2.Id());
+
+    CHECK((!rootEl1.isNull() && !rootEl1.isUndefined()),
+          "root should exist in DOM");
+    CHECK((!rootEl2.isNull() && !rootEl2.isUndefined()),
+          "root2 should exist in DOM");
+
+    tb.MountToLayout(root2, Alignment::Start);
+    root.Apply();
+    root2.Apply();
+
+    CHECK(GetElement(tb.Id())["parentElement"]["id"].as<std::string>() == root2.Id(),
+          "textbox should now belong to second layout");
+}
+// ========================================================
+// Test 44: Hidden before mount stays hidden after mount
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Hidden before mount stays hidden after mount",
+          "[webtextbox][visibility][dom]")
+{
+    root.SetLayoutType(LayoutType::Vertical);
+    root.Apply();
+
+    WebTextbox tb("hidden first");
+    tb.Hide();
+    tb.MountToLayout(root, Alignment::Start);
+    root.Apply();
+
+    val el = GetElement(tb.Id());
+    std::string disp = GetComputedStyleStr(el, "display");
+
+    CHECK(disp == "none",
+          "textbox hidden before mount should still be hidden after mount");
+}
+
+// ========================================================
+// Test 45: Styles set before mount persist after mount
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Styles set before mount persist after mount",
+          "[webtextbox][style][dom]")
+{
+    root.SetLayoutType(LayoutType::Vertical);
+    root.Apply();
+
+    WebTextbox tb("pre-mount styles");
+    tb.SetFontSize(26.0f);
+    tb.SetColor("rgb(10, 20, 30)");
+    tb.SetBackgroundColor("rgb(1, 2, 3)");
+    tb.SetWrap(true);
+
+    tb.MountToLayout(root, Alignment::Start);
+    root.Apply();
+
+    val el = GetElement(tb.Id());
+
+    std::string fs = GetComputedStyleStr(el, "font-size");
+    std::string color = GetComputedStyleStr(el, "color");
+    std::string bg = GetComputedStyleStr(el, "background-color");
+    std::string ws = GetComputedStyleStr(el, "white-space");
+
+    CHECK(fs.find("26") != std::string::npos,
+          "font-size should contain 26px");
+    CHECK(color.find("10") != std::string::npos,
+          "color should contain 10");
+    CHECK(bg.find("1") != std::string::npos,
+          "background-color should contain 1");
+    CHECK((ws.find("pre-wrap") != std::string::npos || ws == "pre-wrap"),
+          "white-space should be pre-wrap");
+}
+
+// ========================================================
+// Test 46: SetFontFamily and fallback are applied to DOM style
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "SetFontFamily and fallback are applied to DOM style",
+          "[webtextbox][style][dom]")
+{
+    root.SetLayoutType(LayoutType::Vertical);
+    root.Apply();
+
+    WebTextbox tb("font chain");
+    tb.SetFontFamily("Arial");
+    tb.SetFallbackFontFamily("serif");
+    tb.MountToLayout(root, Alignment::Start);
+    root.Apply();
+
+    val el = GetElement(tb.Id());
+    std::string ff = el["style"]["fontFamily"].as<std::string>();
+
+    CHECK(ff.find("Arial") != std::string::npos,
+          "font-family should contain Arial");
+    CHECK(ff.find("serif") != std::string::npos,
+          "font-family should contain serif fallback");
+}
+
+// ========================================================
+// Test 47: Alignment start center and stretch apply align-self
+// ========================================================
+TEST_CASE_METHOD(SharedWebContext, "Alignment start center and stretch apply align-self",
+          "[webtextbox][layout][style]")
+{
+    root.SetLayoutType(LayoutType::Vertical);
+    root.Apply();
+
+    WebTextbox tbStart("start");
+    tbStart.MountToLayout(root, Alignment::Start);
+    root.Apply();
+    val elStart = GetElement(tbStart.Id());
+    std::string asStart = GetComputedStyleStr(elStart, "align-self");
+    CHECK((asStart == "flex-start" || asStart == "start"),
+          "align-self should be flex-start-ish for Start");
+
+    WebTextbox tbCenter("center");
+    tbCenter.MountToLayout(root, Alignment::Center);
+    root.Apply();
+    val elCenter = GetElement(tbCenter.Id());
+    std::string asCenter = GetComputedStyleStr(elCenter, "align-self");
+    CHECK(asCenter == "center",
+          "align-self should be center for Center");
+
+    WebTextbox tbStretch("stretch");
+    tbStretch.MountToLayout(root, Alignment::Stretch);
+    root.Apply();
+    val elStretch = GetElement(tbStretch.Id());
+    std::string asStretch = GetComputedStyleStr(elStretch, "align-self");
+    CHECK(asStretch == "stretch",
+          "align-self should be stretch for Stretch");
 }
 
 #endif // __EMSCRIPTEN__

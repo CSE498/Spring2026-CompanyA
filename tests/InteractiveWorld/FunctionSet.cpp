@@ -1,128 +1,138 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/InteractiveWorld/FunctionSet.hpp"
 
-#include <stdexcept>
 #include <vector>
-#include <string_view>
 
 using namespace cse498;
 
-TEST_CASE("Test add, remove, size functions")
+TEST_CASE("FunctionSet starts empty")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
   CHECK(fs.Size() == 0);
+  CHECK(fs.Empty() == true);
+}
+
+TEST_CASE("AddFunction increases size")
+{
+  FunctionSet<> fs;
 
   auto id0 = fs.AddFunction([] {});
   auto id1 = fs.AddFunction([] {});
 
+  CHECK(id1 != id0);
   CHECK(fs.Size() == 2);
+  CHECK(fs.Empty() == false);
+}
+
+TEST_CASE("RemoveFunction removes the correct function")
+{
+  FunctionSet<> fs;
+
+  auto id0 = fs.AddFunction([] {});
+  auto id1 = fs.AddFunction([] {});
 
   CHECK(fs.RemoveFunction(id0) == true);
   CHECK(fs.Size() == 1);
 
-  CHECK(fs.RemoveFunction(999999) == false);
-  CHECK(fs.Size() == 1);
-
+  CHECK(fs.RemoveFunction(id0) == false);
   CHECK(fs.RemoveFunction(id1) == true);
   CHECK(fs.Size() == 0);
+  CHECK(fs.Empty() == true);
 }
 
-TEST_CASE("Test CallAll to properly call all functions in order")
+TEST_CASE("Clear removes all functions")
 {
-  FunctionSet<void(int)> fs;
+  FunctionSet<> fs;
+
+  fs.AddFunction([] {});
+  fs.AddFunction([] {});
+
+  CHECK(fs.Size() == 2);
+
+  fs.Clear();
+
+  CHECK(fs.Size() == 0);
+  CHECK(fs.Empty() == true);
+}
+
+TEST_CASE("CallAll calls functions in insertion order")
+{
+  FunctionSet<int> fs;
   std::vector<int> out;
 
   fs.AddFunction([&](int x) { out.push_back(x); });
   fs.AddFunction([&](int x) { out.push_back(x + 1); });
+  fs.AddFunction([&](int x) { out.push_back(x + 2); });
 
   fs.CallAll(10);
 
-  REQUIRE(out.size() == 2);
+  REQUIRE(out.size() == 3);
   CHECK(out[0] == 10);
   CHECK(out[1] == 11);
-
-  CHECK(fs.LastCallFailureCount() == 0);
-  CHECK(fs.LastCallSuccessCount() == 2);
+  CHECK(out[2] == 12);
 }
 
-TEST_CASE("Test CallAll to continue after throw and count failures")
+TEST_CASE("Removed functions are not called")
 {
-  FunctionSet<void()> fs;
-  int called = 0;
-
-  fs.AddFunction([&] { ++called; });
-  fs.AddFunction([&] { throw std::runtime_error("fail"); });
-  fs.AddFunction([&] { ++called; });
-
-  fs.CallAll();
-
-  CHECK(called == 2);
-  CHECK(fs.LastCallFailureCount() == 1);
-  CHECK(fs.LastCallSuccessCount() == 2);
-}
-
-TEST_CASE("Test to ensure Clear removes all functions but does not reuse IDs")
-{
-  FunctionSet<void()> fs;
-
-  auto id0 = fs.AddFunction([] {});
-  fs.Clear();
-  CHECK(fs.Size() == 0);
-
-  auto id1 = fs.AddFunction([] {});
-  CHECK(id1 != id0);
-  CHECK(id1 > id0);  
-}
-
-TEST_CASE("Removed functions are not called by CallAll")
-{
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
   int called = 0;
 
   auto id0 = fs.AddFunction([&] { ++called; });
-  (void)id0;
   auto id1 = fs.AddFunction([&] { ++called; });
 
   CHECK(fs.RemoveFunction(id1) == true);
+
   fs.CallAll();
 
   CHECK(called == 1);
-  CHECK(fs.LastCallFailureCount() == 0);
+
+  CHECK(id0 != id1);
 }
 
-TEST_CASE("CallAll invokes on_error for throwing functions")
+TEST_CASE("Function IDs keep increasing after Clear")
 {
-  FunctionSet<void()> fs;
+  FunctionSet<> fs;
 
-  auto id_ok = fs.AddFunction([] {});
-  (void)id_ok;
+  auto id0 = fs.AddFunction([] {});
+  fs.Clear();
+  auto id1 = fs.AddFunction([] {});
 
-  auto id_std = fs.AddFunction([] { throw std::runtime_error("fail"); });
-  auto id_nonstd = fs.AddFunction([] { throw 123; });
+  CHECK(id1 > id0);
+}
 
-  int calls = 0;
-  bool saw_std = false;
-  bool saw_nonstd = false;
+TEST_CASE("IDs view returns stored IDs in order")
+{
+  FunctionSet<> fs;
 
-  fs.CallAll([&](auto id, std::string_view msg) {
-    ++calls;
+  auto id0 = fs.AddFunction([] {});
+  auto id1 = fs.AddFunction([] {});
+  auto id2 = fs.AddFunction([] {});
 
-    if (id == id_std) {
-      CHECK(msg == "fail");
-      saw_std = true;
-    } else if (id == id_nonstd) {
-      CHECK(msg == "Function threw non-std exception");
-      saw_nonstd = true;
-    } else {
-      FAIL("on_error called with unexpected FunctionID");
-    }
-  });
+  std::vector<FunctionSet<>::FunctionID> ids;
+  for (auto id : fs.IDs()) {
+    ids.push_back(id);
+  }
 
-  CHECK(fs.LastCallFailureCount() == 2);
-  CHECK(fs.LastCallSuccessCount() == 1);
+  REQUIRE(ids.size() == 3);
+  CHECK(ids[0] == id0);
+  CHECK(ids[1] == id1);
+  CHECK(ids[2] == id2);
+}
 
-  CHECK(calls == 2);
-  CHECK(saw_std);
-  CHECK(saw_nonstd);
+TEST_CASE("Entries view exposes ids in insertion order")
+{
+  FunctionSet<> fs;
+
+  auto id0 = fs.AddFunction([] {});
+  auto id1 = fs.AddFunction([] {});
+
+  std::vector<FunctionSet<>::FunctionID> ids;
+  for (const auto& entry : fs.Entries()) {
+    ids.push_back(entry.id);
+  }
+
+  REQUIRE(ids.size() == 2);
+  CHECK(ids[0] == id0);
+  CHECK(ids[1] == id1);
 }
