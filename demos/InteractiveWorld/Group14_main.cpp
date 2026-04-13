@@ -5,15 +5,15 @@
  **/
 
 // Include the modules that we will be using.
-#include "Agents/PacingAgent.hpp"
-#include "Interfaces/TrashInterface.hpp"
-#include "Worlds/InteractiveWorld.hpp"
-#include "Worlds/MazeWorld.hpp"
-#include "core/InteractiveWorld/Building.hpp"
-#include "core/InteractiveWorld/InteractiveWorldInventory.hpp"
-#include "core/InteractiveWorld/NPC.hpp"
-#include "core/InteractiveWorld/ResourceProducer.hpp"
-#include "core/InteractiveWorld/InteractiveWorldSaveManager.hpp"
+#include "../../source/Agents/PacingAgent.hpp"
+#include "../../source/Interfaces/TrashInterface.hpp"
+#include "../../source/Worlds/Hub/InteractiveWorld.hpp"
+#include "../../source/Worlds/MazeWorld.hpp"
+#include "../../source/Worlds/Hub/Building.hpp"
+#include "../../source/Worlds/Hub/InteractiveWorldInventory.hpp"
+#include "../../source/Worlds/Hub/NPC.hpp"
+#include "../../source/Worlds/Hub/ResourceProducer.hpp"
+#include "../../source/Worlds/Hub/InteractiveWorldSaveManager.hpp"
 
 #include <string>
 #include <iostream>
@@ -25,7 +25,7 @@ int main() {
   std::shared_ptr<InteractiveWorld> world =
       std::make_shared<InteractiveWorld>();
   
-  InteractiveWorldSaveManager saveManager;
+  // InteractiveWorldSaveManager saveManager;
   
   world->GetInventory().AddItem(ItemType::Wood, 10);
   world->GetInventory().AddItem(ItemType::Stone, 5);

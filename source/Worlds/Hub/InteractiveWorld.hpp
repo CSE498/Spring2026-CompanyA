@@ -199,7 +199,7 @@ public:
    * @return
    */
   std::vector<std::pair<WorldPosition, char>>
-  GetOverlaySymbols() const override {
+  GetOverlaySymbols() const {
     std::vector<std::pair<WorldPosition, char>> symbols;
     for (const auto &npc : m_npcs) {
       symbols.emplace_back(npc->GetPosition(), npc->GetSymbol());
