@@ -58,7 +58,7 @@ namespace cse498
             "#             #  #  # #",
             "# #     #  #  #  #  # #",
             "#          #     #    #",
-            "##################  # #",
+            "##### ############  # #",
             "#                    ##",
             "#                    ##",
             "#  ####################",
@@ -267,4 +267,229 @@ TEST_CASE("Skeleton gold and lifetime interactions behave consistently", "[Skele
     world.RemoveDeadAgents();
     REQUIRE_FALSE(world.HasAgent(storedId));
     REQUIRE(world.GetPlayer() != nullptr);
+}
+
+// EVERYTHING BELOW IS JUST FOR TESTING WHAT THE SKELETON CURRENTLY DOES, THESE SHOULD BE CHANGED
+
+TEST_CASE("Skeleton which kills player", "[Skeleton][combat]")
+{
+  SkeletonTestWorld world;
+
+  auto skeleton = AgentFactory::CreateEnemySkeleton(AgentDefinition("2-hit Skeleton", 9, {18, 1}), world);
+  REQUIRE(skeleton != nullptr);
+  auto& stored = world.AddAgent(std::move(skeleton));
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(18, 1));
+
+  world.SetPlayerPosition({21, 1});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(19.0));
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(0.0));
+  REQUIRE(!world.GetPlayer()->IsAlive());
+
+  // Not sure if this whole bit after is necessary, as I assume game will end (or something like
+  // that) after player dies, but if game continues, skeletons do not stop moving
+
+  world.RemoveDeadAgents(); // Player not destroyed (intended)
+
+  world.SetPlayerPosition({1, 1});
+
+  world.RunNonPlayerAgents();
+
+  // As is, skeleton will continue to move towards player, even after death
+  REQUIRE(world.GetLastActionId() == WorldActions::MOVE_LEFT);
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(17, 1));
+
+  world.SetPlayerPosition({14, 1});
+  REQUIRE(world.GetPlayer()->GetLocation().AsWorldPosition() == WorldPosition(14, 1));
+  world.RunNonPlayerAgents();
+
+  // Skeleton will not stop moving after getting within range of player??
+  REQUIRE(world.GetLastActionId() == WorldActions::MOVE_LEFT);
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(16, 1));
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetLastActionId() == WorldActions::MOVE_LEFT);
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(15, 1));
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetLastActionId() == WorldActions::MOVE_LEFT);
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(14, 1));
+
+  world.RunNonPlayerAgents();
+
+  // Skeleton only stops after occupying dead player's position??
+  REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(14, 1));
+}
+
+TEST_CASE("Movement/attack of multiple skeletons", "[Skeleton][movement]")
+{
+  SkeletonTestWorld world;
+
+  auto skeleton1 = AgentFactory::CreateEnemySkeleton(AgentDefinition("Skele1", 0, {2, 3}), world);
+  REQUIRE(skeleton1 != nullptr);
+  auto& stored1 = world.AddAgent(std::move(skeleton1));
+  auto skeleton2 = AgentFactory::CreateEnemySkeleton(AgentDefinition("Skele2", 0, {8, 3}), world);
+  REQUIRE(skeleton2 != nullptr);
+  auto& stored2 = world.AddAgent(std::move(skeleton2));
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(2, 3));
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(8, 3));
+
+  // both skeletons move towards player
+  world.SetPlayerPosition({5, 3});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
+
+  // agent actions happen in order of first added to the world to last
+  REQUIRE(world.GetLastActionId() == WorldActions::MOVE_LEFT);
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(7, 3));
+
+  // skeletons both shoot player
+  world.SetPlayerPosition({5, 4});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
+  REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(7, 3));
+
+  // skeletons still shooting player (range goes diagonally, seems to act as a big square around the skeletons)
+  world.SetPlayerPosition({5, 5});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(28.0));
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
+  REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(7, 3));
+
+  // skeletons give up on chasing player?? (does this count as out of line of sight?)
+  // was trying to funnel them into eachother (prob not best way to do so) but they gave up
+  // maybe a result of me slightly changing the grid? player occupies wall i changed into floor
+  world.SetPlayerPosition({5, 6});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(28.0));
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
+  REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(7, 3));
+  // world looks like this
+  //#  S   S
+  //# #     #  #
+  //#          #
+  //#####P######
+}
+
+TEST_CASE("Collision of multiple skeletons", "[Skeleton][movement]")
+{
+  SkeletonTestWorld world;
+
+  auto skeleton1 = AgentFactory::CreateEnemySkeleton(AgentDefinition("Skele1", 0, {2, 3}), world);
+  REQUIRE(skeleton1 != nullptr);
+  auto& stored1 = world.AddAgent(std::move(skeleton1));
+  auto skeleton2 = AgentFactory::CreateEnemySkeleton(AgentDefinition("Skele2", 0, {3, 4}), world);
+  REQUIRE(skeleton2 != nullptr);
+  auto& stored2 = world.AddAgent(std::move(skeleton2));
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(2, 3));
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(3, 4));
+
+  world.SetPlayerPosition({3, 3});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(2, 3));
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(3, 4));
+
+  // Skeletons move into same position which is probably not supposed to happen
+  // in other news theyre also not attacking the player despite the player still being in range???
+  // i thought i would have to move the player an extra time to get them to move
+  world.SetPlayerPosition({4, 2});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
+
+  REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
+  REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
+}
+
+TEST_CASE("Skeleton pursuing player down corridor", "[Skeleton][movement]")
+{
+  SkeletonTestWorld world;
+
+  auto skeleton = AgentFactory::CreateEnemySkeleton(AgentDefinition("Bones", 0, {21, 1}), world);
+  REQUIRE(skeleton != nullptr);
+  auto& stored = world.AddAgent(std::move(skeleton));
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 1));
+
+
+  world.SetPlayerPosition({21, 4});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 2));
+
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(37.0));
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 2));
+
+
+  world.SetPlayerPosition({21, 5});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 3));
+
+
+  world.SetPlayerPosition({20, 5});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 4));
+
+
+  world.SetPlayerPosition({19, 5});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 5));
+
+
+  world.SetPlayerPosition({19, 6});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 5));
+
+
+  world.SetPlayerPosition({19, 7});
+
+  world.RunNonPlayerAgents();
+
+  REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
+  REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(20, 5));
+  // Starting to get hard to keep up with, but seems it's acting as intended?
 }
