@@ -53,17 +53,17 @@ extern "C" {
 
 /// @brief Constructs a WebCanvas with the given canvas element id.
 /// @param id DOM id of the \<canvas\> element; defaults to "web-canvas" if empty.
-WebCanvas::WebCanvas(const std::string & id)
+WebCanvas::WebCanvas(const std::string& id)
 {
-    mId = std::move(id);
+    mId = id;
     if (mId.empty()) {
         mId = "web-canvas";
     }
 #ifdef __EMSCRIPTEN__
     mElement = GetDocument().call<emscripten::val>("getElementById", mId);
     mExisting = true;
-#endif
     webcanvas__init(mId.c_str());
+#endif
 }
 
 // ---- IDomElement ----
