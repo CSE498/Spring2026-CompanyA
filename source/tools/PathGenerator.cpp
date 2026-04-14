@@ -25,11 +25,10 @@ double PathGenerator::EuclideanDistance(const WorldPosition &p1, const WorldPosi
 }
 
 
-
-
-
-
-
+double PathGenerator::ManhattanDistance(const WorldPosition& p1, const WorldPosition& p2)
+{
+    return std::abs(p1.X() - p2.X()) + std::abs(p1.Y() - p2.Y());
+}
 
 
 bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &dir, const PathRequest &request)
@@ -468,52 +467,90 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
 
 bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pathDir, const PathRequest &request)
 {
+
+    /*
+     * Points are checked at (x,y) being the TOP LEFT position (straight line between then if
+     * the line enters grid then that grid is checked.
+     * If the line is a tie like (1,1) --> (2,2) then it goes Y DIRECTION first (in this case down to (2,1)
+     * then over to (2,2). It is a tie through a point and can't do diagonal steps like that though could.
+     * --> Just modify inner loop to check equality and increment both.
+     */
+
+    // I'm just using this lambda as an inner function loop instead of a function elsewhere
+    auto inner = [start](const WorldPosition& roundedStart, const WorldPosition& endTile, const PathVector& offset,
+        const PathVector& path, const PathRequest &request)
+    {
+        auto tileX = roundedStart.X();
+        auto tileY = roundedStart.Y();
+
+        int stepX = (path.X() > 0) ? 1 : -1;
+        int stepY = (path.Y() > 0) ? 1 : -1;
+
+        // this bit is adapted from chatgpt telling me about "2D DDA grid raycast" but is simple
+        // chatgpt just sped it up. No chat needed. Just look up ^^^.
+
+        // in short:
+        // essentially value of 't' between two points like x = 3 and x = 4 -- how much needed Solves:
+        // 1. startX + V_X * t = 3
+        // 2. startX + V_X * t = 4
+        // solve for the difference in 't' = delta T. (eq2 - eq1)
+        double tDeltaX = (path.X() != 0) ? std::abs(1 / path.X()) : INFINITY;
+        double tDeltaY = (path.Y() != 0) ? std::abs(1 / path.Y()) : INFINITY;
+
+        // This part is really simple we are just solving for 't' in:
+        //  startX + V.X() * t = floor(startX) + 1
+        // from start position how much of time step to reach the next barrier (depending on direction)
+        double nextBoundaryX = (stepX > 0) ? (roundedStart.X() + 1) : roundedStart.X();
+        double nextBoundaryY = (stepY > 0) ? (roundedStart.Y() + 1) : roundedStart.Y();
+        double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
+        double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
+
+        while ((endTile - WorldPosition(tileX, tileY) - offset).GetMagnitude() > EP)
+        {
+            if (tMaxX < tMaxY)
+            {
+                tileX += stepX;
+                tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles
+            }
+            else
+            {
+                tileY += stepY;
+                tMaxY += tDeltaY;
+            }
+            if (!request.mWorldGrid.IsWalkable({tileX, tileY}))
+                return false;
+        }
+        return true;
+
+    };
+
+    // Expensive but not that expensive. This gives a more comprehensive check
+    // so that edges of blocks are ignored in hit testing.
+
     // We make an algorithm to go over all tiles that are entered and check if those tiles are walls
-    WorldPosition roundedStart = Round(start);
-    double tileX = roundedStart.X();
-    double tileY = roundedStart.Y();
+    WorldPosition startRounded = Round(start);
     WorldPosition endTile = Round(start + pathDir);
 
     PathVector path = pathDir;
     path.Normalize();
-    int stepX = (path.X() > 0) ? 1 : -1;
-    int stepY = (path.Y() > 0) ? 1 : -1;
 
-    // this bit is adapted from chatgpt telling me about "2D DDA grid raycast" but is simple
-    // chatgpt just sped it up. No chat needed. Just look up ^^^.
+    bool test = inner(startRounded, endTile, {0,0}, path, request);
+    if (test)
+        return true;
 
-    // in short:
-    // essentially value of 't' between two points like x = 3 and x = 4 -- how much needed Solves:
-    // 1. startX + V_X * t = 3
-    // 2. startX + V_X * t = 4
-    // solve for the difference in 't' = delta T. (eq2 - eq1)
-    double tDeltaX = (path.X() != 0) ? std::abs(1 / path.X()) : INFINITY;
-    double tDeltaY = (path.Y() != 0) ? std::abs(1 / path.Y()) : INFINITY;
-
-    // This part is really simple we are just solving for 't' in:
-    //  startX + V.X() * t = floor(startX) + 1
-    // from start position how much of time step to reach the next barrier (depending on direction)
-    double nextBoundaryX = (stepX > 0) ? (roundedStart.X() + 1) : roundedStart.X();
-    double nextBoundaryY = (stepY > 0) ? (roundedStart.Y() + 1) : roundedStart.Y();
-    double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
-    double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
-
-    while ((endTile - WorldPosition(tileX, tileY)).GetMagnitude() > EP)
+    std::array<PathVector, 1> dirs = std::to_array<PathVector>({{0, 0}});
+    for (const auto & dir : dirs)
     {
-        if (tMaxX < tMaxY)
-        {
-            tileX += stepX;
-            tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles
-        }
-        else
-        {
-            tileY += stepY;
-            tMaxY += tDeltaY;
-        }
-        if (!request.mWorldGrid.IsWalkable({tileX, tileY}))
-            return false;
+        path = pathDir + dir;
+        path.Normalize();
+        endTile = Round(start + pathDir) + dir;
+
+        test = inner(startRounded, endTile, dir, path, request);
+        if (test)
+            return true;
     }
-    return true;
+
+    return false;
 
 }
 

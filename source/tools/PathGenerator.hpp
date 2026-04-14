@@ -273,8 +273,8 @@ public:
     PathGenerator() = delete;
     PathGenerator(const PathGenerator&) = delete;
     PathGenerator(PathGenerator&&) = delete;
-    static double EuclideanDistance(const WorldPosition &p1, const WorldPosition &p2);
-
+    [[nodiscard]] static double EuclideanDistance(const WorldPosition &p1, const WorldPosition &p2);
+    [[nodiscard]] static double ManhattanDistance(const WorldPosition& p1, const WorldPosition& p2);
     /**
      * Finds the path to a point nearest to start that is radius away from center in a fairly efficient manner
      * Only will check in the unit directions inverted from the center --> Will never try to get closer to the center
@@ -284,7 +284,7 @@ public:
      * @param radius - radius distance
      * @return - path to desired point
      */
-    static WorldPath FindPointAway(const WorldPosition& start, const WorldPosition& center, const PathRequest& request, double radius = 5);
+    [[nodiscard]] static WorldPath FindPointAway(const WorldPosition& start, const WorldPosition& center, const PathRequest& request, double radius = 5);
 
 
 
@@ -392,6 +392,10 @@ public:
                                                mWorldGrid(worldGrid), mMaxSearchDistance(maxSearchDistance)
     {
     }
+    explicit PathRequest(const WorldGrid& worldGrid, const double maxSearchDistance = 0) :
+    mAvoidTiles({}), mWorldGrid(worldGrid), mMaxSearchDistance(maxSearchDistance) {}
+
+
 };
 
 /**
