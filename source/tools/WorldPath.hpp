@@ -86,6 +86,11 @@ public:
         return *this;
     }
 
+    constexpr WorldPosition Back() const
+    {
+        return mPoints.back();
+    }
+
     /**
      * Appends points from another path to this path.
      */

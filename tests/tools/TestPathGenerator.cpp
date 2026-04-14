@@ -947,3 +947,97 @@ TEST_CASE("PathGenerator directional stepping - minimal but complete coverage", 
         CHECK(r == WorldPosition(-2, 3));
     }
 }
+
+
+TEST_CASE("Find Point Away tests -- Implicitly tests Find Furthest Point", "[FindPointAway, FindFurthestPoint]")
+{
+    cse498::CircleWorld world;
+    PathRequest request({}, world.GetGrid());
+
+    SECTION("Simple Left case")
+    {
+
+        auto result = PathGenerator::FindPointAway({4,1}, {6,1}, request, 3);
+        vector<WorldPosition> ans = {{4,1}, {3,1}};
+        CHECK(result == WorldPath(ans));
+    }
+    SECTION("No movement once distance is reached")
+    {
+        auto result = PathGenerator::FindPointAway({3,1}, {6,1}, request, 3);
+        CHECK(result.Empty());
+        result = PathGenerator::FindPointAway({2,1}, {6,1}, request, 3);
+        CHECK(result.Empty());
+    }
+
+    SECTION("Diagonal to left")
+    {
+        WorldPosition start = {5,4};
+        WorldPosition center = {6,5};
+        auto result = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(result.Length() <= 5);
+        CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
+
+        PathVector vec = start - center;
+        start = start + vec;
+        auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
+        vector<WorldPosition> ans2 = {{3,4} ,{2,4} ,{1,4}};
+        CHECK(result2.Length() < result.Length());
+        CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
+    }
+
+    SECTION("Diagonal Left trapped")
+    {
+        WorldPosition start = {1,1};
+        WorldPosition center = {2,2};
+        auto result = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(result.Empty());
+    }
+
+    SECTION("Diagonal to Right")
+    {
+        WorldPosition start = {7,4};
+        WorldPosition center = {6,5};
+        auto result = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
+
+        PathVector vec = start - center;
+        start = start + vec;
+        auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
+    }
+    SECTION("Diagonal to Bottom left")
+    {
+        WorldPosition start = {5,6};
+        WorldPosition center = {6,5};
+        auto result = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
+
+        PathVector vec = start - center;
+        start = start + vec;
+        auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
+    }
+    SECTION("Diagonal to Bottom right")
+    {
+        WorldPosition start = {7,6};
+        WorldPosition center = {6,5};
+        auto result = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
+
+        PathVector vec = start - center;
+        start = start + vec;
+        auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
+        CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
+    }
+
+}
+
+

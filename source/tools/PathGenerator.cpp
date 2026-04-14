@@ -16,6 +16,22 @@
 
 namespace cse498
 {
+
+double PathGenerator::EuclideanDistance(const WorldPosition &p1, const WorldPosition &p2)
+{
+    const double x_x = p1.X() - p2.X();
+    const double y_y = p1.Y() - p2.Y();
+    return std::sqrt(x_x * x_x + y_y * y_y); // can't be constexpr but c++26 is nearby
+}
+
+
+
+
+
+
+
+
+
 bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &dir, const PathRequest &request)
 {
     auto nextPos = from + dir;
@@ -90,6 +106,9 @@ bool PathGenerator::IsPointBefore(const WorldPosition &testPt,
 
     return flag == CircleDirectionFlag::CCW ? result < 0 : result > 0;
 }
+
+
+
 
 std::vector<WorldPosition> PathGenerator::AStarReconstruction(const ANode* end)
 {
@@ -498,9 +517,126 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
 
 }
 
+WorldPath PathGenerator::FindPointAway(const WorldPosition& start, const WorldPosition& center, const PathRequest& request, double radius)
+{
+    if (!start.IsValid() || !center.IsValid() || radius < 0.0)
+        return {};
+
+    // If already at the proper distance then done
+    const double startDist = EuclideanDistance(start, center);
+    if (startDist + EP >= radius)
+        return WorldPath();
+
+    PathVector dir = start - center;
+    dir.Normalize(); // Just to scale it to reasonable size so no issues with ~ 0 occur.
+    auto path = FindFurtherestPoint(start, center, dir, request, radius);
+    return WorldPath(path);
+}
+
+std::vector<WorldPosition> PathGenerator::FindFurtherestPoint(const WorldPosition& start, const WorldPosition& center,
+    const PathVector& direction, const PathRequest& request, double maxRange)
+{
+    // If the direction is small we say that 0 direction was provided {0,0} which is invalid
+    if (!request.mWorldGrid.IsWalkable(start) || direction.GetMagnitude() < EP)
+        return {};
+
+    // Possible directions that can be taken
+    std::array<PathVector, 3> dirs = std::to_array<PathVector>({{0,0},{0,0},{0,0}});
+    int dirCount = 0;
+
+    // It is unintended if direction is small to take those directions
+    // ensure these are int directions but saved as doubles because of "narrowing" conversion warnings int --> double?
+    double dx = (std::abs(direction.X()) < EP) ? 0 : static_cast<int>(direction.X() / std::abs(direction.X()));
+    double dy = (std::abs(direction.Y()) < EP) ? 0 : static_cast<int>(direction.Y() / std::abs(direction.Y()));
+    constexpr int STEP = 1; // Defined by the two lines above
+
+    if (dx && dy) // likely case so separated and done first
+    {
+        dirs[0] = {dx, 0};
+        dirs[1] = {0, dy};
+        dirCount = 2;
+    }
+    else
+    {
+        dirCount = 3;
+        if (dx)
+        {
+            dirs[0] = {dx, 0};
+            dirs[1] = {0, STEP}; // this is hard coded 1 since dx,dy calculated to be hard coded 1
+            dirs[2] = {0, -STEP};
+        }
+        else
+        {
+            dirs[0] = {0, dy};
+            dirs[1] = {-STEP, 0};
+            dirs[2] = {STEP, 0};
+        }
+    }
+
+    const bool canMove0 = IsTravelable(start, dirs[0], request);
+    const bool canMove1 = IsTravelable(start, dirs[1], request);
+    const bool canMove2 = (dirCount == 3) ? IsTravelable(start, dirs[2], request) : false;
+
+    if (!canMove0 && !canMove1 && !canMove2)
+        return {};
+    double startg = EuclideanDistance(start, center);
 
 
+    // ---- DFS setup
+    std::vector<std::unique_ptr<ANode>> storage;
+    std::vector<ANode*> stack;
+    std::unordered_set<WorldPosition> visited;
 
+    // start node
+    storage.push_back(std::make_unique<ANode>(start, startg, 0.0, nullptr));
+    stack.push_back(storage.back().get());
+    visited.insert(start);
+
+    // track best result if we never reach maxRange
+    ANode* bestNode = storage.back().get();
+
+    while (!stack.empty())
+    {
+        ANode* node = stack.back();
+        stack.pop_back();
+
+        // update best node (furthest by path cost)
+        if (node->mg > bestNode->mg)
+            bestNode = node;
+
+        // goal condition: reached radius → return immediately
+        if (node->mg >= maxRange - EP) // this limits depth
+        {
+            return AStarReconstruction(node);
+        }
+
+        // Otherwise continue exploring
+        for (int i = dirCount - 1; i >= 0; --i) // reverse so dirs[0] explored first
+        {
+            const auto& dir = dirs[i];
+            WorldPosition neighbor = node->mPos + dir;
+
+            // if the neighbor is not a valid walking tile then skip it
+            if (!IsTravelable(node->mPos, dir, request))
+                continue;
+
+            // I want an actual circle and not a circle dependent on manhattan distance
+            double g = EuclideanDistance(neighbor, center);
+
+            if (visited.contains(neighbor))
+                continue;
+
+            visited.insert(neighbor);
+
+            // Order of arguments is Node, g, f, prev node (f unused here)
+            storage.push_back(std::make_unique<ANode>(neighbor, g, 0.0, node));
+            stack.push_back(storage.back().get());
+        }
+    }
+
+    // If we never hit maxRange, return the furthest we found
+    return AStarReconstruction(bestNode);
+}
 
 
 
