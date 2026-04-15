@@ -228,7 +228,7 @@ std::ostream& operator<<(std::ostream& os, const WorldPath& path)
        << ", length=" << path.Length() << "}";
 
     for (const auto& pt : path.mPoints)
-        os << " {" << pt.X() << "," << pt.Y() << "}";
+        os << " {" << pt.X() << "," << pt.Y() << "},";
 
     return os;
 }

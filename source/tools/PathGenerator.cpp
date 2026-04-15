@@ -16,6 +16,21 @@
 
 namespace cse498
 {
+
+double PathGenerator::EuclideanDistance(const WorldPosition &p1, const WorldPosition &p2)
+{
+    const double x_x = p1.X() - p2.X();
+    const double y_y = p1.Y() - p2.Y();
+    return std::sqrt(x_x * x_x + y_y * y_y); // can't be constexpr but c++26 is nearby
+}
+
+
+double PathGenerator::ManhattanDistance(const WorldPosition& p1, const WorldPosition& p2)
+{
+    return std::abs(p1.X() - p2.X()) + std::abs(p1.Y() - p2.Y());
+}
+
+
 bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &dir, const PathRequest &request)
 {
     auto nextPos = from + dir;
@@ -90,6 +105,9 @@ bool PathGenerator::IsPointBefore(const WorldPosition &testPt,
 
     return flag == CircleDirectionFlag::CCW ? result < 0 : result > 0;
 }
+
+
+
 
 std::vector<WorldPosition> PathGenerator::AStarReconstruction(const ANode* end)
 {
@@ -449,58 +467,213 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
 
 bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pathDir, const PathRequest &request)
 {
+
+    /*
+     * Points are checked at (x,y) being the TOP LEFT position (straight line between then if
+     * the line enters grid then that grid is checked.
+     * If the line is a tie like (1,1) --> (2,2) then it goes Y DIRECTION first (in this case down to (2,1)
+     * then over to (2,2). It is a tie through a point and can't do diagonal steps like that though could.
+     * --> Just modify inner loop to check equality and increment both.
+     */
+
+    // I'm just using this lambda as an inner function loop instead of a function elsewhere
+    auto inner = [start](const WorldPosition& roundedStart, const WorldPosition& endTile, const PathVector& offset,
+        const PathVector& path, const PathRequest &request)
+    {
+        auto tileX = roundedStart.X();
+        auto tileY = roundedStart.Y();
+
+        int stepX = (path.X() > 0) ? 1 : -1;
+        int stepY = (path.Y() > 0) ? 1 : -1;
+
+        // this bit is adapted from chatgpt telling me about "2D DDA grid raycast" but is simple
+        // chatgpt just sped it up. No chat needed. Just look up ^^^.
+
+        // in short:
+        // essentially value of 't' between two points like x = 3 and x = 4 -- how much needed Solves:
+        // 1. startX + V_X * t = 3
+        // 2. startX + V_X * t = 4
+        // solve for the difference in 't' = delta T. (eq2 - eq1)
+        double tDeltaX = (path.X() != 0) ? std::abs(1 / path.X()) : INFINITY;
+        double tDeltaY = (path.Y() != 0) ? std::abs(1 / path.Y()) : INFINITY;
+
+        // This part is really simple we are just solving for 't' in:
+        //  startX + V.X() * t = floor(startX) + 1
+        // from start position how much of time step to reach the next barrier (depending on direction)
+        double nextBoundaryX = (stepX > 0) ? (roundedStart.X() + 1) : roundedStart.X();
+        double nextBoundaryY = (stepY > 0) ? (roundedStart.Y() + 1) : roundedStart.Y();
+        double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
+        double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
+
+        while ((endTile - WorldPosition(tileX, tileY) - offset).GetMagnitude() > EP)
+        {
+            if (tMaxX < tMaxY)
+            {
+                tileX += stepX;
+                tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles
+            }
+            else
+            {
+                tileY += stepY;
+                tMaxY += tDeltaY;
+            }
+            if (!request.mWorldGrid.IsWalkable({tileX, tileY}))
+                return false;
+        }
+        return true;
+
+    };
+
+    // Expensive but not that expensive. This gives a more comprehensive check
+    // so that edges of blocks are ignored in hit testing.
+
     // We make an algorithm to go over all tiles that are entered and check if those tiles are walls
-    WorldPosition roundedStart = Round(start);
-    double tileX = roundedStart.X();
-    double tileY = roundedStart.Y();
+    WorldPosition startRounded = Round(start);
     WorldPosition endTile = Round(start + pathDir);
 
     PathVector path = pathDir;
     path.Normalize();
-    int stepX = (path.X() > 0) ? 1 : -1;
-    int stepY = (path.Y() > 0) ? 1 : -1;
 
-    // this bit is adapted from chatgpt telling me about "2D DDA grid raycast" but is simple
-    // chatgpt just sped it up. No chat needed. Just look up ^^^.
+    bool test = inner(startRounded, endTile, {0,0}, path, request);
+    if (test)
+        return true;
 
-    // in short:
-    // essentially value of 't' between two points like x = 3 and x = 4 -- how much needed Solves:
-    // 1. startX + V_X * t = 3
-    // 2. startX + V_X * t = 4
-    // solve for the difference in 't' = delta T. (eq2 - eq1)
-    double tDeltaX = (path.X() != 0) ? std::abs(1 / path.X()) : INFINITY;
-    double tDeltaY = (path.Y() != 0) ? std::abs(1 / path.Y()) : INFINITY;
-
-    // This part is really simple we are just solving for 't' in:
-    //  startX + V.X() * t = floor(startX) + 1
-    // from start position how much of time step to reach the next barrier (depending on direction)
-    double nextBoundaryX = (stepX > 0) ? (roundedStart.X() + 1) : roundedStart.X();
-    double nextBoundaryY = (stepY > 0) ? (roundedStart.Y() + 1) : roundedStart.Y();
-    double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
-    double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
-
-    while ((endTile - WorldPosition(tileX, tileY)).GetMagnitude() > EP)
+    std::array<PathVector, 1> dirs = std::to_array<PathVector>({{0, 0}});
+    for (const auto & dir : dirs)
     {
-        if (tMaxX < tMaxY)
-        {
-            tileX += stepX;
-            tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles
-        }
-        else
-        {
-            tileY += stepY;
-            tMaxY += tDeltaY;
-        }
-        if (!request.mWorldGrid.IsWalkable({tileX, tileY}))
-            return false;
+        path = pathDir + dir;
+        path.Normalize();
+        endTile = Round(start + pathDir) + dir;
+
+        test = inner(startRounded, endTile, dir, path, request);
+        if (test)
+            return true;
     }
-    return true;
+
+    return false;
 
 }
 
+WorldPath PathGenerator::FindPointAway(const WorldPosition& start, const WorldPosition& center, const PathRequest& request, double radius)
+{
+    if (!start.IsValid() || !center.IsValid() || radius < 0.0)
+        return {};
+
+    // If already at the proper distance then done
+    const double startDist = EuclideanDistance(start, center);
+    if (startDist + EP >= radius)
+        return WorldPath();
+
+    PathVector dir = start - center;
+    dir.Normalize(); // Just to scale it to reasonable size so no issues with ~ 0 occur.
+    auto path = FindFurtherestPoint(start, center, dir, request, radius);
+    return WorldPath(path);
+}
+
+std::vector<WorldPosition> PathGenerator::FindFurtherestPoint(const WorldPosition& start, const WorldPosition& center,
+    const PathVector& direction, const PathRequest& request, double maxRange)
+{
+    // If the direction is small we say that 0 direction was provided {0,0} which is invalid
+    if (!request.mWorldGrid.IsWalkable(start) || direction.GetMagnitude() < EP)
+        return {};
+
+    // Possible directions that can be taken
+    std::array<PathVector, 3> dirs = std::to_array<PathVector>({{0,0},{0,0},{0,0}});
+    int dirCount = 0;
+
+    // It is unintended if direction is small to take those directions
+    // ensure these are int directions but saved as doubles because of "narrowing" conversion warnings int --> double?
+    double dx = (std::abs(direction.X()) < EP) ? 0 : static_cast<int>(direction.X() / std::abs(direction.X()));
+    double dy = (std::abs(direction.Y()) < EP) ? 0 : static_cast<int>(direction.Y() / std::abs(direction.Y()));
+    constexpr int STEP = 1; // Defined by the two lines above
+
+    if (dx && dy) // likely case so separated and done first
+    {
+        dirs[0] = {dx, 0};
+        dirs[1] = {0, dy};
+        dirCount = 2;
+    }
+    else
+    {
+        dirCount = 3;
+        if (dx)
+        {
+            dirs[0] = {dx, 0};
+            dirs[1] = {0, STEP}; // this is hard coded 1 since dx,dy calculated to be hard coded 1
+            dirs[2] = {0, -STEP};
+        }
+        else
+        {
+            dirs[0] = {0, dy};
+            dirs[1] = {-STEP, 0};
+            dirs[2] = {STEP, 0};
+        }
+    }
+
+    const bool canMove0 = IsTravelable(start, dirs[0], request);
+    const bool canMove1 = IsTravelable(start, dirs[1], request);
+    const bool canMove2 = (dirCount == 3) ? IsTravelable(start, dirs[2], request) : false;
+
+    if (!canMove0 && !canMove1 && !canMove2)
+        return {};
+    double startg = EuclideanDistance(start, center);
 
 
+    // ---- DFS setup
+    std::vector<std::unique_ptr<ANode>> storage;
+    std::vector<ANode*> stack;
+    std::unordered_set<WorldPosition> visited;
 
+    // start node
+    storage.push_back(std::make_unique<ANode>(start, startg, 0.0, nullptr));
+    stack.push_back(storage.back().get());
+    visited.insert(start);
+
+    // track best result if we never reach maxRange
+    ANode* bestNode = storage.back().get();
+
+    while (!stack.empty())
+    {
+        ANode* node = stack.back();
+        stack.pop_back();
+
+        // update best node (furthest by path cost)
+        if (node->mg > bestNode->mg)
+            bestNode = node;
+
+        // goal condition: reached radius → return immediately
+        if (node->mg >= maxRange - EP) // this limits depth
+        {
+            return AStarReconstruction(node);
+        }
+
+        // Otherwise continue exploring
+        for (int i = dirCount - 1; i >= 0; --i) // reverse so dirs[0] explored first
+        {
+            const auto& dir = dirs[i];
+            WorldPosition neighbor = node->mPos + dir;
+
+            // if the neighbor is not a valid walking tile then skip it
+            if (!IsTravelable(node->mPos, dir, request))
+                continue;
+
+            // I want an actual circle and not a circle dependent on manhattan distance
+            double g = EuclideanDistance(neighbor, center);
+
+            if (visited.contains(neighbor))
+                continue;
+
+            visited.insert(neighbor);
+
+            // Order of arguments is Node, g, f, prev node (f unused here)
+            storage.push_back(std::make_unique<ANode>(neighbor, g, 0.0, node));
+            stack.push_back(storage.back().get());
+        }
+    }
+
+    // If we never hit maxRange, return the furthest we found
+    return AStarReconstruction(bestNode);
+}
 
 
 

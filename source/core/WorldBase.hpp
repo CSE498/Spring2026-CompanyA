@@ -41,9 +41,7 @@ namespace cse498 {
     PlayerAgent* mPlayer;
 
     bool mRunOver = false;  ///< Are we finished executing and now shutting down?
-
-
-
+    
     /// Helper function that is run whenever a new agent is created.
     /// @note Override this function to provide agents with actions or other setup.
     virtual void ConfigAgent(AgentBase & /* agent */) { }

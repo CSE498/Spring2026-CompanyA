@@ -76,13 +76,6 @@ private:
     // Max search distance relative to circle radius of whatever distance to get there. -- arbitrary and could add param for it
     static constexpr double CIRCLE_EXPAND_MULTIPLIER = 2.2;
 
-    static constexpr double EuclideanDistance(const WorldPosition &p1, const WorldPosition &p2)
-    {
-        const double x_x = p1.X() - p2.X();
-        const double y_y = p1.Y() - p2.Y();
-        return std::sqrt(x_x * x_x + y_y * y_y); // can't be constexpr but c++26 is nearby
-    }
-
     /**
      * These are the nodes used for A* search
      */
@@ -96,6 +89,7 @@ private:
         ANode* mPrev = nullptr;
         ANode(const WorldPosition& pos, double g, double f, ANode* prev) : mPos(pos), mg(g), mf(f), mPrev(prev) {}
     };
+
 
     /**
      * comparison operator for the priority queue
@@ -260,10 +254,39 @@ private:
                                                                         const PathRequest &request,
                                                                         CircleDirectionFlag flag);
 
+    /**
+     * A simpler custom A* operating under different conditions and assumptions to be more efficient
+     * on finding a goal point in the provided general direction
+     * RETURNS 4 DIRECTIONS ONLY for operation
+     * @param start Start position
+     * @param direction - allowed travel direction (1,1), (-1,1), (1,-1), (-1,-1)
+     * @param maxRange - max search range for efficiency
+     * @return vector of world positions to get to the furthest point
+     * If You can't move!! THEN EMPTY!
+     */
+    static std::vector<WorldPosition> FindFurtherestPoint(const WorldPosition& start, const WorldPosition& center,
+        const PathVector& direction, const PathRequest& request, double maxRange);
+
+
+
 public:
     PathGenerator() = delete;
     PathGenerator(const PathGenerator&) = delete;
     PathGenerator(PathGenerator&&) = delete;
+    [[nodiscard]] static double EuclideanDistance(const WorldPosition &p1, const WorldPosition &p2);
+    [[nodiscard]] static double ManhattanDistance(const WorldPosition& p1, const WorldPosition& p2);
+    /**
+     * Finds the path to a point nearest to start that is radius away from center in a fairly efficient manner
+     * Only will check in the unit directions inverted from the center --> Will never try to get closer to the center
+     * Will end up returning empty WorldPath if in a corner for instance
+     * @param start - start position of skeleton ranged enemy for instance
+     * @param center - Point to stay radius distance away from
+     * @param radius - radius distance
+     * @return - path to desired point
+     */
+    [[nodiscard]] static WorldPath FindPointAway(const WorldPosition& start, const WorldPosition& center, const PathRequest& request, double radius = 5);
+
+
 
     // Note none of these can be constexpr because they all need to measure distance with sqrt()
 
@@ -369,6 +392,10 @@ public:
                                                mWorldGrid(worldGrid), mMaxSearchDistance(maxSearchDistance)
     {
     }
+    explicit PathRequest(const WorldGrid& worldGrid, const double maxSearchDistance = 0) :
+    mAvoidTiles({}), mWorldGrid(worldGrid), mMaxSearchDistance(maxSearchDistance) {}
+
+
 };
 
 /**

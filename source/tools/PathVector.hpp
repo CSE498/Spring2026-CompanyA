@@ -32,7 +32,6 @@ private:
 
 
 public:
-
     /**
      * Creates a path vector pointing in the direction of 'to'
      * Example: (0,0) --> (1,1) then resulting vector is 1,1

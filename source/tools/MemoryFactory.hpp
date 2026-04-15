@@ -1,50 +1,49 @@
 /**
  * @brief A memory manager class that pre-allocates blocks of memory for
- *  a specific type T and manages a free list for efficient allocation and deallocation.
+ *  a specific type T and manages a free list for efficient allocation and
+ *deallocation.
  * @note Status: PROPOSAL
  **/
 
- // Refactored this class to use smart pointers using an LLM
+// Refactored this class to use smart pointers using an LLM
 
 #pragma once
-#include <memory>
-#include <vector>
-#include <cstddef>
-#include <utility>
+#include <algorithm>
 #include <cassert>
+#include <cstddef>
+#include <memory>
 #include <new>
+#include <ranges>
+#include <utility>
+#include <vector>
 
 namespace cse498 {
 
     // Templated to work for any type T
-    template <class T>
+    template<class T>
     class MemoryFactory {
 
     public:
-
-        explicit MemoryFactory(std::size_t blockSize = 64)
-            : blockSize(blockSize), freeList(nullptr)
-        {
+        explicit MemoryFactory(std::size_t blockSize = 64) : blockSize(blockSize), freeList(nullptr) {
             assert(blockSize > 0);
-            allocateNewBlock();
+            AllocateNewBlock();
         }
 
-        MemoryFactory(const MemoryFactory&) = delete;
-        MemoryFactory& operator=(const MemoryFactory&) = delete;
+        MemoryFactory(const MemoryFactory &) = delete;
+        MemoryFactory &operator=(const MemoryFactory &) = delete;
 
         // Destructor to free all allocated blocks of memory
         ~MemoryFactory() {
-            for (void* block : blocks) {
-                ::operator delete(block, std::align_val_t(alignof(Node)));
-            }
+            std::ranges::for_each(blocks,
+                                  [](void *block) { ::operator delete(block, std::align_val_t(alignof(Node))); });
         }
 
         struct PoolDeleter {
-            MemoryFactory* pool{nullptr};
+            MemoryFactory *pool{nullptr};
 
-            void operator()(T* ptr) const noexcept {
+            void operator()(T *ptr) const noexcept {
                 if (pool && ptr) {
-                    pool->destroy(ptr);
+                    pool->Destroy(ptr);
                 }
             }
         };
@@ -60,44 +59,48 @@ namespace cse498 {
          * Internally, this function delegates construction to create() and
          * then wraps the resulting raw pointer in a smart pointer.
          */
-        template <class... Args>
-        std::unique_ptr<T, PoolDeleter> make(Args&&... args) {
-            T* obj = create(std::forward<Args>(args)...);
+        template<class... Args>
+        std::unique_ptr<T, PoolDeleter> Make(Args &&...args) {
+            T *obj = Create(std::forward<Args>(args)...);
             return std::unique_ptr<T, PoolDeleter>(obj, PoolDeleter{this});
         }
 
         // Destroys the object and returns the slot to the free list
-        void destroy(T* obj) noexcept {
-            if (!obj) return;
-            
+        void Destroy(T *obj) noexcept {
+            if (!obj)
+                return;
+
             // Call the destructor of the object
             obj->~T();
 
             // Add the slot back to the free list
-            Node* slot = reinterpret_cast<Node*>(obj);
+            Node *slot = reinterpret_cast<Node *>(obj);
             slot->next = freeList;
             freeList = slot;
         }
 
     private:
-
-        // A node in the free list, which can either hold a pointer to the next free slot or the actual data
+        // A node in the free list, which can either hold a pointer to the next free
+        // slot or the actual data
         union Node {
-            Node* next;
+            Node *next;
             alignas(T) unsigned char data[sizeof(T)];
         };
 
-        static_assert(sizeof(Node)  >= sizeof(T), "Node storage must be at least as large as T");
+        static constexpr std::size_t node_size = sizeof(Node);
+        static constexpr std::size_t node_alignment = alignof(Node);
+
+        static_assert(sizeof(Node) >= sizeof(T), "Node storage must be at least as large as T");
         static_assert(alignof(Node) >= alignof(T), "Node alignment must satisfy T's alignment requirement");
-        
+
         // How many nodes in each allocated block
         std::size_t blockSize;
 
         // All allocated blocks of memory
-        std::vector<void*> blocks;
+        std::vector<void *> blocks;
 
         // Pointer to the head of the free list
-        Node* freeList;
+        Node *freeList;
 
         /**
          * Constructs an object of type T inside pooled memory and returns
@@ -111,30 +114,32 @@ namespace cse498 {
          * the object to the pool. Failure to do so will result in the slot
          * not being reclaimed.
          **/
-        template <class... Args>
-        T* create(Args&&... args) {
+        template<class... Args>
+        T *Create(Args &&...args) {
             // If the free list is empty, allocate a new block of memory
-            if (!freeList) allocateNewBlock();
+            if (!freeList)
+                AllocateNewBlock();
 
             // Take the first node from the free list
-            Node* slot = freeList;
+            Node *slot = freeList;
 
             // Move the free list head to the next node
             freeList = freeList->next;
 
             // Construct a T object in the allocated slot using placement new
-            return ::new (static_cast<void*>(slot)) T(std::forward<Args>(args)...);
+            return ::new (static_cast<void *>(slot)) T(std::forward<Args>(args)...);
         }
 
-        void allocateNewBlock() {
+        void AllocateNewBlock() {
 
-            // Allocate a new block of memory for blockSize nodes, ensuring proper alignment
+            // Allocate a new block of memory for blockSize nodes, ensuring proper
+            // alignment
             const std::size_t bytes = sizeof(Node) * blockSize;
-            void* memory = ::operator new(bytes, std::align_val_t(alignof(Node)));
+            void *memory = ::operator new(bytes, std::align_val_t(alignof(Node)));
             blocks.push_back(memory);
 
             // Initialize the free list with the new block of nodes
-            Node* block = static_cast<Node*>(memory);
+            Node *block = static_cast<Node *>(memory);
             for (std::size_t i = 0; i < blockSize; ++i) {
                 block[i].next = freeList;
                 freeList = &block[i];
@@ -142,4 +147,4 @@ namespace cse498 {
         }
     };
 
-} 
+} // namespace cse498
