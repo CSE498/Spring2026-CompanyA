@@ -34,10 +34,11 @@ Verify the installation:
 em++ --version
 ```
 
-## Building WebUI Components
+## Building WebUI Components' Demos
 
-Individual components can be compiled with `em++`. Example for the
-WebButton demo:
+Individual components can be compiled with `em++`.
+
+For WebButton:
 
 ```bash
 cd source/Interfaces/WebUI/WebButton
@@ -47,15 +48,40 @@ em++ main.cpp WebButton.cpp ../WebLayout/WebLayout.cpp \
      -o index.html
 ```
 
+For WebCanvas, read [3.4.3](https://github.com/CSE498/Spring2026-CompanyA/blob/d134241584fe44b10db4e1d47f4efdaadfe8ef53/docs/ClassSpecs/Interfaces/WebUI/WebCanvas.md#343-stand-alone-demo--test) in `Spring2026-CompanyA/docs/ClassSpecs/Interfaces/WebUI/WebCanvas.md`
+
+## Building Module Demo
+
+The module demo main file is Group18_main.cpp, located in the source directory along with an index.html file. To build the demo, run
+```bash
+# From the repo root (Emscripten environment must be active)
+cmake --build build --target group18_demo
+```
+then
+```bash
+# From the repo root (Emscripten environment must be active)
+emrun /source/index.html --browser <chrome | edge | ...> --serve-root .
+```
+The --serve-root argument is important for loading image assets.
+
+Alternative, run
+```bash
+emrun /source/index.html --no_browser --serve-root .
+```
+then open in browser
+```bash
+http://localhost:6931/source/index.html
+```
+
 ## Running Tests
 
-WebUI tests are **excluded** from the default `make test` target because they
-require the Emscripten toolchain. A dedicated Makefile target compiles all
+WebUI tests are **excluded** from the default target because they
+require the Emscripten toolchain. A dedicated cmake target compiles all
 WebUI tests:
 
 ```bash
 # From the repo root (Emscripten environment must be active)
-make web_test
+cmake --build build --target web_test
 ```
 
 This produces HTML files in `tests/build/web_tests/`. To run them:
@@ -63,6 +89,10 @@ This produces HTML files in `tests/build/web_tests/`. To run them:
 ```bash
 cd tests/build/web_tests
 python3 -m http.server 8000
+```
+or
+```bash
+emrun tests/build/web_tests --browser <chrome | edge | ...>
 ```
 
 Then open `http://localhost:8000/<TestName>.html` in your browser. Test

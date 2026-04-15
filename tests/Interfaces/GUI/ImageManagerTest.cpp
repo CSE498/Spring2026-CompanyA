@@ -12,10 +12,12 @@
 
 #include "../../../source/Interfaces/GUI/ImageManager.hpp"
 
+#include <expected>
+
 namespace cse498 {
 
 /**
-* Class for initalizing and shutting down the SDL
+* Class for initializing and shutting down the SDL
 */
 class SDLMock {
 public:
@@ -55,8 +57,10 @@ TEST_CASE("Constructor", "[ImageManager]")
     // set up SDL
     SDLMock mock;
 
-    // ensures constructor works with valid renderer
-    REQUIRE_NOTHROW(ImageManager(mock.renderer));
+    // ensures constructor works with valid renderer, without an image
+    ImageManager manager(mock.renderer);
+    CHECK(manager.HasImage("DNE") == false);
+    CHECK(manager.GetTexture("DNE") == nullptr);
 }
 
 TEST_CASE("Load and get images", "[ImageManager]")
@@ -65,14 +69,14 @@ TEST_CASE("Load and get images", "[ImageManager]")
     SDLMock mock;
     ImageManager manager(mock.renderer);
 
-    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
+    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
 
     // load image & confirm existence
-    REQUIRE_NOTHROW(manager.load_image("test_img", testImage));
-    CHECK(manager.has_image("test_img") == true);
-    CHECK(manager.get_texture("test_img") != nullptr);
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
+    CHECK(manager.HasImage("test_img") == true);
+    CHECK(manager.GetTexture("test_img") != nullptr);
 }
-
 
 TEST_CASE("Duplicate images", "[ImageManager]")
 {
@@ -80,15 +84,16 @@ TEST_CASE("Duplicate images", "[ImageManager]")
     SDLMock mock;
     ImageManager manager(mock.renderer);
 
-    // load image
-    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
-    manager.load_image("test_img", testImage);
+    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+
+    // load image for setup — first load should succeed
+    auto first = manager.LoadImage("test_img", testImage);
+    REQUIRE(first);
 
     // check for error when trying to load same image again
-    REQUIRE_THROWS_AS(
-        manager.load_image("test_img", testImage),
-        std::runtime_error
-    );
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE_FALSE(result);
+    CHECK(result.error() == "Duplicate image name: test_img");
 }
 
 TEST_CASE("Loading invalid file", "[ImageManager]")
@@ -98,10 +103,9 @@ TEST_CASE("Loading invalid file", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // check for error when trying to load a non-existence image file
-    REQUIRE_THROWS_AS(
-        manager.load_image("invalid", "invalid.png"),
-        std::runtime_error
-    );
+    auto result = manager.LoadImage("invalid", "invalid.png");
+    REQUIRE_FALSE(result);
+    CHECK_FALSE(result.error().empty());
 }
 
 TEST_CASE("Invalid file in draw_image", "[ImageManager]")
@@ -111,7 +115,7 @@ TEST_CASE("Invalid file in draw_image", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // confirm it returns false
-    CHECK(manager.draw_image("invalid", 0, 0) == false);
+    CHECK(manager.DrawImage("invalid", 0, 0) == false);
 }
 
 TEST_CASE("Valid file in draw_image", "[ImageManager]")
@@ -121,11 +125,30 @@ TEST_CASE("Valid file in draw_image", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // load image
-    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
-    manager.load_image("test_img", testImage);
+    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
 
     // confirm it returns true
-    CHECK(manager.draw_image("test_img", 10, 10) == true);
+    CHECK(manager.DrawImage("test_img", 10, 10) == true);
+}
+
+TEST_CASE("DrawImage overload with scaling", "[ImageManager]")
+{
+    // set up SDL
+    SDLMock mock;
+    ImageManager manager(mock.renderer);
+
+    // load image
+    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
+
+    // confirm scaled overload returns true
+    CHECK(manager.DrawImage("test_img", 0, 0, 50, 50) == true);
+
+    // confirm scaled overload returns false for an image that was never loaded
+    CHECK(manager.DrawImage("invalid", 0, 0, 50, 50) == false);
 }
 
 TEST_CASE("Loading empty strings", "[ImageManager]")
@@ -134,19 +157,17 @@ TEST_CASE("Loading empty strings", "[ImageManager]")
     SDLMock mock;
     ImageManager manager(mock.renderer);
 
-    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
+    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
 
-    // check for invalid_argument on empty name
-    REQUIRE_THROWS_AS(
-        manager.load_image("", testImage),
-        std::invalid_argument
-    );
+    // check for error on empty name
+    auto result1 = manager.LoadImage("", testImage);
+    REQUIRE_FALSE(result1);
+    CHECK(result1.error() == "Image name or file path can't be empty.");
 
-    // check for invalid_argument on empty path
-    REQUIRE_THROWS_AS(
-        manager.load_image("test_img", ""),
-        std::invalid_argument
-    );
+    // check for error on empty path
+    auto result2 = manager.LoadImage("test_img", "");
+    REQUIRE_FALSE(result2);
+    CHECK(result2.error() == "Image name or file path can't be empty.");
 }
 
 TEST_CASE("Extreme coordinates in draw_image", "[ImageManager]")
@@ -156,12 +177,42 @@ TEST_CASE("Extreme coordinates in draw_image", "[ImageManager]")
     ImageManager manager(mock.renderer);
 
     // load image
-    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
-    manager.load_image("test_img", testImage);
+    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
 
     // Smoke tests for extreme coordinates to ensure SDL doesn't crash
-    CHECK(manager.draw_image("test_img", -9999, -9999) == true);
-    CHECK(manager.draw_image("test_img", 99999, 99999) == true);
+    CHECK(manager.DrawImage("test_img", -9999, -9999) == true);
+    CHECK(manager.DrawImage("test_img", 99999, 99999) == true);
+}
+
+TEST_CASE("DrawImage renders pixels to the screen", "[ImageManager]")
+{
+    // set up SDL
+    SDLMock mock;
+    ImageManager manager(mock.renderer);
+
+    // load image
+    std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+    auto result = manager.LoadImage("test_img", testImage);
+    REQUIRE(result);
+
+    // clear to a bright green color
+    SDL_SetRenderDrawColor(mock.renderer, 0, 255, 0, 255);
+    SDL_RenderClear(mock.renderer);
+
+    // draw the image at (50, 50), away from (0, 0) where we will read
+    REQUIRE(manager.DrawImage("test_img", 50, 50) == true);
+
+    // read pixel at (0, 0), should still be green since image was drawn elsewhere
+    Uint32 pixel = 0;
+    SDL_Rect region = { 0, 0, 1, 1 };
+    REQUIRE(SDL_RenderReadPixels(mock.renderer, &region,
+                                 SDL_PIXELFORMAT_RGBA8888,
+                                 &pixel, sizeof(Uint32)) == 0);
+
+    // 0x00FF00FF = fully opaque green in RGBA8888
+    CHECK(pixel == 0x00FF00FF);
 }
 
 }

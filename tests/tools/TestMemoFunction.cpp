@@ -17,11 +17,11 @@
 using namespace std::chrono;
 using std::string, std::vector;
 
-int multby3(int x) { return x * 3; }
+int MultBy3(int x) { return x * 3; }
 
 TEST_CASE("MemoFunction: Basic function and cache testing", "[MemoFunction]")
 {
-    cse498::MemoFunction<int, int> mf1(multby3);
+    cse498::MemoFunction<int, int> mf1(MultBy3);
     REQUIRE(mf1.CacheSize() == 0);
     REQUIRE(mf1(7) == 21);
     REQUIRE(mf1.CacheSize() == 1);
@@ -35,31 +35,31 @@ TEST_CASE("MemoFunction: Basic function and cache testing", "[MemoFunction]")
     REQUIRE(mf1.CacheSize() == 1);
 }
 
-class testclass {
+class TestClass {
     public:
-      testclass() {};
-      string concat(string a, string b) { return a + b; }
-      bool even(int x) { return x % 2 == 0; }
-      double add(double a, double b, int c) { return a + b + c; }
+      TestClass() {};
+      string Concat(string a, string b) { return a + b; }
+      bool Even(int x) { return x % 2 == 0; }
+      double Add(double a, double b, int c) { return a + b + c; }
 };
 
 // Can apparently pass class functions directly into memofunction with template stuff but not
 // sure if it's really necessary, hopefully using lambda for them isn't that unintuitive
 TEST_CASE("MemoFunction: Class member functions w/ multiple inputs and types", "[MemoFunction]")
 {
-    testclass t1;
-    auto l1 = [&](string a, string b) { return t1.concat(a, b); };
+    TestClass t1;
+    auto l1 = [&](string a, string b) { return t1.Concat(a, b); };
     cse498::MemoFunction<string, string, string> mf2(l1);
     REQUIRE(mf2("abc", "def") == "abcdef");
     REQUIRE(mf2.CacheSize() == 1);
 
-    auto l2 = [&](int x) { return t1.even(x); };
+    auto l2 = [&](int x) { return t1.Even(x); };
     cse498::MemoFunction<bool, int> mf3(l2);
     REQUIRE(mf3(2));
     REQUIRE(!mf3(3));
     REQUIRE(mf3.CacheSize() == 2);
 
-    auto l3 = [&](double a, double b, int c) { return t1.add(a, b, c); };
+    auto l3 = [&](double a, double b, int c) { return t1.Add(a, b, c); };
     cse498::MemoFunction<double, double, double, int> mf4(l3);
     REQUIRE(mf4.CacheSize() == 0);
     REQUIRE(mf4(2.2, 3.6, 1) == Approx(6.8));
@@ -70,63 +70,64 @@ TEST_CASE("MemoFunction: Class member functions w/ multiple inputs and types", "
     REQUIRE(mf4.CacheSize() == 0);
 }
 
-vector<char> hello() { return {'h', 'e', 'l', 'l', 'o'}; }
+vector<char> Hello() { return {'h', 'e', 'l', 'l', 'o'}; }
 
 TEST_CASE("MemoFunction: No argument", "[Memofunction]")
 {
-    cse498::MemoFunction<vector<char>> mf5(hello);
+    cse498::MemoFunction<vector<char>> mf5(Hello);
     auto v = mf5();
     REQUIRE(string(v.begin(), v.end()) == "hello");
     REQUIRE(mf5.CacheSize() == 1);
 }
 
-int exception() { throw std::logic_error("test"); return 1; }
+// Decided on no exceptions
+//int Exception() { throw std::logic_error("test"); return 1; }
 
-TEST_CASE("MemoFunction: Exceptions", "[MemoFunction]")
-{
-    cse498::MemoFunction<int> mf6(exception);
-    REQUIRE_THROWS_AS(mf6(), std::logic_error);
-    REQUIRE(mf6.CacheSize() == 0);
+//TEST_CASE("MemoFunction: Exceptions", "[MemoFunction]")
+//{
+//    cse498::MemoFunction<int> mf6(Exception);
+//    REQUIRE_THROWS_AS(mf6(), std::logic_error);
+//    REQUIRE(mf6.CacheSize() == 0);
 
-    std::function<int()> f;
-    cse498::MemoFunction<int> mf7(f);
-    REQUIRE_THROWS_AS(mf7(), std::bad_function_call);
-    REQUIRE(mf7.CacheSize() == 0);
-}
+//    std::function<int()> F;
+//    cse498::MemoFunction<int> mf7(F);
+//    REQUIRE_THROWS_AS(mf7(), std::bad_function_call);
+//   REQUIRE(mf7.CacheSize() == 0);
+//}
 
-int fib(int x) {
-  if (x < 2) {
-    return x;
-  } else {
-    return fib(x - 2) + fib(x - 1);
-  }
-}
+//int Fib(int x) {
+//  if (x < 2) {
+//    return x;
+// } else {
+//    return Fib(x - 2) + Fib(x - 1);
+//  }
+//}
 
-TEST_CASE("MemoFunction: Performance", "[MemoFunction]")
-{
-    cse498::MemoFunction<int, int> mf8(fib);
-
-    auto start1 = high_resolution_clock::now();
-    mf8(30);
-    auto end1 = high_resolution_clock::now();
-    REQUIRE(mf8.CacheSize() == 1);
-
-    auto start2 = high_resolution_clock::now();
-    mf8(30);
-    auto end2 = high_resolution_clock::now();
-    REQUIRE(mf8.CacheSize() == 1);
-
-    auto time1 = duration_cast<microseconds>(end1 - start1).count();
-    auto time2 = duration_cast<microseconds>(end2 - start2).count();
-    REQUIRE(time1 > time2 * 100);
-
+// Performance testing is not appropriate here
+//TEST_CASE("MemoFunction: Performance", "[MemoFunction]"{
+//    cse498::MemoFunction<int, int> mf8(Fib);
+//
+//    auto start1 = high_resolution_clock::now();
+//    mf8(30);
+//    auto end1 = high_resolution_clock::now();
+//    REQUIRE(mf8.CacheSize() == 1);
+//
+//    auto start2 = high_resolution_clock::now();
+//    mf8(30);
+//    auto end2 = high_resolution_clock::now();
+//    REQUIRE(mf8.CacheSize() == 1);
+//
+//    auto time1 = duration_cast<microseconds>(end1 - start1).count();
+//    auto time2 = duration_cast<microseconds>(end2 - start2).count();
+//    REQUIRE(time1 > time2 * 100);
+//
     //std::cout << "Time 1:" << time1 << std::endl;
     //std::cout << "Time 2:" << time2 << std::endl;
-}
+//}
 
 TEST_CASE("MemoFunction: Cache limit", "[MemoFunction]")
 {
-    cse498::MemoFunction<int, int> mf9(multby3);
+    cse498::MemoFunction<int, int> mf9(MultBy3);
     mf9.SetLimit(2);
     mf9(1); // cache = {1}
     REQUIRE(mf9(1) == 3);

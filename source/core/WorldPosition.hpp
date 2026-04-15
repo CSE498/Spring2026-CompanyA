@@ -12,7 +12,7 @@
 #include <cstddef>    // For size_t
 #include <cstdint>
 #include <functional>
-#include "../tools/PathVector.hpp"
+#include <cmath>
 
 namespace cse498 {
 
@@ -23,7 +23,7 @@ namespace cse498 {
   private:
     double x = 0.0;
     double y = 0.0;
-    static constexpr double eps = 1e-9; /// epsilon
+    static constexpr double EPS = 1e-9; /// epsilon
     /// chops off endings of doubles and converts to ints to make more consistent/comparable doubles
 
   public:
@@ -35,9 +35,6 @@ namespace cse498 {
 
     WorldPosition(const WorldPosition &) = default;
     WorldPosition & operator=(const WorldPosition &) = default;
-    WorldPosition operator+(const PathVector& v) const { return {x + v.X(), y + v.Y()}; }
-    WorldPosition operator-(const PathVector& v) const { return {x - v.X(), y - v.Y()}; }
-    PathVector operator-(const WorldPosition& pos) const { return {x - pos.X(), y - pos.Y()}; }
 
     // -- Accessors --
 
@@ -57,11 +54,24 @@ namespace cse498 {
     }
 
 
-    /// Enable all comparison operators (==, !=, <, <=, >, >=)
-    auto operator<=>(const WorldPosition &) const = default;
-    /// Positions on the map are the same if this is true in essence
+    /**
+     * We use quantization for hashing ability
+     * @param other - other world position
+     * @return strong ordering for comparisons
+     */
+    auto operator<=>(const WorldPosition & other) const
+    {
+      return std::tuple(Quantize(x), Quantize(y)) <=> std::tuple(Quantize(other.x), Quantize(other.y));
+    }
+    /**
+     * implemented as such for it to be hashable - ignores digits smaller than epsilon
+     * which helps A* search
+     * @param other - other world position
+     * @return true/false depending on equality being in the same relative bin
+     */
     auto operator==(const WorldPosition & other) const {
-        return Quantize(x) == Quantize(other.x) && Quantize(y) == Quantize(other.y);
+      // this enables transitivity but means tiny differences can break equality. This should not be trusted
+      return Quantize(x) == Quantize(other.x) && Quantize(y) == Quantize(other.y);
     }
 
     WorldPosition & Set(double in_x, double in_y) {
@@ -73,7 +83,7 @@ namespace cse498 {
     // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
 
     /// Return a the WorldPosition at the requested offset.
-    [[nodiscard]] WorldPosition GetOffset(double offset_x, double offset_y) const {
+    [[nodiscard]] constexpr WorldPosition GetOffset(double offset_x, double offset_y) const {
       return WorldPosition{x+offset_x,y+offset_y};
     }
 
@@ -81,7 +91,7 @@ namespace cse498 {
     [[nodiscard]] WorldPosition Down()  const { return {x, y+1.0}; }
     [[nodiscard]] WorldPosition Left()  const { return {x-1.0, y}; }
     [[nodiscard]] WorldPosition Right() const { return {x+1.0, y}; }
-    static std::int64_t Quantize(double val ) { return static_cast<std::int64_t>(std::llround(val / eps)); }
+    static std::int64_t Quantize(const double val ) { return (std::llround(val / EPS)); }
     /**
      * uses CellX() and CellY() for positioning since this is used for determining locations of world positions
      * in the map based on GIVEN code. TODO: Change CellX() CellY() to round() since this will feel more natural
@@ -108,7 +118,7 @@ namespace cse498 {
    * @param pos - position to round
    * @return new world position rounded to a tile
    */
-  inline WorldPosition round(const WorldPosition& pos)
+  inline WorldPosition Round(const WorldPosition& pos)
 {
   return WorldPosition(pos).Round();
 }

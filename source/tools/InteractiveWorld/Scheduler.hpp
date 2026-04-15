@@ -1,123 +1,117 @@
 /**
- * Scheduler: Schedules a set of processes based on a "priority" heuristic and returns the next process to run
- * using a weighted random selection approach where higher priority processes are more likely to be selected.
+ * Scheduler: Schedules a set of processes based on a "priority" heuristic and
+ * returns the next process to run using a weighted random selection approach
+ * where higher priority processes are more likely to be selected.
  */
 
 #pragma once
 
-#include <vector>
-#include <random>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <numeric>
+#include <random>
+#include <ranges>
+#include <vector>
 
 namespace cse498 {
 
-    using ProcessID = int;
+using ProcessID = int;
 
-    class Scheduler {
-    private:
-        // Represents a process with an ID and a priority value where higher priority is more likely to be scheduled
-        struct Process {
-            ProcessID id;
-            float priority;
-        };
+class Scheduler {
+private:
+  // Represents a process with an ID and a priority value where higher priority
+  // is more likely to be scheduled
+  struct Process {
+    ProcessID id;
+    float priority;
+  };
 
-        // Helper function to find a process by ID; returns iterator to process or processes.end() if not found
-        auto FindProcess(ProcessID id) {
-            return std::find_if(
-                processes.begin(),
-                processes.end(),
-                [id](const Process& p) { return p.id == id; }
-            );
-        }
+  // Helper function to find a process by ID; returns iterator to process or
+  // mProcesses.end() if not found
+  auto FindProcess(ProcessID id) {
+    return std::ranges::find_if(mProcesses,
+                                [id](const Process &p) { return p.id == id; });
+  }
 
-        // Const version of FindProcess for use in const methods
-        auto FindProcess(ProcessID id) const {
-            return std::find_if(
-                processes.begin(),
-                processes.end(),
-                [id](const Process& p) { return p.id == id; }
-            );
-        }
+  // Const version of FindProcess for use in const methods
+  auto FindProcess(ProcessID id) const {
+    return std::ranges::find_if(mProcesses,
+                                [id](const Process &p) { return p.id == id; });
+  }
 
-        std::vector<Process> processes; // List of processes with their priorities
-        std::mt19937 rng{ std::random_device{}() }; // Random number generator for weighted random selection
+  std::vector<Process> mProcesses; // List of processes with their priorities
+  std::mt19937 mRng{std::random_device{}()}; // Random number generator for
+                                            // weighted random selection
 
-    public:
-        // Add a process with an associated priority
-        void AddProcess(ProcessID id, float priority) {
-            assert(priority > 0.0f && "Scheduler priority must be positive");
+public:
+  // Add a process with an associated priority
+  void AddProcess(ProcessID id, float priority) {
+    assert(priority > 0.0f && "Scheduler priority must be positive");
 
-            // Prevent duplicate IDs
-            assert(!HasProcess(id) && "Process already exists in Scheduler");
+    // Prevent duplicate IDs
+    assert(!HasProcess(id) && "Process already exists in Scheduler");
 
-            processes.push_back({ id, priority });
-        }
+    mProcesses.push_back({id, priority});
+  }
 
-        // Returns the ID of the next process to schedule
-        ProcessID Next() {
-            assert(!processes.empty() && "Scheduler is empty");
+  // Returns the ID of the next process to schedule
+  ProcessID Next() {
+    assert(!mProcesses.empty() && "Scheduler is empty");
 
-            // Determines next process to run based on weighted random selection using priorities
-            float totalPriority = 0.0f;
-            for (const auto& p : processes) {
-                totalPriority += p.priority;
-            }
+    const float totalPriority = std::accumulate(
+        mProcesses.begin(), mProcesses.end(), 0.0f,
+        [](float total, const Process& process) {
+          return total + process.priority;
+        });
 
-            // Checks that total priority is positive
-            assert(totalPriority > 0.0f && "Total priority must be > 0");
+    assert(totalPriority > 0.0f && "Total priority must be > 0");
 
-            std::uniform_real_distribution<float> dist(0.0f, totalPriority);
-            float r = dist(rng);
+    std::uniform_real_distribution<float> dist(0.0f, totalPriority);
+    float r = dist(mRng);
 
-            // Iterate through processes and return the first one where the cumulative priority exceeds r
-            float cumulative = 0.0f;
-            for (const auto& p : processes) {
-                cumulative += p.priority;
-                if (r <= cumulative) {
-                    return p.id;
-                }
-            }
+    float cumulative = 0.0f;
+    for (const auto& [id, priority] : mProcesses) {
+      cumulative += priority;
+      if (r <= cumulative) {
+        return id;
+      }
+    }
 
-            // Floating-point safety fallback, just in case
-            return processes.back().id;
-        }
+    // Floating-point safety fallback, just in case
+    return mProcesses.back().id;
+  }
 
-        // Check whether a process exists
-        bool HasProcess(ProcessID id) const {
-            return FindProcess(id) != processes.end();
-        }
+  // Check whether a process exists
+  bool HasProcess(ProcessID id) const {
+    return FindProcess(id) != mProcesses.end();
+  }
 
-        // Remove a process; returns false if not found
-        bool RemoveProcess(ProcessID id) {
-            auto it = FindProcess(id);
-            if (it == processes.end()) {
-                return false;
-            }
+  // Remove a process; returns false if not found
+  bool RemoveProcess(ProcessID id) {
+    auto it = FindProcess(id);
+    if (it == mProcesses.end()) {
+      return false;
+    }
 
-            processes.erase(it);
-            return true;
-        }
+    mProcesses.erase(it);
+    return true;
+  }
 
-        // Update the priority of an existing process
-        void UpdatePriority(ProcessID id, float newPriority) {
-            assert(newPriority > 0.0f);
+  // Update the priority of an existing process
+  void UpdatePriority(ProcessID id, float newPriority) {
+    assert(newPriority > 0.0f && "Scheduler priority must be positive");
 
-            auto it = FindProcess(id);
-            assert(it != processes.end() && "Process not found in Scheduler");
+    auto it = FindProcess(id);
+    assert(it != mProcesses.end() && "Process not found in Scheduler");
 
-            it->priority = newPriority;
-        }
+    it->priority = newPriority;
+  }
 
-        // Remove all processes
-        void Clear() {
-            processes.clear();
-        }
+  // Remove all processes
+  void Clear() { mProcesses.clear(); }
 
-        // Check if there are no processes in the scheduler
-        bool Empty() const {
-            return processes.empty();
-        }
-    };
+  // Check if there are no processes in the scheduler
+  bool Empty() const { return mProcesses.empty(); }
+};
 
-}  // namespace cse498
+} // namespace cse498

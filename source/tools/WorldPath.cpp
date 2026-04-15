@@ -18,10 +18,11 @@ namespace cse498
 
 namespace
 {
+
 // Epsilon used only for geometric intersection math.
 constexpr double kEps = 1e-9;
 
-// Straight-line distance between two world positions.
+/// Compute straight-line distance between two world positions.
 double Dist(const WorldPosition& a, const WorldPosition& b)
 {
     const double dx = a.X() - b.X();
@@ -29,30 +30,38 @@ double Dist(const WorldPosition& a, const WorldPosition& b)
     return std::hypot(dx, dy);
 }
 
-// Small 2D vector used for intersection math.
+/// Small helper vector used for segment intersection calculations.
 struct Vec2
 {
     double x = 0.0;
     double y = 0.0;
 };
 
-Vec2 ToVec2(const WorldPosition& p) { return {p.X(), p.Y()}; }
+/// Convert a WorldPosition into a simple Vec2 representation.
+Vec2 ToVec2(const WorldPosition& p)
+{
+    return {p.X(), p.Y()};
+}
 
+/// 2D cross product of vectors.
 double Cross(const Vec2& a, const Vec2& b)
 {
     return a.x * b.y - a.y * b.x;
 }
 
+/// Vector subtraction (a - b).
 Vec2 Sub(const Vec2& a, const Vec2& b)
 {
     return {a.x - b.x, a.y - b.y};
 }
 
+/// Returns true if two doubles are approximately equal.
 bool NearlyEqual(double a, double b, double eps = kEps)
 {
     return std::abs(a - b) <= eps;
 }
 
+/// Checks whether point p lies on segment ab.
 bool OnSegment(const Vec2& a, const Vec2& b, const Vec2& p)
 {
     const double minx = std::min(a.x, b.x);
@@ -64,7 +73,7 @@ bool OnSegment(const Vec2& a, const Vec2& b, const Vec2& p)
            p.y >= miny - kEps && p.y <= maxy + kEps;
 }
 
-// Segment/segment intersection test.
+/// Determines whether two line segments intersect.
 bool SegmentsIntersect(const WorldPosition& a0,
                        const WorldPosition& a1,
                        const WorldPosition& b0,
@@ -80,7 +89,7 @@ bool SegmentsIntersect(const WorldPosition& a0,
 
     if (NearlyEqual(rxs, 0.0) && NearlyEqual(q_pxs, 0.0))
     {
-        // Collinear case: check overlap
+        // Collinear segments: check overlap
         return OnSegment(p, ToVec2(a1), q) ||
                OnSegment(p, ToVec2(a1), ToVec2(b1)) ||
                OnSegment(q, ToVec2(b1), p) ||
@@ -88,7 +97,7 @@ bool SegmentsIntersect(const WorldPosition& a0,
     }
 
     if (NearlyEqual(rxs, 0.0))
-        return false; // Parallel non-intersecting
+        return false; // Parallel but non-intersecting
 
     const Vec2 q_p = Sub(q, p);
     const double t = Cross(q_p, s) / rxs;
@@ -98,7 +107,7 @@ bool SegmentsIntersect(const WorldPosition& a0,
            u >= -kEps && u <= 1.0 + kEps;
 }
 
-} // namespace
+} // anonymous namespace
 
 WorldPath::WorldPath(std::span<const WorldPosition> path)
     : mPoints(path.begin(), path.end())
@@ -112,7 +121,7 @@ void WorldPath::Clear()
 
 void WorldPath::AddPoint(const WorldPosition& p)
 {
-    // Avoid consecutive duplicates using canonical equality.
+    // Avoid consecutive duplicates.
     if (!mPoints.empty() && (mPoints.back() == p))
         return;
 
@@ -134,11 +143,6 @@ const WorldPosition& WorldPath::At(std::size_t index) const
     return mPoints.at(index);
 }
 
-const std::vector<WorldPosition>& WorldPath::Points() const
-{
-    return mPoints;
-}
-
 std::span<const WorldPosition> WorldPath::Span() const noexcept
 {
     return mPoints;
@@ -150,6 +154,7 @@ double WorldPath::Length() const
         return 0.0;
 
     double total = 0.0;
+
     for (std::size_t i = 1; i < mPoints.size(); ++i)
         total += Dist(mPoints[i - 1], mPoints[i]);
 
@@ -158,7 +163,7 @@ double WorldPath::Length() const
 
 bool WorldPath::SelfIntersects() const
 {
-    if (mPoints.size() < 4)
+    if (mPoints.size() < 3)
         return false;
 
     for (std::size_t i = 1; i < mPoints.size(); ++i)
@@ -197,6 +202,7 @@ WorldPath::FurthestPointPair() const
         for (std::size_t j = i + 1; j < mPoints.size(); ++j)
         {
             const double d = Dist(mPoints[i], mPoints[j]);
+
             if (d > best)
             {
                 best = d;
@@ -207,7 +213,6 @@ WorldPath::FurthestPointPair() const
 
     return bestPair;
 }
-
 
 WorldPath& WorldPath::Extend(const WorldPath& other)
 {

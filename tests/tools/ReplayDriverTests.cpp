@@ -1,168 +1,175 @@
-// #define CATCH_CONFIG_MAIN
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../source/tools/ActionLog.hpp"
-#include "../../source/tools/ReplayDriver.hpp"
+// ReplayDriverTests.cpp
 
-#include <fstream>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <memory>
 
-// static std::vector<std::string> ReadAllLines(const std::string& filename) {
-//     std::ifstream in(filename);
-//     std::vector<std::string> lines;
-//     std::string line;
-//     while (std::getline(in, line)) lines.push_back(line);
-//     return lines;
-// }
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../source/tools/ActionLog.hpp"
+#include "../../source/Analyze/ReplayDriver.hpp"
+#include "../../source/core/WorldPosition.hpp"
 
-// Build a log with known timestamps via UpdateTime(), and known action types/agents.
-static std::shared_ptr<cse498::ActionLog> MakeSampleLog() {
-    std::shared_ptr<cse498::ActionLog> log = std::make_shared<cse498::ActionLog>();
+namespace {
 
-    log->UpdateTime(0.0);
-    log->LogAction(1, "move",   0.0, 0.0, 1.0, 1.0); // (x,y,new_x,new_y)
+std::shared_ptr<cse498::ActionLog> MakeFullGameLog() {
+  auto log = std::make_shared<cse498::ActionLog>();
 
-    log->UpdateTime(1.0);
-    log->LogAction(2, "attack", 1.0, 1.0, 1.0, 1.0);
-
-    log->UpdateTime(2.0);
-    log->LogAction(1, "move",   2.0, 2.0, 3.0, 3.0);
-
-    log->UpdateTime(3.0);
-    log->LogAction(2, "move",   3.0, 3.0, 4.0, 4.0);
-
-    return log;
+  log->LogAction(1, "move", cse498::WorldPosition{0, 0},
+                 cse498::WorldPosition{0, 1});
+  log->LogAction(1, "move", cse498::WorldPosition{0, 1},
+                 cse498::WorldPosition{0, 2});
+  log->LogAction(1, "move", cse498::WorldPosition{0, 2},
+                 cse498::WorldPosition{0, 3});
+  log->LogAction(1, "move", cse498::WorldPosition{0, 3},
+                 cse498::WorldPosition{0, 4});
+  log->LogAction(1, "move", cse498::WorldPosition{0, 4},
+                 cse498::WorldPosition{0, 5});
+  log->LogAction(1, "move", cse498::WorldPosition{0, 5},
+                 cse498::WorldPosition{1, 5});
+  log->LogAction(1, "move", cse498::WorldPosition{1, 5},
+                 cse498::WorldPosition{2, 5});
+  log->LogAction(1, "move", cse498::WorldPosition{2, 5},
+                 cse498::WorldPosition{2, 4});
+  log->LogAction(1, "move", cse498::WorldPosition{2, 4},
+                 cse498::WorldPosition{2, 3});
+  log->LogAction(1, "move", cse498::WorldPosition{2, 3},
+                 cse498::WorldPosition{2, 3});
+  return log;
 }
 
-// Tests for ReplayDriver
-TEST_CASE("ReplayDriver: IsActionLogSet()", "[ReplayDriver]") {
-    cse498::ReplayDriver driver;
-    CHECK(driver.IsActionLogSet() == false);
+std::shared_ptr<cse498::ActionLog> MakeTimedLog() {
+  auto log = std::make_shared<cse498::ActionLog>();
 
-    std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-    driver.setActionLog(log);
-    CHECK(driver.IsActionLogSet() == true);
+  log->UpdateTime(1.0);
+  log->LogAction(1, "move", cse498::WorldPosition{0, 0},
+                 cse498::WorldPosition{0, 1});
+
+  log->UpdateTime(2.0);
+  log->LogAction(1, "move", cse498::WorldPosition{0, 1},
+                 cse498::WorldPosition{0, 2});
+
+  log->UpdateTime(3.0);
+  log->LogAction(1, "move", cse498::WorldPosition{0, 2},
+                 cse498::WorldPosition{0, 3});
+
+  return log;
 }
 
-//Empty replays to csv
-TEST_CASE("ReplayDriver: SaveReplayToFile returns false if no log set", "[ReplayDriver]") {
-    cse498::ReplayDriver driver;
-    CHECK(driver.SaveReplayToFile("should_not_write.csv") == false);
+std::string CaptureStdout(const std::function<void()>& fn) {
+  std::ostringstream captured;
+  std::streambuf* original_buf = std::cout.rdbuf(captured.rdbuf());
+
+  fn();
+
+  std::cout.rdbuf(original_buf);
+  return captured.str();
 }
 
-// //Full Replays to csv
-// TEST_CASE("ReplayDriver: Replay writes all actions to CSV", "[ReplayDriver]") {
-//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-//     cse498::ReplayDriver driver(log);
+std::string ExpectedStartingBoard() {
+  std::vector<std::string> board{
+      "#######################",
+      "# #            ##     #",
+      "# #  #  ######    ### #",
+      "# #  #  #     #  #  # #",
+      "# #  #  #  #  #  #  # #",
+      "#    #     #     #    #",
+      "##################  # #",
+      "#                    ##",
+      "#                    ##",
+      "#  ####################",
+      "#######################"};
 
-//     driver.Replay();
+  // ReplayDriver starts the agent at (1,1), and TrashInterface prints the
+  // board before each move is applied.
+  board[1][1] = '@';
 
-//     const std::string file = "replay_all.csv";
-//     REQUIRE(driver.SaveReplayToFile(file) == true);
+  std::ostringstream out;
+  out << '+' << std::string(board[0].size(), '-') << "+\n";
+  for (const auto& row : board) {
+    out << "|" << row << "|\n";
+  }
+  out << '+' << std::string(board[0].size(), '-') << "+\n";
+  out << "\nUse W, A, S, D to move or Q to quit.";
+  out << "\nYour move? ";
 
-//     auto lines = ReadAllLines(file);
-//     REQUIRE(lines.size() == 4);
+  return out.str();
+}
 
-//     CHECK(lines[0].rfind("1,move,",   0) == 0);
-//     CHECK(lines[1].rfind("2,attack,", 0) == 0);
-//     CHECK(lines[2].rfind("1,move,",   0) == 0);
-//     CHECK(lines[3].rfind("2,move,",   0) == 0);
-// }
+}  // namespace
 
-// //Replays by steps
-// TEST_CASE("ReplayDriver: ReplayByStep selects every Nth action", "[ReplayDriver]") {
-//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-//     cse498::ReplayDriver driver(log);
+TEST_CASE("ReplayDriver ReplayFullGame runs through valid actions",
+          "[ReplayDriver]") {
+  auto log = MakeFullGameLog();
+  cse498::ReplayDriver driver(log, 0);
 
-//     driver.ReplayByStep(2);
+  REQUIRE_NOTHROW(CaptureStdout([&]() {
+    driver.ReplayFullGame();
+  }));
+}
 
-//     const std::string file = "replay_step2.csv";
-//     REQUIRE(driver.SaveReplayToFile(file) == true);
+TEST_CASE("ReplayDriver ReplayByTimeRange replays only selected time window",
+          "[ReplayDriver]") {
+  auto log = MakeTimedLog();
+  cse498::ReplayDriver driver(log, 0);
 
-//     auto lines = ReadAllLines(file);
+  REQUIRE_NOTHROW(CaptureStdout([&]() {
+    driver.ReplayByTimeRange(1.5, 2.5);
+  }));
+}
 
-//     REQUIRE(lines.size() == 2);
-//     CHECK(lines[0].rfind("1,move,", 0) == 0);
-//     CHECK(lines[1].rfind("1,move,", 0) == 0);
-// }
+TEST_CASE("ReplayDriver ReplayByTimeRange handles empty ranges",
+          "[ReplayDriver]") {
+  auto log = MakeTimedLog();
+  cse498::ReplayDriver driver(log, 0);
 
-// // Replays by steps with step <= 0 should replay nothing (safe)
-// TEST_CASE("ReplayDriver: ReplayByStep with step <= 0 replays nothing (safe)", "[ReplayDriver]") {
-//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-//     cse498::ReplayDriver driver(log);
+  REQUIRE_NOTHROW(CaptureStdout([&]() {
+    driver.ReplayByTimeRange(10.0, 20.0);
+  }));
+}
 
-//     driver.ReplayByStep(0);
+TEST_CASE("ReplayDriver ReplayFullGame handles empty logs",
+          "[ReplayDriver]") {
+  auto log = std::make_shared<cse498::ActionLog>();
+  cse498::ReplayDriver driver(log, 0);
 
-//     const std::string file = "replay_step0.csv";
-//     REQUIRE(driver.SaveReplayToFile(file) == true);
+  std::string output = CaptureStdout([&]() {
+    driver.ReplayFullGame();
+  });
 
-//     auto lines = ReadAllLines(file);
-//     CHECK(lines.empty());
-// }
+  REQUIRE(output.empty());
+}
 
-// // Replays by time range
-// TEST_CASE("ReplayDriver: ReplayByTimeRange filters actions by timestamp", "[ReplayDriver]") {
-//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-//     cse498::ReplayDriver driver(log);
+TEST_CASE("ReplayDriver SetActionLog replaces the current log",
+          "[ReplayDriver]") {
+  auto empty_log = std::make_shared<cse498::ActionLog>();
+  auto full_log = MakeFullGameLog();
 
-//     driver.ReplayByTimeRange(1.0, 2.0);
+  cse498::ReplayDriver driver(empty_log, 0);
 
-//     const std::string file = "replay_timerange.csv";
-//     REQUIRE(driver.SaveReplayToFile(file) == true);
+  std::string empty_output = CaptureStdout([&]() {
+    driver.ReplayFullGame();
+  });
+  REQUIRE(empty_output.empty());
 
-//     auto lines = ReadAllLines(file);
-//     REQUIRE(lines.size() == 2);
-//     CHECK(lines[0].rfind("2,attack,", 0) == 0);
-//     CHECK(lines[1].rfind("1,move,",   0) == 0);
-// }
+  driver.SetActionLog(full_log);
 
-// // Replays by agent
-// TEST_CASE("ReplayDriver: ReplayByAgent filters actions", "[ReplayDriver]") {
-//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-//     cse498::ReplayDriver driver(log);
+  std::string full_output = CaptureStdout([&]() {
+    driver.ReplayFullGame();
+  });
+  REQUIRE_FALSE(full_output.empty());
+}
 
-//     driver.ReplayByAgent(2);
+TEST_CASE("ReplayDriver prints TrashInterface board and prompt",
+          "[ReplayDriver][TrashInterface]") {
+  auto log = MakeFullGameLog();
+  cse498::ReplayDriver driver(log, 0);
 
-//     const std::string file = "replay_agent2.csv";
-//     REQUIRE(driver.SaveReplayToFile(file) == true);
+  std::string output = CaptureStdout([&]() {
+    driver.ReplayFullGame();
+  });
 
-//     auto lines = ReadAllLines(file);
-//     REQUIRE(lines.size() == 2);
-//     CHECK(lines[0].rfind("2,attack,", 0) == 0);
-//     CHECK(lines[1].rfind("2,move,",   0) == 0);
-// }
-
-// // Replays by action type
-// TEST_CASE("ReplayDriver: ReplayByActionType filters actions", "[ReplayDriver]") {
-//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-//     cse498::ReplayDriver driver(log);
-
-//     driver.ReplayByActionType("move");
-
-//     const std::string file = "replay_move.csv";
-//     REQUIRE(driver.SaveReplayToFile(file) == true);
-
-//     auto lines = ReadAllLines(file);
-//     REQUIRE(lines.size() == 3);
-//     CHECK(lines[0].rfind("1,move,", 0) == 0);
-//     CHECK(lines[1].rfind("1,move,", 0) == 0);
-//     CHECK(lines[2].rfind("2,move,", 0) == 0);
-// }
-
-// //Replays are replaced after each new replay method is called
-// TEST_CASE("ReplayDriver: A new replay replaces the last replayed set", "[ReplayDriver]") {
-//     std::shared_ptr<cse498::ActionLog> log = MakeSampleLog();
-//     cse498::ReplayDriver driver(log);
-
-//     driver.ReplayByAgent(1);
-//     REQUIRE(driver.SaveReplayToFile("tmp_agent1.csv") == true);
-//     auto agent1 = ReadAllLines("tmp_agent1.csv");
-//     REQUIRE(agent1.size() == 2);
-
-//     driver.ReplayByActionType("attack");
-//     REQUIRE(driver.SaveReplayToFile("tmp_attack.csv") == true);
-//     auto attack = ReadAllLines("tmp_attack.csv");
-//     REQUIRE(attack.size() == 1);
-//     CHECK(attack[0].rfind("2,attack,", 0) == 0);
-// }
+  CHECK(output.find(ExpectedStartingBoard()) != std::string::npos);
+}

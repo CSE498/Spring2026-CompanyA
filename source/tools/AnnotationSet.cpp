@@ -19,21 +19,20 @@ void cse498::AnnotationSet::NotifyRemoved([[maybe_unused]] std::string_view tag)
     // }
 }
 
-void cse498::AnnotationSet::AssertValidTag(std::string_view tag) {        
+void cse498::AnnotationSet::AssertValidTag(std::string_view tag) {
     assert(!tag.empty() && "AnnotationSet: tag must not be empty");
-
 }
 
-    
+
 bool cse498::AnnotationSet::AddTag(std::string_view tag) {
     AssertValidTag(tag);
 
-    
+
     std::string owned(tag);
 
     auto [it, inserted] = mTags.emplace(tag);
     if (!inserted) {
-        return false; 
+        return false;
     }
 
     NotifyAdded(*it);
@@ -48,8 +47,8 @@ bool cse498::AnnotationSet::RemoveTag(std::string_view tag) {
         return false;
     }
 
-    NotifyRemoved(*it);  
-    mTags.erase(it);    
+    NotifyRemoved(*it);
+    mTags.erase(it);
 
     return true;
 }
@@ -66,7 +65,7 @@ void cse498::AnnotationSet::Clear() {
         return;
     }
 
-    for (const auto& t : mTags) {
+    for (const auto &t: mTags) {
         NotifyRemoved(t);
     }
     mTags.clear();

@@ -7,7 +7,7 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/tools/ActionMap/ActionMap.hpp"
+#include "../../source/tools/ActionMap.hpp"
 
 #include <algorithm>
 #include <string>
@@ -30,6 +30,21 @@ TEST_CASE("AddFunction and Trigger for void()", "[ActionMap]")
 
     REQUIRE(map.Trigger("Jump"));
     REQUIRE(called);
+}
+
+TEST_CASE("SetDescription works and fails predictably", "[ActionMap]")
+{
+    ActionMap map;
+    REQUIRE(map.AddFunction("Run", []{}));
+
+    REQUIRE(map.SetDescription("Run", "Makes the player run"));
+    REQUIRE(map.GetDescription("Run").has_value());
+    REQUIRE(*map.GetDescription("Run") == "Makes the player run");
+
+    REQUIRE(map.SetDescription("Run", std::nullopt)); // clear description
+    REQUIRE_FALSE(map.GetDescription("Run").has_value());
+
+    REQUIRE_FALSE(map.SetDescription("Missing", "No action")); // action doesn't exist
 }
 
 TEST_CASE("AddFunction rejects duplicates and invalid names", "[ActionMap]")

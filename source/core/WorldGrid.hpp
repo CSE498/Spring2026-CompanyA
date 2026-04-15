@@ -264,8 +264,7 @@ public:
 
     /**
      * Asks this class if the tile in main_grid is of type "floor"
-     * TODO: This needs to be changed when this whole class changes. This function should be simpler
-     * TODO: This was done based on current structure which is not ideal for this at all.
+     * TODO: Note, depending on structure floor should not be the only thing to determine if it is walkable
      * @param pos - world position
      * @return true if cell is of type "floor"
      */

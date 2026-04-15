@@ -9,12 +9,12 @@
 #include "../../source/tools/PathGenerator.hpp"
 #include "../../source/core/WorldBase.hpp"
 #include "../../source/core/WorldGrid.hpp"
-#include "../../source/tools/AgentAbility.hpp"
 #include "../../source/tools/WorldPath.hpp"
 
 using cse498::WorldPath;
 using cse498::PathGenerator;
 using cse498::WorldPosition;
+using cse498::PathVector;
 using cse498::PathRequest;
 using std::vector;
 
@@ -138,7 +138,7 @@ public:
             "#                  #",
             "#                  #",
             "#                  #",
-            "#                  #",
+            "#                  #", // 17
             "#                  #",
             "#                  #",
             "####################"
@@ -177,6 +177,28 @@ public:
     }
     ~CircleWorld2() override = default;
 };
+
+class TestWorldUtility1 : public TestWorldBase
+{
+public:
+    TestWorldUtility1()
+    {
+        // (9,-3), (10,-3), (11,-3), (12,-3), (9,-4), (10,-4), (11,-4), (12,-4)
+        // (15,-6), (16,-6), (17,-6), (18,-6), (15,-7), (16,-7), (17,-7), (18,-7)
+
+        main_grid.Load(std::vector<std::string>{
+            "#########",
+            "#       #",
+            "# ##    #",
+            "#       #",
+            "#########"
+        });
+    }
+    ~TestWorldUtility1() override = default;
+};
+
+
+
 }
 
 /**
@@ -207,11 +229,11 @@ TEST_CASE("No Constructor", "[PathGenerator, Constructor]")
 TEST_CASE("Shortest Path Generation -- Simple cases for functionality", "[ShorestPath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({},  world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({},  world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({},  world3.GetGrid());
 
     // Initial Tests to ensure things are working ok -- semi-complex
     auto path = PathGenerator::FindShortestPath({0, 0}, {1, 1}, request2);
@@ -287,9 +309,9 @@ TEST_CASE("Shortest Path Generation -- Simple cases for functionality", "[Shores
 TEST_CASE("Shortest Path Generation -- Edge Cases", "[ShortestPath]")
 {
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
 
     // 0 to 0
     auto none2none = PathGenerator::FindShortestPath({1, 1}, {1, 1}, request1);
@@ -318,7 +340,7 @@ TEST_CASE("Shortest Path Generation -- Obstacles", "[ShortestPath]")
 {
     cse498::TestWorld2 world2;
     std::unordered_set<WorldPosition> tiles_to_avoid = {{1, 2}};
-    PathRequest request2_1(tiles_to_avoid, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2_1(tiles_to_avoid, world2.GetGrid());
 
     auto trapped = PathGenerator::FindShortestPath({1, 1}, {1, 5}, request2_1);
     CHECK(!trapped);
@@ -334,13 +356,13 @@ TEST_CASE("Shortest Path Generation -- Obstacles", "[ShortestPath]")
 TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world;
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     // Couple of quick simple tests to ensure it is working in general when pressed into a wall and in free space
     // Edge cases are not tested thoroughly because I could be here for a fortnight.
@@ -383,7 +405,7 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
     CHECK(WorldPathApprox(WorldPath(circ2_exp_path_to), circ2_exp.value().mPathToCircle));
 
     cse498::CircleWorld2 circle_world2;
-    PathRequest circle_request2({}, cse498::AgentAbility(), circle_world2.GetGrid());
+    PathRequest circle_request2({}, circle_world2.GetGrid());
 
     // Generation with center on wall
     // FOREWARNING: Looking at this in desmos can be confusing it can look like "Why did it take that path??"
@@ -426,21 +448,79 @@ TEST_CASE("Circular Path Generation -- Simple Cases", "[CirclePath]")
 
 }
 
-TEST_CASE("Circular Path Generation -- Edge Cases", "[CirclePath]")
+TEST_CASE("Circular Path Generation -- CCW, CW", "[CirclePath]")
 {
-    // Fill this in later possibly. Give me a break this was a lot to write and AI sucks at this type of testing
-    // I have to manually verify every test in desmos and think long and hard about everything returned. It isn't easy
-    // I also don't know if these functions are directly useful yet so before I spend tons more time... please ignore this empty test case
+    cse498::CircleWorld circle_world;
+    PathRequest circle_request({}, circle_world.GetGrid());
+
+    // Check divergence of directions
+    {
+        auto cw = PathGenerator::FindCircularPath({1, 1}, {4, 4}, 2, circle_request);
+        auto ccw = PathGenerator::FindCircularPath({1, 1},
+                                                   {4, 4},
+                                                   2,
+                                                   circle_request,
+                                                   cse498::PathFlag::Skip,
+                                                   cse498::CircleDirectionFlag::CCW);
+
+        REQUIRE(cw);
+        REQUIRE(ccw);
+        REQUIRE(cw->mPathToCircle.Size() >= 2);
+        REQUIRE(ccw->mPathToCircle.Size() >= 2);
+        REQUIRE(cw->mCirclePath.Size() >= 2);
+        REQUIRE(ccw->mCirclePath.Size() >= 2);
+
+        CHECK(cw->mPathToCircle.At(cw->mPathToCircle.Size() - 1) == ccw->mPathToCircle.At(ccw->mPathToCircle.Size() - 1));
+        CHECK(cw->mCirclePath.At(0) == ccw->mCirclePath.At(0));
+        CHECK(cw->mCirclePath.At(1) != ccw->mCirclePath.At(1));
+
+        CHECK(cw->mCirclePath.At(1).X() > cw->mCirclePath.At(0).X());
+        CHECK(cw->mCirclePath.At(1).Y() < cw->mCirclePath.At(0).Y());
+        CHECK(ccw->mCirclePath.At(1).X() < ccw->mCirclePath.At(0).X());
+        CHECK(ccw->mCirclePath.At(1).Y() > ccw->mCirclePath.At(0).Y());
+    }
+
+    // Blocked preferred entry point falls back to a different reachable point
+    {
+        std::unordered_set<WorldPosition> blocked_entry_tiles = {
+            {2, 2}, {3, 2}, {2, 3}
+        };
+        PathRequest blocked_request(blocked_entry_tiles, circle_world.GetGrid());
+
+        auto circ = PathGenerator::FindCircularPath({1, 1}, {4, 4}, 2, blocked_request);
+
+        REQUIRE(circ);
+        REQUIRE(circ->mPathToCircle.Size() >= 2);
+        REQUIRE(circ->mCirclePath.Size() >= 1);
+
+        const auto entry_tile = Round(circ->mPathToCircle.At(circ->mPathToCircle.Size() - 1));
+        CHECK(!blocked_entry_tiles.contains(entry_tile));
+        CHECK(circ->mCirclePath.At(0) == circ->mPathToCircle.At(circ->mPathToCircle.Size() - 1));
+    }
+
+    // No reachable circle point returns no path
+    {
+        std::unordered_set<WorldPosition> avoid_all_walkable;
+        for (size_t y = 1; y < 20; ++y)
+        {
+            for (size_t x = 1; x < 19; ++x)
+                avoid_all_walkable.insert({x, y});
+        }
+        PathRequest impossible_request(avoid_all_walkable, circle_world.GetGrid());
+
+        auto circ = PathGenerator::FindCircularPath({1, 1}, {4, 4}, 2, impossible_request);
+        CHECK(!circ);
+    }
 }
 
 TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
 
     // Straight line vertical test
     auto man_simple1 = PathGenerator::FindManhattanPath({1, 1}, {1, 5}, request2);
@@ -468,22 +548,22 @@ TEST_CASE("Manhattan Path Generation -- Simple Cases", "[ManhattanPath]")
                                                                 cse498::CircleDirectionFlag::CCW);
     // Clockwise direction which is reverse of above
     auto man_different_coord_rev = PathGenerator::FindManhattanPath({15, 5}, {3, 1}, request3);
-    CHECK(man_different_coord.value() == man_different_coord_rev.value().reverse());
+    CHECK(man_different_coord.value() == man_different_coord_rev.value().Reverse());
 
     //{19,4} - {1.8} this is (v) <-- and --> then ^
     auto man_p1 = PathGenerator::FindManhattanPath({19, 4}, {1, 8}, request3);
     auto man_p1_rev = PathGenerator::FindManhattanPath({1, 8}, {19, 4}, request3, cse498::CircleDirectionFlag::CCW);
-    CHECK(man_p1.value() == man_p1_rev.value().reverse());
+    CHECK(man_p1.value() == man_p1_rev.value().Reverse());
 }
 
 TEST_CASE("Manhattan Path Generation -- Edge Cases", "[ManhattanPath]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
 
     auto man_p1 = PathGenerator::FindManhattanPath({1, 1}, {1, 1}, request1);
     std::vector<WorldPosition> man_p1_ans = {{1, 1}};
@@ -496,13 +576,13 @@ TEST_CASE("Manhattan Path Generation -- Edge Cases", "[ManhattanPath]")
 TEST_CASE("Rectangular Loop Generation -- Simple Cases", "[RectangularLoop]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world;
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     auto rectangle1 = PathGenerator::FindRectangularLoopPath({1, 1}, {2.5, 5}, {5.5, 1}, circle_request);
     std::vector<WorldPosition> rectangle1_path_to = {{1, 1}, {2, 1}, {2.5, 1}};
@@ -528,21 +608,17 @@ TEST_CASE("Rectangular Loop Generation -- Simple Cases", "[RectangularLoop]")
     CHECK(WorldPathApprox(WorldPath(rectangle2_path_to), rectangle2.value().mPathToCircle));
 }
 
-TEST_CASE("Rectangular Loop Generation -- Edge Cases", "[RectangularLoop]")
-{
-    // Ignore this one too. This took too long as is.
-}
 
 TEST_CASE("Path Generation - Doubles testing", "[group2]")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world; // x=[1-18] y=[1,8]
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     // Initial Tests to ensure things are working ok -- semi-complex
     //  (1,1) --> (9, 1)
@@ -591,13 +667,13 @@ TEST_CASE("Path Generation - Doubles testing", "[group2]")
 TEST_CASE("Path Generation ALL - testing paths outside of bounds")
 {
     cse498::TestWorld1 world1;
-    PathRequest request1({}, cse498::AgentAbility(), world1.GetGrid());
+    PathRequest request1({}, world1.GetGrid());
     cse498::TestWorld2 world2;
-    PathRequest request2({}, cse498::AgentAbility(), world2.GetGrid());
+    PathRequest request2({}, world2.GetGrid());
     cse498::TestWorld3 world3;
-    PathRequest request3({}, cse498::AgentAbility(), world3.GetGrid());
+    PathRequest request3({}, world3.GetGrid());
     cse498::CircleWorld circle_world; // x=[1-18] y=[1,8]
-    PathRequest circle_request({}, cse498::AgentAbility(), circle_world.GetGrid());
+    PathRequest circle_request({}, circle_world.GetGrid());
 
     // 1. Shortest Path
     auto path1 = PathGenerator::FindShortestPath({0.5, 1.3}, {9.32, -3.35}, request2);
@@ -617,4 +693,257 @@ TEST_CASE("Path Generation ALL - testing paths outside of bounds")
     // 4. Manhattan paths
     auto man1 = PathGenerator::FindManhattanPath({1, -1}, {-4, 4}, request1);
     CHECK(!man1);
+}
+
+
+TEST_CASE("IsPathClear -- random double testing", "[utility]")
+{
+    cse498::CircleWorld world;
+    PathRequest request({}, world.GetGrid());
+    // Long northeast ray from a fractional start stays clear in open space
+    {
+        WorldPosition start{2.25, 17.4};
+        PathVector path{11.1, -6.2};
+
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Long southwest ray from a different fractional start stays clear in open space
+    {
+        WorldPosition start{16.8, 4.3};
+        PathVector path{-10.4, 9.1};
+
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Long southeast ray from another start stays clear in open space
+    {
+        WorldPosition start{4.6, 3.2};
+        PathVector path{9.7, 11.4};
+
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Complex ray that would leave the open area is blocked by the border wall
+    {
+        WorldPosition start{8.4, 8.6};
+        PathVector path{5.7, -8.3};
+
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+}
+TEST_CASE("PathGenerator::IsPathClear basic scenarios", "[path]") {
+    cse498::TestWorldUtility1 world;
+    PathRequest request({}, world.GetGrid());
+
+    // Straight horizontal path (clear)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{3, 0}; // move right
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Straight horizontal path (blocked)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{8, 0}; // blocked further right
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Straight vertical path (clear)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{0, 2}; // move downward
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Straight vertical path (blocked)
+    {
+        WorldPosition start{1, 1};
+        PathVector path{0, 3}; // blocked further up
+        CHECK(!PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Diagonal path
+    {
+        WorldPosition start{7, 1}; // down left
+        PathVector path{-2, 2};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Zero-length path
+    {
+        WorldPosition start{1, 1};
+        PathVector path{0, 0};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Zero-length path starting on wall
+    {
+        WorldPosition start{0, 0};
+        PathVector path{0, 0};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // Negative movement
+    {
+        WorldPosition start{7, 3}; // goes up left
+        PathVector path{-2, -2};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+    // down right
+    {
+        WorldPosition start{5, 1};
+        PathVector path{2, 2};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+
+}
+
+TEST_CASE("PathGenerator directional stepping - minimal but complete coverage", "[NextDirectional]")
+{
+    // =========================
+    // NextCardinalToward
+    // =========================
+
+    {
+        // Degenerate case: no movement
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, 0.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == to);
+    }
+
+    {
+        // Pure axis (X)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(5.0, 0.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(1.0, 0.0));
+    }
+
+    {
+        // Pure axis (Y, negative)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, -3.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(0.0, -1.0));
+    }
+
+    {
+        // X-dominant diagonal → X step
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(4.0, 1.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(1.0, 0.0));
+    }
+
+    {
+        // Y-dominant diagonal → Y step
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(1.0, 4.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(0.0, 1.0));
+    }
+
+    {
+        // Tie case (|dx| == |dy|) → MUST choose X (>= branch)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(-2.0, -2.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(-1.0, 0.0));
+    }
+
+    {
+        // Floating-point asymmetry (very small dx vs large dy)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(1e-12, 10.0);
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(0.0, 1.0));
+    }
+
+    {
+        // Non-origin position, mixed signs
+        WorldPosition from(10.5, -2.5);
+        WorldPosition to(7.5, 5.5); // dx=-3, dy=8 → Y dominant
+
+        auto r = PathGenerator::NextCardinalToward(from, to);
+        CHECK(r == WorldPosition(10.5, -1.5));
+    }
+
+    // =========================
+    // Next8DirectionToward
+    // =========================
+
+    {
+        // Degenerate case
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, 0.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == to);
+    }
+
+    {
+        // Pure X still works
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(-6.0, 0.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(-1.0, 0.0));
+    }
+
+    {
+        // True diagonal (+,+)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(3.0, 7.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(1.0, 1.0));
+    }
+
+    {
+        // Mixed signs (+,-)
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(2.0, -9.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(1.0, -1.0));
+    }
+
+    {
+        // dx extremely small but nonzero → still produces ±1
+        // This verifies your sign extraction behavior explicitly
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(1e-15, -5.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(1.0, -1.0));
+    }
+
+    {
+        // dx exactly zero → must not introduce diagonal artifact
+        WorldPosition from(0.0, 0.0);
+        WorldPosition to(0.0, 8.0);
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(0.0, 1.0));
+    }
+
+    {
+        // Non-origin + asymmetric magnitudes (no prioritization)
+        WorldPosition from(-3.0, 4.0);
+        WorldPosition to(100.0, 3.0); // dx large +, dy small -
+
+        auto r = PathGenerator::Next8DirectionToward(from, to);
+        CHECK(r == WorldPosition(-2, 3));
+    }
 }

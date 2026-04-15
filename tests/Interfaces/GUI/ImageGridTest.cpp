@@ -10,140 +10,222 @@
 #include "../../../source/Interfaces/GUI/ImageGrid.hpp"
 #include "../../../source/Interfaces/GUI/ImageManager.hpp"
 
-namespace cse498 {
+namespace cse498
+{
 
-/**
- * Helper class to initialize and clean up SDL
- * for testing rendering functionality.
- *
- * This mirrors the pattern used in ImageManagerTest.
- */
-class SDLMock {
-public:
-    SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
+    /**
+     * Helper class to initialize and clean up SDL
+     * for testing rendering functionality.
+     */
+    class SDLMock
+    {
+    public:
+        SDL_Window *window = nullptr;
+        SDL_Renderer *renderer = nullptr;
 
-    SDLMock() {
-        REQUIRE(SDL_Init(SDL_INIT_VIDEO) == 0);
-        REQUIRE((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != 0);
+        SDLMock()
+        {
+            REQUIRE(SDL_Init(SDL_INIT_VIDEO) == 0);
+            REQUIRE((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != 0);
 
-        window = SDL_CreateWindow("Test",
-                                  SDL_WINDOWPOS_UNDEFINED,
-                                  SDL_WINDOWPOS_UNDEFINED,
-                                  100, 100,
-                                  SDL_WINDOW_HIDDEN);
-        REQUIRE(window != nullptr);
+            window = SDL_CreateWindow("Test",
+                                      SDL_WINDOWPOS_UNDEFINED,
+                                      SDL_WINDOWPOS_UNDEFINED,
+                                      100, 100,
+                                      SDL_WINDOW_HIDDEN);
+            REQUIRE(window != nullptr);
 
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-        REQUIRE(renderer != nullptr);
+            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+            REQUIRE(renderer != nullptr);
+        }
+
+        ~SDLMock()
+        {
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(window);
+            IMG_Quit();
+            SDL_Quit();
+        }
+    };
+
+    /**
+     * Test that constructor properly sets dimensions and tile size.
+     */
+    TEST_CASE("ImageGrid Constructor Initializes Correctly", "[ImageGrid]")
+    {
+
+        ImageGrid grid(3, 2, 32, 32);
+
+        REQUIRE(grid.GetWidth() == 3);
+        REQUIRE(grid.GetHeight() == 2);
+        REQUIRE(grid.GetTileWidth() == 32);
+        REQUIRE(grid.GetTileHeight() == 32);
     }
 
-    ~SDLMock() {
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        IMG_Quit();
-        SDL_Quit();
+    /**
+     * Verify that SetCell correctly stores image names and GetCell retrieves them.
+     */
+    TEST_CASE("ImageGrid SetCell and GetCell", "[ImageGrid]")
+    {
+
+        ImageGrid grid(2, 2, 32, 32);
+
+        grid.SetCell(1, 1, "tree");
+
+        REQUIRE(grid.GetCell(1, 1) == "tree");
     }
-};
 
-// Test that constructor properly sets dimensions and tile size.
-TEST_CASE("ImageGrid Constructor Initializes Correctly", "[ImageGrid]") {
+    /**
+     * Ensure Clear removes all image names from the grid.
+     */
+    TEST_CASE("ImageGrid Clear Removes All Images", "[ImageGrid]")
+    {
 
-    ImageGrid grid(3, 2, 32, 32);
+        ImageGrid grid(2, 2, 32, 32);
+        grid.SetCell(0, 0, "grass");
+        grid.SetCell(1, 1, "tree");
 
-    REQUIRE(grid.GetWidth() == 3);
-    REQUIRE(grid.GetHeight() == 2);
-    REQUIRE(grid.GetTileWidth() == 32);
-    REQUIRE(grid.GetTileHeight() == 32);
-}
+        grid.Clear();
 
-// // Constructor should throw if tile dimensions are zero.
-// TEST_CASE("ImageGrid Constructor Rejects Zero Tile Size", "[ImageGrid]") {
+        REQUIRE(grid.GetCell(0, 0).empty());
+        REQUIRE(grid.GetCell(1, 1).empty());
+    }
 
-//     REQUIRE_THROWS_AS(
-//         ImageGrid(2, 2, 0, 32),
-//         std::invalid_argument
-//     );
+    /**
+     * Ensure Fill assigns the same image name to every cell.
+     */
+    TEST_CASE("ImageGrid Fill Sets Every Cell", "[ImageGrid]")
+    {
 
-//     REQUIRE_THROWS_AS(
-//         ImageGrid(2, 2, 32, 0),
-//         std::invalid_argument
-//     );
-// }
+        ImageGrid grid(3, 2, 32, 32);
 
-// Verify that SetCell correctly stores image names and GetCell retrieves them.
-TEST_CASE("ImageGrid SetCell and GetCell", "[ImageGrid]") {
+        grid.Fill("grass");
 
-    ImageGrid grid(2, 2, 32, 32);
+        for (size_t y = 0; y < grid.GetHeight(); ++y)
+        {
+            for (size_t x = 0; x < grid.GetWidth(); ++x)
+            {
+                REQUIRE(grid.GetCell(x, y) == "grass");
+            }
+        }
+    }
 
-    grid.SetCell(1, 1, "tree");
+    /**
+     * Ensure IsValid returns true for in-bounds coordinates
+     * and false for out-of-bounds coordinates.
+     */
+    TEST_CASE("ImageGrid IsValid Recognizes Valid Coordinates", "[ImageGrid]")
+    {
 
-    REQUIRE(grid.GetCell(1, 1) == "tree");
-}
+        ImageGrid grid(3, 2, 32, 32);
 
-// Ensure Clear removes all image names from grid.
-TEST_CASE("ImageGrid Clear Removes All Images", "[ImageGrid]") {
+        REQUIRE(grid.IsValid(0, 0));
+        REQUIRE(grid.IsValid(2, 1));
 
-    ImageGrid grid(2, 2, 32, 32);
+        REQUIRE_FALSE(grid.IsValid(3, 0));
+        REQUIRE_FALSE(grid.IsValid(0, 2));
+        REQUIRE_FALSE(grid.IsValid(10, 10));
+    }
 
-    grid.SetCell(0, 0, "grass");
-    grid.Clear();
+    /**
+     * Resize should preserve overlapping region and update grid dimensions correctly.
+     */
+    TEST_CASE("ImageGrid Resize Preserves Existing Cells", "[ImageGrid]")
+    {
 
-    REQUIRE(grid.GetCell(0, 0).empty());
-}
+        ImageGrid grid(2, 2, 32, 32);
+        grid.SetCell(1, 1, "tree");
 
-// Resize should preserve overlapping region and update grid dimensions correctly.
-TEST_CASE("ImageGrid Resize Preserves Existing Cells", "[ImageGrid]") {
+        grid.Resize(4, 4);
 
-    ImageGrid grid(2, 2, 32, 32);
+        REQUIRE(grid.GetWidth() == 4);
+        REQUIRE(grid.GetHeight() == 4);
+        REQUIRE(grid.GetCell(1, 1) == "tree");
+    }
 
-    grid.SetCell(1, 1, "tree");
+    /**
+     * Resize smaller should drop cells outside new bounds.
+     */
+    TEST_CASE("ImageGrid Resize Smaller Drops Out Of Bounds Cells", "[ImageGrid]")
+    {
 
-    // Increase size
-    grid.Resize(4, 4);
+        ImageGrid grid(3, 3, 32, 32);
+        grid.SetCell(0, 0, "grass");
+        grid.SetCell(2, 2, "tree");
 
-    REQUIRE(grid.GetWidth() == 4);
-    REQUIRE(grid.GetHeight() == 4);
-    REQUIRE(grid.GetCell(1, 1) == "tree");
-}
+        grid.Resize(1, 1);
 
-// Resize smaller should drop cells outside new bounds.
-TEST_CASE("ImageGrid Resize Smaller Drops Out Of Bounds Cells", "[ImageGrid]") {
+        REQUIRE(grid.GetWidth() == 1);
+        REQUIRE(grid.GetHeight() == 1);
+        REQUIRE(grid.GetCell(0, 0) == "grass");
+    }
 
-    ImageGrid grid(3, 3, 32, 32);
+    /**
+     * Verify that Draw delegates to ImageManager without throwing exceptions.
+     */
+    TEST_CASE("ImageGrid Draw Integrates With ImageManager", "[ImageGrid]")
+    {
 
-    grid.SetCell(2, 2, "tree");
+        SDLMock mock;
+        ImageManager manager(mock.renderer);
 
-    grid.Resize(1, 1);
+        std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+        auto result = manager.LoadImage("test_img", testImage);
+        REQUIRE(result);
 
-    REQUIRE(grid.GetWidth() == 1);
-    REQUIRE(grid.GetHeight() == 1);
-}
+        ImageGrid grid(2, 2, 32, 32);
+        grid.SetCell(0, 0, "test_img");
 
-// Verify that Draw delegates to ImageManager without throwing exceptions.
-TEST_CASE("ImageGrid Draw Integrates With ImageManager", "[ImageGrid]") {
+        REQUIRE_NOTHROW(grid.Draw(manager));
+    }
 
-    SDLMock mock;
-    ImageManager manager(mock.renderer);
+    /**
+     * Drawing an empty grid should not throw.
+     */
+    TEST_CASE("ImageGrid Draw Empty Grid", "[ImageGrid]")
+    {
 
-    std::string testImage = "Interfaces/GUI/images/ImageManagerTest.png";
-    REQUIRE_NOTHROW(manager.load_image("test_img", testImage));
+        SDLMock mock;
+        ImageManager manager(mock.renderer);
 
-    ImageGrid grid(2, 2, 32, 32);
-    grid.SetCell(0, 0, "test_img");
+        ImageGrid grid(2, 2, 32, 32);
 
-    REQUIRE_NOTHROW(grid.Draw(manager));
-}
+        REQUIRE_NOTHROW(grid.Draw(manager));
+    }
 
-// Drawing an empty grid should not throw.
-TEST_CASE("ImageGrid Draw Empty Grid", "[ImageGrid]") {
+    /**
+     * Verify that DrawViewport renders a visible portion of the grid
+     * without throwing exceptions.
+     */
+    TEST_CASE("ImageGrid DrawViewport Integrates With ImageManager", "[ImageGrid]")
+    {
 
-    SDLMock mock;
-    ImageManager manager(mock.renderer);
+        SDLMock mock;
+        ImageManager manager(mock.renderer);
 
-    ImageGrid grid(2, 2, 32, 32);
+        std::string testImage = std::string(TEST_IMAGE_DIR) + "/ImageManagerTest.png";
+        auto result = manager.LoadImage("test_img", testImage);
+        REQUIRE(result);
 
-    REQUIRE_NOTHROW(grid.Draw(manager));
-}
+        ImageGrid grid(4, 4, 32, 32);
+        grid.SetCell(1, 1, "test_img");
+        grid.SetCell(2, 2, "test_img");
+
+        REQUIRE_NOTHROW(grid.DrawViewport(manager, 0, 0, 64, 64));
+    }
+
+    /**
+     * Drawing an empty viewport region should not throw.
+     */
+    TEST_CASE("ImageGrid DrawViewport Empty Grid", "[ImageGrid]")
+    {
+
+        SDLMock mock;
+        ImageManager manager(mock.renderer);
+
+        ImageGrid grid(4, 4, 32, 32);
+
+        REQUIRE_NOTHROW(grid.DrawViewport(manager, 0, 0, 64, 64));
+    }
 
 } // namespace cse498

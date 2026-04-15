@@ -1,29 +1,48 @@
-#ifndef WEBIMAGE_HPP_
-#define WEBIMAGE_HPP_
+/**
+ * @file WebImage.hpp
+ * @brief Declaration of WebImage, a DOM-backed HTML \<img\> element for WebUI.
+ *
+ * WebImage manages an HTML \<img\> element from C++ via Emscripten. It
+ * implements IDomElement for DOM lifecycle management (mount/unmount/sync)
+ * and ICanvasElement for optional canvas-based rendering. Positioning is
+ * NOT handled by WebImage; use WebLayout (Flex/Grid/Free) to control where
+ * the image appears on the page.
+ *
+ */
+
+#pragma once
 
 #include <string>
 #include <functional>
+#include <unordered_map>
 #include <emscripten/val.h>
 
+#include "../../../tools/Color.hpp"
 #include "../internal/IDomElement.hpp"
 #include "../internal/ICanvasElement.hpp"
 
 namespace cse498 {
 
-/// Behavior when an image source fails to load.
+/// @brief Behavior when an image source fails to load.
 enum class ImageErrorMode {
-  BlankRect,  ///< Show a blank colored rectangle as placeholder
-  NoOp        ///< Do nothing; the element remains invisible/broken
+  BlankRect,  ///< Show a blank colored rectangle as placeholder.
+  NoOp        ///< Do nothing; the element remains invisible/broken.
 };
 
-/// Manages an HTML <img> element from C++ via Emscripten.
-/// Can be rendered as a DOM element via WebLayout or drawn on a WebCanvas.
-///
-/// Positioning is NOT handled by WebImage. Use WebLayout (Flex/Grid/Free)
-/// to control where the image appears on the page.
+/**
+ * @class WebImage
+ * @brief DOM-backed HTML \<img\> element for use in WebUI layouts.
+ *
+ * Manages an HTML \<img\> element from C++ via Emscripten.
+ * Can be rendered as a DOM element via WebLayout or drawn on a WebCanvas.
+ * Positioning is NOT handled by WebImage; use WebLayout (Flex/Grid/Free)
+ * to control where the image appears on the page.
+ */
 class WebImage : public IDomElement, public ICanvasElement {
  public:
-  /// Construct a WebImage with a source URL/path and optional alt text.
+  /// Construct a detached WebImage with a source URL/path and optional alt text.
+  /// The underlying DOM element is created but not mounted; callers should
+  /// attach it through WebLayout when they want it to appear in the document.
   explicit WebImage(const std::string& src,
                     const std::string& alt_text = "");
   ~WebImage();
@@ -108,11 +127,26 @@ class WebImage : public IDomElement, public ICanvasElement {
   // ----- IDomElement Interface -----
 
   void MountToLayout(WebLayout& parent, Alignment align) override;
-  void Unmount() override;
   void SyncFromModel() override;
-  [[nodiscard]] const std::string& Id() const override;
 
   // ----- ICanvasElement Interface -----
+
+  /// Sets the position and optional size used when drawing this image on a
+  /// WebCanvas via Draw(). Coordinates are in canvas pixel space.
+  /// @param x Canvas x coordinate (left edge).
+  /// @param y Canvas y coordinate (top edge).
+  /// @param w Draw width in pixels; pass -1 to use the image's display width.
+  /// @param h Draw height in pixels; pass -1 to use the image's display height.
+  void SetCanvasRect(float x, float y, float w = -1.0f, float h = -1.0f);
+
+  /// Returns the canvas x coordinate set by SetCanvasRect().
+  [[nodiscard]] float CanvasX() const;
+  /// Returns the canvas y coordinate set by SetCanvasRect().
+  [[nodiscard]] float CanvasY() const;
+  /// Returns the canvas draw width set by SetCanvasRect() (-1 = use display width).
+  [[nodiscard]] float CanvasW() const;
+  /// Returns the canvas draw height set by SetCanvasRect() (-1 = use display height).
+  [[nodiscard]] float CanvasH() const;
 
   void Draw(WebCanvas& canvas) override;
 
@@ -121,24 +155,48 @@ class WebImage : public IDomElement, public ICanvasElement {
   /// Handle error event (called when image fails to load).
   void HandleError();
 
- private:
-  std::string mSrc;
-  std::string mAltText;
-  int mWidth = 0;
-  int mHeight = 0;
-  double mOpacity = 1.0;
-  bool mIsVisible = true;
-  bool mIsLoaded = false;
-  bool mHasError = false;
-  ImageErrorMode mErrorMode = ImageErrorMode::BlankRect;
-  std::string mPlaceholderColor = "#CCCCCC";
-  std::function<void()> mOnLoadCallback;
-  std::function<void()> mOnErrorCallback;
-  emscripten::val mElement;
-  std::string mId;
-  int mRegistryId = -1;
+ public:
+  /// @brief Looks up the WebImage registered under the given registry id.
+  /// @param id Registry id to look up.
+  /// @return Pointer to the registered WebImage, or nullptr if not found.
+  [[nodiscard]] static WebImage* LookupImage(int id);
 
-  static int mNextIdCounter;
+ private:
+  friend struct WebImageTestAccessor;
+
+  // ----- Image registry (maps integer IDs to WebImage pointers) -----
+  static std::unordered_map<int, WebImage*> sImageRegistry;
+  static int sNextRegistryId;
+
+  static int RegisterImage(WebImage* img);
+  static void UnregisterImage(int id);
+  static void UpdateRegistryEntry(int id, WebImage* img);
+
+  // ----- Style helper methods (eliminate repeated lambda definitions) -----
+  static void ApplyDimensionStyle(emscripten::val& style, const char* prop, int value);
+  static void ApplyPlaceholderDimensionStyle(emscripten::val& style, const char* prop, int value);
+
+  std::string mSrc;                         ///< Image source URL or asset path.
+  std::string mAltText;                     ///< Alternative text for accessibility.
+  int mWidth = 0;                           ///< Display width in pixels (0 = browser default).
+  int mHeight = 0;                          ///< Display height in pixels (0 = browser default).
+  double mOpacity = 1.0;                    ///< Opacity in [0.0, 1.0].
+  bool mIsVisible = true;                   ///< Whether the image element is visible.
+  bool mIsLoaded = false;                   ///< True after the image finishes loading.
+  bool mHasError = false;                   ///< True if the image source failed to load.
+  ImageErrorMode mErrorMode = ImageErrorMode::BlankRect;  ///< Error handling strategy.
+  std::string mPlaceholderColor = Color::FromRGB255(204, 204, 204).ToHex();
+                                               ///< Color used for the BlankRect placeholder.
+  std::function<void()> mOnLoadCallback;    ///< Callback invoked on successful load.
+  std::function<void()> mOnErrorCallback;   ///< Callback invoked on load failure.
+  int mRegistryId = -1;                     ///< Registry id for JS event forwarding.
+
+  float mCanvasX = 0.0f;   ///< Canvas draw position x (pixels).
+  float mCanvasY = 0.0f;   ///< Canvas draw position y (pixels).
+  float mCanvasW = -1.0f;  ///< Canvas draw width (-1 = use mWidth).
+  float mCanvasH = -1.0f;  ///< Canvas draw height (-1 = use mHeight).
+
+  static int mNextIdCounter;                ///< Counter for generating unique DOM ids.
 
   /// Mark the image as loaded or not (for tracking async loading).
   void MarkLoaded(bool loaded);
@@ -157,5 +215,3 @@ class WebImage : public IDomElement, public ICanvasElement {
 };
 
 }  // namespace cse498
-
-#endif  // WEBIMAGE_HPP_

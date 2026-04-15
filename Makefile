@@ -1,8 +1,8 @@
 # Top-level Makefile (repo root)
 #
-# Delegates builds to:
-#   source/   (program executables)
-#   tests/    (Catch2 unit tests)
+# Delegates compatibility targets to:
+#   source/   (CMake-backed program builds)
+#   tests/    (CMake-backed native and WebUI tests)
 #
 # Common usage:
 #   make                # build default program(s)
@@ -18,11 +18,11 @@
 #   make test-build
 #   make test-list
 
-# AI Disclaimer: Used ChatGPT to create the 'make install' target in order to
-# download the SDL library for both macOS & Linux users.
+# The Make targets below are compatibility shims. Compilation and test
+# orchestration now live in the root CMake project.
 
 .PHONY: default all build test clean debug opt quick grumpy \
-        src-% test-% help web_test
+        src-% test-% help web_test group18_main
 
 # ---------- High-level targets ----------
 
@@ -43,10 +43,15 @@ all: build test
 debug opt quick grumpy:
 	$(MAKE) -C source $@
 
+# Build the Group15 demo
+Group15_demo:
+	cmake --build build --target Group15_demo
+
 # Clean everything
 clean:
 	$(MAKE) -C source clean
 	$(MAKE) -C tests clean
+	$(MAKE) -C demo clean
 
 # Forward anything to source/ by prefixing with src-
 #   make src-simple
@@ -66,14 +71,17 @@ test-%:
 web_test:
 	$(MAKE) -C tests web_test
 
+group18_main:
+	$(MAKE) -C source group18_main
+
 help:
 	@echo "Top-level targets:"
-	@echo "  make / make build      Build program(s) in source/"
-	@echo "  make test              Build + run unit tests in tests/"
+	@echo "  make / make build      Build program(s) via CMake"
+	@echo "  make test              Build + run unit tests via CMake"
 	@echo "  make web_test          Build WebUI tests with em++ (requires Emscripten)"
 	@echo "  make all               Build program(s) + run tests"
-	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode (source/)"
-	@echo "  make clean             Clean source/ and tests/"
+	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode"
+	@echo "  make clean             Clean source/, tests/, and build/cmake/"
 	@echo
 	@echo "Forwarding targets:"
 	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"

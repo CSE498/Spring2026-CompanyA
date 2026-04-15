@@ -23,6 +23,8 @@ namespace cse498 {
     Location location;       ///< Where is this entity located?
     const WorldBase & world; ///< Which world does this entity belong to?
 
+    // NOTE: current assumption is all entities have hitbox size == size of tile.
+
     // @TODO: entities should probably have annotations or properties...
     //        Any public functions here for properties could be useful
     //        in agents, items, or interfaces.
