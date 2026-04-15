@@ -19,39 +19,51 @@
 #include "WorldPosition.hpp"
 
 namespace cse498 {
+    struct ItemID {
+        size_t id;
+    };
 
-  struct ItemID { size_t id; };
-  struct AgentID { size_t id; };
+    struct AgentID {
+        size_t id;
+    };
 
-  class Location {
-  private:
-    std::variant<WorldPosition, ItemID, AgentID> location;
+    class Location {
+    private:
+        std::variant<WorldPosition, ItemID, AgentID> location;
 
-  public:
-    Location() = default;
-    Location(const Location &) = default;
-    Location(const WorldPosition & pos) : location(pos) { }
-    Location(ItemID id) : location(id) { }
-    Location(AgentID id) : location(id) { }
+    public:
+        Location() = default;
 
-    Location & operator=(const Location &) = default;
+        Location(const Location &) = default;
 
-    [[nodiscard]] bool IsPosition() const { return std::holds_alternative<WorldPosition>(location); }
-    [[nodiscard]] bool IsAgentID() const { return std::holds_alternative<AgentID>(location); }
-    [[nodiscard]] bool IsItemID() const { return std::holds_alternative<ItemID>(location); }
+        Location(const WorldPosition &pos) : location(pos) {
+        }
 
-    [[nodiscard]] const WorldPosition & AsWorldPosition() const {
-      assert (IsPosition());
-      return std::get<WorldPosition>(location);
-    }
-    [[nodiscard]] size_t AsAgentID() const {
-      assert(IsAgentID());
-      return std::get<AgentID>(location).id;
-    }
-    [[nodiscard]] size_t AsItemID() const {
-      assert(IsItemID());
-      return std::get<ItemID>(location).id;
-    }
-  };
+        Location(ItemID id) : location(id) {
+        }
 
+        Location(AgentID id) : location(id) {
+        }
+
+        Location &operator=(const Location &) = default;
+
+        [[nodiscard]] bool IsPosition() const { return std::holds_alternative<WorldPosition>(location); }
+        [[nodiscard]] bool IsAgentID() const { return std::holds_alternative<AgentID>(location); }
+        [[nodiscard]] bool IsItemID() const { return std::holds_alternative<ItemID>(location); }
+
+        [[nodiscard]] const WorldPosition &AsWorldPosition() const {
+            assert(IsPosition());
+            return std::get<WorldPosition>(location);
+        }
+
+        [[nodiscard]] size_t AsAgentID() const {
+            assert(IsAgentID());
+            return std::get<AgentID>(location).id;
+        }
+
+        [[nodiscard]] size_t AsItemID() const {
+            assert(IsItemID());
+            return std::get<ItemID>(location).id;
+        }
+    };
 } // End of namespace cse498
