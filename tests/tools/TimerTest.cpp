@@ -6,18 +6,21 @@ TEST_CASE("Timer Constructor", "[Timer]") {
   // Test that single parameter constructor defaults the Timer to running.
   cse498::Timer Timer("Test1");
   REQUIRE(Timer.isRunning());
+  Timer.advanceTime(1.0);
   REQUIRE(Timer.elapsed() > 0);
 
   // Test that adding true in the constructor functions properly and starts the
   // Timer running.
   cse498::Timer Timer2("Test2", true);
   REQUIRE(Timer2.isRunning());
+  Timer2.advanceTime(1.0);
   REQUIRE(Timer2.elapsed() > 0);
 
   // Test that adding false in the constructor starts the Timer paused
   // and that the elapsed time defualts to 0.
   cse498::Timer Timer3("Test3", false);
   REQUIRE(!Timer3.isRunning());
+  Timer3.advanceTime(1.0);
   REQUIRE(Timer3.elapsed() == 0.0);
 }
 
@@ -26,12 +29,14 @@ TEST_CASE("Timer Start Method", "[Timer]") {
   // intended.
   cse498::Timer Timer("Test1", false);
   REQUIRE(!Timer.isRunning());
+  Timer.advanceTime(1.0);
   REQUIRE(Timer.elapsed() == 0.0);
 
   // Call start on the Timer and make sure that it is running and that time is
   // elapsing.
   Timer.start();
   REQUIRE(Timer.isRunning());
+  Timer.advanceTime(1.0);
   REQUIRE(Timer.elapsed() > 0);
 
   // Make sure that calling start on a running Timer doesn't change the state.
@@ -50,6 +55,7 @@ TEST_CASE("Timer Stop Method", "[Timer]") {
   // elapsing.
   Timer.start();
   REQUIRE(Timer.isRunning());
+  Timer.advanceTime(1.0);
   REQUIRE(Timer.elapsed() > 0);
 
   // Call stop on the Timer and make sure that it is no longer running.
