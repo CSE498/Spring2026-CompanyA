@@ -12,9 +12,14 @@ using std::string;
 /// @param key the string to convert
 /// @return the original string in all lower case
 std::string ToLower(std::string& key) {
-    std::string lowerKey = key | std::ranges::views::transform([](unsigned char c) { return std::tolower(c); }) |
-                           std::ranges::to<std::string>();
+    // clang-format off
+    std::string lowerKey =
+        key
+        | std::ranges::views::transform([](unsigned char c) { return std::tolower(c); })
+        | std::ranges::to<std::string>()
+    ;
     return lowerKey;
+    // clang-format on
 }
 
 InputManager::InputManager(WebInterface& interface) : mInterface(interface) {
@@ -80,21 +85,16 @@ InputManager::ActiveAction InputManager::GetAction() {
     mKeysPressed.empty() ? key = mTapAction : key = mKeysPressed.front();
     mTapAction = "";
 
-    if (key == "w")
-        return ActiveAction::Up;
-    if (key == "a")
-        return ActiveAction::Left;
-    if (key == "s")
-        return ActiveAction::Down;
-    if (key == "d")
-        return ActiveAction::Right;
-    if (key == "e")
-        return ActiveAction::Interact;
-    if (key == "q")
-        return ActiveAction::Quit;
-    if (key == "escape")
-        return ActiveAction::Pause;
+    // clang-format off
+    if (key == "w") { return ActiveAction::Up; }
+    if (key == "a") { return ActiveAction::Left; }
+    if (key == "s") { return ActiveAction::Down; }
+    if (key == "d") { return ActiveAction::Right; }
+    if (key == "e") { return ActiveAction::Interact; }
+    if (key == "q") { return ActiveAction::Quit; }
+    if (key == "escape") { return ActiveAction::Pause; }
     return ActiveAction::None;
+    // clang-format on
 }
 
 #endif
