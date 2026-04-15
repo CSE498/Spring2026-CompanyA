@@ -11,8 +11,10 @@
 #include <string>
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include "../../tools/Random.hpp"
 #include "../../tools/WeightedSet.hpp"
+#include "LevelBase.hpp"
 
 namespace cse498 {
 
@@ -25,18 +27,17 @@ namespace cse498 {
     class RoomHolder { 
     protected:
         std::vector<std::string> m_current_room; //Holds the currently selected/stored room
-        std::string m_file_path; //File path used to access the directory of different .txt rooms
+        std::string m_room_dir; //File path used to access the directory of different .txt rooms
         std::string m_image_path = "../../../assets/";  //File path location for images
 
         cse498::Random m_rng; //Random
-		cse498::WeightedSet<std::string> m_room_pool;
+		cse498::WeightedSet<int> m_room_pool;
 
     public:
-		RoomHolder(const cse498::WeightedSet<std::string>& room_pool,
-				   const std::string& file_path) 
-			: m_file_path(file_path),
+		RoomHolder(const LevelBase& level) 
+			: m_room_dir(level.GetRoomDir()),
 			  m_rng(),
-			  m_room_pool(room_pool)
+			  m_room_pool(level.GetRoomPool())
 		{}
 
         /// @brief Grabs the currently selected room from the WeightedSets room_pool
@@ -78,20 +79,19 @@ namespace cse498 {
             return std::make_pair(width_midpoint, height_midpoint);
         }
 
-        /// @brief Generates a file path to the currently selected room 
-        /// @return string file path
+        /// @brief Generates a room from the pool
+        /// @return Generated room number
         [[nodiscard]] std::string GenerateFilePath() { 
 			auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight()).value();
 			
 			auto sample_result = m_room_pool.Sample(room_select);
 			assert(sample_result.has_value());
 
-			std::string file_path = sample_result.value();
-            assert(file_path != "");
+			std::string room = std::to_string(sample_result.value());
+            assert(room != "");
 
-            return file_path;
+            return room;
         }
-
 
         /// @brief Picks an image file for an item/tile/agent/other creature
         /// @param tile_c is a char representing the current square of the dungeon
@@ -194,9 +194,11 @@ namespace cse498 {
         /// @brief Loads a random pre-made room based off of the level dungeon we're currently in
         /// @return a vector of strings representing a room, which is loaded in from a txt file
         std::vector<std::string> LoadRoom() {
-            std::string selected_pool = GenerateFilePath();
-            std::ifstream file(m_file_path + selected_pool); // this will open one of the rooms
+            std::string selected_room = GenerateFilePath();
 
+			//std::cout << m_room_dir + selected_room + ".txt";
+
+            std::ifstream file(m_room_dir + selected_room + ".txt"); // this will open one of the rooms
             if (!file.is_open()) {
                 std::cerr << "ERROR: RoomHolder.hpp: Issues opening the file.\n";
                 return {};
