@@ -192,77 +192,75 @@ bool WebInterface::Initialize() {
 
 void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& itemIds,
                             const std::vector<size_t>& agentIds) {
-    {
-        int canvasWidth;
-        int canvasHeight;
-        emscripten_get_canvas_element_size("#web-canvas", &canvasWidth, &canvasHeight);
-        const double dpr = emscripten_get_device_pixel_ratio();
-
-        canvasWidth = canvasWidth / dpr;
-        canvasHeight = canvasHeight / dpr;
-
-        const int totalPixelWidth = grid.GetWidth() * IMAGE_SIZE;
-        const int totalPixelHeight = grid.GetHeight() * IMAGE_SIZE;
-
-        const double widthRatio = static_cast<double>(canvasWidth) / totalPixelWidth;
-        const double heightRatio = static_cast<double>(canvasHeight) / totalPixelHeight;
-
-        const double desiredScale = widthRatio <= heightRatio ? widthRatio : heightRatio;
-        const int drawSize = gsl::narrow_cast<int>(IMAGE_SIZE * desiredScale);
-
-        const int leftOffset = (canvasWidth - drawSize * grid.GetWidth()) / 2;
-        const int topOffset = (canvasHeight - drawSize * grid.GetHeight()) / 2;
-
-        auto CellXToLeft = [&leftOffset, &drawSize](auto cellX) {
-            return (leftOffset + drawSize * (cellX + 1)) - drawSize / 2;
-        };
-        auto CellYToTop = [&topOffset, &drawSize](auto cellY) { return topOffset + drawSize * (cellY + 1); };
-
-        std::vector<std::string> symbolGrid(grid.GetHeight());
-
-        // Load the world into the symbolGrid;
-        for (size_t y = 0; y < grid.GetHeight(); ++y) {
-            symbolGrid[y].resize(grid.GetWidth());
-            for (size_t x = 0; x < grid.GetWidth(); ++x) {
-                symbolGrid[y][x] = grid.GetSymbol(WorldPosition{x, y});
-            }
+    int canvasWidth;
+    int canvasHeight;
+    emscripten_get_canvas_element_size("#web-canvas", &canvasWidth, &canvasHeight);
+    const double dpr = emscripten_get_device_pixel_ratio();
+    
+    canvasWidth = canvasWidth / dpr;
+    canvasHeight = canvasHeight / dpr;
+    
+    const int totalPixelWidth = grid.GetWidth() * IMAGE_SIZE;
+    const int totalPixelHeight = grid.GetHeight() * IMAGE_SIZE;
+    
+    const double widthRatio = static_cast<double>(canvasWidth) / totalPixelWidth;
+    const double heightRatio = static_cast<double>(canvasHeight) / totalPixelHeight;
+    
+    const double desiredScale = widthRatio <= heightRatio ? widthRatio : heightRatio;
+    const int drawSize = gsl::narrow_cast<int>(IMAGE_SIZE * desiredScale);
+    
+    const int leftOffset = (canvasWidth - drawSize * grid.GetWidth()) / 2;
+    const int topOffset = (canvasHeight - drawSize * grid.GetHeight()) / 2;
+    
+    auto CellXToLeft = [&leftOffset, &drawSize](auto cellX) {
+        return (leftOffset + drawSize * (cellX + 1)) - drawSize / 2;
+    };
+    auto CellYToTop = [&topOffset, &drawSize](auto cellY) { return topOffset + drawSize * (cellY + 1); };
+    
+    std::vector<std::string> symbolGrid(grid.GetHeight());
+    
+    // Load the world into the symbolGrid;
+    for (size_t y = 0; y < grid.GetHeight(); ++y) {
+        symbolGrid[y].resize(grid.GetWidth());
+        for (size_t x = 0; x < grid.GetWidth(); ++x) {
+            symbolGrid[y][x] = grid.GetSymbol(WorldPosition{x, y});
         }
-
-        mCanvas->Clear();
-
-        int top = topOffset + drawSize;
-        for (const auto& row: symbolGrid) {
-            int left = leftOffset + drawSize / 2;
-            for (char cell: row) {
-                mCanvas->DrawTexture(mTextures.at(cell).as_handle(), left, top, desiredScale);
-                left += drawSize;
-            }
-            top += drawSize;
-        }
-
-        // Substitute in items.
-        for (size_t id: itemIds) {
-            const ItemBase& item = world.GetItem(id);
-            WorldPosition pos = item.GetLocation().AsWorldPosition();
-            symbolGrid[pos.CellY()][pos.CellX()] = '+';
-        }
-
-        // Substitute in agents.
-        for (const auto& agentId: agentIds) {
-            const AgentBase& agent = world.GetAgent(agentId);
-            WorldPosition pos = agent.GetLocation().AsWorldPosition();
-            auto agentTexture = mTextures.at(agent.GetSymbol());
-            auto agentLeft = CellXToLeft(pos.CellX());
-            auto agentTop = CellYToTop(pos.CellY());
-            mCanvas->DrawTexture(agentTexture.as_handle(), agentLeft, agentTop, desiredScale);
-        }
-
-        auto pos = GetLocation().AsWorldPosition();
-        auto playerTexture = mTextures.at(GetSymbol());
-        auto playerLeft = CellXToLeft(pos.CellX());
-        auto playerTop = CellYToTop(pos.CellY());
-        mCanvas->DrawTexture(playerTexture.as_handle(), playerLeft, playerTop, desiredScale);
     }
+    
+    mCanvas->Clear();
+    
+    int top = topOffset + drawSize;
+    for (const auto& row: symbolGrid) {
+        int left = leftOffset + drawSize / 2;
+        for (char cell: row) {
+            mCanvas->DrawTexture(mTextures.at(cell).as_handle(), left, top, desiredScale);
+            left += drawSize;
+        }
+        top += drawSize;
+    }
+    
+    // Substitute in items.
+    for (size_t id: itemIds) {
+        const ItemBase& item = world.GetItem(id);
+        WorldPosition pos = item.GetLocation().AsWorldPosition();
+        symbolGrid[pos.CellY()][pos.CellX()] = '+';
+    }
+    
+    // Substitute in agents.
+    for (const auto& agentId: agentIds) {
+        const AgentBase& agent = world.GetAgent(agentId);
+        WorldPosition pos = agent.GetLocation().AsWorldPosition();
+        auto agentTexture = mTextures.at(agent.GetSymbol());
+        auto agentLeft = CellXToLeft(pos.CellX());
+        auto agentTop = CellYToTop(pos.CellY());
+        mCanvas->DrawTexture(agentTexture.as_handle(), agentLeft, agentTop, desiredScale);
+    }
+    
+    auto pos = GetLocation().AsWorldPosition();
+    auto playerTexture = mTextures.at(GetSymbol());
+    auto playerLeft = CellXToLeft(pos.CellX());
+    auto playerTop = CellYToTop(pos.CellY());
+    mCanvas->DrawTexture(playerTexture.as_handle(), playerLeft, playerTop, desiredScale);
 }
 
 void WebInterface::RenderFrame() {
