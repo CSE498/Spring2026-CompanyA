@@ -53,17 +53,30 @@ extern "C" {
 
 /// @brief Constructs a WebCanvas with the given canvas element id.
 /// @param id DOM id of the \<canvas\> element; defaults to "web-canvas" if empty.
-WebCanvas::WebCanvas(const std::string & id)
+WebCanvas::WebCanvas(const std::string& id)
 {
-    mId = std::move(id);
+    mId = id;
     if (mId.empty()) {
         mId = "web-canvas";
     }
 #ifdef __EMSCRIPTEN__
     mElement = GetDocument().call<emscripten::val>("getElementById", mId);
-    mExisting = true;
-#endif
+    mExisting = !mElement.isNull() && !mElement.isUndefined();
+
+    if (!mExisting) {
+        const std::string errorMsg =
+            "WebCanvas error: required canvas element with id '" + mId + "' was not found.";
+
+        emscripten::val::global("console").call<void>("error", errorMsg);
+        emscripten::val::global("alert")(errorMsg);
+
+        // TODO: Provide a unified Emscripten/Web error reporting helper
+        // instead of issuing direct console/alert calls at each failure site.
+        return;
+    }
+
     webcanvas__init(mId.c_str());
+#endif
 }
 
 // ---- IDomElement ----
