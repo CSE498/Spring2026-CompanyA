@@ -7,10 +7,10 @@
 #include <string>
 #include <vector>
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../source/tools/ActionLog.hpp"
 #include "../../source/Analyze/ReplayDriver.hpp"
 #include "../../source/core/WorldPosition.hpp"
+#include "../../source/tools/ActionLog.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 namespace {
 
@@ -58,9 +58,9 @@ std::shared_ptr<cse498::ActionLog> MakeTimedLog() {
   return log;
 }
 
-std::string CaptureStdout(const std::function<void()>& fn) {
+std::string CaptureStdout(const std::function<void()> &fn) {
   std::ostringstream captured;
-  std::streambuf* original_buf = std::cout.rdbuf(captured.rdbuf());
+  std::streambuf *original_buf = std::cout.rdbuf(captured.rdbuf());
 
   fn();
 
@@ -70,16 +70,11 @@ std::string CaptureStdout(const std::function<void()>& fn) {
 
 std::string ExpectedStartingBoard() {
   std::vector<std::string> board{
-      "#######################",
-      "# #            ##     #",
-      "# #  #  ######    ### #",
-      "# #  #  #     #  #  # #",
-      "# #  #  #  #  #  #  # #",
-      "#    #     #     #    #",
-      "##################  # #",
-      "#                    ##",
-      "#                    ##",
-      "#  ####################",
+      "#######################", "# #            ##     #",
+      "# #  #  ######    ### #", "# #  #  #     #  #  # #",
+      "# #  #  #  #  #  #  # #", "#    #     #     #    #",
+      "##################  # #", "#                    ##",
+      "#                    ##", "#  ####################",
       "#######################"};
 
   // ReplayDriver starts the agent at (1,1), and TrashInterface prints the
@@ -88,7 +83,7 @@ std::string ExpectedStartingBoard() {
 
   std::ostringstream out;
   out << '+' << std::string(board[0].size(), '-') << "+\n";
-  for (const auto& row : board) {
+  for (const auto &row : board) {
     out << "|" << row << "|\n";
   }
   out << '+' << std::string(board[0].size(), '-') << "+\n";
@@ -98,16 +93,14 @@ std::string ExpectedStartingBoard() {
   return out.str();
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("ReplayDriver ReplayFullGame runs through valid actions",
           "[ReplayDriver]") {
   auto log = MakeFullGameLog();
   cse498::ReplayDriver driver(log, 0);
 
-  REQUIRE_NOTHROW(CaptureStdout([&]() {
-    driver.ReplayFullGame();
-  }));
+  REQUIRE_NOTHROW(CaptureStdout([&]() { driver.ReplayFullGame(); }));
 }
 
 TEST_CASE("ReplayDriver ReplayByTimeRange replays only selected time window",
@@ -115,9 +108,7 @@ TEST_CASE("ReplayDriver ReplayByTimeRange replays only selected time window",
   auto log = MakeTimedLog();
   cse498::ReplayDriver driver(log, 0);
 
-  REQUIRE_NOTHROW(CaptureStdout([&]() {
-    driver.ReplayByTimeRange(1.5, 2.5);
-  }));
+  REQUIRE_NOTHROW(CaptureStdout([&]() { driver.ReplayByTimeRange(1.5, 2.5); }));
 }
 
 TEST_CASE("ReplayDriver ReplayByTimeRange handles empty ranges",
@@ -125,19 +116,15 @@ TEST_CASE("ReplayDriver ReplayByTimeRange handles empty ranges",
   auto log = MakeTimedLog();
   cse498::ReplayDriver driver(log, 0);
 
-  REQUIRE_NOTHROW(CaptureStdout([&]() {
-    driver.ReplayByTimeRange(10.0, 20.0);
-  }));
+  REQUIRE_NOTHROW(
+      CaptureStdout([&]() { driver.ReplayByTimeRange(10.0, 20.0); }));
 }
 
-TEST_CASE("ReplayDriver ReplayFullGame handles empty logs",
-          "[ReplayDriver]") {
+TEST_CASE("ReplayDriver ReplayFullGame handles empty logs", "[ReplayDriver]") {
   auto log = std::make_shared<cse498::ActionLog>();
   cse498::ReplayDriver driver(log, 0);
 
-  std::string output = CaptureStdout([&]() {
-    driver.ReplayFullGame();
-  });
+  std::string output = CaptureStdout([&]() { driver.ReplayFullGame(); });
 
   REQUIRE(output.empty());
 }
@@ -149,16 +136,12 @@ TEST_CASE("ReplayDriver SetActionLog replaces the current log",
 
   cse498::ReplayDriver driver(empty_log, 0);
 
-  std::string empty_output = CaptureStdout([&]() {
-    driver.ReplayFullGame();
-  });
+  std::string empty_output = CaptureStdout([&]() { driver.ReplayFullGame(); });
   REQUIRE(empty_output.empty());
 
   driver.SetActionLog(full_log);
 
-  std::string full_output = CaptureStdout([&]() {
-    driver.ReplayFullGame();
-  });
+  std::string full_output = CaptureStdout([&]() { driver.ReplayFullGame(); });
   REQUIRE_FALSE(full_output.empty());
 }
 
@@ -167,9 +150,7 @@ TEST_CASE("ReplayDriver prints TrashInterface board and prompt",
   auto log = MakeFullGameLog();
   cse498::ReplayDriver driver(log, 0);
 
-  std::string output = CaptureStdout([&]() {
-    driver.ReplayFullGame();
-  });
+  std::string output = CaptureStdout([&]() { driver.ReplayFullGame(); });
 
   CHECK(output.find(ExpectedStartingBoard()) != std::string::npos);
 }

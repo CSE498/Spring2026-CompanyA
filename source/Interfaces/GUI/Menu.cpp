@@ -29,26 +29,22 @@ Menu::Menu() : mSelectedIndex(std::nullopt) {}
  * @return
  */
 
-bool Menu::AddOption(const std::string &label, std::function<void()> callback)
-{
-    if (label.empty() || !callback)
-    {
+bool Menu::AddOption(const std::string& label, std::function<void()> callback) {
+    if (label.empty() || !callback) {
         return false;
     }
 
     // prevents duplicate labels
     const bool duplicate = std::any_of(mOptions.begin(), mOptions.end(),
-                                       [&label](const MenuOption &option) { return option.label == label; });
+                                       [&label](const MenuOption& option) { return option.label == label; });
 
-    if (duplicate)
-    {
+    if (duplicate) {
         return false;
     }
 
     mOptions.push_back({label, std::move(callback)}); // move instead of copy
 
-    if (mOptions.size() == 1)
-    {
+    if (mOptions.size() == 1) {
         mSelectedIndex = 0;
     }
 
@@ -61,11 +57,10 @@ bool Menu::AddOption(const std::string &label, std::function<void()> callback)
  * @return true if found and removed, false otherwise
  */
 
-bool Menu::RemoveOption(const std::string &label)
-{
+bool Menu::RemoveOption(const std::string& label) {
     // when you build, code runs fine. If you see underlined red, just IDE issue
-    auto it =
-        std::find_if(mOptions.begin(), mOptions.end(), [&label](const MenuOption &opt) { return opt.label == label; });
+    auto it = std::find_if(mOptions.begin(), mOptions.end(),
+                           [&label](const MenuOption& opt) { return opt.label == label; });
 
     if (it == mOptions.end())
         return false;
@@ -73,21 +68,17 @@ bool Menu::RemoveOption(const std::string &label)
     size_t i = static_cast<size_t>(std::distance(mOptions.begin(), it));
     mOptions.erase(it);
 
-    if (mOptions.empty())
-    {
+    if (mOptions.empty()) {
         mSelectedIndex = std::nullopt;
     }
 
-    else if (mSelectedIndex.has_value())
-    {
+    else if (mSelectedIndex.has_value()) {
 
-        if (*mSelectedIndex >= mOptions.size())
-        {
+        if (*mSelectedIndex >= mOptions.size()) {
             mSelectedIndex = mOptions.size() - 1;
         }
 
-        else if (i < *mSelectedIndex)
-        {
+        else if (i < *mSelectedIndex) {
             mSelectedIndex = *mSelectedIndex - 1;
         }
     }
@@ -108,18 +99,15 @@ std::optional<size_t> Menu::GetSelectedIndex() const { return mSelectedIndex; }
 /**
  * Moves the selection down to the next option, wrapping around to first option if current at last
  */
-void Menu::SelectNext()
-{
+void Menu::SelectNext() {
     if (mOptions.empty())
         return;
 
-    if (!mSelectedIndex.has_value())
-    {
+    if (!mSelectedIndex.has_value()) {
         mSelectedIndex = 0;
     }
 
-    else
-    {
+    else {
         mSelectedIndex = (*mSelectedIndex + 1) % mOptions.size();
     }
 }
@@ -127,23 +115,19 @@ void Menu::SelectNext()
 /**
  * Moves selection up to prev. option, wrapping around to the last option if currently at the first
  */
-void Menu::SelectPrevious()
-{
+void Menu::SelectPrevious() {
     if (mOptions.empty())
         return;
 
-    if (!mSelectedIndex.has_value())
-    {
+    if (!mSelectedIndex.has_value()) {
         mSelectedIndex = mOptions.size() - 1;
     }
 
-    else if (*mSelectedIndex == 0)
-    { // ADD *
+    else if (*mSelectedIndex == 0) { // ADD *
         mSelectedIndex = mOptions.size() - 1;
     }
 
-    else
-    {
+    else {
         mSelectedIndex = *mSelectedIndex - 1; // ADD *
     }
 }
@@ -153,10 +137,8 @@ void Menu::SelectPrevious()
  * @param index 0-based position in the menu
  * @return false if the selected index is larger than size
  */
-bool Menu::SelectOption(size_t index)
-{
-    if (index >= mOptions.size())
-    {
+bool Menu::SelectOption(size_t index) {
+    if (index >= mOptions.size()) {
         return false;
     }
 
@@ -167,10 +149,8 @@ bool Menu::SelectOption(size_t index)
 /**
  * Executes callback function of the currently selected option
  */
-bool Menu::ActivateSelected() const
-{
-    if (!mSelectedIndex.has_value() || *mSelectedIndex >= mOptions.size())
-    {
+bool Menu::ActivateSelected() const {
+    if (!mSelectedIndex.has_value() || *mSelectedIndex >= mOptions.size()) {
         return false;
     }
 
@@ -182,10 +162,8 @@ bool Menu::ActivateSelected() const
  * @param index Position of the chosen option
  * @return label of the option at specific index
  */
-std::optional<std::string> Menu::GetOptionLabel(size_t index) const
-{
-    if (index >= mOptions.size())
-    {
+std::optional<std::string> Menu::GetOptionLabel(size_t index) const {
+    if (index >= mOptions.size()) {
         return std::nullopt;
     }
 
@@ -200,8 +178,7 @@ bool Menu::IsEmpty() const noexcept { return mOptions.empty(); }
 /**
  * Removes all options from the menu and resets the selection
  */
-void Menu::Clear()
-{
+void Menu::Clear() {
     mOptions.clear();
     mSelectedIndex = std::nullopt;
 }
@@ -210,27 +187,24 @@ void Menu::Clear()
  * Handles menu responses to input codes
  * @param input_code input code values
  */
-void Menu::HandleInput(InputCode input_code)
-{
-    switch (input_code)
-    {
+void Menu::HandleInput(InputCode input_code) {
+    switch (input_code) {
 
-    case InputCode::up:
-        SelectPrevious();
-        break;
+        case InputCode::up:
+            SelectPrevious();
+            break;
 
-    case InputCode::down:
-        SelectNext();
-        break;
+        case InputCode::down:
+            SelectNext();
+            break;
 
 
-    case InputCode::enter:
-        if (!IsEmpty())
-        {
-            ActivateSelected();
-        }
+        case InputCode::enter:
+            if (!IsEmpty()) {
+                ActivateSelected();
+            }
 
-        break;
+            break;
     }
 }
 
@@ -238,25 +212,23 @@ void Menu::HandleInput(InputCode input_code)
  * Function that takes an actual SDL keyboard event and translates it into InputCode
  * @param key_event SDL releated up/down/enter functionality
  */
-void Menu::HandleSDLInput(const SDL_KeyboardEvent &key_event)
-{
-    switch (key_event.keysym.sym)
-    {
+void Menu::HandleSDLInput(const SDL_KeyboardEvent& key_event) {
+    switch (key_event.keysym.sym) {
 
-    case SDLK_UP:
-        HandleInput(InputCode::up);
-        break;
+        case SDLK_UP:
+            HandleInput(InputCode::up);
+            break;
 
-    case SDLK_DOWN:
-        HandleInput(InputCode::down);
-        break;
+        case SDLK_DOWN:
+            HandleInput(InputCode::down);
+            break;
 
-    case SDLK_RETURN:
-        HandleInput(InputCode::enter);
-        break;
+        case SDLK_RETURN:
+            HandleInput(InputCode::enter);
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
 }
 
@@ -269,9 +241,8 @@ void Menu::HandleSDLInput(const SDL_KeyboardEvent &key_event)
  * @param width The width of the menu area (unused for now)
  * @param height The height of the menu area, calculates spacing between options
  */
-void Menu::DrawMenu(SDL_Renderer *renderer, int x, int y, [[maybe_unused]] int width, int height,
-                    const MenuStyle &style)
-{
+void Menu::DrawMenu(SDL_Renderer* renderer, int x, int y, [[maybe_unused]] int width, int height,
+                    const MenuStyle& style) {
     if (IsEmpty() || !renderer)
         return;
 
@@ -285,18 +256,15 @@ void Menu::DrawMenu(SDL_Renderer *renderer, int x, int y, [[maybe_unused]] int w
     auto isSelected = [&](size_t i) { return mSelectedIndex.has_value() && *mSelectedIndex == i; };
 
     int current_y = y;
-    for (size_t i = 0; i < GetOptionCount(); i++)
-    {
+    for (size_t i = 0; i < GetOptionCount(); i++) {
         menuText.SetContent(GetOptionLabel(i).value());
 
-        if (isSelected(i))
-        {
+        if (isSelected(i)) {
             menuText.SetColor(style.selected_color);
             menuText.SetBold(style.bold_selected);
         }
 
-        else
-        {
+        else {
             menuText.SetColor(style.unselected_color);
             menuText.SetBold(false);
         }

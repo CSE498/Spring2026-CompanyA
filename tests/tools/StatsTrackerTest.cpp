@@ -57,7 +57,7 @@ TEST_CASE("Build Snapshot", "[StatsTracker]") {
                       cse498::WorldPosition(4, 3));
 
   dashboard = tracker.BuildSnapshot(analytics);
-  
+
   REQUIRE(dashboard.actionStats.size() == 1);
 }
 
