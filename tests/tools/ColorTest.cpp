@@ -11,8 +11,8 @@
 #include <string>
 #include <type_traits>
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/Color.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 using cse498::Color;
 
@@ -171,7 +171,7 @@ TEST_CASE("Color parses short and long hex forms", "[tools][color][hex]") {
 }
 
 TEST_CASE("Color rejects invalid hex strings", "[tools][color][hex]") {
-    REQUIRE_FALSE(Color::FromHex("" ).has_value());
+    REQUIRE_FALSE(Color::FromHex("").has_value());
     REQUIRE_FALSE(Color::FromHex("#12").has_value());
     REQUIRE_FALSE(Color::FromHex("#12345").has_value());
     REQUIRE_FALSE(Color::FromHex("#zzzzzz").has_value());
