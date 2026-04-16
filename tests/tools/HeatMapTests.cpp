@@ -101,10 +101,9 @@ TEST_CASE("HeatMap: negative grid/world dimensions throw", "[HeatMap]") {
   test_log.LogAction(1, "move", cse498::WorldPosition{11, 1},
                      cse498::WorldPosition{0, 0});
 
-  REQUIRE_THROWS_AS(
-      cse498::HeatMap(test_log, std::pair<int, int>{-5, -5},
-                      std::pair<double, double>{-10, -10}),
-      std::invalid_argument);
+  REQUIRE_THROWS_AS(cse498::HeatMap(test_log, std::pair<int, int>{-5, -5},
+                                    std::pair<double, double>{-10, -10}),
+                    std::invalid_argument);
 }
 
 TEST_CASE("HeatMap: Adding second log to Heatmap", "[HeatMap]") {
@@ -135,7 +134,6 @@ TEST_CASE("HeatMap: Adding second log to Heatmap", "[HeatMap]") {
   CHECK(GetAllValidGridValues(map9.OutPutHeatMap(output_stream)) == 2);
   CHECK(map9.GetInvalidInputs().size() == 4);
 }
-
 
 TEST_CASE("HeatMap: positions far outside map bounds", "[HeatMap]") {
   cse498::ActionLog test_log;
