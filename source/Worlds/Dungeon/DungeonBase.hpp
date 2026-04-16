@@ -11,6 +11,7 @@
 #include "../../core/WorldBase.hpp"
 #include "WorldGeneration.hpp"
 #include "../../tools/WeightedSet.hpp"
+#include "../../tools/Random.hpp"
 
 namespace cse498 {
 
@@ -30,6 +31,9 @@ namespace cse498 {
     size_t m_monster_tile;
     size_t m_door_tile;
     size_t m_secret_door;
+
+    cse498::WeightedSet<std::string> m_item_pool; // A pool of possible items to generate
+    
 
 
     /// Provide the agent with movement actions.
@@ -54,6 +58,25 @@ namespace cse498 {
       m_monster_tile = main_grid.AddCellType("wall",  "monster tile wall.",    'm');
       m_door_tile = main_grid.AddCellType("wall",  "door tile wall.", 'd');
       m_secret_door = main_grid.AddCellType("wall",  "secret tile wall.", 's');
+
+      auto sword = m_item_pool.Insert("Sword", 1.0);
+      auto sword1 = m_item_pool.Insert("Sword +1", 0.2);
+      auto sword2 = m_item_pool.Insert("Sword +2", 0.1);
+      auto sword3 = m_item_pool.Insert("Sword +3", 0.0);
+      auto sword4 = m_item_pool.Insert("Sword +4", 0.0);
+      auto sword5 = m_item_pool.Insert("Sword +5", 0.0);
+      auto bow = m_item_pool.Insert("Bow", 1.0);
+      auto bow1 = m_item_pool.Insert("Bow +1", 0.2);
+      auto bow2 = m_item_pool.Insert("Bow +2", 0.1);
+      auto bow3 = m_item_pool.Insert("Bow +3", 0.0);
+      auto bow4 = m_item_pool.Insert("Bow +4", 0.0);
+      auto bow5 = m_item_pool.Insert("Bow +5", 0.0);
+      auto healing_potion = m_item_pool.Insert("Healing Potion", 1.0);
+      auto defense_potion = m_item_pool.Insert("Defense Potion", 0.5);
+      auto speed_potion = m_item_pool.Insert("Speed Potion", 0.5);
+      auto axe = m_item_pool.Insert("Axe", 1.0);
+      auto pickaxe = m_item_pool.Insert("Pickaxe", 1.0);
+      auto shovel = m_item_pool.Insert("Shovel", 1.0);
 
       WorldGeneration generation(room_pool); 
       generation.CreateDungeon(); 
@@ -98,6 +121,16 @@ namespace cse498 {
       return true;
     }
 
+    /*
+    * @brief Random selects an item from a weighted set of possible items
+    *
+    * @return An randomly selected item
+    */
+    std::string GetRandomItem(){
+      cse498::Random rng;
+      double item = rng.GetValue(1.0,m_item_pool.GetTotalWeight()).value();
+      return m_item_pool.Sample(item).value();
+    }
   };
 
 } // End of namespace cse498
