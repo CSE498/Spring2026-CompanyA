@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "../../core/Entity.hpp"
+#include "../../core/WorldBase.hpp"
 #include "ItemType.hpp"
 
 #include <cassert>
@@ -19,7 +21,7 @@
 namespace cse498 {
 /// @class Building
 /// @brief Upgradable building. Starts at level 0.
-class Building {
+class Building : public Entity {
 public:
   // The quantity and type of items needed for an upgrade
   struct BuildingUpgrade {
@@ -53,6 +55,7 @@ private:
   int m_level{};               // The current level of the building
   float m_rateModifier = 0.25; // Percent increase as decimal ex: 0.25->25%
   std::vector<BuildingUpgrade> m_upgrades{}; // The upgrade cost per level
+  char m_symbol = 'B';
 
   /**
    * Get the next upgrade BuildingUpgrade struct without checking if one exists.
@@ -92,9 +95,13 @@ public:
   Building() = delete;
   /**
    * Constructor
+   * @param id unique id for the building
    * @param name name of the building
+   * @param world world this building belongs to
+   * @param buildingName
    */
-  Building(std::string name) : m_name{std::move(name)} {};
+  Building(size_t id, const std::string &name, const WorldBase &world)
+      : Entity(id, name, world) {}
   /**
    * Get Max level for this building
    * @return max level as an int
@@ -117,6 +124,16 @@ public:
     return true;
   }
   /**
+   * Set the building symbol
+   * @param c symbol to set to
+   */
+  void SetSymbol(const char c) { m_symbol = c; }
+  /**
+   * Get the building symbol
+   * @return the building's symbol
+   */
+  char GetSymbol() const { return m_symbol; }
+  /**
    * Get Next Upgrade level
    * For UI. Returns the level the next upgrade would reach. If the building is
    * already max level, returns the current level.
@@ -133,11 +150,6 @@ public:
    */
   bool IsMaxLevel() const { return m_level >= GetMaxLevel(); }
   /**
-   * Set the name of the building
-   * @param newName new name of the building
-   */
-  void SetName(std::string newName) { m_name = std::move(newName); }
-  /**
    * Set the rate modifier
    * @param rate rate to set to
    */
@@ -147,11 +159,6 @@ public:
    * @return rate modifier
    */
   float GetRateModifier() const { return m_rateModifier; }
-  /**
-   * Get the name of the building
-   * @return name of the building
-   */
-  std::string GetName() const { return m_name; }
   /**
    * Add an upgrade level to the building
    * @param item type of item needed for the upgrade

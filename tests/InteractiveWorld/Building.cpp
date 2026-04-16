@@ -1,15 +1,18 @@
 #include "../../source/Worlds/Hub/Building.hpp"
+#include "../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "catch2/catch.hpp"
 
 #include <string>
 
 /// used codex for some testcase generations
 
+static cse498::InteractiveWorld world;
+
 TEST_CASE("Test Building Constructor", "[core][InteractiveWorld][Building]") {
   std::string farmStr = "Farm";
   std::string blacksmithStr = "Blacksmith";
-  cse498::Building farm(farmStr);
-  cse498::Building blacksmith(blacksmithStr);
+  cse498::Building farm(1, farmStr, world);
+  cse498::Building blacksmith(2, blacksmithStr, world);
 
   CHECK(farm.GetName() == farmStr);
   CHECK(blacksmith.GetName() == blacksmithStr);
@@ -19,8 +22,8 @@ TEST_CASE("Test Building Setters and Getters",
           "[core][InteractiveWorld][Building]") {
   std::string farmStr = "Farm";
   std::string blacksmithStr = "Blacksmith";
-  cse498::Building farm(farmStr);
-  cse498::Building blacksmith(blacksmithStr);
+  cse498::Building farm(1, farmStr, world);
+  cse498::Building blacksmith(2, blacksmithStr, world);
 
   CHECK(farm.GetName() == farmStr);
   CHECK(blacksmith.GetName() == blacksmithStr);
@@ -33,7 +36,7 @@ TEST_CASE("Test Building Setters and Getters",
 
 TEST_CASE("Test Building GetAllUpgrades",
           "[core][InteractiveWorld][Building]") {
-  cse498::Building farm("Farm");
+  cse498::Building farm(1, "Farm", world);
 
   farm.AddUpgrade(cse498::ItemType::Wood, 25);
   farm.AddUpgrade(cse498::ItemType::Stone, 35);
@@ -52,7 +55,7 @@ TEST_CASE("Test Building GetAllUpgrades",
 
 TEST_CASE("Test Building One Upgrade", "[core][InteractiveWorld][Building]") {
   std::string farmStr = "Farm";
-  cse498::Building farm(farmStr);
+  cse498::Building farm(1, farmStr, world);
 
   CHECK(farm.GetCurrentLevel() == 0);
   CHECK(farm.GetMaxLevel() == 0);
@@ -101,7 +104,7 @@ TEST_CASE("Test Building One Upgrade", "[core][InteractiveWorld][Building]") {
 TEST_CASE("Test Building Multiple Upgrades",
           "[core][InteractiveWorld][Building]") {
   std::string farmStr = "Farm";
-  cse498::Building farm(farmStr);
+  cse498::Building farm(1, farmStr, world);
 
   CHECK(farm.GetCurrentLevel() == 0);
   CHECK(farm.GetMaxLevel() == 0);
@@ -140,7 +143,8 @@ TEST_CASE("Test Building Multiple Upgrades",
   // Attempting to level beyond max level
   auto status5 = farm.Upgrade(cse498::ItemType::Metal, resources);
   CHECK(status5.has_value() == false);
-  CHECK(status5.error() == cse498::Building::UpgradeRejectionType::AlreadyMaxLevel);
+  CHECK(status5.error() ==
+        cse498::Building::UpgradeRejectionType::AlreadyMaxLevel);
   CHECK(farm.GetCurrentLevel() == 3);
   CHECK(farm.IsMaxLevel() == true);
   CHECK(farm.GetNextUpgradeInfo() == std::nullopt);

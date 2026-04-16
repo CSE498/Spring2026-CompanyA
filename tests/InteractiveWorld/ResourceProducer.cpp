@@ -5,6 +5,9 @@
 #include <string>
 
 using cse498::ItemType;
+#include "../../source/Worlds/Hub/InteractiveWorld.hpp"
+
+static cse498::InteractiveWorld world;
 
 bool ApproxEqual(float a, float b, float tolerance = 1e-5f) {
   return std::abs(a - b) <= tolerance;
@@ -14,7 +17,7 @@ TEST_CASE("Test ResourceProducer Constructor",
           "[core][InteractiveWorld][ResourceProducer]") {
   std::string farmStr = "Farm";
   std::shared_ptr<cse498::Building> farm =
-      std::make_shared<cse498::Building>("Farm");
+      std::make_shared<cse498::Building>(1, "Farm", world);
   CHECK(farm->GetName() == farmStr);
 
   cse498::InteractiveWorldInventory inv;
@@ -28,7 +31,7 @@ TEST_CASE("Test ResourceProducer Rate increase",
           "[core][InteractiveWorld][ResourceProducer]") {
   std::string farmStr = "Farm";
   std::shared_ptr<cse498::Building> farm =
-      std::make_shared<cse498::Building>("Farm");
+      std::make_shared<cse498::Building>(1, "Farm", world);
   CHECK(farm->GetName() == farmStr);
   farm->AddUpgrade(ItemType::Wood, 5);
   farm->AddUpgrade(ItemType::Wood, 5);

@@ -5,11 +5,10 @@
  **/
 
 #pragma once
+#include "../../core/WorldBase.hpp"
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
-#include "NPC.hpp"
 #include "ResourceProducer.hpp"
-#include "../../core/WorldBase.hpp"
 #include <array>
 #include <iostream>
 #include <memory>
@@ -47,15 +46,15 @@ protected:
   }
 
 private:
-  // NPCs in the scene
-  std::vector<std::shared_ptr<NPC>> m_npcs{};
+  // Buildings in the scene
+  std::vector<std::shared_ptr<Building>> m_buildings{};
   // ResourceProducers in the scene
   std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
   /**
    * Update world logic
    */
   void UpdateWorld() override {
-    for (const auto& producer : m_producers) {
+    for (const auto &producer : m_producers) {
       producer->Update();
     }
 
@@ -77,25 +76,13 @@ private:
     std::cout << output.str() << std::endl;
   }
 
-  template <typename Func>
-  void ForEachAdjacentNPC(const std::array<WorldPosition, 4> &neighbors,
-                          Func &&func) {
-    for (const auto &neighbor : neighbors) {
-      for (auto &npc : m_npcs) {
-        if (npc->GetPosition() == neighbor) {
-          func(*npc);
-        }
-      }
-    }
-  }
-
-  bool IsNPCAt(const WorldPosition &position) const {
-    for (const auto &npc : m_npcs) {
-      if (npc->GetPosition() == position) {
+  bool IsBuildingAt(const WorldPosition &position) const {
+    for (const auto &building : m_buildings) {
+      if (building->GetLocation().IsPosition() &&
+          building->GetLocation().AsWorldPosition() == position) {
         return true;
       }
     }
-
     return false;
   }
 
@@ -135,9 +122,6 @@ public:
   int DoAction(AgentBase &agent, size_t action_id) override {
     // Determine where the agent is trying to move.
     WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
-    const std::array<WorldPosition, 4> neighbors = {
-        cur_position.Up(), cur_position.Down(), cur_position.Left(),
-        cur_position.Right()};
     WorldPosition new_position;
     switch (action_id) {
     case REMAIN_STILL:
@@ -155,22 +139,8 @@ public:
     case MOVE_RIGHT:
       new_position = cur_position.Right();
       break;
-    case INTERACT: {
-      ForEachAdjacentNPC(neighbors, [this](NPC &npc) {
-        const auto upgrade_status = npc.AttemptUpgrade(m_inventory);
-        if (!upgrade_status) {
-          std::cout
-              << "Upgrade failed: "
-              << Building::UpgradeRejectionTypeToString(
-                     upgrade_status.error())
-              << std::endl;
-          return;
-        }
-
-        std::cout << "Upgrade succeeded: " << npc.GetUpgradeUI() << std::endl;
-      });
+    case INTERACT:
       return true;
-    }
     }
 
     // Don't let the agent move off the world or into a non-walkable tile.
@@ -180,11 +150,11 @@ public:
 
     // Open NPC UI for interface-controlled agents only.
     if (agent.IsInterface()) {
-      ForEachAdjacentNPC(neighbors, [](NPC &npc) { npc.Interact(); });
+      // ForEachAdjacentNPC(neighbors, [](NPC &npc) { npc.Interact(); });
     }
 
-    // Don't walk on NPCs
-    if (IsNPCAt(new_position)) {
+    // Don't walk on Buildings
+    if (IsBuildingAt(new_position)) {
       return false;
     }
 
@@ -198,11 +168,13 @@ public:
    * Overlay symbols on screen
    * @return
    */
-  std::vector<std::pair<WorldPosition, char>>
-  GetOverlaySymbols() const {
+  std::vector<std::pair<WorldPosition, char>> GetOverlaySymbols() const {
     std::vector<std::pair<WorldPosition, char>> symbols;
-    for (const auto &npc : m_npcs) {
-      symbols.emplace_back(npc->GetPosition(), npc->GetSymbol());
+    for (const auto &building : m_buildings) {
+      if (building->GetLocation().IsPosition()) {
+        symbols.emplace_back(building->GetLocation().AsWorldPosition(),
+                             building->GetSymbol());
+      }
     }
     return symbols;
   }
@@ -216,9 +188,13 @@ public:
   }
 
   /**
-   * Add NPC to the world
-   * @param npc NPC to add
+   * Add a building to the world at a given position
+   * @param building building to add
+   * @param position position to place building at
    */
-  void AddNPC(std::shared_ptr<NPC> npc) { m_npcs.push_back(npc); }
+  void AddBuilding(std::shared_ptr<Building> building, WorldPosition position) {
+    building->SetLocation(Location(position));
+    m_buildings.push_back(building);
+  }
 };
 }; // namespace cse498
