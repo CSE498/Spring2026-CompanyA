@@ -252,6 +252,7 @@ target_include_directories(run_tests PRIVATE
 )
 target_compile_definitions(run_tests
     PRIVATE
+        CATCH_CONFIG_NO_COUNTER
         DEFAULT_FONT_PATH="${COMPANYA_FONT_DIR}/OpenSans-Regular.ttf"
         TEST_IMAGE_DIR="${COMPANYA_IMAGE_DIR}"
         ASSETS_DIR="${COMPANYA_ASSETS_DIR}"
