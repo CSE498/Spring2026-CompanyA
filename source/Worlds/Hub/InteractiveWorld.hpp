@@ -9,7 +9,6 @@
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
 #include "ResourceProducer.hpp"
-#include <array>
 #include <iostream>
 #include <memory>
 #include <sstream>
