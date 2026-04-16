@@ -24,12 +24,7 @@ namespace cse498 {
  */
 class InteractiveWorld : public WorldBase {
 public:
-  enum class PlayerMove {
-    Up,
-    Down,
-    Left,
-    Right
-  };
+  enum class PlayerMove { Up, Down, Left, Right };
 
 protected:
   enum ActionType {
@@ -130,7 +125,9 @@ public:
   /**
    * Get the current GUI player position.
    */
-  [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayerPosition; }
+  [[nodiscard]] WorldPosition GetPlayerPosition() const {
+    return mPlayerPosition;
+  }
 
   /**
    * Get the sprite key used to draw the player in the SDL GUI.

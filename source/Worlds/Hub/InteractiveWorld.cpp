@@ -10,7 +10,6 @@
 #include <cmath>
 #include <iostream>
 #include <sstream>
-#include <string_view>
 
 namespace cse498 {
 
@@ -72,7 +71,8 @@ void InteractiveWorld::BuildDefaultRoom() {
   mPlayerPosition = WorldPosition{1, 1};
 
   main_grid = WorldGrid(23, 11);
-  grass_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
+  grass_id =
+      main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
   wall_left_id = main_grid.AddCellType("wall", "Impenetrable wall.", '#');
 
   main_grid.Load(std::vector<std::string>{
@@ -90,7 +90,8 @@ void InteractiveWorld::BuildGuiTerrain() {
   grass_id = main_grid.AddCellType("grass", "Hub grass.", '.');
   grass_flowers_id =
       main_grid.AddCellType("grass_flowers", "Flower patch.", 'f');
-  grass_bones_id = main_grid.AddCellType("grass_bones", "Worn mining soil.", 'b');
+  grass_bones_id =
+      main_grid.AddCellType("grass_bones", "Worn mining soil.", 'b');
   grass_mud_id = main_grid.AddCellType("grass_mud", "Muddy ground.", 'm');
   grass_rock_id = main_grid.AddCellType("grass_rock", "Rocky ground.", 'r');
   entrance_id = main_grid.AddCellType("entrance", "Gate to the dungeon.", 'E');
@@ -121,8 +122,8 @@ void InteractiveWorld::BuildGuiTerrain() {
       wall_corner_id;
 
   PaintRect(main_grid, 1, 1, main_grid.GetWidth() - 2, 4, grass_rock_id);
-  PaintRect(main_grid, 1, 13, main_grid.GetWidth() - 2, main_grid.GetHeight() - 2,
-            grass_mud_id);
+  PaintRect(main_grid, 1, 13, main_grid.GetWidth() - 2,
+            main_grid.GetHeight() - 2, grass_mud_id);
 
   PaintRect(main_grid, 3, 5, 7, 8, grass_flowers_id);
   PaintRect(main_grid, 10, 7, 14, 10, grass_flowers_id);
@@ -189,9 +190,9 @@ void InteractiveWorld::LoadGuiLayout() {
   BuildGuiTerrain();
   SetupGuiBuildings();
 
-  SetActionMessage(
-      "InteractiveWorld hub ready. Use WASD to move and E beside a building to upgrade.",
-      true);
+  SetActionMessage("InteractiveWorld hub ready. Use WASD to move and E beside "
+                   "a building to upgrade.",
+                   true);
   PrintInventoryIfChanged(true);
 }
 
@@ -319,8 +320,7 @@ bool InteractiveWorld::TryUpgradeBuilding(size_t building_index) {
       static_cast<InteractiveWorldInventory::ItemCount>(next_upgrade->quantity);
   const auto available = m_inventory.GetAmount(required_item);
 
-  auto result =
-      building->Upgrade(required_item, static_cast<int>(available));
+  auto result = building->Upgrade(required_item, static_cast<int>(available));
   if (!result.has_value()) {
     std::ostringstream message;
     message << building->GetName() << " upgrade failed: "
