@@ -11,6 +11,7 @@
 #include <string>
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include "../../tools/Random.hpp"
 #include "../../tools/WeightedSet.hpp"
 
@@ -20,6 +21,7 @@ namespace cse498 {
     const int LEVEL_ONE = 1;
     const int LEVEL_TWO = 2;
     const int LEVEL_THREE = 3;
+    const std::string EXIT_FILE_STRING = "exit/room_exit.txt";
 
     class BSPTree;
     class RoomHolder { 
@@ -51,6 +53,11 @@ namespace cse498 {
             auto determined_room = LoadRoom();
             m_current_room = determined_room;
             
+        }
+
+        ///@brief Overloaded function dedicated to loading in the exit room to the next level, separate from the room_pool
+        void SetCurrentRoom(std::vector<std::string> exit_room) {
+            m_current_room = exit_room;
         }
 
         /// @brief Grabs the width of the currently selected room
@@ -193,7 +200,7 @@ namespace cse498 {
 
         /// @brief Loads a random pre-made room based off of the level dungeon we're currently in
         /// @return a vector of strings representing a room, which is loaded in from a txt file
-        std::vector<std::string> LoadRoom() {
+        std::vector<std::string> LoadRoom(bool state = false) {
             std::string selected_pool = GenerateFilePath();
             std::ifstream file(m_file_path + selected_pool); // this will open one of the rooms
 
@@ -204,6 +211,13 @@ namespace cse498 {
 
             std::vector<std::string> lines;
             std::string line;
+
+            if(state) { 
+                file.close();
+                file.open(m_file_path + EXIT_FILE_STRING);
+            }            
+            
+            assert(file.is_open());
 
             while (std::getline(file, line)) {
                 if (!line.empty() && line.back() == '\r') {

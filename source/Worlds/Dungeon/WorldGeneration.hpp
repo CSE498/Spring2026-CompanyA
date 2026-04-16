@@ -61,6 +61,13 @@ struct LinkedRooms {
             TunnelConnectDungeon();
         }
 
+        void Update() {
+            m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); //reset grid
+            m_connected_rooms.clear(); //get rid of tunneling list
+            m_bsp.RegenerateObjectState(); // regenerate tree
+            CreateDungeon();
+        }
+
 
         /// @brief Grabs the Dungeon map vector grid for loading the information in WorldGrid
         /// @return 
