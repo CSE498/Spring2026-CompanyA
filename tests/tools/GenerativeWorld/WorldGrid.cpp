@@ -9,7 +9,6 @@
 #include <vector>
 
 
-
 /*void AddBasicCellTypes(cse498::WorldGrid& grid) {
   // ID 0 is "Unknown" reserved by constructor.
   grid.AddCellType("Wall", "Solid wall", '#');

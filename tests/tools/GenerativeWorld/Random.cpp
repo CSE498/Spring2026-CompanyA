@@ -17,15 +17,15 @@ TEST_CASE("Test Seed Setting", "[core]") {
     cse498::Random ran1;
     cse498::Random ran2;
     uint64_t generatedSeed = ran2.GetSeed();
-    ran2.SetSeed(1000);   // Manually Set the seed
+    ran2.SetSeed(1000); // Manually Set the seed
     CHECK(ran2.GetSeed() != generatedSeed);
     CHECK(ran2.GetSeed() == 1000);
 }
 
-TEST_CASE("Test Error Handling","[core]") {
+TEST_CASE("Test Error Handling", "[core]") {
     cse498::Random ran3;
-    
-    auto error_num1 = ran3.GetValue(10,1);
+
+    auto error_num1 = ran3.GetValue(10, 1);
     REQUIRE_FALSE(error_num1.has_value());
     REQUIRE(error_num1.error() == "cse498::Random::GetValue(): min must be less than or equal to max.");
 
@@ -44,35 +44,35 @@ TEST_CASE("Test Generation Happens", "[core]") {
     // int
     std::vector<int> generations_int;
     for (int i = 0; i < 10; ++i) {
-        generations_int.push_back(ran4.GetValue(1,10).value());
+        generations_int.push_back(ran4.GetValue(1, 10).value());
     }
     REQUIRE(generations_int.size() == 10);
-    
+
     // double
     std::vector<double> generations_double;
     for (int i = 0; i < 10; ++i) {
-        generations_double.push_back(ran4.GetValue(1.0,10.0).value());
+        generations_double.push_back(ran4.GetValue(1.0, 10.0).value());
     }
     REQUIRE(generations_double.size() == 10);
 
     // float
     std::vector<float> generations_float;
     for (int i = 0; i < 10; ++i) {
-        generations_float.push_back(ran4.GetValue(1.0f,10.0f).value());
+        generations_float.push_back(ran4.GetValue(1.0f, 10.0f).value());
     }
     REQUIRE(generations_float.size() == 10);
 
     // char
     std::vector<char> generations_char;
     for (int i = 0; i < 10; ++i) {
-        generations_char.push_back(ran4.GetValue('a','z').value());
+        generations_char.push_back(ran4.GetValue('a', 'z').value());
     }
     REQUIRE(generations_char.size() == 10);
 
     // bool
     std::vector<bool> generations_bool;
     for (int i = 0; i < 10; ++i) {
-        generations_bool.push_back(ran4.GetValue(false,true).value());
+        generations_bool.push_back(ran4.GetValue(false, true).value());
     }
     REQUIRE(generations_bool.size() == 10);
 
@@ -86,7 +86,7 @@ TEST_CASE("Test Generation Happens", "[core]") {
 
 TEST_CASE("Test Random Generation", "[core]") {
     //// Check that it is randomly generating numbers with a set seed
-    std::vector<int> seed1000 =  {10,6,9,6,7,4,7,5,3,1};
+    std::vector<int> seed1000 = {10, 6, 9, 6, 7, 4, 7, 5, 3, 1};
     cse498::Random ran4;
     ran4.SetSeed(1000);
 
@@ -94,11 +94,11 @@ TEST_CASE("Test Random Generation", "[core]") {
     // With regular range
     std::vector<int> generations_int;
     for (int i = 0; i < 10; ++i) {
-        generations_int.push_back(ran4.GetValue(1,10).value());
+        generations_int.push_back(ran4.GetValue(1, 10).value());
     }
     REQUIRE(generations_int.size() == seed1000.size());
     REQUIRE(seed1000 == generations_int);
-    
+
     // With large range
     seed1000 = {96755444, 6877909, 27446121, 27988652, 21206584, 2012321, 5775199, 94442425, 46733563, 64994790};
     std::vector<int> generations_int_large;
@@ -131,7 +131,7 @@ TEST_CASE("Test Random Generation", "[core]") {
     ran5.SetSeed(1111);
     std::vector<int> generations_int_2;
     for (int i = 0; i < 10; ++i) {
-        generations_int_2.push_back(ran4.GetValue(1,10).value());
+        generations_int_2.push_back(ran4.GetValue(1, 10).value());
     }
     REQUIRE(generations_int.size() == generations_int_2.size());
     REQUIRE(generations_int_2 != generations_int);
@@ -149,8 +149,8 @@ TEST_CASE("Test Random Integer Generation Reproducability with Same Seed", "[cor
     std::vector<int> generations_int_1;
     std::vector<int> generations_int_2;
     for (int i = 0; i < 10; ++i) {
-        generations_int_1.push_back(ran15.GetValue(1,10).value());
-        generations_int_2.push_back(ran16.GetValue(1,10).value());
+        generations_int_1.push_back(ran15.GetValue(1, 10).value());
+        generations_int_2.push_back(ran16.GetValue(1, 10).value());
     }
     REQUIRE(generations_int_1.size() == generations_int_2.size());
     CHECK(generations_int_1 == generations_int_2);

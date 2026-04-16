@@ -8,41 +8,35 @@
 #include "../../../source/core/WorldBase.hpp"
 
 
-namespace cse498
-{
-class TestItemWorld : public WorldBase
-{
-public:
-    int DoAction([[maybe_unused]] AgentBase& agent, [[maybe_unused]] size_t action_id) override { return 0; }
-};
+namespace cse498 {
+    class TestItemWorld : public WorldBase {
+    public:
+        int DoAction([[maybe_unused]] AgentBase &agent, [[maybe_unused]] size_t action_id) override { return 0; }
+    };
 
-class TestUniqueItem : public Item
-{
-public:
-    TestUniqueItem(size_t id, const WorldBase& world)
-        : Item(id, "Unique", "unique.png", 11, world)
-    {
-    }
+    class TestUniqueItem : public Item {
+    public:
+        TestUniqueItem(size_t id, const WorldBase &world)
+            : Item(id, "Unique", "unique.png", 11, world) {
+        }
 
-    [[nodiscard]] bool IsUnique() const override { return true; }
-};
+        [[nodiscard]] bool IsUnique() const override { return true; }
+    };
 
-class TestItemConsumable : public Item
-{
-public:
-    TestItemConsumable(size_t id, const WorldBase& world)
-        : Item(id, "DualType", "dual.png", 25, world)
-    {
-    }
+    class TestItemConsumable : public Item {
+    public:
+        TestItemConsumable(size_t id, const WorldBase &world)
+            : Item(id, "DualType", "dual.png", 25, world) {
+        }
 
-    [[nodiscard]] bool IsWeapon() const override { return true; }
-    [[nodiscard]] bool IsConsumable() const override { return true; }
-    void Use() override { m_used = true; }
-    [[nodiscard]] bool WasUsed() const { return m_used; }
+        [[nodiscard]] bool IsWeapon() const override { return true; }
+        [[nodiscard]] bool IsConsumable() const override { return true; }
+        void Use() override { m_used = true; }
+        [[nodiscard]] bool WasUsed() const { return m_used; }
 
-private:
-    bool m_used = false;
-};
+    private:
+        bool m_used = false;
+    };
 } // namespace cse498
 
 using cse498::Item;
@@ -50,8 +44,7 @@ using cse498::TestItemWorld;
 using cse498::TestUniqueItem;
 using cse498::TestItemConsumable;
 
-TEST_CASE("Item base constructor, accessors, and mutators", "[core, item]")
-{
+TEST_CASE("Item base constructor, accessors, and mutators", "[core, item]") {
     TestItemWorld world;
     Item item(42, "Potion", "assets/potion.png", 15, world);
 
@@ -73,8 +66,7 @@ TEST_CASE("Item base constructor, accessors, and mutators", "[core, item]")
     CHECK(item.GetGold() == 40);
 }
 
-TEST_CASE("Item derived behavior can customize uniqueness and virtuals", "[core, item]")
-{
+TEST_CASE("Item derived behavior can customize uniqueness and virtuals", "[core, item]") {
     TestItemWorld world;
 
     TestUniqueItem uniqueItem(100, world);
@@ -89,4 +81,3 @@ TEST_CASE("Item derived behavior can customize uniqueness and virtuals", "[core,
     consumableItem.Use();
     CHECK(consumableItem.WasUsed() == true);
 }
-
