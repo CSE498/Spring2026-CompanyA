@@ -4,7 +4,7 @@
 #include <utility>
 
 namespace {
-    constexpr const char* DEFAULT_RUNTIME_CATEGORY = "GENERAL";
+constexpr const char* DEFAULT_RUNTIME_CATEGORY = "GENERAL";
 }
 
 /*@brief Creates a new OutputManager.
