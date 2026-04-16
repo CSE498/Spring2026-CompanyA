@@ -41,6 +41,16 @@ public:
    * @return current rate of production
    */
   float GetRate() const { return m_rate; }
+
+  /**
+   * Get the building currently associated with this producer.
+   */
+  const std::shared_ptr<Building> &GetBuilding() const { return m_building; }
+
+  /**
+   * Get the resource type produced by this producer.
+   */
+  ItemType GetOutputType() const { return m_outputType; }
   /**
    * Calculate the current rate of production
    */

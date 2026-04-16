@@ -19,8 +19,8 @@
 #include "../ImageManager.hpp"
 #include "../Menu.hpp"
 #include "../Text.hpp"
+#include "../../../Worlds/Hub/InteractiveWorld.hpp"
 #include "DungeonWorld.hpp"
-#include "OverWorld.hpp"
 
 namespace cse498
 {
@@ -83,14 +83,11 @@ namespace cse498
         // -------------------------
         std::unique_ptr<ImageManager> mImageManager; /// Handles image loading and rendering
         std::unique_ptr<ImageGrid> mOverworldGrid; /// Renderable grid for overworld tiles
-        std::unique_ptr<OverWorld> mOverWorld; /// Overworld game logic
+        std::unique_ptr<InteractiveWorld> mInteractiveWorld; /// Interactive hub world logic
         std::unique_ptr<DungeonWorld> mDungeonWorld; /// Dungeon world game logic
 
         int mCamX = 0; /// Camera X position in tile coordinates
         int mCamY = 0; /// Camera Y position in tile coordinates
-
-        int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
-        int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
 
         // -------------------------
         // Dungeon state

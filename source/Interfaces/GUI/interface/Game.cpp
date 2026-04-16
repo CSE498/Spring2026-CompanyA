@@ -104,6 +104,14 @@ namespace cse498
         if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png"))
             return false;
 
+        // Interactive world buildings
+        if (!LoadCheck("lumber_yard", std::string(ASSETS_DIR) + "Tiles/lumber_yard.png"))
+            return false;
+        if (!LoadCheck("quarry", std::string(ASSETS_DIR) + "Tiles/quarry.png"))
+            return false;
+        if (!LoadCheck("ore_mine", std::string(ASSETS_DIR) + "Tiles/ore_mine.png"))
+            return false;
+
         // Dungeon tile images
         if (!LoadCheck("wall", std::string(ASSETS_DIR) + "Tiles/grass.png"))
             return false;
@@ -125,7 +133,7 @@ namespace cse498
         //    mDungeonGrid->Fill("stone");
 
         // Agent module integration demonstration
-        StubAgent player(1, "Player", *mOverWorld);
+        StubAgent player(1, "Player", *mInteractiveWorld);
         player.AddAction("up", 1);
         player.AddAction("down", 2);
         player.AddAction("left", 3);
@@ -133,7 +141,7 @@ namespace cse498
 
         std::cout << "Agent: " << player.GetName() << " (symbol: " << player.GetSymbol() << ")" << std::endl;
         std::cout << "Movement actions registered: " << (player.HasAction("up") ? "yes" : "no") << std::endl;
-        player.Notify("Welcome to the overworld!", "system");
+        player.Notify("Welcome to the interactive world hub!", "system");
 
 
         SetupMainMenu();
@@ -143,10 +151,10 @@ namespace cse498
 
     void Game::SetupOverworld()
     {
-        mOverWorld = std::make_unique<OverWorld>();
-        mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
+        mInteractiveWorld = std::make_unique<InteractiveWorld>();
+        mInteractiveWorld->LoadGuiLayout();
 
-        const WorldGrid &grid = mOverWorld->GetGrid();
+        const WorldGrid &grid = mInteractiveWorld->GetGrid();
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
@@ -162,6 +170,16 @@ namespace cse498
                 mOverworldGrid->SetCell(x, y, cell_name);
             }
         }
+
+        const WorldPosition player_pos = mInteractiveWorld->GetPlayerPosition();
+        int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+        int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+        int tiles_x = mGameView->GetWidth() / tw;
+        int tiles_y = mGameView->GetHeight() / th;
+        int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - tiles_x);
+        int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
+        mCamX = std::clamp(static_cast<int>(player_pos.CellX()) - tiles_x / 2, 0, max_cam_x);
+        mCamY = std::clamp(static_cast<int>(player_pos.CellY()) - tiles_y / 2, 0, max_cam_y);
     }
 
 
@@ -321,11 +339,12 @@ namespace cse498
                         mPauseMenu.ActivateSelected();
                     break;
 
-                    // Player movement — one turn per keypress with 150ms cooldown
+                    // Player movement and interaction — one turn per keypress with 150ms cooldown
                 case SDLK_w:
                 case SDLK_s:
                 case SDLK_a:
                 case SDLK_d:
+                case SDLK_e:
                     if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON)
                     {
                         static Uint32 last_move_time = 0;
@@ -390,9 +409,11 @@ namespace cse498
     {
         if (mTurnTaken)
         {
-            mOverWorld->RunAgents();
+            mInteractiveWorld->RunAgents();
             mTurnTaken = false;
         }
+
+        mInteractiveWorld->AdvanceSimulation();
     }
     void Game::UpdateDungeon() {}
 
@@ -481,23 +502,23 @@ namespace cse498
         int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
         int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
-        for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i)
+        for (size_t i = 0; i < mInteractiveWorld->GetNumAgents(); ++i)
         {
-            const AgentBase &agent = mOverWorld->GetAgent(i);
+            const AgentBase &agent = mInteractiveWorld->GetAgentByIndex(i);
             const WorldPosition &pos = agent.GetLocation().AsWorldPosition();
 
             int screen_x = (static_cast<int>(pos.CellX()) - mCamX) * tw;
             int screen_y = (static_cast<int>(pos.CellY()) - mCamY) * th;
 
-            mImageManager->DrawImage(mOverWorld->GetAgentSpriteName(), screen_x, screen_y, tw, th);
+            mImageManager->DrawImage(mInteractiveWorld->GetAgentSpriteName(), screen_x, screen_y, tw, th);
         }
 
-        // Layer 3 — dummy player
+        // Layer 3 — world-owned player
+        const WorldPosition player_pos = mInteractiveWorld->GetPlayerPosition();
+        int player_screen_x = (static_cast<int>(player_pos.CellX()) - mCamX) * tw;
+        int player_screen_y = (static_cast<int>(player_pos.CellY()) - mCamY) * th;
 
-        int player_screen_x = (mPlayerX - mCamX) * tw;
-        int player_screen_y = (mPlayerY - mCamY) * th;
-
-        mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
+        mImageManager->DrawImage(mInteractiveWorld->GetPlayerSpriteName(), player_screen_x, player_screen_y, tw, th);
 
         // Layer 4 — UI/HUD (health bar, etc.)
         // RenderHUD();
@@ -555,38 +576,50 @@ namespace cse498
     {
         if (mState == GameState::OVERWORLD)
         {
-            int max_x = static_cast<int>(mOverworldGrid->GetWidth()) - 1;
-            int max_y = static_cast<int>(mOverworldGrid->GetHeight()) - 1;
-
+            bool consumed_turn = false;
             switch (key)
             {
             case SDLK_w:
-                mPlayerY = std::max(0, mPlayerY - 1);
+                mInteractiveWorld->TryMovePlayer(InteractiveWorld::PlayerMove::Up);
+                consumed_turn = true;
                 break;
             case SDLK_s:
-                mPlayerY = std::min(max_y, mPlayerY + 1);
+                mInteractiveWorld->TryMovePlayer(InteractiveWorld::PlayerMove::Down);
+                consumed_turn = true;
                 break;
             case SDLK_a:
-                mPlayerX = std::max(0, mPlayerX - 1);
+                mInteractiveWorld->TryMovePlayer(InteractiveWorld::PlayerMove::Left);
+                consumed_turn = true;
                 break;
             case SDLK_d:
-                mPlayerX = std::min(max_x, mPlayerX + 1);
+                mInteractiveWorld->TryMovePlayer(InteractiveWorld::PlayerMove::Right);
+                consumed_turn = true;
+                break;
+            case SDLK_e:
+                mInteractiveWorld->Interact();
+                consumed_turn = true;
                 break;
             default:
                 break;
             }
 
-            int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
-            int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+            if (consumed_turn)
+            {
+                int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+                int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
-            int Tiles_x = mGameView->GetWidth() / tw;
-            int Tiles_y = mGameView->GetHeight() / th;
+                int Tiles_x = mGameView->GetWidth() / tw;
+                int Tiles_y = mGameView->GetHeight() / th;
 
-            int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
-            int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
+                int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
+                int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
 
-            mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
+                const WorldPosition player_pos = mInteractiveWorld->GetPlayerPosition();
+                mCamX = std::clamp(static_cast<int>(player_pos.CellX()) - Tiles_x / 2, 0, max_cam_x);
+                mCamY = std::clamp(static_cast<int>(player_pos.CellY()) - Tiles_y / 2, 0, max_cam_y);
+                mTurnTaken = true;
+            }
+            return;
         }
 
         else if (mState == GameState::DUNGEON)

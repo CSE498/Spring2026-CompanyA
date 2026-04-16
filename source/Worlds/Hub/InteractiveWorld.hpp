@@ -5,24 +5,33 @@
  **/
 
 #pragma once
+
 #include "../../core/WorldBase.hpp"
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
 #include "ResourceProducer.hpp"
-#include <iostream>
+
 #include <memory>
-#include <sstream>
+#include <optional>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace cse498 {
+
 /**
  * World object for the interactive world
  */
 class InteractiveWorld : public WorldBase {
-protected:
-  // World Inventory
-  InteractiveWorldInventory m_inventory;
+public:
+  enum class PlayerMove {
+    Up,
+    Down,
+    Left,
+    Right
+  };
 
+protected:
   enum ActionType {
     REMAIN_STILL = 0,
     MOVE_UP,
@@ -32,80 +41,74 @@ protected:
     INTERACT
   };
 
-  size_t floor_id; ///< Easy access to floor CellType ID.
-  size_t wall_id;  ///< Easy access to wall CellType ID.
+  struct BuildingState {
+    std::shared_ptr<Building> building{};
+    std::shared_ptr<ResourceProducer> producer{};
+    size_t tile_id{0};
+  };
+
+  InteractiveWorldInventory m_inventory;
+
+  size_t grass_id{0};
+  size_t grass_flowers_id{0};
+  size_t grass_bones_id{0};
+  size_t grass_mud_id{0};
+  size_t grass_rock_id{0};
+  size_t entrance_id{0};
+  size_t wall_left_id{0};
+  size_t wall_right_id{0};
+  size_t wall_top_id{0};
+  size_t wall_bottom_id{0};
+  size_t wall_corner_id{0};
+  size_t lumber_yard_id{0};
+  size_t quarry_id{0};
+  size_t ore_mine_id{0};
+
+  WorldPosition mPlayerPosition{1, 1};
+  std::string mPlayerSpriteName{"player"};
+  std::string mAgentSpriteName{"skeleton"};
+  std::string mLastActionMessage{};
+  std::string mLastInventorySnapshot{};
+
+  std::vector<BuildingState> m_buildings{};
+  std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
 
   /// Provide the agent with movement actions.
-  void ConfigAgent(AgentBase &agent) override {
-    agent.AddAction("up", MOVE_UP);
-    agent.AddAction("down", MOVE_DOWN);
-    agent.AddAction("left", MOVE_LEFT);
-    agent.AddAction("right", MOVE_RIGHT);
-    agent.AddAction("interact", INTERACT);
-  }
+  void ConfigAgent(AgentBase &agent) override;
+
+  /// Update world logic
+  void UpdateWorld() override;
 
 private:
-  // Buildings in the scene
-  std::vector<std::shared_ptr<Building>> m_buildings{};
-  // ResourceProducers in the scene
-  std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
-  /**
-   * Update world logic
-   */
-  void UpdateWorld() override {
-    for (const auto &producer : m_producers) {
-      producer->Update();
-    }
+  void BuildDefaultRoom();
+  void BuildGuiTerrain();
+  void SetupGuiBuildings();
+  void PrintInventoryIfChanged(bool force = false);
+  void SetActionMessage(std::string message, bool print_to_console = true);
 
-    PrintInventory(); // Shows inventory status, for demo/simple game purposes
-  }
-
-  /**
-   * Print the world inventory
-   */
-  void PrintInventory() {
-    std::ostringstream output;
-    output << m_inventory.GetAmount(ItemType::Wood) << ' '
-           << ItemTypeToString(ItemType::Wood) << " | "
-           << m_inventory.GetAmount(ItemType::Stone) << ' '
-           << ItemTypeToString(ItemType::Stone) << " | "
-           << m_inventory.GetAmount(ItemType::Metal) << ' '
-           << ItemTypeToString(ItemType::Metal);
-
-    std::cout << output.str() << std::endl;
-  }
-
-  bool IsBuildingAt(const WorldPosition &position) const {
-    for (const auto &building : m_buildings) {
-      if (building->GetLocation().IsPosition() &&
-          building->GetLocation().AsWorldPosition() == position) {
-        return true;
-      }
-    }
-    return false;
-  }
+  [[nodiscard]] bool IsBlockedTile(const WorldPosition &position) const;
+  [[nodiscard]] bool IsBuildingAt(const WorldPosition &position) const;
+  [[nodiscard]] bool IsPlayerAt(const WorldPosition &position) const;
+  [[nodiscard]] bool IsAgentAt(const WorldPosition &position,
+                               const AgentBase *ignore = nullptr) const;
+  [[nodiscard]] std::optional<size_t>
+  FindBuildingIndexAt(const WorldPosition &position) const;
+  [[nodiscard]] std::optional<size_t> FindAdjacentBuildingIndex() const;
+  bool TryUpgradeBuilding(size_t building_index);
 
 public:
-  /**
-   * Constructor
-   */
-  InteractiveWorld() {
-    floor_id =
-        main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
-    wall_id = main_grid.AddCellType("wall", "Impenetrable wall.", '#');
+  InteractiveWorld();
+  ~InteractiveWorld() override = default;
 
-    main_grid.Load(std::vector<std::string>{
-        "#######################", "#                     #",
-        "#                     #", "#                     #",
-        "#                     #", "#                     #",
-        "#                     #", "#                     #",
-        "#                     #", "#                     #",
-        "#######################"});
-  }
   /**
-   * Destructor
+   * Rebuild the world into the SDL GUI hub layout.
    */
-  ~InteractiveWorld() = default;
+  void LoadGuiLayout();
+
+  /**
+   * Run producer/resource updates in the GUI loop.
+   */
+  void AdvanceSimulation();
 
   /**
    * Get the world inventory object
@@ -113,87 +116,74 @@ public:
    */
   InteractiveWorldInventory &GetInventory() { return m_inventory; }
   const InteractiveWorldInventory &GetInventory() const { return m_inventory; }
+
+  /**
+   * Move the GUI-controlled player one tile if the destination is valid.
+   */
+  bool TryMovePlayer(PlayerMove move);
+
+  /**
+   * Interact with an adjacent building.
+   */
+  bool Interact();
+
+  /**
+   * Get the current GUI player position.
+   */
+  [[nodiscard]] WorldPosition GetPlayerPosition() const { return mPlayerPosition; }
+
+  /**
+   * Get the sprite key used to draw the player in the SDL GUI.
+   */
+  [[nodiscard]] const std::string &GetPlayerSpriteName() const {
+    return mPlayerSpriteName;
+  }
+
+  /**
+   * Get the sprite key used for any ambient agents rendered by the SDL GUI.
+   */
+  [[nodiscard]] const std::string &GetAgentSpriteName() const {
+    return mAgentSpriteName;
+  }
+
+  /**
+   * Last world action message generated by interaction or movement rules.
+   */
+  [[nodiscard]] const std::string &GetLastActionMessage() const {
+    return mLastActionMessage;
+  }
+
+  /**
+   * Check if a position is walkable for the player or world agents.
+   */
+  [[nodiscard]] bool IsWalkable(const WorldPosition &position) const;
+
   /**
    * Have agent perform an action
    * @param agent Agent to perform action on
    * @param action_id type of action to perform
    */
-  int DoAction(AgentBase &agent, size_t action_id) override {
-    // Determine where the agent is trying to move.
-    WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
-    WorldPosition new_position;
-    switch (action_id) {
-    case REMAIN_STILL:
-      new_position = cur_position;
-      break;
-    case MOVE_UP:
-      new_position = cur_position.Up();
-      break;
-    case MOVE_DOWN:
-      new_position = cur_position.Down();
-      break;
-    case MOVE_LEFT:
-      new_position = cur_position.Left();
-      break;
-    case MOVE_RIGHT:
-      new_position = cur_position.Right();
-      break;
-    case INTERACT:
-      return true;
-    }
-
-    // Don't let the agent move off the world or into a non-walkable tile.
-    if (!main_grid.IsWalkable(new_position)) {
-      return false;
-    }
-
-    // Open NPC UI for interface-controlled agents only.
-    if (agent.IsInterface()) {
-      // ForEachAdjacentNPC(neighbors, [](NPC &npc) { npc.Interact(); });
-    }
-
-    // Don't walk on Buildings
-    if (IsBuildingAt(new_position)) {
-      return false;
-    }
-
-    // Set the agent to its new position.
-    agent.SetLocation(new_position);
-
-    return true;
-  }
+  int DoAction(AgentBase &agent, size_t action_id) override;
 
   /**
-   * Overlay symbols on screen
-   * @return
+   * Overlay symbols on screen for text-mode interfaces.
    */
-  std::vector<std::pair<WorldPosition, char>> GetOverlaySymbols() const {
-    std::vector<std::pair<WorldPosition, char>> symbols;
-    for (const auto &building : m_buildings) {
-      if (building->GetLocation().IsPosition()) {
-        symbols.emplace_back(building->GetLocation().AsWorldPosition(),
-                             building->GetSymbol());
-      }
-    }
-    return symbols;
-  }
+  std::vector<std::pair<WorldPosition, char>> GetOverlaySymbols() const;
 
   /**
    * Add producer to the world
    * @param producer producer to add
    */
-  void AddProducer(std::shared_ptr<ResourceProducer> producer) {
-    m_producers.push_back(producer);
-  }
+  void AddProducer(std::shared_ptr<ResourceProducer> producer);
 
   /**
    * Add a building to the world at a given position
    * @param building building to add
    * @param position position to place building at
+   * @param tile_id optional world tile used to render the building in GUI paths
    */
-  void AddBuilding(std::shared_ptr<Building> building, WorldPosition position) {
-    building->SetLocation(Location(position));
-    m_buildings.push_back(building);
-  }
+  void AddBuilding(std::shared_ptr<Building> building, WorldPosition position,
+                   size_t tile_id = 0);
 };
-}; // namespace cse498
+
+} // namespace cse498
