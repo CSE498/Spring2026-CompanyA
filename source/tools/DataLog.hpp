@@ -9,23 +9,20 @@
  **/
 
 #pragma once
-#include <vector>
 #include <cstddef>
 #include <optional>
+#include <vector>
 #include "Timer.hpp"
 
-namespace cse498
-{
-    class DataLog
-    {
+namespace cse498 {
+    class DataLog {
     public:
         /*
         A struct to represent a recorded sample in the log
         - value: the numeric value of the sample
         - timestamp: seconds since the datalog instance was constructed
         */
-        struct DataSample
-        {
+        struct DataSample {
             double value;
             double timestamp;
         };
@@ -43,7 +40,7 @@ namespace cse498
         /*
         Function returns a const reference to the collection of data samples
         */
-        const std::vector<DataSample> &DataSamples() const;
+        const std::vector<DataSample>& DataSamples() const;
 
         /*
         Function clears all samples from the data log
@@ -97,4 +94,4 @@ namespace cse498
         // Timer to measure elapsed time since datalog was constructed
         Timer mTimer{"DataLog"};
     };
-}
+} // namespace cse498
