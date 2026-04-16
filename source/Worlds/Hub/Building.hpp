@@ -110,7 +110,7 @@ public:
    * @param level level to set building to
    * @return bool if setting level was successful
    */
-  bool SetCurrentLevel(int level) {
+  [[maybe_unused]] bool SetCurrentLevel(int level) {
     if (level < 0 || level > GetMaxLevel())
       return false;
     m_level = level;
