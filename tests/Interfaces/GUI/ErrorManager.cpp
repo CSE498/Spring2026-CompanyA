@@ -3,8 +3,8 @@
 
 #include "../../../source/Interfaces/GUI/ErrorManager.hpp"
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 // Helper to capture stderr output during a test
 // Made via reference to Claude Sonnet 4.5
@@ -12,17 +12,11 @@ struct StderrCapture {
     std::streambuf* originalBuf;
     std::ostringstream captured;
 
-    StderrCapture() {
-        originalBuf = std::cerr.rdbuf(captured.rdbuf());
-    }
+    StderrCapture() { originalBuf = std::cerr.rdbuf(captured.rdbuf()); }
 
-    ~StderrCapture() {
-        std::cerr.rdbuf(originalBuf);
-    }
+    ~StderrCapture() { std::cerr.rdbuf(originalBuf); }
 
-    std::string Get() const {
-        return captured.str();
-    }
+    std::string Get() const { return captured.str(); }
 };
 
 
@@ -52,8 +46,7 @@ struct StderrCapture {
 // }
 
 
-TEST_CASE("Test ErrorManager Color Setters", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager Color Setters", "[ErrorManager]") {
     cse498::ErrorManager em;
 
     em.SetFatalErrorColor(cse498::ErrorManager::ErrorColor::BOLD);
@@ -80,8 +73,7 @@ TEST_CASE("Test ErrorManager Color Setters", "[ErrorManager]")
 }
 
 
-TEST_CASE("Test ErrorManager RaiseTerminalError Output", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager RaiseTerminalError Output", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -94,8 +86,7 @@ TEST_CASE("Test ErrorManager RaiseTerminalError Output", "[ErrorManager]")
 }
 
 
-TEST_CASE("Test ErrorManager RaiseTerminalError Does Not Stop Execution", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager RaiseTerminalError Does Not Stop Execution", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -109,8 +100,7 @@ TEST_CASE("Test ErrorManager RaiseTerminalError Does Not Stop Execution", "[Erro
 }
 
 
-TEST_CASE("Test ErrorManager RaiseTerminalWarning Output", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager RaiseTerminalWarning Output", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -122,8 +112,7 @@ TEST_CASE("Test ErrorManager RaiseTerminalWarning Output", "[ErrorManager]")
 }
 
 
-TEST_CASE("Test ErrorManager RaiseTerminalWarning Does Not Stop Execution", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager RaiseTerminalWarning Does Not Stop Execution", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -136,8 +125,7 @@ TEST_CASE("Test ErrorManager RaiseTerminalWarning Does Not Stop Execution", "[Er
 }
 
 
-TEST_CASE("Test ErrorManager LogError Output", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager LogError Output", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -149,8 +137,7 @@ TEST_CASE("Test ErrorManager LogError Output", "[ErrorManager]")
 }
 
 
-TEST_CASE("Test ErrorManager LogError Does Not Stop Execution", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager LogError Does Not Stop Execution", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -163,8 +150,7 @@ TEST_CASE("Test ErrorManager LogError Does Not Stop Execution", "[ErrorManager]"
 }
 
 
-TEST_CASE("Test ErrorManager LogWarning Output", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager LogWarning Output", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -176,8 +162,7 @@ TEST_CASE("Test ErrorManager LogWarning Output", "[ErrorManager]")
 }
 
 
-TEST_CASE("Test ErrorManager LogWarning Does Not Stop Execution", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager LogWarning Does Not Stop Execution", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -190,8 +175,7 @@ TEST_CASE("Test ErrorManager LogWarning Does Not Stop Execution", "[ErrorManager
 }
 
 
-TEST_CASE("Test ErrorManager Custom Color Output", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager Custom Color Output", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -203,8 +187,7 @@ TEST_CASE("Test ErrorManager Custom Color Output", "[ErrorManager]")
 }
 
 
-TEST_CASE("Test ErrorManager Multiple Non-Fatal Errors Continue Execution", "[ErrorManager]")
-{
+TEST_CASE("Test ErrorManager Multiple Non-Fatal Errors Continue Execution", "[ErrorManager]") {
     cse498::ErrorManager em;
     StderrCapture capture;
 
@@ -232,7 +215,4 @@ TEST_CASE("Test ErrorManager Multiple Non-Fatal Errors Continue Execution", "[Er
 
 /// This function intentionally kills the program - this would interrupt the testing suite as well I believe.
 /// For that reason, it's left here as a placeholder in case in the future a more meaningful test is thought of.
-TEST_CASE("Test ErrorManager RaiseFatalError NOTE", "[ErrorManager]")
-{
-    CHECK(true);
-}
+TEST_CASE("Test ErrorManager RaiseFatalError NOTE", "[ErrorManager]") { CHECK(true); }
