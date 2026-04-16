@@ -86,5 +86,13 @@ int main() {
   quarry->SetSymbol('M');
   mine->SetSymbol('X');
 
+  // Load save AFTER buildings/producers/world setup
+  InteractiveWorldSaveManager saveManager;
+  if (saveManager.Load(*world, "interactive_world_save.json")) {
+    std::cout << "Loaded existing save file.\n";
+  } else {
+    std::cout << "No save file found. Starting new game.\n";
+  }
+
   world->Run();
 }

@@ -13,6 +13,7 @@
 #include "../Worlds/Hub/InteractiveWorld.hpp"
 #include "../core/InterfaceBase.hpp"
 #include "../core/WorldBase.hpp"
+#include "../Worlds/Hub/InteractiveWorldSaveManager.hpp"
 
 namespace cse498 {
 
@@ -116,6 +117,19 @@ public:
       break;
     case 'q':
     case 'Q':
+      {
+        const auto* interactive_world = dynamic_cast<const InteractiveWorld*>(&world);
+        if (interactive_world) {
+          InteractiveWorldSaveManager save_manager;
+          if (save_manager.Save(*interactive_world, "interactive_world_save.json"))
+          {
+            std::cout << "\nGame saved to interactive_world_save.json\n";
+          } else {
+            std::cout << "\nFailed to save game.\n";
+          }
+        }
+      }
+
       exit(0); // Quit!
     }
 

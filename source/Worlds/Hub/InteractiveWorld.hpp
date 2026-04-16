@@ -9,6 +9,7 @@
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
 #include "ResourceProducer.hpp"
+#include <array>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -102,10 +103,19 @@ public:
         "#                     #", "#                     #",
         "#######################"});
   }
+
   /**
    * Destructor
    */
   ~InteractiveWorld() = default;
+
+  const std::vector<std::shared_ptr<Building>>& GetBuildings() const {
+    return m_buildings;
+  }
+
+  std::vector<std::shared_ptr<Building>>& GetBuildings() {
+    return m_buildings;
+  }
 
   /**
    * Get the world inventory object
