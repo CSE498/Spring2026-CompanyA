@@ -5,12 +5,12 @@
  * @note Status: PROPOSAL
  **/
 
-#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../../source/tools/Random.hpp"
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <vector>
 
 
 TEST_CASE("Test Seed Setting", "[core]") {

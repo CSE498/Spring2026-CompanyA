@@ -1,5 +1,5 @@
 /**
-* @file WorldPath.hpp
+ * @file WorldPath.hpp
  * @author Luke Antone
  *
  * WorldPath stores an ordered sequence of 2D positions for an agent to follow.
@@ -9,9 +9,9 @@
 #ifndef SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H
 #define SPRING2026_COMPANYA_GROUP_SPECIFIC_CONTENT_GROUP_02_WORLDPATH_H
 
+#include <algorithm>
 #include <cstddef>
 #include <iosfwd>
-#include <algorithm>
 #include <optional>
 #include <ranges>
 #include <span>
@@ -19,11 +19,9 @@
 #include <vector>
 #include "../core/WorldPosition.hpp"
 
-namespace cse498
-{
+namespace cse498 {
 
-class WorldPath
-{
+class WorldPath {
 public:
     WorldPath() = default;
 
@@ -80,8 +78,7 @@ public:
     /**
      * Reverses the world path in place.
      */
-    WorldPath& Reverse() noexcept
-    {
+    WorldPath& Reverse() noexcept {
         std::ranges::reverse(mPoints);
         return *this;
     }

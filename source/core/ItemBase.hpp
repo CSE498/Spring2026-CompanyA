@@ -14,14 +14,13 @@
 
 namespace cse498 {
 
-  class ItemBase : public Entity {
-  protected:
+class ItemBase : public Entity {
+protected:
     // Any traits that ITEMS have that agents should not go here.
     // (All Entities have a unique ID, a name, a location, and a reference to their world.)
 
-  public:
-    ItemBase(size_t id, const std::string & name, const WorldBase & world)
-      : Entity(id, name, world) { }
+public:
+    ItemBase(size_t id, const std::string& name, const WorldBase& world) : Entity(id, name, world) {}
     ~ItemBase() override = default; // Already virtual from Entity
 
     // -- Entity Overrides --
@@ -31,13 +30,16 @@ namespace cse498 {
     // -- Ownership Info --
     [[nodiscard]] bool IsOwned() const { return location.IsAgentID(); }
     [[nodiscard]] size_t GetOwnerID() const {
-      assert(IsOwned());
-      return location.AsAgentID();
+        assert(IsOwned());
+        return location.AsAgentID();
     }
 
     // Set owner ID can be either a number or an AgentID
-    ItemBase & SetOwnerID(AgentID id) { location = id; return *this; }
-    ItemBase & SetOwnerID(size_t id) { return SetOwnerID(AgentID{id}); }
-  };
+    ItemBase& SetOwnerID(AgentID id) {
+        location = id;
+        return *this;
+    }
+    ItemBase& SetOwnerID(size_t id) { return SetOwnerID(AgentID{id}); }
+};
 
 } // End of namespace cse498

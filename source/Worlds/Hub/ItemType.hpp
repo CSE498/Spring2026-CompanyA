@@ -15,9 +15,9 @@ namespace cse498 {
  * @brief Resource and upgrade item types used across the interactive world.
  */
 enum class ItemType {
-  Wood,  ///< Wood resource.
-  Stone, ///< Stone resource.
-  Metal  ///< Metal resource.
+    Wood, ///< Wood resource.
+    Stone, ///< Stone resource.
+    Metal ///< Metal resource.
 };
 
 /**
@@ -26,16 +26,16 @@ enum class ItemType {
  * @return string view naming the item type, or "Unknown" for unhandled values
  */
 constexpr std::string_view ItemTypeToString(ItemType itemType) {
-  switch (itemType) {
-  case ItemType::Wood:
-    return "Wood";
-  case ItemType::Stone:
-    return "Stone";
-  case ItemType::Metal:
-    return "Metal";
-  }
+    switch (itemType) {
+        case ItemType::Wood:
+            return "Wood";
+        case ItemType::Stone:
+            return "Stone";
+        case ItemType::Metal:
+            return "Metal";
+    }
 
-  return "Unknown";
+    return "Unknown";
 }
 
 } // namespace cse498

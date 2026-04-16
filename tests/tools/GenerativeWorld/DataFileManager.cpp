@@ -1,15 +1,14 @@
-//#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../../source/tools/DataFileManager.hpp"
-#include "../../../source/core/WorldBase.hpp"
 #include <sstream>
-
+#include "../../../source/core/WorldBase.hpp"
+#include "../../../source/tools/DataFileManager.hpp"
 
 /*
-* Test case for the constructor of the DataFileManager class, 
-* ensuring that it initializes with the correct filename and world pointer.
-*/
+ * Test case for the constructor of the DataFileManager class,
+ * ensuring that it initializes with the correct filename and world pointer.
+ */
 TEST_CASE("Testing DataFileManager Constructor", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
@@ -18,9 +17,9 @@ TEST_CASE("Testing DataFileManager Constructor", "[core]") {
 }
 
 /*
-* Test case for the Update function of the DataFileManager class,
-* ensuring that it successfully writes the current state of the world to the specified file. 
-*/
+ * Test case for the Update function of the DataFileManager class,
+ * ensuring that it successfully writes the current state of the world to the specified file.
+ */
 TEST_CASE("Testing DataFileManager Update", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
@@ -41,10 +40,10 @@ TEST_CASE("Testing DataFileManager Update", "[core]") {
     std::remove("DataFileManagerTest.csv");
 }
 
-/* 
-* Test case (error handling) for the Update function of the DataFileManager class,
-* ensuring that it returns false when it fails to open the specified file for writing.
-*/
+/*
+ * Test case (error handling) for the Update function of the DataFileManager class,
+ * ensuring that it returns false when it fails to open the specified file for writing.
+ */
 TEST_CASE("Testing DataFileManager Update with invalid file", "[core]") {
     cse498::DataFileManager manager("/invalid_path/DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
@@ -53,9 +52,9 @@ TEST_CASE("Testing DataFileManager Update with invalid file", "[core]") {
 }
 
 /*
-* Test case for the Update function of the DataFileManager class,
-* verifying that it successfully appends data (two lines) to the file updates.
-*/
+ * Test case for the Update function of the DataFileManager class,
+ * verifying that it successfully appends data (two lines) to the file updates.
+ */
 TEST_CASE("Testing DataFileManager Update writing to file", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
@@ -77,9 +76,9 @@ TEST_CASE("Testing DataFileManager Update writing to file", "[core]") {
 }
 
 /*
-* Test case for the Update function of the DataFileManager class,
-* verifying that it successfully appends data to the file on multiple updates.
-*/
+ * Test case for the Update function of the DataFileManager class,
+ * verifying that it successfully appends data to the file on multiple updates.
+ */
 TEST_CASE("Testing DataFileManager Update with multiple updates", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
 
@@ -103,9 +102,9 @@ TEST_CASE("Testing DataFileManager Update with multiple updates", "[core]") {
 }
 
 /*
-* Test case for the Load function of the DataFileManager class,
-* verifying that it successfully reads the most recent tile snapshot back into the world grid.
-*/
+ * Test case for the Load function of the DataFileManager class,
+ * verifying that it successfully reads the most recent tile snapshot back into the world grid.
+ */
 TEST_CASE("Testing DataFileManager Load restores grid", "[core]") {
     cse498::DataFileManager manager("DataFileManagerTest.csv", std::make_unique<cse498::MazeWorld>());
     manager.Update();
@@ -118,9 +117,9 @@ TEST_CASE("Testing DataFileManager Load restores grid", "[core]") {
 }
 
 /*
-* Test case (error handling) for the Load function of the DataFileManager class,
-* ensuring that it handles the case when the file does not exist.
-*/
+ * Test case (error handling) for the Load function of the DataFileManager class,
+ * ensuring that it handles the case when the file does not exist.
+ */
 // TEST_CASE("Testing DataFileManager Load with missing file", "[core]") {
 //     cse498::DataFileManager manager("NonExistentFile.csv", std::make_unique<cse498::MazeWorld>());
 

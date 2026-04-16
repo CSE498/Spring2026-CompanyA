@@ -14,25 +14,23 @@
 
 #pragma once
 
+#include <array>
+#include <iostream>
+#include <memory>
+#include <optional>
+#include <set>
+#include <unordered_map>
+#include <utility>
 #include "../../../core/ItemBase.hpp"
 #include "../../../core/item/Item.hpp"
-#include <optional>
-#include <array>
-#include <unordered_map>
-#include <set>
-#include <iostream>
-#include <utility>
-#include <memory>
 
-namespace cse498
-{
+namespace cse498 {
 
 /**
  * !IMPORTANT
  * Hotbar leftmost slot = slot 0 then slot HOTBAR_SIZE + 1 is top left of backpack
  */
-class Inventory
-{
+class Inventory {
 public:
     static constexpr size_t BACKPACK_SIZE = 20;
     static constexpr size_t HOTBAR_SIZE = 10;
@@ -55,7 +53,7 @@ public:
      * @return
      */
     template<typename ITEM_T, typename... Args>
-    requires std::derived_from<ITEM_T, Item>
+        requires std::derived_from<ITEM_T, Item>
     size_t AddItem(size_t quantity = 1, Args&&... args) // it may be better to replace forwarding to 2 args: id, world
     {
         return AddItem(std::make_unique<ITEM_T>(std::forward<Args>(args)...), quantity);
@@ -115,45 +113,49 @@ public:
      * meddling with internal variables since it can break things
      * This class SHOULD NOT BE USED OUTSIDE THIS CLASS but is public for testing
      */
-    class InventorySlot
-    {
+    class InventorySlot {
     private:
         std::unique_ptr<Item> mItem = nullptr;
         size_t mQuantity = 0;
+
     public:
         InventorySlot() = default;
         /**
-         * if the item IS UNIQUE then quantity NEEDS TO BE 1. Otherwise, not unique ==> quantity in [1, MAX_ITEMS_PER_SLOT]
+         * if the item IS UNIQUE then quantity NEEDS TO BE 1. Otherwise, not unique ==> quantity in [1,
+         * MAX_ITEMS_PER_SLOT]
          * @param item item to put in the inventory slot
          * @param quantity - quantity of the item
          */
-        InventorySlot(std::unique_ptr<Item> item, size_t quantity) : mItem(std::move(item)), mQuantity(quantity)
-        {
+        InventorySlot(std::unique_ptr<Item> item, size_t quantity) : mItem(std::move(item)), mQuantity(quantity) {
             // I would've used exceptions here otherwise.
             assert(quantity > 0 && quantity <= MAX_ITEMS_PER_SLOT);
             // This should never occur. An item that is unique shouldn't have quantity > 1 this would be strange
             if (mItem)
                 assert(!mItem->IsUnique() || quantity == 1);
         }
-        void Reset() { mItem.reset(); mQuantity = 0; }
+        void Reset() {
+            mItem.reset();
+            mQuantity = 0;
+        }
 
-        [[nodiscard]] bool IsEmpty() const {return !mItem;}
-        [[nodiscard]] bool IsFull() const {return (mQuantity >= Inventory::MAX_ITEMS_PER_SLOT || (mItem && mItem->IsUnique()));}
-        [[nodiscard]] size_t GetQuantity() const {return mQuantity;}
+        [[nodiscard]] bool IsEmpty() const { return !mItem; }
+        [[nodiscard]] bool IsFull() const {
+            return (mQuantity >= Inventory::MAX_ITEMS_PER_SLOT || (mItem && mItem->IsUnique()));
+        }
+        [[nodiscard]] size_t GetQuantity() const { return mQuantity; }
         [[nodiscard]] bool IsRoom(size_t amount) const { return (mQuantity + amount) <= MAX_ITEMS_PER_SLOT; }
 
-        InventorySlot& Decrement()
-        {
+        InventorySlot& Decrement() {
             mQuantity--;
-            if (mQuantity == 0) mItem = nullptr;
+            if (mQuantity == 0)
+                mItem = nullptr;
             return *this;
         }
-        InventorySlot& Increment()
-        {
+        InventorySlot& Increment() {
             mQuantity++;
             return *this;
         }
-        explicit operator bool() const {return static_cast<bool>(mItem);}
+        explicit operator bool() const { return static_cast<bool>(mItem); }
         [[nodiscard]] bool Contains(const std::string& name) { return (mItem && mItem->GetName() == name); }
         [[nodiscard]] bool Contains(const size_t itemId) { return (mItem && mItem->GetId() == itemId); }
         /**
@@ -161,12 +163,9 @@ public:
          * @param item some defined item
          * @param quantity some defined quantity of item
          */
-        size_t InsertNew(std::unique_ptr<Item> item, size_t quantity)
-        {
-            if (item && item->IsUnique())
-            {
-                if (quantity == 1)
-                {
+        size_t InsertNew(std::unique_ptr<Item> item, size_t quantity) {
+            if (item && item->IsUnique()) {
+                if (quantity == 1) {
                     mQuantity = 1;
                     mItem = std::move(item);
                     return 0;
@@ -176,23 +175,19 @@ public:
             mItem = std::move(item);
             return Insert(quantity);
         }
-        size_t Insert(size_t quantity)
-        {
+        size_t Insert(size_t quantity) {
             if (mItem && mItem->IsUnique())
                 return quantity;
             mQuantity += quantity;
-            if (mQuantity > MAX_ITEMS_PER_SLOT)
-            {
+            if (mQuantity > MAX_ITEMS_PER_SLOT) {
                 auto overflow = mQuantity - MAX_ITEMS_PER_SLOT;
                 mQuantity = MAX_ITEMS_PER_SLOT;
                 return overflow;
             }
             return 0;
         }
-        size_t Remove(size_t quantity)
-        {
-            if (mQuantity <= quantity)
-            {
+        size_t Remove(size_t quantity) {
+            if (mQuantity <= quantity) {
                 mItem.reset();
                 auto underflow = (quantity - mQuantity);
                 mQuantity = 0;
@@ -201,11 +196,7 @@ public:
             mQuantity -= quantity;
             return 0;
         }
-        [[nodiscard]] Item* GetItem() const
-        {
-            return mItem.get();
-        }
-
+        [[nodiscard]] Item* GetItem() const { return mItem.get(); }
     };
 
     /**
@@ -213,22 +204,19 @@ public:
      * @return const ref of inventory.
      */
     const std::array<InventorySlot, INVENTORY_SIZE>& GetInventoryArray() const { return mInventory; }
+
 private:
     /**
      * Enforces that removal will take place in the backpack first then
      * the hotbar
      */
-    struct CircularCompare
-    {
-        size_t Transform(size_t x) const
-        {
-            if (x >= HOTBAR_SIZE) return (x - HOTBAR_SIZE);
+    struct CircularCompare {
+        size_t Transform(size_t x) const {
+            if (x >= HOTBAR_SIZE)
+                return (x - HOTBAR_SIZE);
             return x + (INVENTORY_SIZE - HOTBAR_SIZE + 1);
         }
-        bool operator()(size_t a, size_t b) const
-        {
-            return Transform(a) < Transform(b);
-        }
+        bool operator()(size_t a, size_t b) const { return Transform(a) < Transform(b); }
     };
 
     // I don't care what the size of the inventory is or if we change the structure.
@@ -243,8 +231,6 @@ private:
 
     /// this is the selected hotbar slot
     size_t mCurrentHotbarSlot = 0;
-
-
 };
 
 std::ostream& operator<<(std::ostream& os, const Inventory::InventorySlot& slot);
@@ -257,6 +243,4 @@ std::ostream& operator<<(std::ostream& os, const Inventory::InventorySlot& slot)
 std::ostream& operator<<(std::ostream& os, const Inventory& inv);
 
 
-}
-
-
+} // namespace cse498

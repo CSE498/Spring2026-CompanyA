@@ -20,14 +20,14 @@ using namespace cse498;
 
 namespace {
 
-    constexpr int kDefaultSpacing = 12;
+constexpr int kDefaultSpacing = 12;
 
-    // Keep DOM-backed demo objects alive after main() returns under Emscripten.
-    std::unique_ptr<WebLayout> sLayout;
-    std::unique_ptr<WebImage> sImg1;
-    std::unique_ptr<WebImage> sImg2;
-    std::unique_ptr<WebImage> sImg3;
-    std::unique_ptr<WebImage> sImg4;
+// Keep DOM-backed demo objects alive after main() returns under Emscripten.
+std::unique_ptr<WebLayout> sLayout;
+std::unique_ptr<WebImage> sImg1;
+std::unique_ptr<WebImage> sImg2;
+std::unique_ptr<WebImage> sImg3;
+std::unique_ptr<WebImage> sImg4;
 
 } // namespace
 

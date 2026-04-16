@@ -12,17 +12,16 @@
 
 namespace cse498 {
 
-  // NOTE: InterfaceBase derives from AgentBase, but this is only needed for software
-  // where the user is a "player" with the same abilities as an agent and needs to be
-  // tracked by the World.  Some software types won't need this style of interface.
-  
-  class InterfaceBase : public AgentBase {
-  protected:
+// NOTE: InterfaceBase derives from AgentBase, but this is only needed for software
+// where the user is a "player" with the same abilities as an agent and needs to be
+// tracked by the World.  Some software types won't need this style of interface.
+
+class InterfaceBase : public AgentBase {
+protected:
     bool mPaused{false};
 
-  public:
-    InterfaceBase(size_t id, const std::string & name, const WorldBase & world)
-      : AgentBase(id, name, world) { }
+public:
+    InterfaceBase(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
     ~InterfaceBase() = default; // Already virtual from Entity
 
     // -- Entity Overrides --
@@ -49,6 +48,6 @@ namespace cse498 {
     // SelectAction is run when the world is given the player an opportunity to choose
     // and action to perform. The interface will be provided with the current WorldGrid
     // Return the ID associated with the action to perform; (zero is always "no action")
-  };
+};
 
 } // End of namespace cse498

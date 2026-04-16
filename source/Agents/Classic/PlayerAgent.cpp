@@ -3,15 +3,14 @@
  */
 
 #include "PlayerAgent.hpp"
-#include "../../core/WorldBase.hpp"
 #include <iostream>
+#include "../../core/WorldBase.hpp"
 
 namespace cse498 {
 
-PlayerAgent::PlayerAgent(size_t id, const std::string &name, const WorldBase &world)
-    : AgentBase(id, name, world) {}
+PlayerAgent::PlayerAgent(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
 
-size_t PlayerAgent::SelectAction(const WorldGrid & /*grid*/) {
+size_t PlayerAgent::SelectAction(const WorldGrid& /*grid*/) {
     // This function isn't usable. Don't call it. It needs an override.
     // 1. WorldGrid input is useless since we have that in Entity.
     // 2. This is only designed around this being in the interface implementation, but
@@ -20,15 +19,13 @@ size_t PlayerAgent::SelectAction(const WorldGrid & /*grid*/) {
     return 0;
 }
 
-size_t PlayerAgent::SelectPlayerAction(const char input)
-{
+size_t PlayerAgent::SelectPlayerAction(const char input) {
     // After calling this function you need to call DoAction on the result
     // then call SetActionResult for the player.
     // This CANNOT be done here because world is const& and DoAction is not const method.
     // I wish it was... too late now :/
 
-    switch (input)
-    {
+    switch (input) {
         case 'a':
         case 'A':
             return GetActionID("a");
@@ -50,14 +47,11 @@ size_t PlayerAgent::SelectPlayerAction(const char input)
         default:
             return GetActionID("stay");
     }
-
 }
 
 
-bool PlayerAgent::SpendGold(std::size_t amount)
-{
-    if (amount > mGold)
-    {
+bool PlayerAgent::SpendGold(std::size_t amount) {
+    if (amount > mGold) {
         return false;
     }
 

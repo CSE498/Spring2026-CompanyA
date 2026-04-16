@@ -37,9 +37,9 @@ int WebImage_registryContains(int registry_id);
 }
 
 namespace cse498 {
-    struct WebImageTestAccessor {
-        static int RegistryId(const WebImage& img) { return img.mRegistryId; }
-    };
+struct WebImageTestAccessor {
+    static int RegistryId(const WebImage& img) { return img.mRegistryId; }
+};
 } // namespace cse498
 
 static constexpr const char* kValidImageSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
