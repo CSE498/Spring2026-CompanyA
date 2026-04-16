@@ -68,7 +68,7 @@ namespace cse498 {
         int m_iterations = DEFAULT_ITERATIONS; //number of splits into the grid
         Random m_rng; //Random number generator
 
-        bool mExitDoor = false; //Switch that works to spawn only one exit room 
+        bool m_exit_door = false; //Switch that works to spawn only one exit room 
         double mExitProbabilityState = 0.0; //Escalating probability value to determine when exit room spawns
 
     public: 
@@ -118,11 +118,11 @@ namespace cse498 {
             const auto upper_threshold = DOOR_EXIT_PROBABILITY_LIMIT; //upper prob bound
             const auto probability_increment = DOOR_EXIT_PROBABILITY_INCREMENT;
 
-            if(!mExitDoor) {
+            if(!m_exit_door) {
                 auto val_one = m_rng.GetValue(0.0, 1.0);
-                if ((val_one.value() < lower_threshold && !mExitDoor)) {
-                    mExitDoor = true;
-                    m_room_holder.SetCurrentRoom(m_room_holder.LoadRoom(mExitDoor));
+                if ((val_one.value() < lower_threshold && !m_exit_door)) {
+                    m_exit_door = true;
+                    m_room_holder.SetCurrentRoom(m_room_holder.LoadRoom(m_exit_door));
                     return;
                 }
 
@@ -163,6 +163,7 @@ namespace cse498 {
         void ClearState() { 
             m_BSP_tree.clear();
             m_leaf_nodes.clear();
+            m_exit_door = false;
         }
 
         void RepopulateTree() { 

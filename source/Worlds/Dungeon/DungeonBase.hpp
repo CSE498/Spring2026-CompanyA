@@ -18,6 +18,7 @@ namespace cse498 {
   class DungeonBase : public WorldBase {
   protected:
     enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
+    WorldGeneration m_generation;
 
     size_t m_floor_id; ///< Easy access to floor CellType ID.
     size_t m_wall_id;  ///< Easy access to wall CellType ID.
@@ -31,6 +32,9 @@ namespace cse498 {
     size_t m_monster_tile;
     size_t m_door_tile;
     size_t m_secret_door;
+    size_t m_exit_door;
+    size_t m_variant_floor;
+
 
     cse498::WeightedSet<std::string> m_item_pool; // A pool of possible items to generate
     
@@ -45,7 +49,7 @@ namespace cse498 {
     }
 
   public:
-    DungeonBase(const cse498::WeightedSet<std::string>& room_pool) {
+    DungeonBase(const cse498::WeightedSet<std::string>& room_pool) : m_generation(room_pool) {
       m_floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
       m_wall_id  = main_grid.AddCellType("wall",  "Impenetrable wall.",'#');
       m_upper_external = main_grid.AddCellType("wall",  "upper wall.", '^');
@@ -58,7 +62,9 @@ namespace cse498 {
       m_monster_tile = main_grid.AddCellType("wall",  "monster tile wall.",    'm');
       m_door_tile = main_grid.AddCellType("wall",  "door tile wall.", 'd');
       m_secret_door = main_grid.AddCellType("wall",  "secret tile wall.", 's');
-
+      m_exit_door = main_grid.AddCellType("exit",  "secret tile wall.", 'e');
+      m_variant_floor = main_grid.AddCellType("wall",  "variant tile wall.", 'v');
+      
       auto sword = m_item_pool.Insert("Sword", 1.0);
       auto sword1 = m_item_pool.Insert("Sword +1", 0.2);
       auto sword2 = m_item_pool.Insert("Sword +2", 0.1);
@@ -78,19 +84,50 @@ namespace cse498 {
       auto pickaxe = m_item_pool.Insert("Pickaxe", 1.0);
       auto shovel = m_item_pool.Insert("Shovel", 1.0);
 
-      WorldGeneration generation(room_pool); 
-      generation.CreateDungeon(); 
-      std::vector<std::string> testing = generation.GetDungeon();
+
+      m_generation.CreateDungeon(); 
+      std::vector<std::string> dungeon = m_generation.GetDungeon();
 
       // Debugging calls in order to see the Grid Parition outline and coordinate/room information
       //generation.GetBSP().TreeParser();
-      //generation.GetBSP().GenerateTileMap();
+      m_generation.GetBSP().GenerateTileMap();
 
-      main_grid.Load(testing);
+      main_grid.Load(dungeon);
 
 
     }
     ~DungeonBase() = default;
+
+    /// @brief Grabs user input to determine whether or not to move to the next level. 
+    /// Debug tool used for updating level progression + progressing dungeon levels (dungeonone, dungeontwo, dungeonthree)
+    void UserInput() { 
+      std::cout << "Success! Continue or quit? ('c'/'q')" << std::endl;
+      char input;
+      bool user_checker = true;
+      while(user_checker) {
+        std::cin >> input;
+        if (std::tolower(input) == 'c') {
+          user_checker = false;
+        }
+        else if (std::tolower(input) == 'q') {
+          std::cout << "DungeonGame terminated" << std::endl;
+          exit(-1);
+        }
+
+        else { 
+          std::cout << "Invalid Command!" << std::endl;
+          continue;
+        }
+      }
+      return;
+    }
+
+    void Update() { 
+      m_generation.Update();
+      std::vector<std::string> dungeon = m_generation.GetDungeon();
+
+      main_grid.Load(dungeon);
+    }
 
     /// Allow the agents to move around the maze.
     int DoAction(AgentBase & agent, size_t action_id) override {
@@ -115,6 +152,15 @@ namespace cse498 {
 			|| main_grid[new_position] == m_right_external)
 		{ return false; }
 
+        //Here we set up if new_position is walking into an item, they'll pick it up, but not move (LATER)
+        //For now we're implementing the 
+
+      else if (main_grid[new_position] == m_exit_door && dynamic_cast<TrashInterface*>(&agent)) { 
+        UserInput();
+        Update();
+        new_position = WorldPosition(1,1); //default player location upon loading into new world
+
+      }
       // Set the agent to its new postion.
       agent.SetLocation(new_position);
 
