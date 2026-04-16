@@ -106,6 +106,17 @@ public:
    */
   int GetCurrentLevel() const { return m_level; }
   /**
+   * Set the current building level
+   * @param level level to set building to
+   * @return bool if setting level was successful
+   */
+  bool SetCurrentLevel(int level) {
+    if (level < 0 || level > GetMaxLevel())
+      return false;
+    m_level = level;
+    return true;
+  }
+  /**
    * Get Next Upgrade level
    * For UI. Returns the level the next upgrade would reach. If the building is
    * already max level, returns the current level.
