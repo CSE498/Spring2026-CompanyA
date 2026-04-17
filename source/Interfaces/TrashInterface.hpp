@@ -49,15 +49,6 @@ protected:
       symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
     }
 
-    // Substitute in overlay symbols such as buildings
-    if (const auto *iw =
-            dynamic_cast<const cse498::InteractiveWorld *>(&world)) {
-      auto overlay = iw->GetOverlaySymbols();
-      for (const auto &[pos, symbol] : overlay) {
-        symbol_grid[pos.CellY()][pos.CellX()] = symbol;
-      }
-    }
-
     // Print out the symbol_grid with a box around it.
     std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
     for (const auto &row : symbol_grid) {

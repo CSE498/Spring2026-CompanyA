@@ -12,7 +12,9 @@
 #include "../../source/Worlds/Hub/InteractiveWorldInventory.hpp"
 #include "../../source/Worlds/Hub/InteractiveWorldSaveManager.hpp"
 #include "../../source/Worlds/Hub/ResourceProducer.hpp"
+#include "../../source/Worlds/Hub/ResourceSpawn.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
+
 
 #include <iostream>
 #include <memory>
@@ -42,24 +44,41 @@ int main() {
       .SetLocation(WorldPosition{1, 1});
 
   // Buildings
-  std::shared_ptr<Building> lumberYard =
-      std::make_shared<Building>(1, "Lumber Yard", *world);
-  lumberYard->SetSymbol('L');
-  lumberYard->AddUpgrade(ItemType::Wood, 15);
-  lumberYard->AddUpgrade(ItemType::Wood, 50);
-  lumberYard->AddUpgrade(ItemType::Stone, 50);
-  std::shared_ptr<Building> quarry =
-      std::make_shared<Building>(2, "Quarry", *world);
-  quarry->SetSymbol('Q');
-  quarry->AddUpgrade(ItemType::Wood, 50);
-  quarry->AddUpgrade(ItemType::Stone, 50);
-  quarry->AddUpgrade(ItemType::Metal, 35);
-  std::shared_ptr<Building> mine =
-      std::make_shared<Building>(3, "Ore Mine", *world);
-  mine->SetSymbol('M');
-  mine->AddUpgrade(ItemType::Stone, 100);
-  mine->AddUpgrade(ItemType::Metal, 50);
-  mine->AddUpgrade(ItemType::Metal, 100);
+Building& lumberYard = world->AddAgent<Building>("Lumber Yard");
+lumberYard.SetSymbol('L');
+lumberYard.AddUpgrade(ItemType::Wood, 15);
+
+Building& quarry = world->AddAgent<Building>("Quarry");
+  quarry.SetSymbol('Q');
+  quarry.AddUpgrade(ItemType::Wood, 50);
+  quarry.AddUpgrade(ItemType::Stone, 50);
+  quarry.AddUpgrade(ItemType::Metal, 35);
+
+  Building& mine = world->AddAgent<Building>("Mine");
+  mine.SetSymbol('M');
+  mine.AddUpgrade(ItemType::Stone, 100);
+  mine.AddUpgrade(ItemType::Metal, 50);
+  mine.AddUpgrade(ItemType::Metal, 100);
+
+  // Resource spawns
+	auto woodSpawnPtr = std::make_unique<ResourceSpawn>(
+	    world->GetNextAgentId(), "Wood Spawn", *world, ItemType::Wood);
+	woodSpawnPtr->SetSymbol('l');
+	ResourceSpawn& woodSpawn = world->AddAgent(std::move(woodSpawnPtr));
+	woodSpawn.SetLocation(WorldPosition{5, 5});
+
+	auto stoneSpawnPtr = std::make_unique<ResourceSpawn>(
+	    world->GetNextAgentId(), "Stone Spawn", *world, ItemType::Stone);
+	stoneSpawnPtr->SetSymbol('q');
+	ResourceSpawn& stoneSpawn = world->AddAgent(std::move(stoneSpawnPtr));
+	stoneSpawn.SetLocation(WorldPosition{4, 9});
+
+	auto metalSpawnPtr = std::make_unique<ResourceSpawn>(
+	    world->GetNextAgentId(), "Metal Spawn", *world, ItemType::Metal);
+	metalSpawnPtr->SetSymbol('m');
+	ResourceSpawn& metalSpawn = world->AddAgent(std::move(metalSpawnPtr));
+	metalSpawn.SetLocation(WorldPosition{1, 7});
+
 
   // Resource Producers
   std::shared_ptr<ResourceProducer> woodProducer =
@@ -82,11 +101,10 @@ int main() {
   world->AddBuilding(quarry, WorldPosition{5, 3});
   world->AddBuilding(mine, WorldPosition{8, 5});
 
-  lumberYard->SetSymbol('L');
-  quarry->SetSymbol('M');
-  mine->SetSymbol('X');
+  lumberYard.SetSymbol('L');
+  quarry.SetSymbol('Q');
+  mine.SetSymbol('M');
 
-  // Load save AFTER buildings/producers/world setup
   InteractiveWorldSaveManager saveManager;
   if (saveManager.Load(*world, "interactive_world_save.json")) {
     std::cout << "Loaded existing save file.\n";
