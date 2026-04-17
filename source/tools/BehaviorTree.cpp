@@ -7,22 +7,16 @@ namespace BehaviorTrees {
 // BLACKBOARD IMPLEMENTATION
 // ============================================================
 
-bool Blackboard::Has(const std::string& key) const {
-    return mData.find(key) != mData.end();
-}
+bool Blackboard::Has(const std::string& key) const { return mData.find(key) != mData.end(); }
 
-void Blackboard::Remove(const std::string& key) {
-    mData.erase(key);
-}
+void Blackboard::Remove(const std::string& key) { mData.erase(key); }
 
-void Blackboard::Clear() {
-    mData.clear();
-}
+void Blackboard::Clear() { mData.clear(); }
 
 std::vector<std::string> Blackboard::GetKeys() const {
     std::vector<std::string> keys;
     keys.reserve(mData.size());
-    for (const auto& pair : mData) {
+    for (const auto& pair: mData) {
         keys.push_back(pair.first);
     }
     return keys;
@@ -32,8 +26,7 @@ std::vector<std::string> Blackboard::GetKeys() const {
 // EXECUTION CONTEXT
 // ============================================================
 
-ExecutionContext::ExecutionContext(Blackboard& bb)
-    : mBlackboard(bb) {}
+ExecutionContext::ExecutionContext(Blackboard& bb) : mBlackboard(bb) {}
 
 // ============================================================
 // NODE BASE IMPLEMENTATION
@@ -58,28 +51,22 @@ void Node::OnExit(ExecutionContext&, Status) {
 // COMPOSITE
 // ============================================================
 
-void Composite::AddChild(std::unique_ptr<Node> child) {
-    mChildren.push_back(std::move(child));
-}
+void Composite::AddChild(std::unique_ptr<Node> child) { mChildren.push_back(std::move(child)); }
 
 void Composite::Reset() {
     mCurrentChild = 0;
-    for (auto& ch : mChildren) {
+    for (auto& ch: mChildren) {
         ch->Reset();
     }
 }
 
-const std::vector<std::unique_ptr<Node>>& Composite::GetChildren() const {
-    return mChildren;
-}
+const std::vector<std::unique_ptr<Node>>& Composite::GetChildren() const { return mChildren; }
 
 // ============================================================
 // DECORATOR
 // ============================================================
 
-void Decorator::SetChild(std::unique_ptr<Node> childNode) {
-    mChild = std::move(childNode);
-}
+void Decorator::SetChild(std::unique_ptr<Node> childNode) { mChild = std::move(childNode); }
 
 void Decorator::Reset() {
     if (mChild) {
@@ -87,28 +74,21 @@ void Decorator::Reset() {
     }
 }
 
-const std::unique_ptr<Node>& Decorator::GetChild() const {
-    return mChild;
-}
+const std::unique_ptr<Node>& Decorator::GetChild() const { return mChild; }
 
 // ============================================================
 // ACTION
 // ============================================================
 
-Action::Action(const std::string& name, ActionFunc action)
-    : mName(name), mAction(std::move(action)) {}
+Action::Action(const std::string& name, ActionFunc action) : mName(name), mAction(std::move(action)) {}
 
-std::string Action::GetName() const {
-    return mName;
-}
+std::string Action::GetName() const { return mName; }
 
 void Action::Reset() {
     // Typically stateless
 }
 
-Node::Status Action::OnUpdate(ExecutionContext& context) {
-    return mAction(context);
-}
+Node::Status Action::OnUpdate(ExecutionContext& context) { return mAction(context); }
 
 // ============================================================
 // SELECTOR
@@ -116,9 +96,7 @@ Node::Status Action::OnUpdate(ExecutionContext& context) {
 
 Selector::Selector(const std::string& name) : mName(name) {}
 
-std::string Selector::GetName() const {
-    return mName;
-}
+std::string Selector::GetName() const { return mName; }
 
 Node::Status Selector::OnUpdate(ExecutionContext& context) {
     while (mCurrentChild < mChildren.size()) {
@@ -145,9 +123,7 @@ Node::Status Selector::OnUpdate(ExecutionContext& context) {
 
 Sequence::Sequence(const std::string& name) : mName(name) {}
 
-std::string Sequence::GetName() const {
-    return mName;
-}
+std::string Sequence::GetName() const { return mName; }
 
 Node::Status Sequence::OnUpdate(ExecutionContext& context) {
     while (mCurrentChild < mChildren.size()) {
@@ -174,9 +150,7 @@ Node::Status Sequence::OnUpdate(ExecutionContext& context) {
 
 Invert::Invert(const std::string& name) : mName(name) {}
 
-std::string Invert::GetName() const {
-    return mName;
-}
+std::string Invert::GetName() const { return mName; }
 
 Node::Status Invert::OnUpdate(ExecutionContext& context) {
     if (!mChild)
@@ -199,9 +173,7 @@ Node::Status Invert::OnUpdate(ExecutionContext& context) {
 
 ContinuallyRepeat::ContinuallyRepeat(const std::string& name) : mName(name) {}
 
-std::string ContinuallyRepeat::GetName() const {
-    return mName;
-}
+std::string ContinuallyRepeat::GetName() const { return mName; }
 
 Node::Status ContinuallyRepeat::OnUpdate(ExecutionContext& context) {
     if (!mChild)
@@ -220,21 +192,15 @@ Node::Status ContinuallyRepeat::OnUpdate(ExecutionContext& context) {
 // TREE BUILDER
 // ============================================================
 
-std::unique_ptr<Sequence> TreeBuilder::Seq(const std::string& name) {
-    return std::make_unique<Sequence>(name);
-}
+std::unique_ptr<Sequence> TreeBuilder::Seq(const std::string& name) { return std::make_unique<Sequence>(name); }
 
-std::unique_ptr<Selector> TreeBuilder::Sel(const std::string& name) {
-    return std::make_unique<Selector>(name);
-}
+std::unique_ptr<Selector> TreeBuilder::Sel(const std::string& name) { return std::make_unique<Selector>(name); }
 
 std::unique_ptr<Action> TreeBuilder::Act(const std::string& name, Action::ActionFunc func) {
     return std::make_unique<Action>(name, std::move(func));
 }
 
-std::unique_ptr<Invert> TreeBuilder::Inv(const std::string& name) {
-    return std::make_unique<Invert>(name);
-}
+std::unique_ptr<Invert> TreeBuilder::Inv(const std::string& name) { return std::make_unique<Invert>(name); }
 
 std::unique_ptr<ContinuallyRepeat> TreeBuilder::Repeat(const std::string& name) {
     return std::make_unique<ContinuallyRepeat>(name);

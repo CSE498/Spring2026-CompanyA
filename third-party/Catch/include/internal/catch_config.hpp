@@ -8,18 +8,18 @@
 #ifndef TWOBLUECUBES_CATCH_CONFIG_HPP_INCLUDED
 #define TWOBLUECUBES_CATCH_CONFIG_HPP_INCLUDED
 
-#include "catch_test_spec_parser.h"
 #include "catch_interfaces_config.h"
+#include "catch_test_spec_parser.h"
 
 // Libstdc++ doesn't like incomplete classes for unique_ptr
 #include "catch_stream.h"
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #ifndef CATCH_CONFIG_CONSOLE_WIDTH
-#define CATCH_CONFIG_CONSOLE_WIDTH 80
+#    define CATCH_CONFIG_CONSOLE_WIDTH 80
 #endif
 
 namespace Catch {
@@ -61,7 +61,7 @@ namespace Catch {
         std::string name;
         std::string processName;
 #ifndef CATCH_CONFIG_DEFAULT_REPORTER
-#define CATCH_CONFIG_DEFAULT_REPORTER "console"
+#    define CATCH_CONFIG_DEFAULT_REPORTER "console"
 #endif
         std::string reporterName = CATCH_CONFIG_DEFAULT_REPORTER;
 #undef CATCH_CONFIG_DEFAULT_REPORTER
@@ -70,10 +70,8 @@ namespace Catch {
         std::vector<std::string> sectionsToRun;
     };
 
-
     class Config : public IConfig {
     public:
-
         Config() = default;
         Config( ConfigData const& data );
         virtual ~Config() = default;
@@ -119,7 +117,6 @@ namespace Catch {
         std::chrono::milliseconds benchmarkWarmupTime() const override;
 
     private:
-
         IStream const* openStream();
         ConfigData m_data;
 

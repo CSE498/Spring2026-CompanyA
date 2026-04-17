@@ -15,12 +15,12 @@ Implements:
 
 #pragma once
 
-#include <vector>
+#include <any>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <any>
-#include <functional>
+#include <vector>
 
 namespace cse498 {
 namespace BehaviorTrees {
@@ -119,7 +119,7 @@ public:
 
 protected:
     std::vector<std::unique_ptr<Node>> mChildren;
-    size_t mCurrentChild = 0;  // Tracks active child during execution
+    size_t mCurrentChild = 0; // Tracks active child during execution
 };
 
 // ============================================================
@@ -236,8 +236,8 @@ private:
 class TreeBuilder {
 public:
     /**
-    * Runs children in order until one fails. Succeeds only if all children succeed.
-    * (Manages Multiple children aka a composite)
+     * Runs children in order until one fails. Succeeds only if all children succeed.
+     * (Manages Multiple children aka a composite)
      * @param name - name of node
      * @return seq
      */

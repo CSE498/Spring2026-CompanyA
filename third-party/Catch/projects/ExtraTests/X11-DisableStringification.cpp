@@ -9,8 +9,6 @@
 
 struct Hidden {};
 
-bool operator==(Hidden, Hidden) { return true; }
+bool operator==( Hidden, Hidden ) { return true; }
 
-TEST_CASE("DisableStringification") {
-    REQUIRE( Hidden{} == Hidden{} );
-}
+TEST_CASE( "DisableStringification" ) { REQUIRE( Hidden{} == Hidden{} ); }

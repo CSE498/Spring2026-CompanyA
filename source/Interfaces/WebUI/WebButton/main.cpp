@@ -17,15 +17,15 @@ using namespace cse498;
 
 namespace {
 
-    static constexpr int DEFAULT_SPACING = 10;
-    static constexpr int BUTTON_WIDTH = 150;
-    static constexpr int BUTTON_HEIGHT = 40;
+static constexpr int DEFAULT_SPACING = 10;
+static constexpr int BUTTON_WIDTH = 150;
+static constexpr int BUTTON_HEIGHT = 40;
 
-    // Keep DOM-backed demo objects alive after main() returns under Emscripten.
-    std::unique_ptr<WebLayout> sLayout;
-    std::unique_ptr<WebButton> sBtn1;
-    std::unique_ptr<WebButton> sBtn2;
-    std::unique_ptr<WebButton> sBtn3;
+// Keep DOM-backed demo objects alive after main() returns under Emscripten.
+std::unique_ptr<WebLayout> sLayout;
+std::unique_ptr<WebButton> sBtn1;
+std::unique_ptr<WebButton> sBtn2;
+std::unique_ptr<WebButton> sBtn3;
 
 } // namespace
 

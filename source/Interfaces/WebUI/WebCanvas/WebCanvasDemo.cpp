@@ -34,44 +34,44 @@
 static cse498::WebCanvas* g_canvas = nullptr;
 
 namespace {
-    constexpr std::string kBgColor = "#111318";
-    constexpr std::string kAxisColor = "#2a2f3a";
-    constexpr std::string kHeaderRectColor = "#1e2230";
-    constexpr std::string kSectionATextColor = "#6a8faf";
-    constexpr std::string kPulseStrokeColor = "#00d1ff";
-    constexpr std::string kPulseFillColor = "#002733";
-    constexpr std::string kWhiteColor = "#ffffff";
-    constexpr std::string kTriangleStrokeColor = "#ffd166";
-    constexpr std::string kTriangleFillColor = "#3a2b12";
-    constexpr std::string kSineTrailColor = "#7bf1a8";
-    constexpr std::string kMovingLineColor = "#ff4d6d";
-    constexpr std::string kSectionBTextColor = "#af8f6a";
-    constexpr std::string kImagePlaceholderA = "#1a5276";
-    constexpr std::string kImagePlaceholderB = "#145a32";
-    constexpr std::string kImagePlaceholderC = "#6e2f1a";
-    constexpr std::string kButtonStartColor = "#1e8449";
-    constexpr std::string kButtonPauseColor = "#1a5276";
-    constexpr std::string kScoreTextColor = "#ffd166";
-    constexpr std::string kLevelTextColor = "#7bf1a8";
-    constexpr std::string kStatusTextColor = "#aaaaaa";
-    constexpr std::string kCanvasBorderColor = "#444444";
+constexpr std::string kBgColor = "#111318";
+constexpr std::string kAxisColor = "#2a2f3a";
+constexpr std::string kHeaderRectColor = "#1e2230";
+constexpr std::string kSectionATextColor = "#6a8faf";
+constexpr std::string kPulseStrokeColor = "#00d1ff";
+constexpr std::string kPulseFillColor = "#002733";
+constexpr std::string kWhiteColor = "#ffffff";
+constexpr std::string kTriangleStrokeColor = "#ffd166";
+constexpr std::string kTriangleFillColor = "#3a2b12";
+constexpr std::string kSineTrailColor = "#7bf1a8";
+constexpr std::string kMovingLineColor = "#ff4d6d";
+constexpr std::string kSectionBTextColor = "#af8f6a";
+constexpr std::string kImagePlaceholderA = "#1a5276";
+constexpr std::string kImagePlaceholderB = "#145a32";
+constexpr std::string kImagePlaceholderC = "#6e2f1a";
+constexpr std::string kButtonStartColor = "#1e8449";
+constexpr std::string kButtonPauseColor = "#1a5276";
+constexpr std::string kScoreTextColor = "#ffd166";
+constexpr std::string kLevelTextColor = "#7bf1a8";
+constexpr std::string kStatusTextColor = "#aaaaaa";
+constexpr std::string kCanvasBorderColor = "#444444";
 
-    constexpr std::array<std::string, 21> kHexColors{
-            kBgColor,          kAxisColor,         kHeaderRectColor,     kSectionATextColor, kPulseStrokeColor,
-            kPulseFillColor,   kWhiteColor,        kTriangleStrokeColor, kTriangleFillColor, kSineTrailColor,
-            kMovingLineColor,  kSectionBTextColor, kImagePlaceholderA,   kImagePlaceholderB, kImagePlaceholderC,
-            kButtonStartColor, kButtonPauseColor,  kScoreTextColor,      kLevelTextColor,    kStatusTextColor,
-            kCanvasBorderColor};
+constexpr std::array<std::string, 21> kHexColors{
+        kBgColor,          kAxisColor,         kHeaderRectColor,     kSectionATextColor, kPulseStrokeColor,
+        kPulseFillColor,   kWhiteColor,        kTriangleStrokeColor, kTriangleFillColor, kSineTrailColor,
+        kMovingLineColor,  kSectionBTextColor, kImagePlaceholderA,   kImagePlaceholderB, kImagePlaceholderC,
+        kButtonStartColor, kButtonPauseColor,  kScoreTextColor,      kLevelTextColor,    kStatusTextColor,
+        kCanvasBorderColor};
 
-    constexpr bool AllDemoColorsAreValid() {
-        for (const auto color: kHexColors) {
-            if (!cse498::Color::FromHex(color).has_value()) {
-                return false;
-            }
+constexpr bool AllDemoColorsAreValid() {
+    for (const auto color: kHexColors) {
+        if (!cse498::Color::FromHex(color).has_value()) {
+            return false;
         }
-        return true;
     }
-    static_assert(AllDemoColorsAreValid());
+    return true;
+}
+static_assert(AllDemoColorsAreValid());
 } // namespace
 
 /// @brief Per-frame callback: Section A immediate-mode, then Section B via RenderFrame().

@@ -3,21 +3,19 @@
  * @author Logan Rimarcik
  */
 
-#include <cassert>
+#include "PathGenerator.hpp"
+#include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
+#include <numbers>
 #include <unordered_map>
 #include <unordered_set>
-#include <numbers>
-#include <algorithm>
-#include "PathGenerator.hpp"
-#include "WorldPath.hpp"
 #include "../core/WorldGrid.hpp"
+#include "WorldPath.hpp"
 
-namespace cse498
-{
-bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &dir, const PathRequest &request)
-{
+namespace cse498 {
+bool PathGenerator::IsTravelable(const WorldPosition& from, const PathVector& dir, const PathRequest& request) {
     auto nextPos = from + dir;
     if (!request.mWorldGrid.IsWalkable(nextPos) || request.mAvoidTiles.contains(Round(nextPos)))
         return false;
@@ -36,18 +34,15 @@ bool PathGenerator::IsTravelable(const WorldPosition &from, const PathVector &di
     return request.mWorldGrid.IsWalkable(test1) && request.mWorldGrid.IsWalkable(test2);
 }
 
-PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPosition &from,
-                                                              const WorldPosition &to,
-                                                              const PathRequest &request)
-{
+PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPosition& from, const WorldPosition& to,
+                                                              const PathRequest& request) {
     // find the direction of the 'to'
     const auto vec = PathVector(from, to);
     if (vec.GetMagnitude() > 1 + EP) // can't be constexpr
     {
         // Some point was skipped. We no longer know if we can travel there directly: Find weird path there instead
         auto pth = AStarSearch(from, request, SingleGoalHeuristic{to}, vec.GetMagnitude() * 2, false);
-        if (!pth.empty())
-        {
+        if (!pth.empty()) {
             // it brings us to the right tile but we change the actual position on that tile to what we want.
             // This will be generally better though some spots that are longer but if we can get to the tile then we
             // can get to a specific position on that tile type of thing.
@@ -62,11 +57,8 @@ PathGenerator::CircleTravel PathGenerator::IsTravelableCircle(const WorldPositio
 
     return {IsTravelable(from, vec, request), {from, to}};
 }
-bool PathGenerator::IsPointBefore(const WorldPosition &testPt,
-                                  const WorldPosition &relativePt,
-                                  const WorldPosition &center,
-                                  const CircleDirectionFlag flag)
-{
+bool PathGenerator::IsPointBefore(const WorldPosition& testPt, const WorldPosition& relativePt,
+                                  const WorldPosition& center, const CircleDirectionFlag flag) {
     // Again clockwise = Counterclockwise and vise versa. Everything is opposite and it hurts my head
     // Assume both points are on the circle
     const PathVector centerToTest(testPt, center);
@@ -91,14 +83,12 @@ bool PathGenerator::IsPointBefore(const WorldPosition &testPt,
     return flag == CircleDirectionFlag::CCW ? result < 0 : result > 0;
 }
 
-std::vector<WorldPosition> PathGenerator::AStarReconstruction(const ANode* end)
-{
+std::vector<WorldPosition> PathGenerator::AStarReconstruction(const ANode* end) {
     std::vector<WorldPosition> result;
     // Reconstruct the path and return.
     result.push_back(end->mPos);
     auto prev = end->mPrev;
-    while (prev)
-    {
+    while (prev) {
         result.push_back(prev->mPos);
         prev = prev->mPrev;
     }
@@ -106,11 +96,8 @@ std::vector<WorldPosition> PathGenerator::AStarReconstruction(const ANode* end)
     return result;
 }
 
-WorldPosition PathGenerator::FindNextCirclePos(const WorldPosition &start,
-                                               const WorldPosition &center,
-                                               const double radius,
-                                               const CircleDirectionFlag flag)
-{
+WorldPosition PathGenerator::FindNextCirclePos(const WorldPosition& start, const WorldPosition& center,
+                                               const double radius, const CircleDirectionFlag flag) {
     // Simple rotation to find the next point
     PathVector centerToStart(center, start);
     assert(std::abs(centerToStart.GetMagnitude() - radius) < EP); // just to ensure no bugs from this.
@@ -124,28 +111,21 @@ WorldPosition PathGenerator::FindNextCirclePos(const WorldPosition &start,
     return center + centerToStart.Rotate(angle * directionDecider);
 }
 
-WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
-                                    const WorldPosition &circCenter,
-                                    const double cRadius,
-                                    const PathRequest &request,
-                                    const PathFlag flag,
-                                    const CircleDirectionFlag circleFlag)
-{
+WorldPath PathGenerator::MakeCircle(const WorldPosition& start, const WorldPosition& circCenter, const double cRadius,
+                                    const PathRequest& request, const PathFlag flag,
+                                    const CircleDirectionFlag circleFlag) {
     std::vector<WorldPosition> result;
     // Assert that the first tile is good
     assert(request.mWorldGrid.IsWalkable(start));
     // Now we should be good to make the circle from here and take whatever strategy to make it.
     result.push_back(start);
 
-    if (flag == PathFlag::Skip)
-    {
+    if (flag == PathFlag::Skip) {
         WorldPosition next = FindNextCirclePos(start, circCenter, cRadius, circleFlag);
 
-        while (EuclideanDistance(start, next) > STEP_SIZE / 2)
-        {
+        while (EuclideanDistance(start, next) > STEP_SIZE / 2) {
             auto [possible, path] = IsTravelableCircle(result.back(), next, request);
-            if (possible)
-            {
+            if (possible) {
                 // Possible to optimize this. but result isn't always >= 2 size ....
                 result.insert(result.end(), path.begin() + 1, path.end());
             }
@@ -154,16 +134,13 @@ WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
         // add the last point provided that 1. it is a valid tile and 2. that it comes before the start of the circle
 
         auto [possible, path] = IsTravelableCircle(result.back(), next, request);
-        if (possible)
-        {
+        if (possible) {
             if (path.size() >= 2)
                 result.insert(result.end(), path.begin() + 1, path.end() - 1);
-            if (IsPointBefore(next, start, circCenter, circleFlag) && EuclideanDistance(result.back(), start) >
-                STEP_SIZE * STEP_CIRCLE_TOLERANCE)
+            if (IsPointBefore(next, start, circCenter, circleFlag) &&
+                EuclideanDistance(result.back(), start) > STEP_SIZE * STEP_CIRCLE_TOLERANCE)
                 result.push_back(next);
-        }
-        else
-        {
+        } else {
             // Tile invalid just go to the start - didn't do this originally since it is slightly different in
             // cases that matter
             auto [possible2, path2] = IsTravelableCircle(result.back(), start, request);
@@ -177,20 +154,17 @@ WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
     {
         // this case is strange and needs to be updated IMMEDIATELY once physics changes and more information exists
         // TODO: Update this once physics and more information about positions exists, size of player, etc.
-        //TODO: Expand is supposed to hug walls and corners but is impossible without size of player/collision test
+        // TODO: Expand is supposed to hug walls and corners but is impossible without size of player/collision test
         // This case is also really slow but I think it is useful for calculating things and saving them in jsons
         WorldPosition next = FindNextCirclePos(start, circCenter, cRadius);
 
-        auto inner = [&]
-        {
+        auto inner = [&] {
             auto [possible, _] = IsTravelableCircle(result.back(), next, request);
             // this should run small code every time
             if (possible)
                 result.push_back(next); // We do not extend paths. Just need to know it is possible or not
-            else
-            {
-                const double searchDistance = PathVector(result.back(), next).GetMagnitude() *
-                    CIRCLE_EXPAND_MULTIPLIER;
+            else {
+                const double searchDistance = PathVector(result.back(), next).GetMagnitude() * CIRCLE_EXPAND_MULTIPLIER;
                 auto path = AStarSearch(result.back(), request, SingleGoalHeuristic{next}, searchDistance, true);
                 if (path.size() > 1)
                     result.insert(result.end(), path.begin() + 1, path.end()); // skip first pos for repeats
@@ -199,8 +173,7 @@ WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
         };
 
         // default step unit is coded as 1 for travel directions. this is 1/2
-        while (EuclideanDistance(start, next) > STEP_SIZE / 2)
-        {
+        while (EuclideanDistance(start, next) > STEP_SIZE / 2) {
             inner();
         }
         // once within range of ending
@@ -208,8 +181,7 @@ WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
         // This case is different from the previous ending connection because in this case we are
         // always technically very close to the starting position so we only worry if it is a missing point
         // to fill the gap
-        if (IsPointBefore(next, start, circCenter, circleFlag) && EuclideanDistance(result.back(), start) > 1)
-        {
+        if (IsPointBefore(next, start, circCenter, circleFlag) && EuclideanDistance(result.back(), start) > 1) {
             const size_t sizeTemp = result.size();
             inner(); // call it one more time with that position
             if (sizeTemp != result.size())
@@ -227,13 +199,10 @@ WorldPath PathGenerator::MakeCircle(const WorldPosition &start,
     std::unreachable();
 }
 
-std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &agentPos,
-                                                          const WorldPosition &circleCenter,
-                                                          const double cRadius,
-                                                          const PathRequest &request,
-                                                          const PathFlag flag,
-                                                          const CircleDirectionFlag circleFlag)
-{
+std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition& agentPos,
+                                                          const WorldPosition& circleCenter, const double cRadius,
+                                                          const PathRequest& request, const PathFlag flag,
+                                                          const CircleDirectionFlag circleFlag) {
     /*
      * Goal is to return a list of points that are 1 unit apart for the most part making a complete circle
      * The start of the circle is at the point nearest to the agent given that tile is reachable. Otherwise it is
@@ -248,21 +217,18 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
     auto startPoint = circleCenter + circleDir;
     std::vector<WorldPosition> pathToCircle;
 
-    // We need to encapsulate the process of finding the initial path to a point on the circle before generating the circle
-    // It is two separate things and shouldn't be combined because then it needs to be separated again.
-    // HOWEVER, the processes are similar so there is a little bit of redundancy that is bad to combine into 1 func
+    // We need to encapsulate the process of finding the initial path to a point on the circle before generating the
+    // circle It is two separate things and shouldn't be combined because then it needs to be separated again. HOWEVER,
+    // the processes are similar so there is a little bit of redundancy that is bad to combine into 1 func
     auto [travelPossible, travelPath] = IsTravelableCircle(agentPos, startPoint, request);
     if (travelPossible)
         pathToCircle.insert(pathToCircle.end(), travelPath.begin(), travelPath.end());
-    else
-    {
+    else {
         // Try to find start point
         WorldPosition next = FindNextCirclePos(startPoint, circleCenter, cRadius, circleFlag);
-        while (EuclideanDistance(startPoint, next) > STEP_SIZE / 2)
-        {
+        while (EuclideanDistance(startPoint, next) > STEP_SIZE / 2) {
             auto [possible, path] = IsTravelableCircle(agentPos, next, request);
-            if (possible)
-            {
+            if (possible) {
                 // Possible to optimize this. but result isn't always >= 2 size ....
                 pathToCircle.insert(pathToCircle.end(), path.begin(), path.end());
                 startPoint = next;
@@ -282,11 +248,10 @@ std::optional<CirclePath> PathGenerator::FindCircularPath(const WorldPosition &a
     return CirclePath(WorldPath(pathToCircle), circlePath);
 }
 
-std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(const WorldPosition &bottomLeft,
-                                                                            const WorldPosition &topRight,
-                                                                            const PathRequest &request,
-                                                                            const CircleDirectionFlag flag)
-{
+std::optional<std::vector<WorldPosition>> PathGenerator::MakeRectangleLoop(const WorldPosition& bottomLeft,
+                                                                           const WorldPosition& topRight,
+                                                                           const PathRequest& request,
+                                                                           const CircleDirectionFlag flag) {
     // NOTE: does this return cell int positions or doubles? -- doubles if given doubles
     assert(bottomLeft.CellX() <= topRight.CellX());
     assert(bottomLeft.CellY() >= topRight.CellY());
@@ -294,15 +259,11 @@ std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(cons
     WorldPosition cur = bottomLeft;
     const size_t upStepCount = bottomLeft.CellY() - topRight.CellY(); // Not constexpr but could be.
     const size_t rightStepCount = topRight.CellX() - bottomLeft.CellX();
-    const std::array directions = {
-        PathVector(0, -STEP_SIZE), PathVector(STEP_SIZE, 0),
-        PathVector(0, STEP_SIZE), PathVector(-STEP_SIZE, 0)
-    };
+    const std::array directions = {PathVector(0, -STEP_SIZE), PathVector(STEP_SIZE, 0), PathVector(0, STEP_SIZE),
+                                   PathVector(-STEP_SIZE, 0)};
     const std::array steps = {upStepCount, rightStepCount, upStepCount, rightStepCount};
-    for (size_t i = 0; i < directions.size(); i++)
-    {
-        for (size_t j = 0; j < steps.at(i); j++)
-        {
+    for (size_t i = 0; i < directions.size(); i++) {
+        for (size_t j = 0; j < steps.at(i); j++) {
             result.push_back(cur);
             cur = cur + directions.at(i);
             if (request.mAvoidTiles.contains(Round(cur)))
@@ -314,12 +275,11 @@ std::optional<std::vector<WorldPosition> > PathGenerator::MakeRectangleLoop(cons
     return result;
 }
 
-std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosition &agentPos,
-                                                                 const WorldPosition &bottomLeft,
-                                                                 const WorldPosition &topRight,
-                                                                 const PathRequest &request,
-                                                                 const CircleDirectionFlag flag)
-{
+std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosition& agentPos,
+                                                                 const WorldPosition& bottomLeft,
+                                                                 const WorldPosition& topRight,
+                                                                 const PathRequest& request,
+                                                                 const CircleDirectionFlag flag) {
     // finds rectangular loop. Quite simple pretty much just creates it if it can.
     // 1. First find the path from the agent bosition to the loop
     // TODO MULTIGOAL H. You need to make map of INTS Cell positions for comparison in calcs.
@@ -328,7 +288,7 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     auto loop = MakeRectangleLoop(bottomLeft, topRight, request, flag);
     if (!loop)
         return {};
-    auto &loopVector = loop.value(); // just reference this value and modify it. We own it in loop
+    auto& loopVector = loop.value(); // just reference this value and modify it. We own it in loop
 
     // Forcing std::ranges ..
     // Necessary to make goal set for the multiGoalHeuristic in A*
@@ -341,10 +301,8 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
     assert(goals.contains(Round(loopStart)));
 
     // Get the loop in the proper order.
-    auto itr = std::ranges::find_if(loopVector, [loopStart](const auto& tile)
-    {
-        return Round(loopStart) == Round(tile);
-    });
+    auto itr =
+            std::ranges::find_if(loopVector, [loopStart](const auto& tile) { return Round(loopStart) == Round(tile); });
     if (itr == loopVector.end()) // should always be able to find it by definition
         return {};
     if ((loopStart - *itr).GetMagnitude() > EP) // so little deflections aren't made in the loop also no repeats
@@ -355,27 +313,22 @@ std::optional<CirclePath> PathGenerator::FindRectangularLoopPath(const WorldPosi
 
     return CirclePath(WorldPath(startPath), WorldPath(loopVector));
 }
-std::optional<WorldPath> PathGenerator::FindShortestPath(const WorldPosition &start,
-                                                         const WorldPosition &end,
-                                                         const PathRequest &request)
-{
+std::optional<WorldPath> PathGenerator::FindShortestPath(const WorldPosition& start, const WorldPosition& end,
+                                                         const PathRequest& request) {
     /*
-    * We need to make the shortest path from start to end with certain other parameters.
-    * We are going to do this a "bad" way of following 8 directions around the player and do A* search on that
-    * result to the goal. This probably won't be that quick and can be made faster after more information
-    * about the games structure is understood, and I can work/edit the right files.
-    */
+     * We need to make the shortest path from start to end with certain other parameters.
+     * We are going to do this a "bad" way of following 8 directions around the player and do A* search on that
+     * result to the goal. This probably won't be that quick and can be made faster after more information
+     * about the games structure is understood, and I can work/edit the right files.
+     */
     // Step 1:
     auto result = AStarSearch(start, request, SingleGoalHeuristic{end});
     if (result.empty())
         return {};
     return WorldPath(result);
 }
-std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &start,
-                                                          const WorldPosition &end,
-                                                          const PathRequest &request,
-                                                          const CircleDirectionFlag flag)
-{
+std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition& start, const WorldPosition& end,
+                                                          const PathRequest& request, const CircleDirectionFlag flag) {
     if (!IsTravelable(start, {0, 0}, request)) // Check start position. A little verbose but simple
         return {};
 
@@ -391,16 +344,14 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
     // if (direction_determiner == 0)
 
     bool const topDown = (flag != CircleDirectionFlag::CW || directionDeterminer <= 0) &&
-        (flag == CircleDirectionFlag::CW || directionDeterminer >= 0);
+                         (flag == CircleDirectionFlag::CW || directionDeterminer >= 0);
 
-    auto upDown = [&](const WorldPosition &startPos)
-    {
+    auto upDown = [&](const WorldPosition& startPos) {
         int const directionSign = endy - starty >= 0 ? 1 : -1;
         auto const direction = PathVector(0, 1).Mult(0, directionSign);
         size_t const steps = std::abs(endy - starty);
         WorldPosition cur = startPos;
-        for (size_t i = 0; i < steps; i++)
-        {
+        for (size_t i = 0; i < steps; i++) {
             if (!IsTravelable(cur, direction, request))
                 return false; // Cannot make a simple path;
             cur = cur + direction;
@@ -408,14 +359,12 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
         }
         return true;
     };
-    auto rightLeft = [&](const WorldPosition &startPos)
-    {
+    auto rightLeft = [&](const WorldPosition& startPos) {
         int const directionSign = endx - startx >= 0 ? 1 : -1;
         auto const direction = PathVector(1, 0).Mult(directionSign, 0);
         size_t const steps = std::abs(endx - startx);
         WorldPosition cur = startPos;
-        for (size_t i = 0; i < steps; i++)
-        {
+        for (size_t i = 0; i < steps; i++) {
             if (!IsTravelable(cur, direction, request))
                 return false;
             cur = cur + direction;
@@ -427,14 +376,11 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
     result.push_back(start);
     bool r1;
     bool r2;
-    if (topDown)
-    {
+    if (topDown) {
         // to top then right
         r1 = upDown(start);
         r2 = rightLeft(result.back());
-    }
-    else
-    {
+    } else {
         // do right then top
         r1 = rightLeft(start);
         r2 = upDown(result.back());
@@ -442,13 +388,10 @@ std::optional<WorldPath> PathGenerator::FindManhattanPath(const WorldPosition &s
     if (!r1 || !r2)
         return {};
     return WorldPath(result);
-
 }
 
 
-
-bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pathDir, const PathRequest &request)
-{
+bool PathGenerator::IsPathClear(const WorldPosition& start, const PathVector& pathDir, const PathRequest& request) {
     // We make an algorithm to go over all tiles that are entered and check if those tiles are walls
     WorldPosition roundedStart = Round(start);
     double tileX = roundedStart.X();
@@ -479,15 +422,11 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
     double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
     double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
 
-    while ((endTile - WorldPosition(tileX, tileY)).GetMagnitude() > EP)
-    {
-        if (tMaxX < tMaxY)
-        {
+    while ((endTile - WorldPosition(tileX, tileY)).GetMagnitude() > EP) {
+        if (tMaxX < tMaxY) {
             tileX += stepX;
             tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles
-        }
-        else
-        {
+        } else {
             tileY += stepY;
             tMaxY += tDeltaY;
         }
@@ -495,13 +434,7 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
             return false;
     }
     return true;
-
 }
 
 
-
-
-
-
-
-}
+} // namespace cse498

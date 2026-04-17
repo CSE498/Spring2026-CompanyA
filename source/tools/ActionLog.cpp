@@ -8,26 +8,25 @@
 #include <algorithm>
 #include <cassert>
 #include <fstream>
+#include <iterator>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
-#include <iterator>
 
 namespace cse498 {
 
 // ActionLog
 
-ActionLog::ActionLog()
-    : mNextSequenceNumber(0), mCurrentTime(0.0) {}
+ActionLog::ActionLog() : mNextSequenceNumber(0), mCurrentTime(0.0) {}
 
-void ActionLog::LogAction(int entityId, const std::string& actionType,
-                          WorldPosition position, WorldPosition newPosition) {
+void ActionLog::LogAction(int entityId, const std::string& actionType, WorldPosition position,
+                          WorldPosition newPosition) {
     Action action;
-    action.EntityId       = entityId;
-    action.ActionType     = actionType;
-    action.Timestamp      = mCurrentTime;
-    action.Position       = position;
-    action.NewPosition    = newPosition;
+    action.EntityId = entityId;
+    action.ActionType = actionType;
+    action.Timestamp = mCurrentTime;
+    action.Position = position;
+    action.NewPosition = newPosition;
     action.SequenceNumber = mNextSequenceNumber++;
     mActions.push_back(action);
 }
@@ -37,30 +36,25 @@ void ActionLog::UpdateTime(double newTime) {
     mCurrentTime = newTime;
 }
 
-const std::vector<Action>& ActionLog::GetActions() const {
-    return mActions;
-}
+const std::vector<Action>& ActionLog::GetActions() const { return mActions; }
 
 std::vector<Action> ActionLog::GetActionRange(double startTime, double endTime) const {
     assert(startTime <= endTime && "startTime must be <= endTime");
 
     std::vector<Action> result;
-    auto inRange = [startTime, endTime](const Action& a) {
-        return a.Timestamp >= startTime && a.Timestamp <= endTime;
-    };
+    auto inRange = [startTime, endTime](const Action& a) { return a.Timestamp >= startTime && a.Timestamp <= endTime; };
     std::copy_if(mActions.begin(), mActions.end(), std::back_inserter(result), inRange);
     return result;
 }
 
 std::vector<Action> ActionLog::GetEntityActions(int entityId) const {
     std::vector<Action> result;
-    std::copy_if(mActions.begin(), mActions.end(), std::back_inserter(result), [entityId](const Action& a) { return a.EntityId == entityId; });
+    std::copy_if(mActions.begin(), mActions.end(), std::back_inserter(result),
+                 [entityId](const Action& a) { return a.EntityId == entityId; });
     return result;
 }
 
-int ActionLog::GetActionCount() const {
-    return static_cast<int>(mActions.size());
-}
+int ActionLog::GetActionCount() const { return static_cast<int>(mActions.size()); }
 
 std::optional<int> ActionLog::GetMostActiveEntity() const {
     if (mActions.empty()) {
@@ -68,11 +62,10 @@ std::optional<int> ActionLog::GetMostActiveEntity() const {
     }
 
     std::unordered_map<int, int> counts;
-    std::for_each(mActions.begin(), mActions.end(),
-        [&counts](const Action& a) { ++counts[a.EntityId]; });
+    std::for_each(mActions.begin(), mActions.end(), [&counts](const Action& a) { ++counts[a.EntityId]; });
 
     auto maxEntry = std::max_element(counts.begin(), counts.end(),
-        [](const auto& a, const auto& b) { return a.second < b.second; });
+                                     [](const auto& a, const auto& b) { return a.second < b.second; });
 
     return maxEntry->first;
 }
@@ -80,10 +73,9 @@ std::optional<int> ActionLog::GetMostActiveEntity() const {
 int ActionLog::GetActionCountInRange(double startTime, double endTime) const {
     assert(startTime <= endTime && "startTime must be <= endTime");
 
-    return static_cast<int>(std::count_if(mActions.begin(), mActions.end(),
-        [startTime, endTime](const Action& a) {
-            return a.Timestamp >= startTime && a.Timestamp <= endTime;
-        }));
+    return static_cast<int>(std::count_if(mActions.begin(), mActions.end(), [startTime, endTime](const Action& a) {
+        return a.Timestamp >= startTime && a.Timestamp <= endTime;
+    }));
 }
 
 void ActionLog::Clear() {
@@ -97,7 +89,7 @@ double AgentActionLog::GetStuckAgentRatio(int windowSize) const {
     assert(windowSize > 0 && "windowSize must be positive");
 
     std::unordered_set<int> agentIds;
-    for (const auto& action : mActions) {
+    for (const auto& action: mActions) {
         agentIds.insert(action.EntityId);
     }
 
@@ -106,9 +98,7 @@ double AgentActionLog::GetStuckAgentRatio(int windowSize) const {
     }
 
     int stuckCount = std::count_if(agentIds.begin(), agentIds.end(),
-    [this, windowSize](int id) {
-        return cse498::IsEntityStuck(*this, id, windowSize);
-    });
+                                   [this, windowSize](int id) { return cse498::IsEntityStuck(*this, id, windowSize); });
 
     return static_cast<double>(stuckCount) / static_cast<double>(agentIds.size());
 }
@@ -131,7 +121,7 @@ std::optional<std::string> UserActionLog::GetMostFrequentActionType() const {
     std::for_each(mActions.begin(), mActions.end(), [&counts](const Action& a) { ++counts[a.ActionType]; });
 
     auto maxEntry = std::max_element(counts.begin(), counts.end(),
-        [](const auto& a, const auto& b) { return a.second < b.second; });
+                                     [](const auto& a, const auto& b) { return a.second < b.second; });
 
     return maxEntry->first;
 }
@@ -148,8 +138,7 @@ bool IsEntityStuck(const ActionLog& log, int entityId, int windowSize) {
 
     auto begin = entityActions.end() - windowSize;
     return std::all_of(begin, entityActions.end(), [](const Action& a) {
-        return a.Position.X() == a.NewPosition.X() &&
-            a.Position.Y() == a.NewPosition.Y();
+        return a.Position.X() == a.NewPosition.X() && a.Position.Y() == a.NewPosition.Y();
     });
 }
 
@@ -160,14 +149,9 @@ bool ExportToCsv(const ActionLog& log, const std::string& filePath) {
     }
 
     file << "SequenceNumber,EntityId,ActionType,Timestamp,X,Y,NewX,NewY\n";
-    for (const auto& action : log.GetActions()) {
-        file << action.SequenceNumber  << ","
-             << action.EntityId        << ","
-             << action.ActionType      << ","
-             << action.Timestamp       << ","
-             << action.Position.X()    << ","
-             << action.Position.Y()    << ","
-             << action.NewPosition.X() << ","
+    for (const auto& action: log.GetActions()) {
+        file << action.SequenceNumber << "," << action.EntityId << "," << action.ActionType << "," << action.Timestamp
+             << "," << action.Position.X() << "," << action.Position.Y() << "," << action.NewPosition.X() << ","
              << action.NewPosition.Y() << "\n";
     }
     return true;
@@ -176,15 +160,10 @@ bool ExportToCsv(const ActionLog& log, const std::string& filePath) {
 std::string Serialize(const ActionLog& log) {
     std::ostringstream oss;
     oss << log.GetActionCount() << "\n";
-    for (const auto& action : log.GetActions()) {
-        oss << action.SequenceNumber  << " "
-            << action.EntityId        << " "
-            << action.Timestamp       << " "
-            << action.Position.X()    << " "
-            << action.Position.Y()    << " "
-            << action.NewPosition.X() << " "
-            << action.NewPosition.Y() << " "
-            << action.ActionType      << "\n";
+    for (const auto& action: log.GetActions()) {
+        oss << action.SequenceNumber << " " << action.EntityId << " " << action.Timestamp << " " << action.Position.X()
+            << " " << action.Position.Y() << " " << action.NewPosition.X() << " " << action.NewPosition.Y() << " "
+            << action.ActionType << "\n";
     }
     return oss.str();
 }
@@ -199,12 +178,9 @@ void Deserialize(ActionLog& log, const std::string& data) {
     for (int i = 0; i < count; ++i) {
         Action action;
         double px, py, npx, npy;
-        if (iss >> action.SequenceNumber
-        >> action.EntityId
-        >> action.Timestamp
-        >> px >> py >> npx >> npy
-        >> action.ActionType) {
-            action.Position    = WorldPosition{px, py};
+        if (iss >> action.SequenceNumber >> action.EntityId >> action.Timestamp >> px >> py >> npx >> npy >>
+            action.ActionType) {
+            action.Position = WorldPosition{px, py};
             action.NewPosition = WorldPosition{npx, npy};
             log.UpdateTime(action.Timestamp);
             log.LogAction(action.EntityId, action.ActionType, action.Position, action.NewPosition);
@@ -216,12 +192,8 @@ bool ActionLog::IsEntityStuck(int entityId, int windowSize) const {
     return cse498::IsEntityStuck(*this, entityId, windowSize);
 }
 
-std::string ActionLog::Serialize() const {
-    return cse498::Serialize(*this);
-}
+std::string ActionLog::Serialize() const { return cse498::Serialize(*this); }
 
-void ActionLog::Deserialize(const std::string& data) {
-    cse498::Deserialize(*this, data);
-}
+void ActionLog::Deserialize(const std::string& data) { cse498::Deserialize(*this, data); }
 
-}
+} // namespace cse498

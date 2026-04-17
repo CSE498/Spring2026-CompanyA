@@ -17,10 +17,10 @@
 using namespace cse498;
 
 namespace {
-    constexpr cse498::Color kDimGray = cse498::Color::FromRGB255(0xcc, 0xcc, 0xcc);
-    constexpr cse498::Color kCanvasBg = cse498::Color::FromRGB255(0x0c, 0x10, 0x17);
-    static_assert(kDimGray.R() == 0xcc && kDimGray.G() == 0xcc && kDimGray.B() == 0xcc);
-    static_assert(kCanvasBg.R() == 0x0c && kCanvasBg.G() == 0x10 && kCanvasBg.B() == 0x17);
+constexpr cse498::Color kDimGray = cse498::Color::FromRGB255(0xcc, 0xcc, 0xcc);
+constexpr cse498::Color kCanvasBg = cse498::Color::FromRGB255(0x0c, 0x10, 0x17);
+static_assert(kDimGray.R() == 0xcc && kDimGray.G() == 0xcc && kDimGray.B() == 0xcc);
+static_assert(kCanvasBg.R() == 0x0c && kCanvasBg.G() == 0x10 && kCanvasBg.B() == 0x17);
 } // namespace
 
 using emscripten::val;
@@ -196,29 +196,29 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& it
     int canvasHeight;
     emscripten_get_canvas_element_size("#web-canvas", &canvasWidth, &canvasHeight);
     const double dpr = emscripten_get_device_pixel_ratio();
-    
+
     canvasWidth = canvasWidth / dpr;
     canvasHeight = canvasHeight / dpr;
-    
+
     const int totalPixelWidth = grid.GetWidth() * IMAGE_SIZE;
     const int totalPixelHeight = grid.GetHeight() * IMAGE_SIZE;
-    
+
     const double widthRatio = static_cast<double>(canvasWidth) / totalPixelWidth;
     const double heightRatio = static_cast<double>(canvasHeight) / totalPixelHeight;
-    
+
     const double desiredScale = widthRatio <= heightRatio ? widthRatio : heightRatio;
     const int drawSize = gsl::narrow_cast<int>(IMAGE_SIZE * desiredScale);
-    
+
     const int leftOffset = (canvasWidth - drawSize * grid.GetWidth()) / 2;
     const int topOffset = (canvasHeight - drawSize * grid.GetHeight()) / 2;
-    
+
     auto CellXToLeft = [&leftOffset, &drawSize](auto cellX) {
         return (leftOffset + drawSize * (cellX + 1)) - drawSize / 2;
     };
     auto CellYToTop = [&topOffset, &drawSize](auto cellY) { return topOffset + drawSize * (cellY + 1); };
-    
+
     std::vector<std::string> symbolGrid(grid.GetHeight());
-    
+
     // Load the world into the symbolGrid;
     for (size_t y = 0; y < grid.GetHeight(); ++y) {
         symbolGrid[y].resize(grid.GetWidth());
@@ -226,9 +226,9 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& it
             symbolGrid[y][x] = grid.GetSymbol(WorldPosition{x, y});
         }
     }
-    
+
     mCanvas->Clear();
-    
+
     int top = topOffset + drawSize;
     for (const auto& row: symbolGrid) {
         int left = leftOffset + drawSize / 2;
@@ -238,14 +238,14 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& it
         }
         top += drawSize;
     }
-    
+
     // Substitute in items.
     for (size_t id: itemIds) {
         const ItemBase& item = world.GetItem(id);
         WorldPosition pos = item.GetLocation().AsWorldPosition();
         symbolGrid[pos.CellY()][pos.CellX()] = '+';
     }
-    
+
     // Substitute in agents.
     for (const auto& agentId: agentIds) {
         const AgentBase& agent = world.GetAgent(agentId);
@@ -255,7 +255,7 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& it
         auto agentTop = CellYToTop(pos.CellY());
         mCanvas->DrawTexture(agentTexture.as_handle(), agentLeft, agentTop, desiredScale);
     }
-    
+
     auto pos = GetLocation().AsWorldPosition();
     auto playerTexture = mTextures.at(GetSymbol());
     auto playerLeft = CellXToLeft(pos.CellX());
