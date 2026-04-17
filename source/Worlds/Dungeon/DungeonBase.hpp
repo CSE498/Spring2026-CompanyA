@@ -13,9 +13,27 @@
 #include "../../tools/WeightedSet.hpp"
 #include "../../tools/Random.hpp"
 
+#include "../../core/item/ItemWeaponSword.hpp"
+#include "../../core/item/ItemWeaponBow.hpp"
+#include "../../core/item/ItemConsumableDefense.hpp"
+#include "../../core/item/ItemConsumableHealing.hpp"
+#include "../../core/item/ItemConsumableSpeed.hpp"
+#include "../../core/item/ItemWeaponToolAxe.hpp"
+#include "../../core/item/ItemWeaponToolPickaxe.hpp"
+#include "../../core/item/ItemWeaponToolShovel.hpp"
+#include "../../Agents/Classic/PlayerFeatures/Inventory.hpp"
+
 namespace cse498 {
 
   class DungeonBase : public WorldBase {
+    // Constants for item generation
+    static constexpr double BASE_RANGE = 1.0;
+    static constexpr double BASE_DAMAGE = 1.0;
+    static constexpr double BASE_BONUS = 0;
+    static constexpr int BASE_GOLD = 3;
+    static constexpr size_t MIN_ID = 1;
+    static constexpr size_t MAX_ID = 1000000000;
+
   protected:
     enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
     WorldGeneration m_generation;
@@ -129,7 +147,19 @@ namespace cse498 {
       main_grid.Load(dungeon);
     }
 
-    /// Allow the agents to move around the maze.
+    /*
+    * @brief Random selects an item from a weighted set of possible items
+    *
+    * @return An randomly selected item
+    */
+    std::string GetRandomItem(){
+      cse498::Random rng;
+      double item = rng.GetValue(1.0,m_item_pool.GetTotalWeight()).value();
+
+     return m_item_pool.Sample(item).value();
+    }
+
+    /// Allow the agents to move around the maze and pick up items.
     int DoAction(AgentBase & agent, size_t action_id) override {
       // Determine where the agent is trying to move.
       WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
@@ -145,12 +175,283 @@ namespace cse498 {
       // Don't let the agent move off the world or into a wall.
       if (!main_grid.IsValid(new_position)) { return false; }
       if (main_grid[new_position] == m_wall_id
-			|| main_grid[new_position] == m_internal_obstacle
-			|| main_grid[new_position] == m_upper_external
-			|| main_grid[new_position] == m_lower_external
-			|| main_grid[new_position] == m_left_external
-			|| main_grid[new_position] == m_right_external)
-		{ return false; }
+        || main_grid[new_position] == m_internal_obstacle
+        || main_grid[new_position] == m_upper_external
+        || main_grid[new_position] == m_lower_external
+        || main_grid[new_position] == m_left_external
+        || main_grid[new_position] == m_right_external)
+      { return false; }
+
+      // Generate an item into the player inventory
+      if (main_grid[new_position] == m_loot_tile && agent.GetID() == 0) {
+        
+        if (auto* player = dynamic_cast<PlayerAgent*>(&agent))
+        {
+          Inventory & inventory = player->GetInventory();
+          std::string item_str = GetRandomItem();
+          Random rng;
+          size_t item_id = rng.GetValue(MIN_ID,MAX_ID).value();
+          
+          if (item_str == "Sword") {
+            std::unique_ptr<ItemWeaponSword> sword = std::make_unique<ItemWeaponSword>(
+              item_id,
+              item_str,
+              "/assets/item/item_sword_1.png",
+              BASE_GOLD + 1,
+              *this
+            );
+            sword->SetRange(BASE_RANGE);
+            sword->SetDamage(BASE_DAMAGE + 0.5);
+            sword->SetHitBonus(BASE_BONUS);
+
+            inventory.AddItem(std::move(sword));
+          }
+          else if (item_str == "Sword +1") {
+            std::unique_ptr<ItemWeaponSword> sword1 = std::make_unique<ItemWeaponSword>(
+              item_id,
+              item_str,
+              "/assets/item/item_sword_1.png",
+              BASE_GOLD + 2,
+              *this
+            );
+            sword1->SetRange(BASE_RANGE);
+            sword1->SetDamage(BASE_DAMAGE + 1.0);
+            sword1->SetHitBonus(BASE_BONUS + 1);
+
+            inventory.AddItem(std::move(sword1));
+          }
+          else if (item_str == "Sword +2") {
+            std::unique_ptr<ItemWeaponSword> sword2 = std::make_unique<ItemWeaponSword>(
+              item_id,
+              item_str,
+              "/assets/item/item_sword_1.png",
+              BASE_GOLD + 3,
+              *this
+            );
+            sword2->SetRange(BASE_RANGE);
+            sword2->SetDamage(BASE_DAMAGE + 1.5);
+            sword2->SetHitBonus(BASE_BONUS + 2);
+
+            inventory.AddItem(std::move(sword2));
+          }
+          else if (item_str == "Sword +3") {      
+            std::unique_ptr<ItemWeaponSword> sword3 = std::make_unique<ItemWeaponSword>(
+              item_id,
+              item_str,
+              "/assets/item/item_sword_1.png",
+              BASE_GOLD + 4,
+              *this
+            );
+            sword3->SetRange(BASE_RANGE);
+            sword3->SetDamage(BASE_DAMAGE + 2.0);
+            sword3->SetHitBonus(BASE_BONUS + 3);
+
+            inventory.AddItem(std::move(sword3));
+          }
+          else if (item_str == "Sword +4") {
+            std::unique_ptr<ItemWeaponSword> sword4 = std::make_unique<ItemWeaponSword>(
+              item_id,
+              item_str,
+              "/assets/item/item_sword_1.png",
+              BASE_GOLD + 5,
+              *this
+            );
+            sword4->SetRange(BASE_RANGE);
+            sword4->SetDamage(BASE_DAMAGE + 2.5);
+            sword4->SetHitBonus(BASE_BONUS + 4);
+
+            inventory.AddItem(std::move(sword4));
+          }
+          else if (item_str == "Sword +5") {
+            std::unique_ptr<ItemWeaponSword> sword5 = std::make_unique<ItemWeaponSword>(
+              item_id,
+              item_str,
+              "/assets/item/item_sword_1.png",
+              BASE_GOLD + 6,
+              *this
+            );
+            sword5->SetRange(BASE_RANGE);
+            sword5->SetDamage(BASE_DAMAGE + 3.0);
+            sword5->SetHitBonus(BASE_BONUS + 5);
+
+            inventory.AddItem(std::move(sword5));
+          }
+          
+          if (item_str == "Bow") {
+            std::unique_ptr<ItemWeaponBow> bow = std::make_unique<ItemWeaponBow>(
+              item_id,
+              item_str,
+              "/assets/item/item_bow_1.png",
+              BASE_GOLD + 1,
+              *this
+            );
+            bow->SetRange(BASE_RANGE+3);
+            bow->SetDamage(BASE_DAMAGE + 0.5);
+            bow->SetHitBonus(BASE_BONUS);
+
+            inventory.AddItem(std::move(bow));
+          }
+          else if (item_str == "Bow +1") {
+            std::unique_ptr<ItemWeaponBow> bow1 = std::make_unique<ItemWeaponBow>(
+              item_id,
+              item_str,
+              "/assets/item/item_bow_1.png",
+              BASE_GOLD + 2,
+              *this
+            );
+            bow1->SetRange(BASE_RANGE+3);
+            bow1->SetDamage(BASE_DAMAGE + 1.0);
+            bow1->SetHitBonus(BASE_BONUS + 1);
+
+            inventory.AddItem(std::move(bow1));
+          }
+          else if (item_str == "Bow +2") {
+            std::unique_ptr<ItemWeaponBow> bow2 = std::make_unique<ItemWeaponBow>(
+              item_id,
+              item_str,
+              "/assets/item/item_bow_1.png",
+              BASE_GOLD + 3,
+              *this
+            );
+            bow2->SetRange(BASE_RANGE+3);
+            bow2->SetDamage(BASE_DAMAGE + 1.5);
+            bow2->SetHitBonus(BASE_BONUS + 2);
+
+            inventory.AddItem(std::move(bow2));
+          }
+          else if (item_str == "Bow +3") {
+            std::unique_ptr<ItemWeaponBow> bow3 = std::make_unique<ItemWeaponBow>(
+              item_id,
+              item_str,
+              "/assets/item/item_bow_1.png",
+              BASE_GOLD + 4,
+              *this
+            );
+            bow3->SetRange(BASE_RANGE+3);
+            bow3->SetDamage(BASE_DAMAGE + 2.0);
+            bow3->SetHitBonus(BASE_BONUS + 3);
+
+            inventory.AddItem(std::move(bow3));
+          }
+          else if (item_str == "Bow +4") {
+            std::unique_ptr<ItemWeaponBow> bow4 = std::make_unique<ItemWeaponBow>(
+              item_id,
+              item_str,
+              "/assets/item/item_bow_1.png",
+              BASE_GOLD + 5,
+              *this
+            );
+            bow4->SetRange(BASE_RANGE+3);
+            bow4->SetDamage(BASE_DAMAGE + 2.5);
+            bow4->SetHitBonus(BASE_BONUS + 4);
+
+            inventory.AddItem(std::move(bow4));
+          }
+          else if (item_str == "Bow +5") {
+            std::unique_ptr<ItemWeaponBow> bow5 = std::make_unique<ItemWeaponBow>(
+              item_id,
+              item_str,
+              "/assets/item/item_bow_1.png",
+              BASE_GOLD + 6,
+              *this
+            );
+            bow5->SetRange(BASE_RANGE+4);
+            bow5->SetDamage(BASE_DAMAGE + 3.0);
+            bow5->SetHitBonus(BASE_BONUS + 5);
+
+            inventory.AddItem(std::move(bow5));
+          }
+          
+          else if (item_str == "Healing Potion") {
+            std::unique_ptr<ItemConsumableHealing> healing = std::make_unique<ItemConsumableHealing>(
+              item_id,
+              item_str,
+              "/assets/item/potion_healing.png",
+              BASE_GOLD,
+              *this
+            );
+            healing->SetCharges(1);
+            healing->SetDuration(0);
+            
+            inventory.AddItem(std::move(healing));
+          }
+          else if (item_str == "Defense Potion") {
+            std::unique_ptr<ItemConsumableDefense> defense = std::make_unique<ItemConsumableDefense>(
+              item_id,
+              item_str,
+              "/assets/item/potion_defense.png",
+              BASE_GOLD,
+              *this
+            );
+            defense->SetCharges(1);
+            defense->SetDuration(3);
+            
+            inventory.AddItem(std::move(defense));
+          }
+          else if (item_str == "Speed Potion") {
+            std::unique_ptr<ItemConsumableSpeed> speed = std::make_unique<ItemConsumableSpeed>(
+              item_id,
+              item_str,
+              "/assets/item/potion_speed.png",
+              BASE_GOLD,
+              *this
+            );
+            speed->SetCharges(1);
+            speed->SetDuration(3);
+            
+            inventory.AddItem(std::move(speed));
+          }
+          
+          else if (item_str == "Axe") {
+            std::unique_ptr<ItemWeaponToolAxe> axe = std::make_unique<ItemWeaponToolAxe>(
+              item_id,
+              item_str,
+              "/assets/item/item_axe.png",
+              BASE_GOLD,
+              *this
+            );
+            axe->SetRange(BASE_RANGE);
+            axe->SetDamage(BASE_DAMAGE);
+            axe->SetHitBonus(BASE_BONUS);
+            axe->SetDropRate(1);
+            axe->SetHarvestSpeed(1);
+
+            inventory.AddItem(std::move(axe));
+          }
+          else if (item_str == "Pickaxe") {
+            std::unique_ptr<ItemWeaponToolPickaxe> pickaxe = std::make_unique<ItemWeaponToolPickaxe>(
+              item_id,
+              item_str,
+              "/assets/item/item_pickaxe.png",
+              BASE_GOLD,
+              *this
+            );
+            pickaxe->SetRange(BASE_RANGE);
+            pickaxe->SetDamage(BASE_DAMAGE);
+            pickaxe->SetHitBonus(BASE_BONUS);
+            pickaxe->SetDropRate(1);
+            pickaxe->SetHarvestSpeed(1);
+
+            inventory.AddItem(std::move(pickaxe));
+          }
+          else if (item_str == "Shovel") {
+            std::unique_ptr<ItemWeaponToolPickaxe> shovel = std::make_unique<ItemWeaponToolPickaxe>(
+              item_id,
+              item_str,
+              "/assets/item/item_shovel.png",
+              BASE_GOLD,
+              *this
+            );
+            shovel->SetRange(BASE_RANGE);
+            shovel->SetDamage(BASE_DAMAGE);
+            shovel->SetHitBonus(BASE_BONUS);
+            shovel->SetDropRate(1);
+            shovel->SetHarvestSpeed(1);
+
+            inventory.AddItem(std::move(shovel));
+          }
+        }
+      }
 
         //Here we set up if new_position is walking into an item, they'll pick it up, but not move (LATER)
         //For now we're implementing the 
@@ -165,17 +466,6 @@ namespace cse498 {
       agent.SetLocation(new_position);
 
       return true;
-    }
-
-    /*
-    * @brief Random selects an item from a weighted set of possible items
-    *
-    * @return An randomly selected item
-    */
-    std::string GetRandomItem(){
-      cse498::Random rng;
-      double item = rng.GetValue(1.0,m_item_pool.GetTotalWeight()).value();
-      return m_item_pool.Sample(item).value();
     }
   };
 

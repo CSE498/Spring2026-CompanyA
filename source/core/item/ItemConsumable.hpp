@@ -7,7 +7,7 @@
 #pragma once
 
 #include <string>
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
 #include "Item.hpp"
 
 namespace cse498 {
@@ -24,11 +24,14 @@ namespace cse498 {
 
             int GetCharges() {return m_charges;}
             int GetDuration() {return m_duration;}
-            void DecrementCharges(int decrement = 1) {
+
+            /*Returns true if decrement was successful. Item should be deleted if it returns false.*/
+            bool DecrementCharges(int decrement = 1) {
                 m_charges -= decrement;
                 if (m_charges <= 0) {
-                    DestroyItem();
+                    return false;
                 }
+                return true;
             }
             void SetCharges (int charges) {m_charges = charges;}
             void SetDuration (int duration) {m_duration = duration;}
