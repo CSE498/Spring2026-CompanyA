@@ -34,6 +34,7 @@ enum class GameState {
     DUNGEON, /// Procedurally generated dungeon world
     PAUSED, /// Paused state (reachable from OVERWORLD or DUNGEON)
     SETTINGS, /// Settings screen (placeholder)
+    STATS,    /// Contains information captured in gameplay
     QUIT /// Exit state
 };
 
@@ -132,6 +133,8 @@ private:
     void RenderDungeon();
     void RenderPaused();
     void RenderSettings();
+    void UpdateStats();
+    void RenderStats();
 
     /**
      * @brief Process player movement input.

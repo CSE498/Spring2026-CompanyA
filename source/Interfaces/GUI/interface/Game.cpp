@@ -198,6 +198,10 @@ void Game::SetupPauseMenu() {
         mPreviousState = GameState::OVERWORLD;
     });
 
+    mPauseMenu.AddOption("Stats", [this]() {
+        TransitionTo(GameState::STATS);
+    });
+
     mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
 
     mPauseMenu.AddOption("Quit to Main Menu", [this]() { TransitionTo(GameState::MAIN_MENU); });
@@ -225,6 +229,9 @@ void Game::Run() {
             case GameState::PAUSED:
                 UpdatePaused();
                 break;
+            case GameState::STATS:
+                UpdateStats();
+                break;
             case GameState::SETTINGS:
                 UpdateSettings();
                 break;
@@ -245,6 +252,9 @@ void Game::Run() {
                 break;
             case GameState::PAUSED:
                 RenderPaused();
+                break;
+            case GameState::STATS:
+                RenderStats();
                 break;
             case GameState::SETTINGS:
                 RenderSettings();
@@ -313,7 +323,7 @@ void Game::HandleEvents() {
                         Pause();
                     } else if (mState == GameState::PAUSED) {
                         Resume();
-                    } else if (mState == GameState::SETTINGS) {
+                    } else if (mState == GameState::SETTINGS || mState == GameState::STATS) {
                         Resume();
                     }
                     break;
@@ -497,6 +507,19 @@ void Game::RenderPaused() {
 
 void Game::RenderSettings() {
     // TODO: render settings screen
+}
+
+void Game::UpdateStats() {}
+
+void Game::RenderStats() {
+    SDL_Renderer* renderer = mGameView->GetRenderer();
+    int w = mGameView->GetWidth();
+    int h = mGameView->GetHeight();
+
+    // Dark background
+    SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+    SDL_Rect bg = {0, 0, w, h};
+    SDL_RenderFillRect(renderer, &bg);
 }
 
 void Game::ProcessPlayerMove(SDL_Keycode key) {
