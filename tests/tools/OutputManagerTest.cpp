@@ -1,5 +1,4 @@
 #include "../../source/tools/OutputManager.hpp"
-#include "../../source/tools/OutputManager.hpp"
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include <chrono>
@@ -14,7 +13,6 @@
  * @param needle The string to search for
  */
 static bool Contains(const std::string& haystack, const std::string& needle) {
-static bool Contains(const std::string& haystack, const std::string& needle) {
     return haystack.find(needle) != std::string::npos;
 }
 
@@ -23,7 +21,6 @@ static bool Contains(const std::string& haystack, const std::string& needle) {
  * @param line The formatted log line.
  * @return The parsed millisecond value.
  */
-static long long ParseTimestampMs(const std::string& line) {
 static long long ParseTimestampMs(const std::string& line) {
     const std::size_t start = line.find('[');
     const std::size_t end = line.find("ms]");
@@ -39,15 +36,11 @@ static long long ParseTimestampMs(const std::string& line) {
  * object
  */
 class CoutCapture {
-class CoutCapture {
 public:
     CoutCapture() : m_old(std::cout.rdbuf(m_capture.rdbuf())) {}
-    CoutCapture() : m_old(std::cout.rdbuf(m_capture.rdbuf())) {}
 
     ~CoutCapture() { std::cout.rdbuf(m_old); }
-    ~CoutCapture() { std::cout.rdbuf(m_old); }
 
-    std::string Str() const { return m_capture.str(); }
     std::string Str() const { return m_capture.str(); }
 
 private:
@@ -56,8 +49,6 @@ private:
 };
 
 /*Tests for GetMinLogLevel and SetMinLogLevel functionality of OutputManager
- */
-TEST_CASE("OutputManager::GetMinLogLevel returns current min level", "[output][minlevel]") {
  */
 TEST_CASE("OutputManager::GetMinLogLevel returns current min level", "[output][minlevel]") {
     cse498::OutputManager om;
@@ -72,11 +63,8 @@ TEST_CASE("OutputManager::GetMinLogLevel returns current min level", "[output][m
 /* @brief Tests for OutputManager functionality: log level filtering
  */
 TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shouldlog]") {
- */
-TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shouldlog]") {
     cse498::OutputManager om;
 
-    SECTION("Min = DEBUG allows DEBUG..ERROR") {
     SECTION("Min = DEBUG allows DEBUG..ERROR") {
         om.SetMinLogLevel(cse498::LogLevel::Debug);
 
@@ -88,7 +76,6 @@ TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shoul
         CHECK_FALSE(om.ShouldLog(cse498::LogLevel::Silent));
     }
 
-    SECTION("Min = Silent filters everything") {
     SECTION("Min = Silent filters everything") {
         om.SetMinLogLevel(cse498::LogLevel::Silent);
 
@@ -104,8 +91,6 @@ TEST_CASE("OutputManager::ShouldLog respects minimum log level", "[output][shoul
 /* @brief Tests for OutputManager::Log behavior with filtering and formatting
  */
 TEST_CASE("OutputManager::Log is filtered when below minimum level", "[output][log][filter]") {
- */
-TEST_CASE("OutputManager::Log is filtered when below minimum level", "[output][log][filter]") {
     cse498::OutputManager om;
 
     CoutCapture cap;
@@ -115,7 +100,6 @@ TEST_CASE("OutputManager::Log is filtered when below minimum level", "[output][l
     CHECK(cap.Str().empty());
 }
 
-TEST_CASE("OutputManager::Log formats level/category/message (timestamps disabled)", "[output][log][format]") {
 TEST_CASE("OutputManager::Log formats level/category/message (timestamps disabled)", "[output][log][format]") {
     cse498::OutputManager om;
     om.SetMinLogLevel(cse498::LogLevel::Info);
@@ -132,7 +116,8 @@ TEST_CASE("OutputManager::Log formats level/category/message (timestamps disable
     CHECK_FALSE(Contains(out, "ms]"));
 }
 
-/* @brief Tests for OutputManager::Log behavior with timestamp toggling and Timer integration
+/* @brief Tests for OutputManager::Log behavior with timestamp toggling and
+ * Timer integration
  */
 TEST_CASE("OutputManager timestamp toggling affects output", "[output][log][timestamp]") {
     cse498::OutputManager om;
@@ -145,7 +130,6 @@ TEST_CASE("OutputManager timestamp toggling affects output", "[output][log][time
     CHECK(Contains(cap.Str(), "ms]"));
 }
 
-TEST_CASE("OutputManager timestamps advance over time using the shared Timer", "[output][log][timer]") {
 TEST_CASE("OutputManager timestamps advance over time using the shared Timer", "[output][log][timer]") {
     cse498::OutputManager om;
     std::vector<std::string> lines;
@@ -171,7 +155,6 @@ TEST_CASE("OutputManager timestamps advance over time using the shared Timer", "
 }
 
 TEST_CASE("OutputManager can reset the timestamp clock", "[output][log][reset-timestamp]") {
-TEST_CASE("OutputManager can reset the timestamp clock", "[output][log][reset-timestamp]") {
     cse498::OutputManager om;
     std::vector<std::string> lines;
 
@@ -193,7 +176,6 @@ TEST_CASE("OutputManager can reset the timestamp clock", "[output][log][reset-ti
 }
 
 TEST_CASE("OutputManager convenience logging uses default level and category", "[output][log][defaults]") {
-TEST_CASE("OutputManager convenience logging uses default level and category", "[output][log][defaults]") {
     cse498::OutputManager om;
     std::vector<std::string> lines;
 
@@ -210,7 +192,6 @@ TEST_CASE("OutputManager convenience logging uses default level and category", "
     CHECK(Contains(lines[0], "Default message"));
 }
 
-TEST_CASE("OutputManager supports runtime category strings", "[output][log][runtime-category]") {
 TEST_CASE("OutputManager supports runtime category strings", "[output][log][runtime-category]") {
     cse498::OutputManager om;
     std::vector<std::string> lines;
@@ -231,15 +212,12 @@ TEST_CASE("OutputManager supports runtime category strings", "[output][log][runt
 /* @brief Tests for OutputManager sink behavior
  */
 TEST_CASE("OutputManager sink behavior", "[output][sink]") {
- */
-TEST_CASE("OutputManager sink behavior", "[output][sink]") {
     cse498::OutputManager om;
     std::vector<std::string> lines;
 
     om.ClearSinks();
     om.AddSink([&](std::string_view s) { lines.emplace_back(s); });
 
-    SECTION("Allowed log emits exactly one formatted line") {
     SECTION("Allowed log emits exactly one formatted line") {
         om.SetMinLogLevel(cse498::LogLevel::Info);
         om.EnableTimestamps(false);
@@ -251,7 +229,6 @@ TEST_CASE("OutputManager sink behavior", "[output][sink]") {
         CHECK(Contains(lines[0], "Goblin hit player"));
     }
 
-    SECTION("Per-sink minimum level filters independently") {
     SECTION("Per-sink minimum level filters independently") {
         std::vector<std::string> warnOnlyLines;
 
@@ -274,8 +251,6 @@ TEST_CASE("OutputManager sink behavior", "[output][sink]") {
 /* @brief Tests for OutputManager name helper functions
  */
 TEST_CASE("OutputManager name helpers return correct strings", "[output][names]") {
- */
-TEST_CASE("OutputManager name helpers return correct strings", "[output][names]") {
     CHECK(cse498::OutputManager::LevelName(cse498::LogLevel::Debug) == "DEBUG");
     CHECK(cse498::OutputManager::LevelName(cse498::LogLevel::Verbose) == "VERBOSE");
     CHECK(cse498::OutputManager::LevelName(cse498::LogLevel::Info) == "INFO");
@@ -292,8 +267,6 @@ TEST_CASE("OutputManager name helpers return correct strings", "[output][names]"
 /* @brief Tests for file path validation and state helpers
  */
 TEST_CASE("OutputManager file path validation throws on invalid inputs", "[output][file][errors]") {
- */
-TEST_CASE("OutputManager file path validation throws on invalid inputs", "[output][file][errors]") {
     cse498::OutputManager om;
 
     REQUIRE_THROWS_AS(om.SetCsvPath("", true), std::invalid_argument);
@@ -302,7 +275,6 @@ TEST_CASE("OutputManager file path validation throws on invalid inputs", "[outpu
     REQUIRE_THROWS_AS(om.SetCsvPath(".", false), std::runtime_error);
 }
 
-TEST_CASE("OutputManager state helpers report current settings", "[output][state]") {
 TEST_CASE("OutputManager state helpers report current settings", "[output][state]") {
     cse498::OutputManager om;
 
