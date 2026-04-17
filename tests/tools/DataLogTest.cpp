@@ -101,7 +101,8 @@ TEST_CASE("Negative Value Entry Test", "[tools]") {
 }
 
 /*
-Test checks that the timestamps associated with the data values are in increasing order
+Test checks that the timestamps associated with the data values are in
+increasing order
 */
 TEST_CASE("Timestamp order check", "[tools]") {
 
@@ -123,7 +124,6 @@ TEST_CASE("Initial Timestamp Test", "[tools]") {
 
     cse498::DataLog log;
     log.Add(1.0);
-
 
     CHECK(log.DataSamples().size() == 1);
     CHECK(log.DataSamples()[0].timestamp >= 0.0);

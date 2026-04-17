@@ -24,26 +24,25 @@
 #include "../../tools/Random.hpp"
 
 
-
 namespace cse498 {
     /// @brief Holds basic information of the grids
     struct BSPNode {
-        
         int left_child = -1; //Left node of the tree
         int right_child = -1; //right node of the tree
         int x, y, width, height; // (x,y) - (origin point of the grid (top-left corner))
-                                 // (width, height) - dimension of the grid cut (lxw)
+        // (width, height) - dimension of the grid cut (lxw)
         std::string name; //Name of the node for debugging purposes
         std::string file_name; //
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
-        
+
 
         BSPNode() = default;
-        BSPNode(int l, int r, int x, int y, int width, int height, std::string name) 
-           : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {}
 
+        BSPNode(int l, int r, int x, int y, int width, int height, std::string name)
+            : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {
+        }
     };
-    
+
 
     static constexpr int DEFAULT_WIDTH = 150;
     static constexpr int DEFAULT_HEIGHT = 100;
@@ -66,13 +65,12 @@ namespace cse498 {
         Random m_rng; //Random number generator
 
 
-    public: 
-        /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
+    public:
+        /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated
         /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
-        BSP(const cse498::WeightedSet<std::string>& room_pool,
-			const std::string& file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_") 
-			: m_room_holder(room_pool, file_path)
-		{ 
+        BSP(const cse498::WeightedSet<std::string> &room_pool,
+            const std::string &file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_")
+            : m_room_holder(room_pool, file_path) {
             insert_split(m_iterations); //Creates BSP Tree
             PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
@@ -81,11 +79,10 @@ namespace cse498 {
         /// @attention This constructor is purely meant to be used for debugging purposes to test proper Tree/Leaf Node initialization
         /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
         /// @param seed Set int value to determine room generation layout
-        BSP(const cse498::WeightedSet<std::string>& room_pool, 
-			uint64_t seed,
-			const std::string& file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_")  
-            : m_room_holder(room_pool, file_path)
-        {
+        BSP(const cse498::WeightedSet<std::string> &room_pool,
+            uint64_t seed,
+            const std::string &file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_")
+            : m_room_holder(room_pool, file_path) {
             m_rng.SetSeed(seed);
             insert_split(m_iterations);
             PostOrderDFS();
@@ -96,16 +93,17 @@ namespace cse498 {
         ///////////////////////////////////
 
         /// @brief Creates a split in the grid to populate with a room
-        /// @param iter number of iterations desired in the grid 
+        /// @param iter number of iterations desired in the grid
         /// @return integer value of a BSPNode's position in its container
         int insert_split(int iter) {
-            BSPNode root_node = BSPNode{-1, -1, 0 , 0, m_width, m_height, std::string("Container")}; // creation of root node
+            BSPNode root_node = BSPNode{-1, -1, 0, 0, m_width, m_height, std::string("Container")};
+            // creation of root node
 
             return insert_split(root_node, iter);
         }
 
         /// @brief Grabs all the leaf nodes of the BSP_Tree using Post-Order DFS, for map generation
-        /// @param node root_node 
+        /// @param node root_node
         void PostOrderDFS(BSPNode &node) {
             if (node.left_child == -1 && node.right_child == -1) {
                 //Populating node with room and coordinate offset info
@@ -122,23 +120,22 @@ namespace cse498 {
 
         /// @brief Grabs all the leaf nodes of the BSP_Tree using Post-Order DFS for map generation
         void PostOrderDFS() {
-
             assert(m_BSP_tree.size() != 0 && "PostOrderDFS not initialized!");
             PostOrderDFS(m_BSP_tree[0]);
         }
 
-        void ClearState() { 
+        void ClearState() {
             m_BSP_tree.clear();
             m_leaf_nodes.clear();
         }
 
-        void RepopulateTree() { 
+        void RepopulateTree() {
             insert_split(m_iterations); //Creates BSP Tree
             PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
 
         /**
-         * @brief Regenerates the BSP Tree incase any modifications to width/height/properties after its creation are made in order to 
+         * @brief Regenerates the BSP Tree incase any modifications to width/height/properties after its creation are made in order to
          * ensure the object's state is up to date when new dungeons are later created
          */
         void RegenerateObjectState() {
@@ -149,35 +146,33 @@ namespace cse498 {
         ////////////////////////////////////
         //    BSP Tree Debug Info
         ///////////////////////////////////
-        
-        /// @brief Generates Dungeon Map World outline of solely the splits from the BSP Tree without the rooms populated in them 
+
+        /// @brief Generates Dungeon Map World outline of solely the splits from the BSP Tree without the rooms populated in them
         /// @attention GenerateTileMap only shows the outline of the grid-map and the splits/paritions of the grid, it does not show the rooms
         void GenerateTileMap() {
             std::vector<std::string> grid(m_height, std::string(m_width, ' ')); //Copy of grid
-            
-            for (const auto& i : m_leaf_nodes) {
+
+            for (const auto &i: m_leaf_nodes) {
                 auto copy_x = i.x;
                 auto copy_y = i.y;
 
                 for (int y = 0; y < i.height; y++) {
                     int grid_y = y + copy_y;
 
-                    for (int x = 0; x < i.width; x++) { 
+                    for (int x = 0; x < i.width; x++) {
                         int grid_x = x + copy_x;
-                        if (y == 0 || y == i.height - 1 || x == 0 || x == i.width - 1){
+                        if (y == 0 || y == i.height - 1 || x == 0 || x == i.width - 1) {
                             grid[grid_y][grid_x] = '.';
                         }
-                            
                     }
                 }
             }
-
         }
 
-        /// @brief Simple parser that'll output the contents of the BSP Vector. 
+        /// @brief Simple parser that'll output the contents of the BSP Vector.
         /// @attention Names of the same number are of the same depth level (name2 and name2 are the same level)
         void TreeParser() const {
-            for (auto const& i : m_BSP_tree) {
+            for (auto const &i: m_BSP_tree) {
                 std::cout << "------------" << std::endl;
                 std::cout << "Name " << i.name << std::endl;
                 std::cout << "x " << i.x << std::endl;
@@ -187,19 +182,19 @@ namespace cse498 {
                 std::cout << "left_child, [Index]: " << i.left_child << std::endl;
                 std::cout << "right_child, [Index]: " << i.right_child << std::endl;
 
-                for (auto const& j : i.vector_room) {
+                for (auto const &j: i.vector_room) {
                     std::cout << j << '\n';
                 }
             }
         }
- 
+
         /// @brief Sets RNG seed primarily for test case purposes
         /// @param integer seed value we want to set the RNG object too
         void SetRngSeed(uint64_t integer) {
             m_rng.SetSeed(integer);
         }
 
-        uint64_t GetRngSeed() { 
+        uint64_t GetRngSeed() {
             return m_rng.GetSeed();
         }
 
@@ -218,45 +213,43 @@ namespace cse498 {
         /// @return WIDTH value
         [[nodiscard]] int GetWidth() {
             return m_width;
-        }   
+        }
 
         /// @brief updates the HEIGHT value for the grid map
-        /// @param height 
+        /// @param height
         void SetHeight(int height) {
             m_height = height;
         }
 
         /// @brief updates the WIDTH value for the grid map
-        /// @param width 
+        /// @param width
         void SetWidth(int width) {
             m_width = width;
         }
-        
+
         /// @brief Sets the number of splits done to the BSP Tree
-        /// @param iter 
-        void SetIterations (int iter) {
+        /// @param iter
+        void SetIterations(int iter) {
             m_iterations = iter;
         }
 
         /// @brief Grabs the number of iterations done in splitting the BSP_Tree
         /// @return number of iterations we want to split the rooms with
-        [[nodiscard]] int GetIterations() const { 
+        [[nodiscard]] int GetIterations() const {
             return m_iterations;
         }
 
         /// @brief Returns the reference to BSP_Tree's leaf nodes
-        [[nodiscard]] std::vector<BSPNode>& GetLeafNodes() {
+        [[nodiscard]] std::vector<BSPNode> &GetLeafNodes() {
             return m_leaf_nodes;
         }
 
         /// @brief Returns the reference to entirety of the created BSP_Tree
-        [[nodiscard]] std::vector<BSPNode>& GetBSPTree() {
+        [[nodiscard]] std::vector<BSPNode> &GetBSPTree() {
             return m_BSP_tree;
         }
 
-
     private:
-
         /// @brief Continuously populates the BSP tree until iter base case reaches 0
         /// @param iter number of iterations to split
         [[nodiscard]] int insert_split(BSPNode node, int iter) {
@@ -264,12 +257,11 @@ namespace cse498 {
             m_BSP_tree.push_back(node);
 
             if (iter != 0) {
-
                 auto split = random_split(node, iter); //Splits the grid into nodes
 
 
                 //Prevent UE
-                if(!split) {
+                if (!split) {
                     return node_index;
                 }
 
@@ -279,21 +271,19 @@ namespace cse498 {
                 auto left_node = insert_split(left_split, iter - 1);
                 //std::cout << "-------------" << std::endl;
                 //std::cout << "right node iter: " << iter << " " << std::endl;
-                auto right_node = insert_split(right_split, iter -1);
+                auto right_node = insert_split(right_split, iter - 1);
 
                 //connecting the nodes in the array-based tree based on index position
                 m_BSP_tree[node_index].left_child = left_node;
                 m_BSP_tree[node_index].right_child = right_node;
-
             }
             return node_index;
         }
 
-        /// @brief Given an inputted struct root Node, splits the width/height randomly into  
-        /// @param node 
+        /// @brief Given an inputted struct root Node, splits the width/height randomly into
+        /// @param node
         /// @return returns a tuple pair of Nodes, other returning nullopt if threshold width/height not met
-        [[nodiscard]] std::optional<std::tuple<BSPNode, BSPNode>> random_split(BSPNode &node, int iter) {
-
+        [[nodiscard]] std::optional<std::tuple<BSPNode, BSPNode> > random_split(BSPNode &node, int iter) {
             bool split_width = true;
             bool split_height = true;
 
@@ -314,61 +304,59 @@ namespace cse498 {
             bool directional_split;
 
             if (split_width && split_height) {
-                directional_split = (m_rng.GetValue(0,1).value() == 0);
-            }
-            else {
+                directional_split = (m_rng.GetValue(0, 1).value() == 0);
+            } else {
                 directional_split = split_width;
             }
-            
+
             if (directional_split) {
                 ///Left split
-                auto width_distributor = m_rng.GetValue(m_threshold_width_value, node.width - m_threshold_width_value).value();
-                const int stored_width = width_distributor; 
+                auto width_distributor = m_rng.GetValue(m_threshold_width_value, node.width - m_threshold_width_value).
+                        value();
+                const int stored_width = width_distributor;
 
                 left_split = {
-                    -1, -1,                 // left right child 
-                    node.x, node.y,         // x-y coordinate
-                    stored_width,           // width
-                    node.height,            // height
-                    std::to_string(iter)    //tree-depth (descending from iter) name
+                    -1, -1, // left right child
+                    node.x, node.y, // x-y coordinate
+                    stored_width, // width
+                    node.height, // height
+                    std::to_string(iter) //tree-depth (descending from iter) name
                 };
-                
+
                 ///Right split
                 right_split = {
-                    -1, -1,                             // left right child 
-                    node.x + left_split.width, node.y,  // x-y coordinate
-                    node.width - left_split.width,      // width
-                    node.height,                        // height
-                    std::to_string(iter)                //tree-depth (descending from iter) name
+                    -1, -1, // left right child
+                    node.x + left_split.width, node.y, // x-y coordinate
+                    node.width - left_split.width, // width
+                    node.height, // height
+                    std::to_string(iter) //tree-depth (descending from iter) name
                 };
-            }
-
-            else {
-                auto height_distributor = m_rng.GetValue(m_threshold_height_value, node.height - m_threshold_height_value).value();
-                const int stored_height = height_distributor; 
+            } else {
+                auto height_distributor = m_rng.GetValue(m_threshold_height_value,
+                                                         node.height - m_threshold_height_value).value();
+                const int stored_height = height_distributor;
 
                 ///top split
                 left_split = {
-                    -1, -1,                 // left right child 
-                    node.x, node.y,         // x-y coordinate
-                    node.width,             // width
-                    stored_height,          // height
-                    std::to_string(iter)    //tree-depth (descending from iter) name
+                    -1, -1, // left right child
+                    node.x, node.y, // x-y coordinate
+                    node.width, // width
+                    stored_height, // height
+                    std::to_string(iter) //tree-depth (descending from iter) name
                 };
-                
+
                 ///bottom split
                 right_split = {
-                    -1, -1,                             // left right child 
+                    -1, -1, // left right child
                     node.x, node.y + left_split.height, // x-y coordinate
-                    node.width,                         // width
-                    node.height - left_split.height,    // height
-                    std::to_string(iter)                //tree-depth (descending from iter) name
+                    node.width, // width
+                    node.height - left_split.height, // height
+                    std::to_string(iter) //tree-depth (descending from iter) name
                 };
             }
 
 
             return std::make_tuple(left_split, right_split);
-
-        }   
+        }
     };
 }

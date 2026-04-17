@@ -65,7 +65,7 @@ void cse498::AnnotationSet::Clear() {
         return;
     }
 
-    for (const auto &t: mTags) {
+    for (const auto& t: mTags) {
         NotifyRemoved(t);
     }
     mTags.clear();

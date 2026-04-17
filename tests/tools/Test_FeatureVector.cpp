@@ -7,9 +7,9 @@
 
 namespace {
 
-    enum class TestFeature { Health = 0, Energy, DistanceToGoal, NearbyEnemies, COUNT };
+enum class TestFeature { Health = 0, Energy, DistanceToGoal, NearbyEnemies, COUNT };
 
-    using TestVector = cse498::FeatureVector<TestFeature>;
+using TestVector = cse498::FeatureVector<TestFeature>;
 
 } // namespace
 

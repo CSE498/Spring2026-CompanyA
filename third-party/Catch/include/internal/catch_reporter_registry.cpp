@@ -10,25 +10,31 @@ namespace Catch {
 
     ReporterRegistry::~ReporterRegistry() = default;
 
-    IStreamingReporterPtr ReporterRegistry::create( std::string const& name, IConfigPtr const& config ) const {
-        auto it =  m_factories.find( name );
-        if( it == m_factories.end() )
+    IStreamingReporterPtr
+    ReporterRegistry::create( std::string const& name,
+                              IConfigPtr const& config ) const {
+        auto it = m_factories.find( name );
+        if ( it == m_factories.end() )
             return nullptr;
         return it->second->create( ReporterConfig( config ) );
     }
 
-    void ReporterRegistry::registerReporter( std::string const& name, IReporterFactoryPtr const& factory ) {
-        m_factories.emplace(name, factory);
+    void
+    ReporterRegistry::registerReporter( std::string const& name,
+                                        IReporterFactoryPtr const& factory ) {
+        m_factories.emplace( name, factory );
     }
-    void ReporterRegistry::registerListener( IReporterFactoryPtr const& factory ) {
+    void
+    ReporterRegistry::registerListener( IReporterFactoryPtr const& factory ) {
         m_listeners.push_back( factory );
     }
 
-    IReporterRegistry::FactoryMap const& ReporterRegistry::getFactories() const {
+    IReporterRegistry::FactoryMap const&
+    ReporterRegistry::getFactories() const {
         return m_factories;
     }
     IReporterRegistry::Listeners const& ReporterRegistry::getListeners() const {
         return m_listeners;
     }
 
-}
+} // namespace Catch

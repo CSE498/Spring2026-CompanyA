@@ -5,22 +5,21 @@
  * Catch2 unit tests for MemoFunction.
  */
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/MemoFunction.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
+#include <chrono>
+#include <climits>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <chrono>
-#include <iostream>
-#include <climits>
 
 using namespace std::chrono;
 using std::string, std::vector;
 
 int MultBy3(int x) { return x * 3; }
 
-TEST_CASE("MemoFunction: Basic function and cache testing", "[MemoFunction]")
-{
+TEST_CASE("MemoFunction: Basic function and cache testing", "[MemoFunction]") {
     cse498::MemoFunction<int, int> mf1(MultBy3);
     REQUIRE(mf1.CacheSize() == 0);
     REQUIRE(mf1(7) == 21);
@@ -36,17 +35,16 @@ TEST_CASE("MemoFunction: Basic function and cache testing", "[MemoFunction]")
 }
 
 class TestClass {
-    public:
-      TestClass() {};
-      string Concat(string a, string b) { return a + b; }
-      bool Even(int x) { return x % 2 == 0; }
-      double Add(double a, double b, int c) { return a + b + c; }
+public:
+    TestClass() {};
+    string Concat(string a, string b) { return a + b; }
+    bool Even(int x) { return x % 2 == 0; }
+    double Add(double a, double b, int c) { return a + b + c; }
 };
 
 // Can apparently pass class functions directly into memofunction with template stuff but not
 // sure if it's really necessary, hopefully using lambda for them isn't that unintuitive
-TEST_CASE("MemoFunction: Class member functions w/ multiple inputs and types", "[MemoFunction]")
-{
+TEST_CASE("MemoFunction: Class member functions w/ multiple inputs and types", "[MemoFunction]") {
     TestClass t1;
     auto l1 = [&](string a, string b) { return t1.Concat(a, b); };
     cse498::MemoFunction<string, string, string> mf2(l1);
@@ -72,8 +70,7 @@ TEST_CASE("MemoFunction: Class member functions w/ multiple inputs and types", "
 
 vector<char> Hello() { return {'h', 'e', 'l', 'l', 'o'}; }
 
-TEST_CASE("MemoFunction: No argument", "[Memofunction]")
-{
+TEST_CASE("MemoFunction: No argument", "[Memofunction]") {
     cse498::MemoFunction<vector<char>> mf5(Hello);
     auto v = mf5();
     REQUIRE(string(v.begin(), v.end()) == "hello");
@@ -81,13 +78,13 @@ TEST_CASE("MemoFunction: No argument", "[Memofunction]")
 }
 
 // Decided on no exceptions
-//int Exception() { throw std::logic_error("test"); return 1; }
+// int Exception() { throw std::logic_error("test"); return 1; }
 
-//TEST_CASE("MemoFunction: Exceptions", "[MemoFunction]")
+// TEST_CASE("MemoFunction: Exceptions", "[MemoFunction]")
 //{
-//    cse498::MemoFunction<int> mf6(Exception);
-//    REQUIRE_THROWS_AS(mf6(), std::logic_error);
-//    REQUIRE(mf6.CacheSize() == 0);
+//     cse498::MemoFunction<int> mf6(Exception);
+//     REQUIRE_THROWS_AS(mf6(), std::logic_error);
+//     REQUIRE(mf6.CacheSize() == 0);
 
 //    std::function<int()> F;
 //    cse498::MemoFunction<int> mf7(F);
@@ -95,16 +92,16 @@ TEST_CASE("MemoFunction: No argument", "[Memofunction]")
 //   REQUIRE(mf7.CacheSize() == 0);
 //}
 
-//int Fib(int x) {
-//  if (x < 2) {
-//    return x;
-// } else {
-//    return Fib(x - 2) + Fib(x - 1);
-//  }
-//}
+// int Fib(int x) {
+//   if (x < 2) {
+//     return x;
+//  } else {
+//     return Fib(x - 2) + Fib(x - 1);
+//   }
+// }
 
 // Performance testing is not appropriate here
-//TEST_CASE("MemoFunction: Performance", "[MemoFunction]"{
+// TEST_CASE("MemoFunction: Performance", "[MemoFunction]"{
 //    cse498::MemoFunction<int, int> mf8(Fib);
 //
 //    auto start1 = high_resolution_clock::now();
@@ -121,12 +118,11 @@ TEST_CASE("MemoFunction: No argument", "[Memofunction]")
 //    auto time2 = duration_cast<microseconds>(end2 - start2).count();
 //    REQUIRE(time1 > time2 * 100);
 //
-    //std::cout << "Time 1:" << time1 << std::endl;
-    //std::cout << "Time 2:" << time2 << std::endl;
+// std::cout << "Time 1:" << time1 << std::endl;
+// std::cout << "Time 2:" << time2 << std::endl;
 //}
 
-TEST_CASE("MemoFunction: Cache limit", "[MemoFunction]")
-{
+TEST_CASE("MemoFunction: Cache limit", "[MemoFunction]") {
     cse498::MemoFunction<int, int> mf9(MultBy3);
     mf9.SetLimit(2);
     mf9(1); // cache = {1}
@@ -171,7 +167,7 @@ TEST_CASE("MemoFunction: Cache limit", "[MemoFunction]")
     REQUIRE(mf9.CacheSize() == 0);
     mf9.SetLimit(-1); // wraps around and sets it to max size_t value
     for (int i = 0; i < 10000; i++) {
-      mf9(i);
+        mf9(i);
     }
     REQUIRE(mf9.CacheSize() == 10000); // doesnt prove much but shows limit is set high
     mf9.SetLimit(INT_MAX);

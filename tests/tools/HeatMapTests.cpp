@@ -100,7 +100,6 @@ TEST_CASE("HeatMap: Adding second log to Heatmap", "[HeatMap]") {
     CHECK(map9.GetInvalidInputs().size() == 4);
 }
 
-
 TEST_CASE("HeatMap: positions far outside map bounds", "[HeatMap]") {
     cse498::ActionLog test_log;
 

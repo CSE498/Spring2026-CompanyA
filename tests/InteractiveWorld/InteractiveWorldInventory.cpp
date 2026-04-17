@@ -2,8 +2,8 @@
  * @file InteractiveWorldInventory.cpp
  */
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/Worlds/Hub/InteractiveWorldInventory.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 using namespace cse498;
 
