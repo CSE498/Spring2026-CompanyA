@@ -14,6 +14,8 @@
 #include <string>
 
 
+#include "../../../Analyze/AnalyticsManager.hpp"
+#include "../../../Analyze/StatsTracker.hpp"
 #include "../GameView.hpp"
 #include "../ImageGrid.hpp"
 #include "../ImageManager.hpp"
@@ -34,7 +36,7 @@ enum class GameState {
     DUNGEON, /// Procedurally generated dungeon world
     PAUSED, /// Paused state (reachable from OVERWORLD or DUNGEON)
     SETTINGS, /// Settings screen (placeholder)
-    STATS,    /// Contains information captured in gameplay
+    STATS, /// Contains information captured in gameplay
     QUIT /// Exit state
 };
 
@@ -100,6 +102,12 @@ private:
 
     int mDungeonPlayerX = kInitialPlayerX; /// Player X position in dungeon tile coordinates
     int mDungeonPlayerY = kInitialPlayerY; /// Player Y position in dungeon tile coordinates
+
+    // -------------------------
+    // Stats state
+    // -------------------------
+    std::unique_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
+    std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
 
     // -------------------------
     // Runtime flags
