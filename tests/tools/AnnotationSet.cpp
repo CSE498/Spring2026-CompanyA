@@ -4,7 +4,7 @@
 #include <vector>
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-static std::set<std::string> AsSet(const std::vector<std::string> &v) {
+static std::set<std::string> AsSet(const std::vector<std::string>& v) {
     return std::set<std::string>(v.begin(), v.end());
 }
 
@@ -42,7 +42,7 @@ TEST_CASE("AnnotationSet basic behavior", "[tools][AnnotationSet]") {
 
     // Iteration (order independent)
     std::set<std::string> visited;
-    for (const auto &t: set)
+    for (const auto& t: set)
         visited.insert(t);
     CHECK(visited == std::set<std::string>{"b"});
 }

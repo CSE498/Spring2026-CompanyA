@@ -8,11 +8,11 @@
  */
 
 #define SDL_MAIN_HANDLED
-#include "../../source/Interfaces/GUI/interface/Game.hpp"
-#include "../../source/Interfaces/GUI/GameView.hpp"
-#include "../../source/Interfaces/GUI/ErrorManager.hpp"
-#include <iostream>
 #include <SDL2/SDL.h>
+#include <iostream>
+#include "../../source/Interfaces/GUI/ErrorManager.hpp"
+#include "../../source/Interfaces/GUI/GameView.hpp"
+#include "../../source/Interfaces/GUI/interface/Game.hpp"
 
 // -----------------------------------------------------------------------
 //  Helper: pause and print a step header so the demo is easy to follow
@@ -24,8 +24,7 @@ void DemoStep(const std::string& title) {
     SDL_Delay(2000); // pause 1 second between steps so changes are visible
 }
 
-int main()
-{
+int main() {
     // -----------------------------------------------------------------------
     //  DEMO 1 — GameView standalone usage
     //  GameView manages the SDL window and renderer independently.
@@ -41,7 +40,8 @@ int main()
             SDL_Event e;
             while (SDL_GetTicks() - start < static_cast<Uint32>(ms)) {
                 while (SDL_PollEvent(&e)) {
-                    if (e.type == SDL_QUIT) return;
+                    if (e.type == SDL_QUIT)
+                        return;
                 }
                 v.Present();
                 SDL_Delay(16); // ~60fps
@@ -55,10 +55,10 @@ int main()
         }
 
         std::cout << "Window title:   Slay The Dungeon\n";
-        std::cout << "Window width:   " << view.GetWidth()  << "px\n";
+        std::cout << "Window width:   " << view.GetWidth() << "px\n";
         std::cout << "Window height:  " << view.GetHeight() << "px\n";
         std::cout << "Renderer ready: " << (view.IsReady() ? "yes" : "no") << "\n";
-        std::cout << "Window ptr:     " << view.GetWindow()   << "\n";
+        std::cout << "Window ptr:     " << view.GetWindow() << "\n";
         std::cout << "Renderer ptr:   " << view.GetRenderer() << "\n";
 
         // Black screen
@@ -116,15 +116,12 @@ int main()
 
         // Check initial state
         std::cout << "Initial state: MAIN_MENU ("
-                  << (game.GetState() == cse498::GameState::MAIN_MENU ? "confirmed" : "unexpected")
-                  << ")\n";
+                  << (game.GetState() == cse498::GameState::MAIN_MENU ? "confirmed" : "unexpected") << ")\n";
 
         // GameView is accessible via Game for external SDL operations
         auto view = game.GetGameView();
-        std::cout << "Window ready via Game::GetGameView(): "
-                  << (view->IsReady() ? "yes" : "no") << "\n";
-        std::cout << "Window size: "
-                  << view->GetWidth() << "x" << view->GetHeight() << "\n";
+        std::cout << "Window ready via Game::GetGameView(): " << (view->IsReady() ? "yes" : "no") << "\n";
+        std::cout << "Window size: " << view->GetWidth() << "x" << view->GetHeight() << "\n";
 
 
         // Launch the full game loop

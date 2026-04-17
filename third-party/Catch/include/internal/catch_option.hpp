@@ -11,37 +11,32 @@
 namespace Catch {
 
     // An optional type
-    template<typename T>
-    class Option {
+    template <typename T> class Option {
     public:
-        Option() : nullableValue( nullptr ) {}
-        Option( T const& _value )
-        : nullableValue( new( storage ) T( _value ) )
-        {}
-        Option( Option const& _other )
-        : nullableValue( _other ? new( storage ) T( *_other ) : nullptr )
-        {}
+        Option(): nullableValue( nullptr ) {}
+        Option( T const& _value ):
+            nullableValue( new ( storage ) T( _value ) ) {}
+        Option( Option const& _other ):
+            nullableValue( _other ? new ( storage ) T( *_other ) : nullptr ) {}
 
-        ~Option() {
-            reset();
-        }
+        ~Option() { reset(); }
 
-        Option& operator= ( Option const& _other ) {
-            if( &_other != this ) {
+        Option& operator=( Option const& _other ) {
+            if ( &_other != this ) {
                 reset();
-                if( _other )
-                    nullableValue = new( storage ) T( *_other );
+                if ( _other )
+                    nullableValue = new ( storage ) T( *_other );
             }
             return *this;
         }
-        Option& operator = ( T const& _value ) {
+        Option& operator=( T const& _value ) {
             reset();
-            nullableValue = new( storage ) T( _value );
+            nullableValue = new ( storage ) T( _value );
             return *this;
         }
 
         void reset() {
-            if( nullableValue )
+            if ( nullableValue )
                 nullableValue->~T();
             nullableValue = nullptr;
         }
@@ -58,14 +53,12 @@ namespace Catch {
         bool some() const { return nullableValue != nullptr; }
         bool none() const { return nullableValue == nullptr; }
 
-        bool operator !() const { return nullableValue == nullptr; }
-        explicit operator bool() const {
-            return some();
-        }
+        bool operator!() const { return nullableValue == nullptr; }
+        explicit operator bool() const { return some(); }
 
     private:
-        T *nullableValue;
-        alignas(alignof(T)) char storage[sizeof(T)];
+        T* nullableValue;
+        alignas( alignof( T ) ) char storage[sizeof( T )];
     };
 
 } // end namespace Catch

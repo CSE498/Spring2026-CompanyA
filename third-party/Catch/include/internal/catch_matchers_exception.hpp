@@ -10,27 +10,27 @@
 #include "catch_matchers.h"
 
 namespace Catch {
-namespace Matchers {
-namespace Exception {
+    namespace Matchers {
+        namespace Exception {
 
-class ExceptionMessageMatcher : public MatcherBase<std::exception> {
-    std::string m_message;
-public:
+            class ExceptionMessageMatcher : public MatcherBase<std::exception> {
+                std::string m_message;
 
-    ExceptionMessageMatcher(std::string const& message):
-        m_message(message)
-    {}
+            public:
+                ExceptionMessageMatcher( std::string const& message ):
+                    m_message( message ) {}
 
-    bool match(std::exception const& ex) const override;
+                bool match( std::exception const& ex ) const override;
 
-    std::string describe() const override;
-};
+                std::string describe() const override;
+            };
 
-} // namespace Exception
+        } // namespace Exception
 
-Exception::ExceptionMessageMatcher Message(std::string const& message);
+        Exception::ExceptionMessageMatcher
+        Message( std::string const& message );
 
-} // namespace Matchers
+    } // namespace Matchers
 } // namespace Catch
 
 #endif // TWOBLUECUBES_CATCH_MATCHERS_EXCEPTION_HPP_INCLUDED

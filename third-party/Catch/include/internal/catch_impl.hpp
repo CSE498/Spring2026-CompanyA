@@ -9,15 +9,14 @@
 #define TWOBLUECUBES_CATCH_IMPL_HPP_INCLUDED
 
 #ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wweak-vtables"
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wweak-vtables"
 #endif
 
 // Keep these here for external reporters
-#include "catch_test_spec.h"
-#include "catch_test_case_tracker.h"
-
 #include "catch_leak_detector.h"
+#include "catch_test_case_tracker.h"
+#include "catch_test_spec.h"
 
 // Cpp files will be included in the single-header file here
 // ~*~* CATCH_CPP_STITCH_PLACE *~*~
@@ -27,7 +26,7 @@ namespace Catch {
 }
 
 #ifdef __clang__
-#pragma clang diagnostic pop
+#    pragma clang diagnostic pop
 #endif
 
 #endif // TWOBLUECUBES_CATCH_IMPL_HPP_INCLUDED

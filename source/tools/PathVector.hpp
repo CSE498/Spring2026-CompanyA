@@ -8,39 +8,35 @@
 #pragma once
 
 
-
 #include <cmath>
 #include <string>
 
 #include "../core/WorldPosition.hpp"
 
-namespace cse498
-{
+namespace cse498 {
 class WorldPosition;
 
 /**
  * PathVector is a directional vector that is in charge of
  * 1. Movement (You have a point a --> point b scaled by delta time and speed of the character)
- * 2. Calculations for collisions (you can test with vectors if the distance between two vectors are too close = collision)
+ * 2. Calculations for collisions (you can test with vectors if the distance between two vectors are too close =
+ * collision)
  *
  */
-class PathVector
-{
+class PathVector {
 private:
     double mX = 0.0;
     double mY = 0.0;
 
 
 public:
-
     /**
      * Creates a path vector pointing in the direction of 'to'
      * Example: (0,0) --> (1,1) then resulting vector is 1,1
      * @param from
      * @param to
      */
-    constexpr PathVector(const WorldPosition& from, const WorldPosition& to)
-    {
+    constexpr PathVector(const WorldPosition& from, const WorldPosition& to) {
         mX = to.X() - from.X();
         mY = to.Y() - from.Y();
     }
@@ -50,16 +46,9 @@ public:
      * @param y - y part
      */
     constexpr PathVector(double x, double y) : mX(x), mY(y) {}
-    constexpr PathVector operator+(const PathVector& rhs) const
-    {
-        return {mX + rhs.mX, mY + rhs.mY};
-    }
-    constexpr PathVector operator-(const PathVector& rhs) const
-    {
-        return {mX - rhs.mX, mY - rhs.mY};
-    }
-    constexpr bool operator==(const PathVector& rhs) const
-    {
+    constexpr PathVector operator+(const PathVector& rhs) const { return {mX + rhs.mX, mY + rhs.mY}; }
+    constexpr PathVector operator-(const PathVector& rhs) const { return {mX - rhs.mX, mY - rhs.mY}; }
+    constexpr bool operator==(const PathVector& rhs) const {
         return std::abs(mX - rhs.mX) < 1e-6 && std::abs(mY - rhs.mY) < 1e-6;
     }
     /// Classic dot project
@@ -73,8 +62,7 @@ public:
      * Normalizes the vector IN-PLACE so magnitude is approx 1
      * @return modified in place vector
      */
-    PathVector& Normalize()
-    {
+    PathVector& Normalize() {
         double mag = GetMagnitude();
         mX /= mag;
         mY /= mag;
@@ -85,14 +73,12 @@ public:
      * @param scale_val scale factor for the vector. Changes x,y by this amount so mag --> mag * scale_val
      * @return scaled vector in place.
      */
-    constexpr PathVector& Scale(double scale_val)
-    {
+    constexpr PathVector& Scale(double scale_val) {
         mX *= scale_val;
         mY *= scale_val;
 
         return *this;
     }
-
 
 
     [[nodiscard]] constexpr double X() const { return mX; }
@@ -117,12 +103,10 @@ public:
      * @param this_onto_that whatever is put here is projected onto the object calling this function.
      * @return
      */
-    [[nodiscard]] constexpr PathVector Project(const WorldPosition& this_onto_that) const
-    {
+    [[nodiscard]] constexpr PathVector Project(const WorldPosition& this_onto_that) const {
         return Project(PathVector(this_onto_that.X(), this_onto_that.Y()));
     }
-    [[nodiscard]] constexpr PathVector Project(const PathVector& this_onto_that) const
-    {
+    [[nodiscard]] constexpr PathVector Project(const PathVector& this_onto_that) const {
         // project input onto "this"
         PathVector result = *this;
         double top = this_onto_that.Dot(*this);
@@ -130,15 +114,12 @@ public:
         result.Scale(top / bottom);
         return result;
     }
-
 };
 
 inline WorldPosition operator+(const WorldPosition& p, const PathVector& v) { return {p.X() + v.X(), p.Y() + v.Y()}; }
 inline WorldPosition operator-(const WorldPosition& p, const PathVector& v) { return {p.X() - v.X(), p.Y() - v.Y()}; }
-inline PathVector operator-(const WorldPosition& p, const WorldPosition& pos) { return {p.X() - pos.X(), p.Y() - pos.Y()}; }
-
+inline PathVector operator-(const WorldPosition& p, const WorldPosition& pos) {
+    return {p.X() - pos.X(), p.Y() - pos.Y()};
 }
 
-
-
-
+} // namespace cse498

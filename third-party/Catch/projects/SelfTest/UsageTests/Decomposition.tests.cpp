@@ -6,34 +6,35 @@
  *  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#include <iostream>
 #include <cstdio>
+#include <iostream>
 
 namespace {
 
-struct truthy {
-    truthy(bool b):m_value(b){}
-    operator bool() const {
-        return false;
-    }
-    bool m_value;
-};
+    struct truthy {
+        truthy( bool b ): m_value( b ) {}
+        operator bool() const { return false; }
+        bool m_value;
+    };
 
-std::ostream& operator<<(std::ostream& o, truthy) {
-    o << "Hey, its truthy!";
-    return o;
-}
+    std::ostream& operator<<( std::ostream& o, truthy ) {
+        o << "Hey, its truthy!";
+        return o;
+    }
 
 } // end anonymous namespace
 
 #include "catch.hpp"
 
-TEST_CASE( "Reconstruction should be based on stringification: #914" , "[Decomposition][failing][.]") {
-    CHECK(truthy(false));
+TEST_CASE( "Reconstruction should be based on stringification: #914",
+           "[Decomposition][failing][.]" ) {
+    CHECK( truthy( false ) );
 }
 
-TEST_CASE("#1005: Comparing pointer to int and long (NULL can be either on various systems)", "[Decomposition]") {
+TEST_CASE( "#1005: Comparing pointer to int and long (NULL can be either on "
+           "various systems)",
+           "[Decomposition]" ) {
     FILE* fptr = nullptr;
-    REQUIRE(fptr == 0);
-    REQUIRE(fptr == 0l);
+    REQUIRE( fptr == 0 );
+    REQUIRE( fptr == 0l );
 }

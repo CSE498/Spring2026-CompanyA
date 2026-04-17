@@ -17,9 +17,8 @@
 namespace Catch {
 
     struct AutomakeReporter : StreamingReporterBase<AutomakeReporter> {
-        AutomakeReporter( ReporterConfig const& _config )
-          :   StreamingReporterBase( _config )
-        {}
+        AutomakeReporter( ReporterConfig const& _config ):
+            StreamingReporterBase( _config ) {}
 
         ~AutomakeReporter() override;
 
@@ -29,14 +28,18 @@ namespace Catch {
 
         void assertionStarting( AssertionInfo const& ) override {}
 
-        bool assertionEnded( AssertionStats const& /*_assertionStats*/ ) override { return true; }
+        bool
+        assertionEnded( AssertionStats const& /*_assertionStats*/ ) override {
+            return true;
+        }
 
         void testCaseEnded( TestCaseStats const& _testCaseStats ) override {
-            // Possible values to emit are PASS, XFAIL, SKIP, FAIL, XPASS and ERROR.
+            // Possible values to emit are PASS, XFAIL, SKIP, FAIL, XPASS and
+            // ERROR.
             stream << ":test-result: ";
-            if (_testCaseStats.totals.assertions.allPassed()) {
+            if ( _testCaseStats.totals.assertions.allPassed() ) {
                 stream << "PASS";
-            } else if (_testCaseStats.totals.assertions.allOk()) {
+            } else if ( _testCaseStats.totals.assertions.allOk() ) {
                 stream << "XFAIL";
             } else {
                 stream << "FAIL";
@@ -48,14 +51,13 @@ namespace Catch {
         void skipTest( TestCaseInfo const& testInfo ) override {
             stream << ":test-result: SKIP " << testInfo.name << '\n';
         }
-
     };
 
 #ifdef CATCH_IMPL
     AutomakeReporter::~AutomakeReporter() {}
 #endif
 
-    CATCH_REGISTER_REPORTER( "automake", AutomakeReporter)
+    CATCH_REGISTER_REPORTER( "automake", AutomakeReporter )
 
 } // end namespace Catch
 

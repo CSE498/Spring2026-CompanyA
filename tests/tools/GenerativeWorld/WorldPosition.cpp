@@ -2,48 +2,39 @@
 
 #include "../../../source/tools/WorldGridPosition.hpp"
 
-TEST_CASE("Test WorldGridPosition Constructor", "[core]")
-{
-    SECTION("Default Constructor")
-    {
+TEST_CASE("Test WorldGridPosition Constructor", "[core]") {
+    SECTION("Default Constructor") {
         cse498::WorldGridPosition pos;
         CHECK(pos.X() == 0.0);
         CHECK(pos.Y() == 0.0);
     }
 
-    SECTION("Constructor with doubles")
-    {
+    SECTION("Constructor with doubles") {
         cse498::WorldGridPosition pos2(3.5, 4.5);
         CHECK(pos2.X() == 3.5);
         CHECK(pos2.Y() == 4.5);
     }
 
-    SECTION("Constructor with integers")
-    {
+    SECTION("Constructor with integers") {
         cse498::WorldGridPosition pos3(3, 4);
         CHECK(pos3.X() == 3.0);
         CHECK(pos3.Y() == 4.0);
     }
-
 }
 
-TEST_CASE("Test Getdir and Setdir", "[core]")
-{
-    SECTION("Default direction is NORTH") 
-    {
+TEST_CASE("Test Getdir and Setdir", "[core]") {
+    SECTION("Default direction is NORTH") {
         cse498::WorldGridPosition pos(5.0, 10.0);
         CHECK(pos.Dir() == cse498::WorldGridPosition::Orientation::NORTH);
     }
-    
-    SECTION("Set direction to SOUTH") 
-    {
+
+    SECTION("Set direction to SOUTH") {
         cse498::WorldGridPosition pos(5.0, 10.0);
         pos.SetDir(cse498::WorldGridPosition::Orientation::SOUTH);
         CHECK(pos.Dir() == cse498::WorldGridPosition::Orientation::SOUTH);
     }
-    
-    SECTION("Change direction multiple times") 
-    {
+
+    SECTION("Change direction multiple times") {
         cse498::WorldGridPosition pos(5.0, 10.0);
         pos.SetDir(cse498::WorldGridPosition::Orientation::EAST);
         pos.SetDir(cse498::WorldGridPosition::Orientation::WEST);
@@ -52,25 +43,24 @@ TEST_CASE("Test Getdir and Setdir", "[core]")
 }
 
 TEST_CASE("Test isColliding", "[core]") {
-    
     SECTION("Same position") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(5.0, 10.0);
         CHECK(pos1.IsColliding(pos2) == true);
     }
-    
+
     SECTION("Same cell however different decimals") {
         cse498::WorldGridPosition pos1(5.1, 10.2);
         cse498::WorldGridPosition pos2(5.9, 10.8);
         CHECK(pos1.IsColliding(pos2) == true);
     }
-    
+
     SECTION("Different cells") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(6.0, 10.0);
         CHECK(pos1.IsColliding(pos2) == false);
     }
-    
+
     SECTION("Adjacent cells") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(5.0, 11.0);
@@ -79,13 +69,12 @@ TEST_CASE("Test isColliding", "[core]") {
 }
 
 TEST_CASE("Test IsAdjacentCell", "[core]") {
-    
     SECTION("Same cell") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(5.0, 10.0);
         CHECK(pos1.IsAdjacentCell(pos2) == false);
     }
-    
+
     SECTION("One cell to the right") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(6.0, 10.0);
@@ -109,7 +98,7 @@ TEST_CASE("Test IsAdjacentCell", "[core]") {
         cse498::WorldGridPosition pos2(5.0, 11.0);
         CHECK(pos1.IsAdjacentCell(pos2) == true);
     }
-    
+
     SECTION("Diagonal") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(6.0, 11.0);
@@ -118,13 +107,12 @@ TEST_CASE("Test IsAdjacentCell", "[core]") {
 }
 
 TEST_CASE("Test CellDistance", "[core]") {
-    
     SECTION("Same cell") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(5.0, 10.0);
         CHECK(pos1.CellDistance(pos2) == 0);
     }
-    
+
     SECTION("One cell away") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(6.0, 10.0);
@@ -145,7 +133,6 @@ TEST_CASE("Test CellDistance", "[core]") {
 }
 
 TEST_CASE("Test Offset", "[core]") {
-
     SECTION("Positive offset") {
         cse498::WorldGridPosition pos(5.0, 10.0);
         cse498::WorldGridPosition result = pos.Offset(2.0, 3.0);
@@ -177,7 +164,6 @@ TEST_CASE("Test Offset", "[core]") {
 }
 
 TEST_CASE("Test CellDistance edge cases", "[core]") {
-
     SECTION("Diagonal distance") {
         cse498::WorldGridPosition pos1(0.0, 0.0);
         cse498::WorldGridPosition pos2(3.0, 4.0);
@@ -198,7 +184,6 @@ TEST_CASE("Test CellDistance edge cases", "[core]") {
 }
 
 TEST_CASE("Test IsAdjacentCell edge cases", "[core]") {
-
     SECTION("Two cells apart horizontally is not adjacent") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(7.0, 10.0);
@@ -219,7 +204,6 @@ TEST_CASE("Test IsAdjacentCell edge cases", "[core]") {
 }
 
 TEST_CASE("Test IsColliding edge cases", "[core]") {
-
     SECTION("Collision is symmetric") {
         cse498::WorldGridPosition pos1(5.0, 10.0);
         cse498::WorldGridPosition pos2(5.5, 10.5);

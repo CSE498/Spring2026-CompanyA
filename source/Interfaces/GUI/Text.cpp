@@ -16,17 +16,9 @@ const std::string Text::DEFAULT_FONT = DEFAULT_FONT_PATH;
  * Constructor
  * @param renderer SDL renderer for drawing
  */
-Text::Text(SDL_Renderer* renderer)
-    : mContent("")
-    , mFontPath(DEFAULT_FONT)
-    , mColor(DEFAULT_COLOR)
-    , mFontSize(DEFAULT_SIZE)
-    , mBold(false)
-    , mItalic(false)
-    , mInitialized(false)
-    , mRenderer(renderer)
-    , mFont(nullptr)
-{
+Text::Text(SDL_Renderer* renderer) :
+    mContent(""), mFontPath(DEFAULT_FONT), mColor(DEFAULT_COLOR), mFontSize(DEFAULT_SIZE), mBold(false), mItalic(false),
+    mInitialized(false), mRenderer(renderer), mFont(nullptr) {
     // Initialize SDL_ttf if not already initialized
     // Static bool ensures TTF_Init() is called only once across ALL Text objects
     // This is necessary because TTF_Init() initializes global SDL_ttf state
@@ -34,7 +26,7 @@ Text::Text(SDL_Renderer* renderer)
     if (!ttf_initialized) {
         if (TTF_Init() == -1) {
             std::cerr << "Error: Failed to initialize SDL_ttf: " << TTF_GetError() << std::endl;
-            return;  // mInitialized remains false
+            return; // mInitialized remains false
         }
         ttf_initialized = true;
     }
@@ -52,17 +44,10 @@ Text::Text(SDL_Renderer* renderer)
 /**
  * Move constructor
  */
-Text::Text(Text&& other) noexcept
-    : mContent(std::move(other.mContent))
-    , mFontPath(std::move(other.mFontPath))
-    , mColor(other.mColor)
-    , mFontSize(other.mFontSize)
-    , mBold(other.mBold)
-    , mItalic(other.mItalic)
-    , mInitialized(other.mInitialized)
-    , mRenderer(other.mRenderer)
-    , mFont(std::move(other.mFont))
-{
+Text::Text(Text&& other) noexcept :
+    mContent(std::move(other.mContent)), mFontPath(std::move(other.mFontPath)), mColor(other.mColor),
+    mFontSize(other.mFontSize), mBold(other.mBold), mItalic(other.mItalic), mInitialized(other.mInitialized),
+    mRenderer(other.mRenderer), mFont(std::move(other.mFont)) {
     other.mRenderer = nullptr;
     other.mInitialized = false;
 }
@@ -95,9 +80,8 @@ bool Text::SetFont(const std::string& font_name) {
     if (!ReloadFont()) {
         // Revert to old font on failure
         mFontPath = old_path;
-        ReloadFont();  // Try to restore old font
-        std::cerr << "Warning: Failed to set font '" << font_name
-                  << "', keeping previous font" << std::endl;
+        ReloadFont(); // Try to restore old font
+        std::cerr << "Warning: Failed to set font '" << font_name << "', keeping previous font" << std::endl;
         return false;
     }
 
@@ -117,7 +101,7 @@ bool Text::SetSize(int point_size) {
     if (!ReloadFont()) {
         // Revert to old size on failure
         mFontSize = old_size;
-        ReloadFont();  // Try to restore
+        ReloadFont(); // Try to restore
         std::cerr << "Warning: Failed to set size " << point_size << std::endl;
         return false;
     }
@@ -152,7 +136,7 @@ void Text::ResetStyle() {
 bool Text::Draw(int x, int y) {
     // Validate state
     if (mContent.empty()) {
-        return true;  // Nothing to draw is not an error
+        return true; // Nothing to draw is not an error
     }
 
     if (!mRenderer) {
@@ -248,8 +232,7 @@ bool Text::ReloadFont() {
 
         // If still no font, return false
         if (!raw_font) {
-            std::cerr << "Error: Failed to load font '" << mFontPath
-                      << "': " << TTF_GetError() << std::endl;
+            std::cerr << "Error: Failed to load font '" << mFontPath << "': " << TTF_GetError() << std::endl;
             return false;
         }
     }

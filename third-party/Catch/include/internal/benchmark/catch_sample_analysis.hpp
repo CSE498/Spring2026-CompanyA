@@ -16,14 +16,13 @@
 #include "catch_outlier_classification.hpp"
 
 #include <algorithm>
-#include <vector>
-#include <string>
 #include <iterator>
+#include <string>
+#include <vector>
 
 namespace Catch {
     namespace Benchmark {
-        template <typename Duration>
-        struct SampleAnalysis {
+        template <typename Duration> struct SampleAnalysis {
             std::vector<Duration> samples;
             Estimate<Duration> mean;
             Estimate<Duration> standard_deviation;
@@ -33,10 +32,13 @@ namespace Catch {
             template <typename Duration2>
             operator SampleAnalysis<Duration2>() const {
                 std::vector<Duration2> samples2;
-                samples2.reserve(samples.size());
-                std::transform(samples.begin(), samples.end(), std::back_inserter(samples2), [](Duration d) { return Duration2(d); });
+                samples2.reserve( samples.size() );
+                std::transform( samples.begin(),
+                                samples.end(),
+                                std::back_inserter( samples2 ),
+                                []( Duration d ) { return Duration2( d ); } );
                 return {
-                    std::move(samples2),
+                    std::move( samples2 ),
                     mean,
                     standard_deviation,
                     outliers,

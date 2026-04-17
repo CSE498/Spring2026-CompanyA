@@ -18,32 +18,28 @@ using namespace cse498;
  */
 class SDLMock {
 public:
- SDL_Window* window = nullptr;
- SDL_Renderer* renderer = nullptr;
+    SDL_Window* window = nullptr;
+    SDL_Renderer* renderer = nullptr;
 
- SDLMock() {
-  REQUIRE(SDL_Init(SDL_INIT_VIDEO) == 0);
+    SDLMock() {
+        REQUIRE(SDL_Init(SDL_INIT_VIDEO) == 0);
 
-  window = SDL_CreateWindow("Test",
-                            SDL_WINDOWPOS_UNDEFINED,
-                            SDL_WINDOWPOS_UNDEFINED,
-                            100, 100,
-                            SDL_WINDOW_HIDDEN);
-  REQUIRE(window != nullptr);
+        window =
+                SDL_CreateWindow("Test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 100, 100, SDL_WINDOW_HIDDEN);
+        REQUIRE(window != nullptr);
 
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-  REQUIRE(renderer != nullptr);
- }
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+        REQUIRE(renderer != nullptr);
+    }
 
- ~SDLMock() {
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
-  SDL_Quit();
- }
+    ~SDLMock() {
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
 };
 
-TEST_CASE("Text Constructor initializes usable object", "[Text]")
-{
+TEST_CASE("Text Constructor initializes usable object", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -51,41 +47,37 @@ TEST_CASE("Text Constructor initializes usable object", "[Text]")
 
     CHECK(text.GetWidth() > 0);
     CHECK(text.GetHeight() > 0);
-    CHECK(text.Draw(0,0));
+    CHECK(text.Draw(0, 0));
 }
 
-TEST_CASE("Text Content", "[Text]")
-{
- SDLMock mock;
- Text text(mock.renderer);
+TEST_CASE("Text Content", "[Text]") {
+    SDLMock mock;
+    Text text(mock.renderer);
 
- text.SetContent("Hello World");
- CHECK(text.GetContent() == "Hello World");
+    text.SetContent("Hello World");
+    CHECK(text.GetContent() == "Hello World");
 }
 
-TEST_CASE("Text Color", "[Text]")
-{
- SDLMock mock;
- Text text(mock.renderer);
+TEST_CASE("Text Color", "[Text]") {
+    SDLMock mock;
+    Text text(mock.renderer);
 
- text.SetColor(255, 100, 50);
- Color c = text.GetColor();
- CHECK(c.r == 255);
- CHECK(c.g == 100);
- CHECK(c.b == 50);
+    text.SetColor(255, 100, 50);
+    Color c = text.GetColor();
+    CHECK(c.r == 255);
+    CHECK(c.g == 100);
+    CHECK(c.b == 50);
 }
 
-TEST_CASE("Text Size", "[Text]")
-{
- SDLMock mock;
- Text text(mock.renderer);
+TEST_CASE("Text Size", "[Text]") {
+    SDLMock mock;
+    Text text(mock.renderer);
 
- text.SetSize(24);
- CHECK(text.GetSize() == 24);
+    text.SetSize(24);
+    CHECK(text.GetSize() == 24);
 }
 
-TEST_CASE("Empty content rendering", "[Text]")
-{
+TEST_CASE("Empty content rendering", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -98,8 +90,7 @@ TEST_CASE("Empty content rendering", "[Text]")
     CHECK(text.GetHeight() == 0);
 }
 
-TEST_CASE("Reset style", "[Text]")
-{
+TEST_CASE("Reset style", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -127,8 +118,7 @@ TEST_CASE("Reset style", "[Text]")
     CHECK(text.GetContent() == "Test");
 }
 
-TEST_CASE("Color with alpha channel", "[Text]")
-{
+TEST_CASE("Color with alpha channel", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -140,8 +130,7 @@ TEST_CASE("Color with alpha channel", "[Text]")
     CHECK(c.a == 128);
 }
 
-TEST_CASE("Text dimensions change with size", "[Text]")
-{
+TEST_CASE("Text dimensions change with size", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -156,8 +145,7 @@ TEST_CASE("Text dimensions change with size", "[Text]")
     CHECK(height24 > height12);
 }
 
-TEST_CASE("Text dimensions change with content", "[Text]")
-{
+TEST_CASE("Text dimensions change with content", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -171,8 +159,7 @@ TEST_CASE("Text dimensions change with content", "[Text]")
     CHECK(width2 > width1);
 }
 
-TEST_CASE("Invalid font path fallback", "[Text]")
-{
+TEST_CASE("Invalid font path fallback", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
     text.SetFont("nonexistent_font.ttf");
@@ -181,9 +168,8 @@ TEST_CASE("Invalid font path fallback", "[Text]")
     CHECK(text.GetFont() == DEFAULT_FONT_PATH);
 }
 
-TEST_CASE("Renderer can be set after construction", "[Text]")
-{
-    Text text;  // No renderer
+TEST_CASE("Renderer can be set after construction", "[Text]") {
+    Text text; // No renderer
     CHECK(text.GetRenderer() == nullptr);
 
     SDLMock mock;
@@ -191,8 +177,7 @@ TEST_CASE("Renderer can be set after construction", "[Text]")
     CHECK(text.GetRenderer() == mock.renderer);
 }
 
-TEST_CASE("Unicode content", "[Text]")
-{
+TEST_CASE("Unicode content", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -205,8 +190,7 @@ TEST_CASE("Unicode content", "[Text]")
     CHECK(text.GetHeight() > 0);
 }
 
-TEST_CASE("GetDimensions returns both width and height", "[Text]")
-{
+TEST_CASE("GetDimensions returns both width and height", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -224,8 +208,7 @@ TEST_CASE("GetDimensions returns both width and height", "[Text]")
     CHECK(dims.height > 0);
 }
 
-TEST_CASE("GetDimensions returns zeros for empty content", "[Text]")
-{
+TEST_CASE("GetDimensions returns zeros for empty content", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -237,8 +220,7 @@ TEST_CASE("GetDimensions returns zeros for empty content", "[Text]")
     CHECK(dims.height == 0);
 }
 
-TEST_CASE("GetDimensions changes with font size", "[Text]")
-{
+TEST_CASE("GetDimensions changes with font size", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -257,8 +239,7 @@ TEST_CASE("GetDimensions changes with font size", "[Text]")
     CHECK(dims_large.height > dims_small.height);
 }
 
-TEST_CASE("GetDimensions changes with content length", "[Text]")
-{
+TEST_CASE("GetDimensions changes with content length", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -279,8 +260,7 @@ TEST_CASE("GetDimensions changes with content length", "[Text]")
     CHECK(dims_long.height == dims_short.height);
 }
 
-TEST_CASE("GetDimensions with Unicode characters", "[Text]")
-{
+TEST_CASE("GetDimensions with Unicode characters", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -293,17 +273,15 @@ TEST_CASE("GetDimensions with Unicode characters", "[Text]")
     CHECK(dims.height > 0);
 }
 
-TEST_CASE("Draw throws exception without renderer", "[Text]")
-{
-    Text text;  // No renderer
+TEST_CASE("Draw throws exception without renderer", "[Text]") {
+    Text text; // No renderer
     text.SetContent("Test");
 
     // Should throw when trying to draw
     CHECK_FALSE(text.Draw(0, 0));
 }
 
-TEST_CASE("GetDimensions is more efficient than separate calls", "[Text]")
-{
+TEST_CASE("GetDimensions is more efficient than separate calls", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -320,8 +298,7 @@ TEST_CASE("GetDimensions is more efficient than separate calls", "[Text]")
     // (Performance benefit can't be tested directly in unit tests)
 }
 
-TEST_CASE("GetDimensions with bold text", "[Text]")
-{
+TEST_CASE("GetDimensions with bold text", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -340,8 +317,7 @@ TEST_CASE("GetDimensions with bold text", "[Text]")
     CHECK(dims_bold.width >= dims_normal.width);
 }
 
-TEST_CASE("GetDimensions with italic text", "[Text]")
-{
+TEST_CASE("GetDimensions with italic text", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -353,39 +329,36 @@ TEST_CASE("GetDimensions with italic text", "[Text]")
 
     // Italic text dimensions may vary
     CHECK(dims_italic.width > 0);
-    CHECK(dims_italic.height > 0 );
+    CHECK(dims_italic.height > 0);
 }
 
-TEST_CASE("GetDimensions struct can be copied", "[Text]")
-{
+TEST_CASE("GetDimensions struct can be copied", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
     text.SetContent("Copy Test");
 
     auto dims1 = text.GetDimensions();
-    auto dims2 = dims1;  // Copy
+    auto dims2 = dims1; // Copy
 
     CHECK(dims2.width == dims1.width);
     CHECK(dims2.height == dims1.height);
 }
 
-TEST_CASE("GetDimensions struct can be assigned", "[Text]")
-{
+TEST_CASE("GetDimensions struct can be assigned", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
     text.SetContent("Test");
 
     Text::Dimensions dims;
-    dims = text.GetDimensions();  // Assignment
+    dims = text.GetDimensions(); // Assignment
 
     CHECK(dims.width > 0);
     CHECK(dims.height > 0);
 }
 
-TEST_CASE("SetBold enables and disables bold", "[Text]")
-{
+TEST_CASE("SetBold enables and disables bold", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -401,8 +374,7 @@ TEST_CASE("SetBold enables and disables bold", "[Text]")
     CHECK(text.IsBold() == false);
 }
 
-TEST_CASE("SetItalic enables and disables italic", "[Text]")
-{
+TEST_CASE("SetItalic enables and disables italic", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -418,8 +390,7 @@ TEST_CASE("SetItalic enables and disables italic", "[Text]")
     CHECK(text.IsItalic() == false);
 }
 
-TEST_CASE("Bold and italic can be enabled simultaneously", "[Text]")
-{
+TEST_CASE("Bold and italic can be enabled simultaneously", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -435,8 +406,7 @@ TEST_CASE("Bold and italic can be enabled simultaneously", "[Text]")
     CHECK(text.GetHeight() > 0);
 }
 
-TEST_CASE("Text move constructor transfers ownership", "[Text]")
-{
+TEST_CASE("Text move constructor transfers ownership", "[Text]") {
     SDLMock mock;
     Text text1(mock.renderer);
     text1.SetContent("Original");
@@ -456,8 +426,7 @@ TEST_CASE("Text move constructor transfers ownership", "[Text]")
     CHECK(text1.GetRenderer() == nullptr);
 }
 
-TEST_CASE("Text move assignment transfers ownership", "[Text]")
-{
+TEST_CASE("Text move assignment transfers ownership", "[Text]") {
     SDLMock mock;
     Text text1(mock.renderer);
     text1.SetContent("Source");
@@ -480,8 +449,7 @@ TEST_CASE("Text move assignment transfers ownership", "[Text]")
     CHECK(text1.GetRenderer() == nullptr);
 }
 
-TEST_CASE("Draw succeeds with valid content and renderer", "[Text]")
-{
+TEST_CASE("Draw succeeds with valid content and renderer", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -493,8 +461,7 @@ TEST_CASE("Draw succeeds with valid content and renderer", "[Text]")
     CHECK(text.Draw(100, 200));
 }
 
-TEST_CASE("Draw succeeds with styled text", "[Text]")
-{
+TEST_CASE("Draw succeeds with styled text", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -508,8 +475,7 @@ TEST_CASE("Draw succeeds with styled text", "[Text]")
     CHECK(text.Draw(50, 50));
 }
 
-TEST_CASE("SetSize with extremely large size", "[Text]")
-{
+TEST_CASE("SetSize with extremely large size", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -531,8 +497,7 @@ TEST_CASE("Draw returns false when renderer is null", "[Text]") {
     CHECK_FALSE(text.Draw(0, 0));
 }
 
-TEST_CASE("Draw throws exception when font is not loaded", "[Text]")
-{
+TEST_CASE("Draw throws exception when font is not loaded", "[Text]") {
     SDLMock mock;
 
     // Create text with invalid default font path (simulate font load failure)
@@ -563,8 +528,7 @@ TEST_CASE("SetFont falls back to default for invalid font", "[Text]") {
     CHECK(text.GetFont() == DEFAULT_FONT_PATH);
 }
 
-TEST_CASE("Multiple Draw calls work correctly", "[Text]")
-{
+TEST_CASE("Multiple Draw calls work correctly", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -576,8 +540,7 @@ TEST_CASE("Multiple Draw calls work correctly", "[Text]")
     CHECK(text.Draw(30, 30));
 }
 
-TEST_CASE("Changing content between draws works", "[Text]")
-{
+TEST_CASE("Changing content between draws works", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -591,8 +554,7 @@ TEST_CASE("Changing content between draws works", "[Text]")
     CHECK(text.Draw(0, 0));
 }
 
-TEST_CASE("Very long text content", "[Text]")
-{
+TEST_CASE("Very long text content", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -606,8 +568,7 @@ TEST_CASE("Very long text content", "[Text]")
     CHECK(text.Draw(0, 0));
 }
 
-TEST_CASE("Special characters in text", "[Text]")
-{
+TEST_CASE("Special characters in text", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 
@@ -618,8 +579,7 @@ TEST_CASE("Special characters in text", "[Text]")
     CHECK(text.Draw(0, 0));
 }
 
-TEST_CASE("Toggling styles multiple times", "[Text]")
-{
+TEST_CASE("Toggling styles multiple times", "[Text]") {
     SDLMock mock;
     Text text(mock.renderer);
 

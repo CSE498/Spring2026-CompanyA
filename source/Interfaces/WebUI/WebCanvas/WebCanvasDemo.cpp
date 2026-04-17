@@ -13,18 +13,18 @@
  * In non-Emscripten builds a stub main() is provided so the file compiles.
  */
 
-#include "WebCanvas.hpp"
 #include "../../../tools/Color.hpp"
+#include "WebCanvas.hpp"
 
 #ifdef __EMSCRIPTEN__
-#include "../WebImage/WebImage.hpp"
-#include "../WebButton/WebButton.hpp"
-#include "../WebTextbox/WebTextbox.hpp"
 #include <emscripten.h>
+#include "../WebButton/WebButton.hpp"
+#include "../WebImage/WebImage.hpp"
+#include "../WebTextbox/WebTextbox.hpp"
 #endif
 
-#include <cmath>
 #include <array>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -57,16 +57,14 @@ constexpr std::string kStatusTextColor = "#aaaaaa";
 constexpr std::string kCanvasBorderColor = "#444444";
 
 constexpr std::array<std::string, 21> kHexColors{
-    kBgColor,          kAxisColor,         kHeaderRectColor,  kSectionATextColor,
-    kPulseStrokeColor, kPulseFillColor,    kWhiteColor,       kTriangleStrokeColor,
-    kTriangleFillColor, kSineTrailColor,   kMovingLineColor,  kSectionBTextColor,
-    kImagePlaceholderA, kImagePlaceholderB, kImagePlaceholderC, kButtonStartColor,
-    kButtonPauseColor, kScoreTextColor,    kLevelTextColor,   kStatusTextColor,
-    kCanvasBorderColor
-};
+        kBgColor,          kAxisColor,         kHeaderRectColor,     kSectionATextColor, kPulseStrokeColor,
+        kPulseFillColor,   kWhiteColor,        kTriangleStrokeColor, kTriangleFillColor, kSineTrailColor,
+        kMovingLineColor,  kSectionBTextColor, kImagePlaceholderA,   kImagePlaceholderB, kImagePlaceholderC,
+        kButtonStartColor, kButtonPauseColor,  kScoreTextColor,      kLevelTextColor,    kStatusTextColor,
+        kCanvasBorderColor};
 
 constexpr bool AllDemoColorsAreValid() {
-    for (const auto color : kHexColors) {
+    for (const auto color: kHexColors) {
         if (!cse498::Color::FromHex(color).has_value()) {
             return false;
         }
@@ -74,7 +72,7 @@ constexpr bool AllDemoColorsAreValid() {
     return true;
 }
 static_assert(AllDemoColorsAreValid());
-}
+} // namespace
 
 /// @brief Per-frame callback: Section A immediate-mode, then Section B via RenderFrame().
 static void demo_frame(void* /*arg*/) {
@@ -92,11 +90,7 @@ static void demo_frame(void* /*arg*/) {
     g_canvas->DrawLine(W * 0.5f, 0, W * 0.5f, H, 1.0f, kAxisColor);
 
     g_canvas->DrawRect(10.0f, 4.0f, 260.0f, 22.0f, kHeaderRectColor);
-    g_canvas->DrawText(14.0f, 20.0f,
-                    "Section A: immediate-mode primitives",
-                    kSectionATextColor,
-                    13.0f,
-                    "sans-serif");
+    g_canvas->DrawText(14.0f, 20.0f, "Section A: immediate-mode primitives", kSectionATextColor, 13.0f, "sans-serif");
     // Pulsing circle
     {
         const float r = 20.0f + 10.0f * std::sin(t * 2.0f);
@@ -110,7 +104,7 @@ static void demo_frame(void* /*arg*/) {
         std::vector<cse498::WebCanvas::Vec2> tri(3);
         for (int i = 0; i < 3; ++i) {
             const float a = t + i * 2.0943951f;
-            tri[i] = { cx + R * std::cos(a), cy + R * std::sin(a) };
+            tri[i] = {cx + R * std::cos(a), cy + R * std::sin(a)};
         }
         g_canvas->DrawPolygon(tri, kTriangleStrokeColor, 3.0f, kTriangleFillColor);
     }
@@ -123,7 +117,7 @@ static void demo_frame(void* /*arg*/) {
 
     // Moving thick line
     {
-        const float x1 = 60.0f,  y1 = 420.0f + std::sin(t * 1.5f) * 30.0f;
+        const float x1 = 60.0f, y1 = 420.0f + std::sin(t * 1.5f) * 30.0f;
         const float x2 = 420.0f, y2 = 520.0f + std::cos(t * 1.3f) * 30.0f;
         g_canvas->DrawLine(x1, y1, x2, y2, 6.0f, kMovingLineColor);
     }
@@ -131,11 +125,8 @@ static void demo_frame(void* /*arg*/) {
     // ---- Section B: real WebImage / WebButton / WebTextbox via ICanvasElement ----
 
     g_canvas->DrawRect(500.0f, 4.0f, 390.0f, 22.0f, kHeaderRectColor);
-    g_canvas->DrawText(504.0f, 20.0f,
-                   "Section B: real WebImage / WebButton / WebTextbox",
-                   kSectionBTextColor,
-                   13.0f,
-                   "sans-serif");
+    g_canvas->DrawText(504.0f, 20.0f, "Section B: real WebImage / WebButton / WebTextbox", kSectionBTextColor, 13.0f,
+                       "sans-serif");
 
     g_canvas->RenderFrame();
 }
@@ -146,19 +137,21 @@ int main() {
     static cse498::WebCanvas canvas("web-canvas");
     g_canvas = &canvas;
 
-    EM_ASM({
-        let c = document.getElementById("web-canvas");
-        if (!c) {
-            c = document.createElement("canvas");
-            c.id = "web-canvas";
-            document.body.appendChild(c);
-        }
-        c.width = 900;
-        c.height = 600;
-        c.style.border = "1px solid " + UTF8ToString($0);
-        c.style.display = "block";
-        c.style.margin = "16px auto";
-    }, kCanvasBorderColor.c_str());
+    EM_ASM(
+            {
+                let c = document.getElementById("web-canvas");
+                if (!c) {
+                    c = document.createElement("canvas");
+                    c.id = "web-canvas";
+                    document.body.appendChild(c);
+                }
+                c.width = 900;
+                c.height = 600;
+                c.style.border = "1px solid " + UTF8ToString($0);
+                c.style.display = "block";
+                c.style.margin = "16px auto";
+            },
+            kCanvasBorderColor.c_str());
 
     // ---- WebImage (z = 0) ----
     // Empty src triggers the error path → Draw() renders a BlankRect placeholder
@@ -169,7 +162,7 @@ int main() {
     img_a->SetPlaceholderColor(kImagePlaceholderA);
     img_a->SetCanvasRect(520.0f, 50.0f, 80.0f, 80.0f);
     img_a->SetZIndex(0);
-    img_a->Hide();   // DOM <img> hidden; only the canvas rendering is shown
+    img_a->Hide(); // DOM <img> hidden; only the canvas rendering is shown
 
     auto img_b = std::make_unique<cse498::WebImage>("");
     img_b->SetSize(80, 80);
@@ -194,13 +187,13 @@ int main() {
     btn_start->SetTextColor(kWhiteColor);
     btn_start->SetCanvasRect(520.0f, 160.0f, 200.0f, 28.0f);
     btn_start->SetZIndex(1);
-    btn_start->Hide();   // DOM <button> hidden; canvas rendering is shown
+    btn_start->Hide(); // DOM <button> hidden; canvas rendering is shown
 
     auto btn_pause = std::make_unique<cse498::WebButton>("Pause");
     btn_pause->SetSize(200, 28);
     btn_pause->SetBackgroundColor(kButtonPauseColor);
     btn_pause->SetTextColor(kWhiteColor);
-    btn_pause->Disable();   // disabled → Draw() uses grey background
+    btn_pause->Disable(); // disabled → Draw() uses grey background
     btn_pause->SetCanvasRect(730.0f, 160.0f, 150.0f, 28.0f);
     btn_pause->SetZIndex(1);
     btn_pause->Hide();
@@ -231,7 +224,7 @@ int main() {
     auto invisible = std::make_unique<cse498::WebTextbox>("THIS SHOULD NOT APPEAR");
     invisible->SetCanvasPosition(520.0f, 310.0f);
     invisible->SetZIndex(3);
-    invisible->SetVisible(false);   // ICanvasElement::SetVisible — skipped by RenderFrame
+    invisible->SetVisible(false); // ICanvasElement::SetVisible — skipped by RenderFrame
 
     canvas.AddElement(std::move(img_a));
     canvas.AddElement(std::move(img_b));
