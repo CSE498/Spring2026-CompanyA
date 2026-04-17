@@ -476,6 +476,7 @@ namespace Catch {
 #include <iosfwd>
 #include <string>
 #include <cstdint>
+#include <new>
 
 // We need a dummy global operator<< so we can bring it into Catch namespace later
 struct Catch_global_namespace_dummy {};
@@ -17973,4 +17974,3 @@ using Catch::Detail::Approx;
 // end catch_reenable_warnings.h
 // end catch.hpp
 #endif // TWOBLUECUBES_SINGLE_INCLUDE_CATCH_HPP_INCLUDED
-
