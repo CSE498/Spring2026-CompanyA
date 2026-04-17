@@ -12,6 +12,7 @@
 
 
 #include "BSP-Dungeon.hpp"
+#include "LevelBase.hpp"
 #include <cmath>
 #include <ranges>
 #include <algorithm>
@@ -41,8 +42,8 @@ struct LinkedRooms {
     public: 
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
-        WorldGeneration(const WeightedSet<std::string>& room_pool) 
-            : m_bsp(room_pool), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
+        WorldGeneration(const LevelBase& level) 
+            : m_bsp(level), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
               //mRoomHolder(room_pool), 
               m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'))
             {}

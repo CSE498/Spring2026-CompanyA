@@ -22,6 +22,7 @@
 #include <print>
 #include "RoomHolder.hpp"
 #include "../../tools/Random.hpp"
+#include "LevelBase.hpp"
 
 
 
@@ -73,10 +74,9 @@ namespace cse498 {
 
     public: 
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
-        /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
-        BSP(const cse498::WeightedSet<std::string>& room_pool,
-			const std::string& file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_") 
-			: m_room_holder(room_pool, file_path)
+        /// @param 
+        BSP(const LevelBase& level) 
+			: m_room_holder(level)
 		{ 
             insert_split(m_iterations); //Creates BSP Tree
             PostOrderDFS(); //Grabs all the generated room slots from the tree
@@ -86,14 +86,13 @@ namespace cse498 {
         /// @attention This constructor is purely meant to be used for debugging purposes to test proper Tree/Leaf Node initialization
         /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
         /// @param seed Set int value to determine room generation layout
-        BSP(const cse498::WeightedSet<std::string>& room_pool, 
-			uint64_t seed,
-			const std::string& file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_")  
-            : m_room_holder(room_pool, file_path)
-        {
-            m_rng.SetSeed(seed);
-            insert_split(m_iterations);
-            PostOrderDFS();
+		BSP(const LevelBase& level,
+			uint64_t seed) 
+			: m_room_holder(level)
+		{ 
+			m_rng.SetSeed(seed);
+            insert_split(m_iterations); //Creates BSP Tree
+            PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
 
         ////////////////////////////////////
