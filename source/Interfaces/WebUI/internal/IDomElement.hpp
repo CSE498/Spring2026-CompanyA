@@ -93,21 +93,21 @@ public:
 
         if (parentElement.isNull() || parentElement.isUndefined()) {
             // clang-format off
-                GetConsole().call<void>("warn", string("parent is not nullptr but parent element is undefined"));
+            GetConsole().call<void>("warn", string("parent is not nullptr but parent element is undefined"));
             // clang-format on
             return;
         }
 
         if (parent->GetElement() != mElement) {
             // clang-format off
-                GetConsole().call<void>("warn", "element with Id: " + element->Id() + " is not a child of element with Id: " + Id());
+            GetConsole().call<void>("warn", "element with Id: " + element->Id() + " is not a child of element with Id: " + Id());
             // clang-format on
             return;
         }
 
         if (element->mExisting) {
             // clang-format off
-                GetConsole().call<void>("warn", "element with Id: " + element->Id() + " is an existing element and will not be removed.");
+            GetConsole().call<void>("warn", "element with Id: " + element->Id() + " is an existing element and will not be removed.");
             // clang-format on
             return;
         }
