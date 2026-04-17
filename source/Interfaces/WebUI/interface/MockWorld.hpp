@@ -83,27 +83,27 @@ public:
         mFloorIds[2] = main_grid.AddCellType("floor-variant2", "world/forest/floor_tiles/tile_grass_2.png", 't');
 
         // clang-format off
-            mImpassableIds[0] = main_grid.AddCellType("floor-obstacle", "world/forest/floor_tiles/tile_grass_3.png", '$');
-            mImpassableIds[1] = main_grid.AddCellType("top-wall", "world/forest/walls/external/border_top_forest.png", '^');
-            mImpassableIds[2] = main_grid.AddCellType("left-wall", "world/forest/walls/external/border_left_forest.png", '<');
-            mImpassableIds[3] = main_grid.AddCellType("right-wall", "world/forest/walls/external/border_right_forest.png", '>');
-            mImpassableIds[4] = main_grid.AddCellType("bottom-wall", "world/forest/walls/external/border_bottom_forest.png", '&');
+        mImpassableIds[0] = main_grid.AddCellType("floor-obstacle", "world/forest/floor_tiles/tile_grass_3.png", '$');
+        mImpassableIds[1] = main_grid.AddCellType("top-wall", "world/forest/walls/external/border_top_forest.png", '^');
+        mImpassableIds[2] = main_grid.AddCellType("left-wall", "world/forest/walls/external/border_left_forest.png", '<');
+        mImpassableIds[3] = main_grid.AddCellType("right-wall", "world/forest/walls/external/border_right_forest.png", '>');
+        mImpassableIds[4] = main_grid.AddCellType("bottom-wall", "world/forest/walls/external/border_bottom_forest.png", '&');
         // clang-format on
 
         // clang-format off
-            main_grid.Load(std::vector<std::string>{
-                "^^^^^^^^^^^^^^^^^^",
-                "<        t       >",
-                "<  vv         $  >",
-                "<                >",
-                "<  t   $         >",
-                "<          t     >",
-                "<  vv            >",
-                "<  vv        $   >",
-                "< $   t          >",
-                "<        vvvv    >",
-                "&&&&&&&&&&&&&&&&&&"
-            });
+        main_grid.Load(std::vector<std::string>{
+            "^^^^^^^^^^^^^^^^^^",
+            "<        t       >",
+            "<  vv         $  >",
+            "<                >",
+            "<  t   $         >",
+            "<          t     >",
+            "<  vv            >",
+            "<  vv        $   >",
+            "< $   t          >",
+            "<        vvvv    >",
+            "&&&&&&&&&&&&&&&&&&"
+        });
         // clang-format on
     }
 
