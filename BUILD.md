@@ -148,13 +148,13 @@ Group 18's demo requires the Emscripten toolchain. See the [Web Tests setup](#se
 Open automatically in Chrome:
 
 ```bash
-emrun demos/WebUI/index.html --browser chrome --serve-root .
+emrun demos/WebUI/index.html --browser chrome --serve_root .
 ```
 
 Or start the server without opening a browser:
 
 ```bash
-emrun demos/WebUI/index.html --no_browser --serve-root .
+emrun demos/WebUI/index.html --no_browser --serve_root .
 ```
 
 Then navigate to:

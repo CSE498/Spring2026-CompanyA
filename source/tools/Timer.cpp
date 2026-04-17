@@ -153,7 +153,8 @@ std::string cse498::Timer::toString(bool withLaps) const {
       << std::fmod(time, SECONDS_IN_MINUTE);
 
   if (withLaps) {
-    for (auto [i, lapTime] : std::ranges::views::enumerate(mLaps)) {
+    for (std::size_t i = 0; i < mLaps.size(); ++i) {
+      const double lapTime = mLaps.at(i);
       oss << "\n  Lap " << (i + 1) << ": " << std::setfill('0') << std::setw(2)
           << static_cast<int>(lapTime / SECONDS_IN_MINUTE) << ":"
           << std::setw(6) << std::fixed << std::setprecision(3)

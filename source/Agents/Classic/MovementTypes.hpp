@@ -13,6 +13,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cmath>
 #include <string>
 
 namespace cse498
