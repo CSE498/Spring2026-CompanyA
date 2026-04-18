@@ -12,6 +12,7 @@
 
 
 #include "BSP-Dungeon.hpp"
+#include "LevelBase.hpp"
 #include <cmath>
 #include <ranges>
 #include <algorithm>
@@ -39,13 +40,12 @@ namespace cse498 {
 
     public:
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
-        WorldGeneration(const WeightedSet<std::string> &room_pool)
-            : m_bsp(room_pool),
-              //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
-              //mRoomHolder(room_pool),
-              m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')) {
-        }
-
+        WorldGeneration(const LevelBase& level) 
+            : m_bsp(level), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
+              //mRoomHolder(room_pool), 
+              m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'))
+            {}
+        
 
         /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room
         ///relationship is created through PostOrderRoomConnect()
@@ -59,6 +59,13 @@ namespace cse498 {
             //Tried to implement BFS Room connection for more varied layouts, but duplicating DFS is better
 
             TunnelConnectDungeon();
+        }
+
+        void Update() {
+            m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); //reset grid
+            m_connected_rooms.clear(); //get rid of tunneling list
+            m_bsp.RegenerateObjectState(); // regenerate tree
+            CreateDungeon();
         }
 
 

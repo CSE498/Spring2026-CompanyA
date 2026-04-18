@@ -2,31 +2,32 @@
 
 #include "../../../source/Worlds/Dungeon/BSP-Dungeon.hpp"
 
+#include "../../../source/Worlds/Dungeon/ForestLevel.hpp"
+
 /// @brief Brought over from DungeonOne for test case purposes
 /// @return vector of 
-inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{
-    {
-        {1, 10},
-        {2, 10},
-        {3, 10},
-        {4, 10},
-        {5, 10},
-        {6, 1},
-    }
-};
+// inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{{
+// 		{1, 10},
+// 		{2, 10},
+// 		{3, 10},
+// 		{4, 10},
+// 		{5, 10},
+// 		{6, 1},
+// 	}};
 
-inline static const std::string PREFIX = "one_pool/room_";
+// inline static const std::string PREFIX = "one_pool/room_";
 
-static cse498::WeightedSet<std::string> MakeRoomPool() {
-    cse498::WeightedSet<std::string> rooms;
+// static cse498::WeightedSet<std::string> MakeRoomPool() {
+// 	cse498::WeightedSet<std::string> rooms;
+	
+// 	for (const auto& [num, weight] : ROOM_DATA) {
+// 		auto result = rooms.Insert(PREFIX + std::to_string(num) + ".txt", weight);
+// 		assert(result.has_value());
+// 	}
 
-    for (const auto &[num, weight]: ROOM_DATA) {
-        auto result = rooms.Insert(PREFIX + std::to_string(num) + ".txt", weight);
-        assert(result.has_value());
-    }
+// 	return rooms;
+// }
 
-    return rooms;
-}
 
 
 /// @brief Setting the BSP Tree to its default state based off the values within the class itself 
@@ -65,7 +66,8 @@ const std::string FILE_PATH = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_";
 
 TEST_CASE("BSP-Dungeon Constructor", "[core]") {
     SECTION("Constructor creates a tree of nodes given default parameters") {
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
+        cse498::ForestLevel level;
+        cse498::BSP BSP(level, SEED_VALUE_ONE);
         SetDefaultSetting(BSP);
         //Making sure default parameters are created properly   
         CHECK(BSP.GetWidth() == 100);
@@ -78,7 +80,8 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
     }
 
     SECTION("Testing that RegenerateObjectState() regenerates BSPTree properly") {
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
+        cse498::ForestLevel level;
+        cse498::BSP BSP(level, SEED_VALUE_ONE);
         SetDefaultSetting(BSP);
 
         BSP.ClearState();
@@ -94,7 +97,8 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 
 
     SECTION("Testing Setting and Getting mWidth/mHeight/Iterations parameters") {
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
+        cse498::ForestLevel level;
+        cse498::BSP BSP(level, SEED_VALUE_ONE);
         SetDefaultSetting(BSP);
 
         ///Checking default parameters
@@ -124,7 +128,8 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
     SECTION("Testing that the Dungeon Generation parameters (default width/height) are stable with different seeds") {
         ///Given Default width, height, and iterations
-        cse498::BSP BSP(MakeRoomPool(), SEED_VALUE_ONE, FILE_PATH);
+        cse498::ForestLevel level;
+        cse498::BSP BSP(level, SEED_VALUE_ONE);
         SetDefaultSetting(BSP);
 
         CHECK(BSP.GetRngSeed() == SEED_VALUE_ONE);

@@ -7,8 +7,8 @@
 #pragma once
 
 #include <string>
+#include "../WorldBase.hpp"
 #include "Item.hpp"
-#include "WorldBase.hpp"
 
 namespace cse498 {
 class ItemConsumable : public Item {
@@ -22,16 +22,19 @@ public:
 
     bool IsConsumable() const override { return true; }
 
-    int GetCharges() { return m_charges; }
-    int GetDuration() { return m_duration; }
-    void DecrementCharges(int decrement = 1) {
-        m_charges -= decrement;
-        if (m_charges <= 0) {
-            DestroyItem();
-        }
-    }
-    void SetCharges(int charges) { m_charges = charges; }
-    void SetDuration(int duration) { m_duration = duration; }
+            int GetCharges() {return m_charges;}
+            int GetDuration() {return m_duration;}
+
+            /*Returns true if decrement was successful. Item should be deleted if it returns false.*/
+            bool DecrementCharges(int decrement = 1) {
+                m_charges -= decrement;
+                if (m_charges <= 0) {
+                    return false;
+                }
+                return true;
+            }
+            void SetCharges (int charges) {m_charges = charges;}
+            void SetDuration (int duration) {m_duration = duration;}
 
     virtual bool IsHealing() const { return false; }
     virtual bool IsSpeed() const { return false; }
