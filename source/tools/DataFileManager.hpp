@@ -14,6 +14,9 @@
  * Learned a modern way of how to make a string constant and view only using std::string_view from this link:
  * https://chatgpt.com/share/69a0eabd-00d8-8013-ac6b-83e572449254
  * Understood and learned about json from this link: https://www.w3schools.com/whatis/whatis_json.asp
+ * Learned how to to replace throw error to expected using std::expected and std::unexpected from these two links: 
+ * 1. https://chatgpt.com/share/69e2b313-a0cc-83ea-9f95-0fc2e11e86c9
+ * 2. https://chatgpt.com/share/69e2b42a-4020-83ea-8b33-a6db26f551dc
  */
 
 
@@ -21,6 +24,7 @@
 
 #include <cassert>
 #include <cctype>
+#include <expected>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -288,14 +292,15 @@ namespace cse498 {
 
         /**
          * @brief Loads the most recent world snapshot from the file.
-         * @throws std::runtime_error If the file contains no valid snapshot or malformed tile data.
+         * @return std::expected<void, std::string> with error text on failure.
          */
-        void LoadData() {
+        std::expected<void, std::string> LoadData() {
             std::ifstream file(m_filename);
             if (!file.is_open()) {
                 std::cerr << "ERROR::cse498::DataFileManager::LoadData(): Failed to open file " << m_filename <<
                         std::endl;
-                return;
+                return std::unexpected(
+                    std::string("ERROR::cse498::DataFileManager::LoadData(): Failed to open file ") + m_filename);
             }
 
             std::string last_valid_line;
@@ -306,7 +311,7 @@ namespace cse498 {
             file.close();
 
             if (last_valid_line.empty()) {
-                throw std::runtime_error(
+                return std::unexpected(
                     "ERROR::cse498::DataFileManager::LoadData(): No JSON snapshot found in file " + m_filename);
             }
 
@@ -317,18 +322,21 @@ namespace cse498 {
             std::vector<std::string> rows; {
                 size_t pos = last_valid_line.find("\"tiles\"");
                 if (pos == std::string::npos) {
-                    throw std::runtime_error("cse498::DataFileManager::LoadData(): Missing 'tiles' key in JSON data");
+                    return std::unexpected(
+                        std::string("cse498::DataFileManager::LoadData(): Missing 'tiles' key in JSON data"));
                 }
                 pos = last_valid_line.find('[', pos);
                 if (pos == std::string::npos) {
-                    throw std::runtime_error("cse498::DataFileManager::LoadData(): Invalid 'tiles' array in JSON data");
+                    return std::unexpected(
+                        std::string("cse498::DataFileManager::LoadData(): Invalid 'tiles' array in JSON data"));
                 }
                 ++pos;
 
                 while (true) {
                     SkipWhitespace(last_valid_line, pos);
                     if (pos >= last_valid_line.size()) {
-                        throw std::runtime_error("cse498::DataFileManager::LoadData(): Unterminated 'tiles' array");
+                        return std::unexpected(
+                            std::string("cse498::DataFileManager::LoadData(): Unterminated 'tiles' array"));
                     }
                     if (last_valid_line[pos] == ']') {
                         ++pos;
@@ -337,8 +345,8 @@ namespace cse498 {
 
                     std::string row;
                     if (!ParseQuotedString(last_valid_line, pos, row)) {
-                        throw std::runtime_error(
-                            "cse498::DataFileManager::LoadData(): Invalid row string in 'tiles' array");
+                        return std::unexpected(
+                            std::string("cse498::DataFileManager::LoadData(): Invalid row string in 'tiles' array"));
                     }
                     rows.push_back(row);
 
@@ -350,16 +358,16 @@ namespace cse498 {
             }
 
             if (rows.empty()) {
-                throw std::runtime_error(
+                return std::unexpected(
                     "cse498::DataFileManager::LoadData(): Failed to parse tile data from file " + m_filename);
             }
             m_world->GetGrid().Load(rows);
 
             /// @brief Restore agent state from the optional agents array.
             size_t pos = last_valid_line.find("\"agents\"");
-            if (pos == std::string::npos) return;
+            if (pos == std::string::npos) return {};
             pos = last_valid_line.find('[', pos);
-            if (pos == std::string::npos) return;
+            if (pos == std::string::npos) return {};
             ++pos;
 
             while (true) {
@@ -442,6 +450,8 @@ namespace cse498 {
                     continue;
                 }
             }
+
+            return {};
         }
     };
 }; ///< namespace cse498
