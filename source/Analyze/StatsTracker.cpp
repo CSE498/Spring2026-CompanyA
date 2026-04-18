@@ -1,9 +1,11 @@
 /**
  * @file StatsTracker.cpp
  * @brief Implementation of StatsTracker and related dashboard summary helpers.
+ * used AI to help in formatting the display data function
  */
 
 #include "StatsTracker.hpp"
+#include <iostream>
 
 namespace cse498 {
 
@@ -81,4 +83,77 @@ std::optional<ActionSummary> StatsTracker::BuildActionSummary(const std::string&
     return summary;
 }
 
+/*
+ * Prepares and outputs dashboard data through the analytics manager.
+ * Used as a temporary way to output the summaries to the console until the GUI is implemented.
+ */
+void StatsTracker::DisplayData(const AnalyticsManager& analytics) const{
+    auto snapshot = BuildSnapshot(analytics);
+
+    std::cout << "========== Dashboard Snapshot ==========" << "\n";
+
+    if(snapshot.numericStats.empty() && snapshot.actionStats.empty()) {
+        std::cout << "No data to display" << "\n";
+        return;
+    }
+
+    std::cout << "DataLog Stats:" << "\n";
+    for (const auto& stat: snapshot.numericStats) {
+        std::cout << "----------------------------------------" << "\n";
+        std::cout << "- " << stat.label << "\n";
+
+        std::cout << "Current Value: " << stat.currentValue << "\n";
+
+        std::cout << "Min Value: ";
+        if (stat.minValue.has_value()) {
+            std::cout << *stat.minValue << "\n";
+        } 
+        else {
+            std::cout << "N/A" << "\n";
+        }
+
+        std::cout << "Max Value: ";
+        if (stat.maxValue.has_value()) {
+            std::cout << *stat.maxValue << "\n";
+        } 
+        else {
+            std::cout << "N/A" << "\n";
+        }
+        std::cout << "Mean Value: ";
+        if (stat.meanValue.has_value()) {
+            std::cout << *stat.meanValue << "\n";
+        } 
+        else {
+            std::cout << "N/A" << "\n";
+        }
+
+        std::cout << "Median Value: ";
+        if (stat.medianValue.has_value()) {
+            std::cout << *stat.medianValue << "\n";
+        } 
+        else {
+            std::cout << "N/A" << "\n";
+        }
+        
+        std::cout << "Sample Count: " << stat.sampleCount << "\n";
+        std::cout << "----------------------------------------" << "\n";
+    }
+
+    std::cout << "ActionLog Stats:" << "\n";
+    for(const auto& actionStat: snapshot.actionStats) {
+        std::cout << "----------------------------------------" << "\n";
+        std::cout << "Label: " << actionStat.label << "\n";
+        std::cout << "Action Count: " << actionStat.actionCount << "\n";
+        std::cout << "Most Active Entity: ";
+        if (actionStat.mostActiveEntity.has_value()) {
+            std::cout << *actionStat.mostActiveEntity << "\n";
+        } 
+        else {
+            std::cout << "N/A" << "\n";
+        }
+        std::cout << "----------------------------------------" << "\n";
+    }
+
+    std::cout << "========================================" << "\n";
+}
 } // namespace cse498
