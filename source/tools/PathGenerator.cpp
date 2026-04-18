@@ -477,11 +477,20 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
      */
 
     // I'm just using this lambda as an inner function loop instead of a function elsewhere
-    auto inner = [start](const WorldPosition& roundedStart, const WorldPosition& endTile, const PathVector& offset,
+    auto inner = [start](const WorldPosition& rStart, const WorldPosition& endTile, const PathVector& offset,
         const PathVector& path, const PathRequest &request)
     {
-        auto tileX = roundedStart.X();
-        auto tileY = roundedStart.Y();
+
+        /*
+         * I shift the start of the ray by offset and go in the same direction with the
+         * same magnitude so the end point is endTile + offset, but it will always be
+         * captured by tileX and tileY so we never use that term.
+         */
+
+        auto startShifted = start + offset;
+        auto tileX = rStart.X();
+        auto tileY = rStart.Y();
+
 
         int stepX = (path.X() > 0) ? 1 : -1;
         int stepY = (path.Y() > 0) ? 1 : -1;
@@ -500,13 +509,27 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
         // This part is really simple we are just solving for 't' in:
         //  startX + V.X() * t = floor(startX) + 1
         // from start position how much of time step to reach the next barrier (depending on direction)
-        double nextBoundaryX = (stepX > 0) ? (roundedStart.X() + 1) : roundedStart.X();
-        double nextBoundaryY = (stepY > 0) ? (roundedStart.Y() + 1) : roundedStart.Y();
-        double tMaxX = (path.X() != 0) ? (nextBoundaryX - start.X()) / path.X() : INFINITY;
-        double tMaxY = (path.Y() != 0) ? (nextBoundaryY - start.Y()) / path.Y() : INFINITY;
+        double nextBoundaryX = (stepX > 0) ? (tileX + 1) : tileX;
+        double nextBoundaryY = (stepY > 0) ? (tileY + 1) : tileY;
+        double tMaxX = (path.X() != 0) ? (nextBoundaryX - startShifted.X()) / path.X() : INFINITY;
+        double tMaxY = (path.Y() != 0) ? (nextBoundaryY - startShifted.Y()) / path.Y() : INFINITY;
 
-        while ((endTile - WorldPosition(tileX, tileY) - offset).GetMagnitude() > EP)
+        while ((endTile - WorldPosition(tileX, tileY)).GetMagnitude() > EP)
         {
+            if (std::abs(tMaxX - tMaxY) < EP)
+            {
+                // Check both corner tiles
+                if (!request.mWorldGrid.IsWalkable({tileX + stepX, tileY}))
+                    return false;
+                if (!request.mWorldGrid.IsWalkable({tileX, tileY + stepY}))
+                    return false;
+                // now increment
+                tileX += stepX;
+                tileY += stepY;
+                tMaxX += tDeltaX;
+                tMaxY += tDeltaY;
+                // We basically just combined two operations into one checking both sides because of tie
+            }
             if (tMaxX < tMaxY)
             {
                 tileX += stepX;
@@ -534,23 +557,9 @@ bool PathGenerator::IsPathClear(const WorldPosition &start, const PathVector &pa
     PathVector path = pathDir;
     path.Normalize();
 
-    bool test = inner(startRounded, endTile, {0,0}, path, request);
-    if (test)
-        return true;
+    // Just one test from the CENTER OF THE TILE
+    return inner(startRounded, endTile, {0.5,0.5}, path, request);
 
-    std::array<PathVector, 1> dirs = std::to_array<PathVector>({{0, 0}});
-    for (const auto & dir : dirs)
-    {
-        path = pathDir + dir;
-        path.Normalize();
-        endTile = Round(start + pathDir) + dir;
-
-        test = inner(startRounded, endTile, dir, path, request);
-        if (test)
-            return true;
-    }
-
-    return false;
 
 }
 

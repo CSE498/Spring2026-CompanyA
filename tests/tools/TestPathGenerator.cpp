@@ -1103,39 +1103,50 @@ TEST_CASE("Path Generator Manhattan Distance - quick")
 TEST_CASE("line of sight")
 {
     // TODO: Logan is coming back to this once more is known.
-    // cse498::TestPathClear world;
-    // PathRequest request = PathRequest(world.GetGrid());
-    // {
-    //     WorldPosition skeleton = {3,3};
-    //     WorldPosition player = {4,4};
-    //
-    //     CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {3,2};
-    //     WorldPosition player = {4,4};
-    //
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {5,2};
-    //     WorldPosition player = {4,4};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {5,2};
-    //     WorldPosition player = {4,4};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {4,1};
-    //     WorldPosition player = {1,2};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {4,2};
-    //     WorldPosition player = {1,2};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
+    cse498::TestPathClear world;
+    PathRequest request = PathRequest(world.GetGrid());
+    {
+        WorldPosition skeleton = {3,3};
+        WorldPosition player = {4,4};
+
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {5,3};
+        WorldPosition player = {4,4};
+
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {3,2};
+        WorldPosition player = {4,4};
+
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {5,2};
+        WorldPosition player = {4,4};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {4,1};
+        WorldPosition player = {1,2};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {4,2};
+        WorldPosition player = {1,2};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {2,1};
+        WorldPosition player = {1,2};
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {2,3};
+        WorldPosition player = {1,2};
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
 
 }
