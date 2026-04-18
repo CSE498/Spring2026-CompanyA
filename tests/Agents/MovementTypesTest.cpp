@@ -3,16 +3,15 @@
  * @author Logan Rimarcik
  */
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/Agents/Classic/MovementTypes.hpp"
 #include "../../source/Worlds/DemoG2/WorldActions.hpp"
 #include "../../source/tools/PathVector.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 using cse498::MovementTypes;
 using cse498::WorldActions;
 
-TEST_CASE("Movement  Types -- Getting Id of movement", "[ids]")
-{
+TEST_CASE("Movement  Types -- Getting Id of movement", "[ids]") {
     {
         CHECK(MovementTypes::GetActionID(0.0, -1.0) == WorldActions::MOVE_UP);
         CHECK(MovementTypes::GetActionID(cse498::PathVector(0.0, -1.0)) == WorldActions::MOVE_UP);
@@ -41,8 +40,7 @@ TEST_CASE("Movement  Types -- Getting Id of movement", "[ids]")
     }
 }
 
-TEST_CASE("Movement  Types -- Getting String of movement", "[ids]")
-{
+TEST_CASE("Movement  Types -- Getting String of movement", "[ids]") {
     {
         CHECK(MovementTypes::GetActionName(0.0, -1.0) == "w");
         CHECK(MovementTypes::GetActionName(cse498::PathVector(0.0, -1.0)) == "w");

@@ -7,16 +7,15 @@
 #ifndef TWOBLUECUBES_CATCH_TO_STRING_H_INCLUDED
 #define TWOBLUECUBES_CATCH_TO_STRING_H_INCLUDED
 
-#include <string>
-
 #include "catch_compiler_capabilities.h"
 #include "catch_stream.h"
 
+#include <string>
+
 namespace Catch {
-    template <typename T>
-    std::string to_string(T const& t) {
-#if defined(CATCH_CONFIG_CPP11_TO_STRING)
-        return std::to_string(t);
+    template <typename T> std::string to_string( T const& t ) {
+#if defined( CATCH_CONFIG_CPP11_TO_STRING )
+        return std::to_string( t );
 #else
         ReusableStringStream rss;
         rss << t;

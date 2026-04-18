@@ -1,5 +1,5 @@
 /**
-* @file TestPlayerInteractions.cpp
+ * @file TestPlayerInteractions.cpp
  */
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
@@ -41,14 +41,11 @@ private:
     std::istringstream mInput;
 
 public:
-    explicit ScopedInputRedirect(const std::string& data)
-        : mOldBuffer(std::cin.rdbuf()), mInput(data) {
+    explicit ScopedInputRedirect(const std::string& data) : mOldBuffer(std::cin.rdbuf()), mInput(data) {
         std::cin.rdbuf(mInput.rdbuf());
     }
 
-    ~ScopedInputRedirect() {
-        std::cin.rdbuf(mOldBuffer);
-    }
+    ~ScopedInputRedirect() { std::cin.rdbuf(mOldBuffer); }
 };
 
 } // namespace

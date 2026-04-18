@@ -52,7 +52,7 @@ TEST_CASE("Insert single element and find it", "[tools][RobinHoodMap]") {
     CHECK(inserted);
     CHECK(map.Size() == 1);
 
-    std::string *val = map.Find(42);
+    std::string* val = map.Find(42);
     REQUIRE(val != nullptr);
     CHECK(*val == "hello");
 }
@@ -183,7 +183,7 @@ TEST_CASE("operator[] reads existing value", "[tools][RobinHoodMap]") {
 
 TEST_CASE("operator[] auto-inserts default value", "[tools][RobinHoodMap]") {
     cse498::RobinHoodMap<std::string, int> map;
-    int &val = map["new_key"];
+    int& val = map["new_key"];
     CHECK(val == 0);
     CHECK(map.Size() == 1);
     CHECK(map.Contains("new_key"));
@@ -272,7 +272,7 @@ TEST_CASE("Range-for visits all elements", "[tools][RobinHoodMap]") {
     }
 
     std::set<int> visited_keys;
-    for (auto &[key, value]: map) {
+    for (auto& [key, value]: map) {
         visited_keys.insert(key);
         CHECK(value == key * 100);
     }
@@ -282,7 +282,7 @@ TEST_CASE("Range-for visits all elements", "[tools][RobinHoodMap]") {
 TEST_CASE("Iteration over empty map", "[tools][RobinHoodMap]") {
     cse498::RobinHoodMap<int, int> map;
     int count = 0;
-    for ([[maybe_unused]] auto &[k, v]: map) {
+    for ([[maybe_unused]] auto& [k, v]: map) {
         ++count;
     }
     CHECK(count == 0);
@@ -295,7 +295,7 @@ TEST_CASE("Iterator pre-increment and post-increment", "[tools][RobinHoodMap]") 
 
     // Pre-increment
     auto it = map.begin();
-    auto &ref = ++it;
+    auto& ref = ++it;
     CHECK(&ref == &it); // returns reference to itself
 
     // Post-increment
@@ -310,8 +310,8 @@ TEST_CASE("Const Find returns const pointer", "[tools][RobinHoodMap]") {
     cse498::RobinHoodMap<int, int> map;
     map.Insert(1, 100);
 
-    const auto &cmap = map;
-    const int *val = cmap.Find(1);
+    const auto& cmap = map;
+    const int* val = cmap.Find(1);
     REQUIRE(val != nullptr);
     CHECK(*val == 100);
     CHECK(cmap.Find(999) == nullptr);
@@ -321,7 +321,7 @@ TEST_CASE("Const Contains and Size", "[tools][RobinHoodMap]") {
     cse498::RobinHoodMap<std::string, double> map;
     map.Insert("pi", 3.14);
 
-    const auto &cmap = map;
+    const auto& cmap = map;
     CHECK(cmap.Contains("pi"));
     CHECK_FALSE(cmap.Contains("e"));
     CHECK(cmap.Size() == 1);
@@ -346,9 +346,9 @@ TEST_CASE("Range-for on const map", "[tools][RobinHoodMap]") {
     map.Insert(5, 50);
     map.Insert(6, 60);
 
-    const auto &cmap = map;
+    const auto& cmap = map;
     int sum = 0;
-    for (const auto &[k, v]: cmap) {
+    for (const auto& [k, v]: cmap) {
         sum += v;
     }
     CHECK(sum == 110);
@@ -414,7 +414,7 @@ TEST_CASE("Insert and find 10000 elements", "[tools][RobinHoodMap]") {
 
     // Every element should be findable with the correct value.
     for (int i = 0; i < N; ++i) {
-        int *val = map.Find(i);
+        int* val = map.Find(i);
         REQUIRE(val != nullptr);
         CHECK(*val == i * 3);
     }
@@ -493,7 +493,7 @@ TEST_CASE("Elements with colliding hashes are all retrievable", "[tools][RobinHo
     }
 
     for (int i = 0; i < 3; ++i) {
-        int *val = map.Find(i);
+        int* val = map.Find(i);
         REQUIRE(val != nullptr);
         CHECK(*val == i * 10);
     }
@@ -664,7 +664,7 @@ TEST_CASE("Custom hash function", "[tools][RobinHoodMap]") {
 TEST_CASE("Custom equality comparator (case-insensitive strings)", "[tools][RobinHoodMap]") {
     // Case-insensitive hash.
     struct CIHash {
-        size_t operator()(const std::string &s) const {
+        size_t operator()(const std::string& s) const {
             size_t h = 0;
             for (char c: s) {
                 h = h * 31 + static_cast<size_t>(static_cast<unsigned char>(std::tolower(c)));
@@ -674,7 +674,7 @@ TEST_CASE("Custom equality comparator (case-insensitive strings)", "[tools][Robi
     };
     // Case-insensitive equality.
     struct CIEqual {
-        bool operator()(const std::string &a, const std::string &b) const {
+        bool operator()(const std::string& a, const std::string& b) const {
             if (a.size() != b.size())
                 return false;
             for (size_t i = 0; i < a.size(); ++i) {
@@ -717,7 +717,7 @@ TEST_CASE("Value modification through Find pointer", "[tools][RobinHoodMap]") {
     cse498::RobinHoodMap<int, int> map;
     map.Insert(1, 100);
 
-    int *val = map.Find(1);
+    int* val = map.Find(1);
     REQUIRE(val != nullptr);
     *val = 999;
 
@@ -769,7 +769,7 @@ TEST_CASE("Large values (vector of ints)", "[tools][RobinHoodMap]") {
     std::vector<int> big(1000, 7);
     map.Insert(1, big);
 
-    auto *found = map.Find(1);
+    auto* found = map.Find(1);
     REQUIRE(found != nullptr);
     CHECK(found->size() == 1000);
     CHECK((*found)[0] == 7);
@@ -806,7 +806,7 @@ TEST_CASE("Iteration count matches Size after rehashes", "[tools][RobinHoodMap]"
     }
 
     size_t iter_count = 0;
-    for ([[maybe_unused]] auto &[k, v]: map) {
+    for ([[maybe_unused]] auto& [k, v]: map) {
         ++iter_count;
     }
     CHECK(iter_count == map.Size());

@@ -15,123 +15,123 @@
 #include <cmath>
 
 namespace cse498 {
+    /// @class WorldPosition
+    /// @brief Represents a position within a 2D world.
+    /// Stored as floating point, but can be converted to coordinates
+    class WorldPosition {
+    private:
+        double x = 0.0;
+        double y = 0.0;
+        static constexpr double EPS = 1e-9;
+        /// epsilon
+           /// chops off endings of doubles and converts to ints to make more consistent/comparable doubles
 
-  /// @class WorldPosition
-  /// @brief Represents a position within a 2D world.
-  /// Stored as floating point, but can be converted to coordinates
-  class WorldPosition {
-  private:
-    double x = 0.0;
-    double y = 0.0;
-    static constexpr double EPS = 1e-9; /// epsilon
-    /// chops off endings of doubles and converts to ints to make more consistent/comparable doubles
+    public:
+        WorldPosition() = default;
 
-  public:
-    WorldPosition() = default;
-    WorldPosition(double x, double y) : x(x), y(y) { }
-    template <std::integral T, std::integral U>
-    WorldPosition(T x, U y)
-      : WorldPosition(static_cast<double>(x), static_cast<double>(y)) {}
+        WorldPosition(double x, double y) : x(x), y(y) {
+        }
 
-    WorldPosition(const WorldPosition &) = default;
-    WorldPosition & operator=(const WorldPosition &) = default;
+        template<std::integral T, std::integral U>
+        WorldPosition(T x, U y)
+            : WorldPosition(static_cast<double>(x), static_cast<double>(y)) {
+        }
 
-    // -- Accessors --
+        WorldPosition(const WorldPosition &) = default;
 
-    [[nodiscard]] double X() const { return x; }
-    [[nodiscard]] double Y() const { return y; }
-    [[nodiscard]] size_t CellX() const {
-      assert(x >= 0.0);
-      return static_cast<size_t>(x);
-    }
-    [[nodiscard]] size_t CellY() const {
-      assert(y >= 0.0);
-      return static_cast<size_t>(y);
-    }
-    [[nodiscard]] bool IsValid() const
-    {
-      return (x >= 0.0 && y >= 0.0); // exists because above condition for CellX() CellY() exists.
-    }
+        WorldPosition &operator=(const WorldPosition &) = default;
 
+        // -- Accessors --
+
+        [[nodiscard]] double X() const { return x; }
+        [[nodiscard]] double Y() const { return y; }
+
+        [[nodiscard]] size_t CellX() const {
+            assert(x >= 0.0);
+            return static_cast<size_t>(x);
+        }
+
+        [[nodiscard]] size_t CellY() const {
+            assert(y >= 0.0);
+            return static_cast<size_t>(y);
+        }
+
+        [[nodiscard]] bool IsValid() const {
+            return (x >= 0.0 && y >= 0.0); // exists because above condition for CellX() CellY() exists.
+        }
+
+
+        /**
+         * We use quantization for hashing ability
+         * @param other - other world position
+         * @return strong ordering for comparisons
+         */
+        auto operator<=>(const WorldPosition &other) const {
+            return std::tuple(Quantize(x), Quantize(y)) <=> std::tuple(Quantize(other.x), Quantize(other.y));
+        }
+
+        /**
+         * implemented as such for it to be hashable - ignores digits smaller than epsilon
+         * which helps A* search
+         * @param other - other world position
+         * @return true/false depending on equality being in the same relative bin
+         */
+        auto operator==(const WorldPosition &other) const {
+            // this enables transitivity but means tiny differences can break equality. This should not be trusted
+            return Quantize(x) == Quantize(other.x) && Quantize(y) == Quantize(other.y);
+        }
+
+        WorldPosition &Set(double in_x, double in_y) {
+            x = in_x;
+            y = in_y;
+            return *this;
+        }
+
+        // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
+
+        /// Return a the WorldPosition at the requested offset.
+        [[nodiscard]] constexpr WorldPosition GetOffset(double offset_x, double offset_y) const {
+            return WorldPosition{x + offset_x, y + offset_y};
+        }
+
+        [[nodiscard]] WorldPosition Up() const { return {x, y - 1.0}; }
+        [[nodiscard]] WorldPosition Down() const { return {x, y + 1.0}; }
+        [[nodiscard]] WorldPosition Left() const { return {x - 1.0, y}; }
+        [[nodiscard]] WorldPosition Right() const { return {x + 1.0, y}; }
+        static std::int64_t Quantize(const double val) { return (std::llround(val / EPS)); }
+        /**
+         * uses CellX() and CellY() for positioning since this is used for determining locations of world positions
+         * in the map based on GIVEN code. TODO: Change CellX() CellY() to round() since this will feel more natural
+         * TODO:                                 for this application of traversing the world.
+         * @return in-place modification --
+         */
+        WorldPosition &Round() {
+            x = static_cast<double>(CellX());
+            y = static_cast<double>(CellY());
+            return *this;
+        }
+
+        [[nodiscard]] WorldPosition StepPolar(double length, double angle) const {
+            double result_x = x + length * std::cos(angle);
+            double result_y = y + length * std::sin(angle);
+            return {result_x, result_y};
+        }
+    };
 
     /**
-     * We use quantization for hashing ability
-     * @param other - other world position
-     * @return strong ordering for comparisons
+     * makes new object and returns new object.
+     * @param pos - position to round
+     * @return new world position rounded to a tile
      */
-    auto operator<=>(const WorldPosition & other) const
-    {
-      return std::tuple(Quantize(x), Quantize(y)) <=> std::tuple(Quantize(other.x), Quantize(other.y));
+    inline WorldPosition Round(const WorldPosition &pos) {
+        return WorldPosition(pos).Round();
     }
-    /**
-     * implemented as such for it to be hashable - ignores digits smaller than epsilon
-     * which helps A* search
-     * @param other - other world position
-     * @return true/false depending on equality being in the same relative bin
-     */
-    auto operator==(const WorldPosition & other) const {
-      // this enables transitivity but means tiny differences can break equality. This should not be trusted
-      return Quantize(x) == Quantize(other.x) && Quantize(y) == Quantize(other.y);
-    }
-
-    WorldPosition & Set(double in_x, double in_y) {
-      x = in_x;
-      y = in_y;
-      return *this;
-    }
-
-    // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
-
-    /// Return a the WorldPosition at the requested offset.
-    [[nodiscard]] constexpr WorldPosition GetOffset(double offset_x, double offset_y) const {
-      return WorldPosition{x+offset_x,y+offset_y};
-    }
-
-    [[nodiscard]] WorldPosition Up()    const { return {x, y-1.0}; }
-    [[nodiscard]] WorldPosition Down()  const { return {x, y+1.0}; }
-    [[nodiscard]] WorldPosition Left()  const { return {x-1.0, y}; }
-    [[nodiscard]] WorldPosition Right() const { return {x+1.0, y}; }
-    static std::int64_t Quantize(const double val ) { return (std::llround(val / EPS)); }
-    /**
-     * uses CellX() and CellY() for positioning since this is used for determining locations of world positions
-     * in the map based on GIVEN code. TODO: Change CellX() CellY() to round() since this will feel more natural
-     * TODO:                                 for this application of traversing the world.
-     * @return in-place modification --
-     */
-    WorldPosition& Round()
-    {
-      x = static_cast<double>(CellX());
-      y = static_cast<double>(CellY());
-      return *this;
-    }
-    [[nodiscard]] WorldPosition StepPolar(double length, double angle) const
-    {
-      double result_x = x + length * std::cos(angle);
-      double result_y = y + length * std::sin(angle);
-      return {result_x, result_y};
-    }
-
-  };
-
-  /**
-   * makes new object and returns new object.
-   * @param pos - position to round
-   * @return new world position rounded to a tile
-   */
-  inline WorldPosition Round(const WorldPosition& pos)
-{
-  return WorldPosition(pos).Round();
-}
-
-
-
 } // End of namespace cse498
 
 
-template <>
+template<>
 struct std::hash<cse498::WorldPosition> {
-    std::size_t operator()(const cse498::WorldPosition& pos) const noexcept
-    {
+    std::size_t operator()(const cse498::WorldPosition &pos) const noexcept {
         auto qx = cse498::WorldPosition::Quantize(pos.X());
         auto qy = cse498::WorldPosition::Quantize(pos.Y());
         //Taken from boost hash_combine https://www.boost.org/doc/libs/latest/libs/container_hash/doc/html/hash.html

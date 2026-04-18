@@ -19,14 +19,14 @@ TEST_CASE("MemoryFactory: make/destroy via unique_ptr", "[tools][MemoryFactory]"
     int destructor = 0;
 
     struct Tracked {
-        int &alive;
-        int &constructor;
-        int &destructor;
+        int& alive;
+        int& constructor;
+        int& destructor;
 
         int x{};
         std::string s{};
 
-        Tracked(int v, std::string str, int &a, int &c, int &d) :
+        Tracked(int v, std::string str, int& a, int& c, int& d) :
             alive(a), constructor(c), destructor(d), x(v), s(std::move(str)) {
             ++alive;
             ++constructor;
@@ -37,13 +37,13 @@ TEST_CASE("MemoryFactory: make/destroy via unique_ptr", "[tools][MemoryFactory]"
             ++destructor;
         }
 
-        Tracked(const Tracked &) = delete;
-        Tracked &operator=(const Tracked &) = delete;
+        Tracked(const Tracked&) = delete;
+        Tracked& operator=(const Tracked&) = delete;
     };
 
     cse498::MemoryFactory<Tracked> pool(8);
 
-    Tracked *raw = nullptr;
+    Tracked* raw = nullptr;
     {
         auto p = pool.Make(7, "hi", alive, constructor, destructor);
         raw = p.get();
@@ -74,13 +74,13 @@ TEST_CASE("MemoryFactory: reuses freed slot", "[tools][MemoryFactory]") {
 
     cse498::MemoryFactory<P> pool(2);
 
-    P *first = nullptr;
+    P* first = nullptr;
     {
         auto a = pool.Make(1);
         first = a.get();
     }
 
-    P *second = nullptr;
+    P* second = nullptr;
     {
         auto b = pool.Make(2);
         second = b.get();
@@ -149,13 +149,13 @@ TEST_CASE("MemoryFactory with Agents: slot reuse works with PacingAgent", "[tool
     cse498::MazeWorld world;
     cse498::MemoryFactory<cse498::PacingAgent> pool(1);
 
-    cse498::PacingAgent *first = nullptr;
+    cse498::PacingAgent* first = nullptr;
     {
         auto a1 = pool.Make(0, std::string("a1"), world);
         first = a1.get();
     }
 
-    cse498::PacingAgent *second = nullptr;
+    cse498::PacingAgent* second = nullptr;
     {
         auto a2 = pool.Make(1, std::string("a2"), world);
         second = a2.get();
@@ -168,7 +168,7 @@ TEST_CASE("MemoryFactory and Agents: make() returns memory to pool for PacingAge
     cse498::MazeWorld world;
     cse498::MemoryFactory<cse498::PacingAgent> pool(1);
 
-    cse498::PacingAgent *raw = nullptr;
+    cse498::PacingAgent* raw = nullptr;
     {
         auto up = pool.Make(0, std::string("pace"), world);
         raw = up.get();

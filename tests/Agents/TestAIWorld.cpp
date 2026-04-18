@@ -15,33 +15,31 @@ using namespace cse498;
 
 namespace {
 
-    struct AIWorldHarness : AIWorld {
-    public:
-        using AIWorld::mAgentState;
-        using AIWorld::mCurrentTurn;
-        using AIWorld::mEnemies;
-        using AIWorld::mMaxTurns;
+struct AIWorldHarness : AIWorld {
+public:
+    using AIWorld::mAgentState;
+    using AIWorld::mCurrentTurn;
+    using AIWorld::mEnemies;
+    using AIWorld::mMaxTurns;
 
-        void InvokeHandleEnemyAt(size_t index) { HandleEnemyTurn(mEnemies.at(index)); }
+    void InvokeHandleEnemyAt(size_t index) { HandleEnemyTurn(mEnemies.at(index)); }
 
-        bool InvokeWaitForStep() { return WaitForStep(); }
+    bool InvokeWaitForStep() { return WaitForStep(); }
 
-        std::string InvokeActionName(size_t id) const { return ActionName(id); }
+    std::string InvokeActionName(size_t id) const { return ActionName(id); }
 
-        void InvokePrintWorldState(const std::string &header) const { PrintWorldState(header); }
+    void InvokePrintWorldState(const std::string& header) const { PrintWorldState(header); }
 
-        bool InvokeIsWalkable(WorldPosition pos) const { return IsWalkable(pos); }
+    bool InvokeIsWalkable(WorldPosition pos) const { return IsWalkable(pos); }
 
-        bool InvokeIsEnemyAt(WorldPosition pos, size_t *enemy_index = nullptr) const {
-            return IsEnemyAt(pos, enemy_index);
-        }
+    bool InvokeIsEnemyAt(WorldPosition pos, size_t* enemy_index = nullptr) const { return IsEnemyAt(pos, enemy_index); }
 
-        bool InvokeIsAgentAt(WorldPosition pos, size_t skip_agent_id = static_cast<size_t>(-1)) const {
-            return IsAgentAt(pos, skip_agent_id);
-        }
+    bool InvokeIsAgentAt(WorldPosition pos, size_t skip_agent_id = static_cast<size_t>(-1)) const {
+        return IsAgentAt(pos, skip_agent_id);
+    }
 
-        std::optional<size_t> InvokeItemOnFloor(WorldPosition pos) const { return ItemOnFloor(pos); }
-    };
+    std::optional<size_t> InvokeItemOnFloor(WorldPosition pos) const { return ItemOnFloor(pos); }
+};
 
 } // namespace
 
@@ -68,7 +66,7 @@ TEST_CASE("AIWorld GetFloorItems lists default loot", "[AIWorld]") {
     CHECK_FALSE(items.empty());
     bool saw_weapon = false;
     bool saw_heal = false;
-    for (const auto &v: items) {
+    for (const auto& v: items) {
         if (v.mKind == LootItem::ItemKind::Weapon) {
             saw_weapon = true;
         }
@@ -114,7 +112,7 @@ TEST_CASE("AIWorld IsAgentAt respects skip id", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
     world.SetStepMode(false);
-    auto &agent = world.AddAgent<LearningExplorerAgent>("A");
+    auto& agent = world.AddAgent<LearningExplorerAgent>("A");
     agent.SetLocation(WorldPosition{10, 7});
     CHECK(world.InvokeIsAgentAt(WorldPosition{10, 7}));
     CHECK_FALSE(world.InvokeIsAgentAt(WorldPosition{10, 7}, agent.GetID()));
@@ -124,7 +122,7 @@ TEST_CASE("AIWorld ItemOnFloor finds loot at sword tile", "[AIWorld]") {
     AIWorldHarness world;
     const auto id = world.InvokeItemOnFloor(WorldPosition{3, 5});
     REQUIRE(id.has_value());
-    const auto *loot = dynamic_cast<const LootItem *>(&world.GetItem(*id));
+    const auto* loot = dynamic_cast<const LootItem*>(&world.GetItem(*id));
     REQUIRE(loot != nullptr);
     CHECK(loot->GetKind() == LootItem::ItemKind::Weapon);
 }
@@ -132,13 +130,13 @@ TEST_CASE("AIWorld ItemOnFloor finds loot at sword tile", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction pickup weapon increases attack and score", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{3, 5});
-    const auto &before = world.GetAgentState(hero.GetID());
+    const auto& before = world.GetAgentState(hero.GetID());
     const int atk_before = before.mAttack;
 
     CHECK(world.DoAction(hero, hero.GetActionID("pickup")) != 0);
-    const auto &after = world.GetAgentState(hero.GetID());
+    const auto& after = world.GetAgentState(hero.GetID());
     CHECK(after.mAttack > atk_before);
     CHECK(after.mScore >= 15);
 }
@@ -146,7 +144,7 @@ TEST_CASE("AIWorld DoAction pickup weapon increases attack and score", "[AIWorld
 TEST_CASE("AIWorld DoAction pickup heal grants charges", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{13, 8});
 
     CHECK(world.DoAction(hero, hero.GetActionID("pickup")) != 0);
@@ -156,10 +154,10 @@ TEST_CASE("AIWorld DoAction pickup heal grants charges", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction use_heal restores HP when damaged", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
 
-    auto &st = world.mAgentState.at(hero.GetID());
+    auto& st = world.mAgentState.at(hero.GetID());
     st.mHealCharges = 2;
     st.mHP = 5;
     st.mMaxHP = 12;
@@ -172,9 +170,9 @@ TEST_CASE("AIWorld DoAction use_heal restores HP when damaged", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction use_heal fails with no charges", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
-    auto &st = world.mAgentState.at(hero.GetID());
+    auto& st = world.mAgentState.at(hero.GetID());
     st.mHealCharges = 0;
     st.mHP = 5;
     CHECK(world.DoAction(hero, hero.GetActionID("use_heal")) == 0);
@@ -183,9 +181,9 @@ TEST_CASE("AIWorld DoAction use_heal fails with no charges", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction use_heal fails at full HP", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
-    auto &st = world.mAgentState.at(hero.GetID());
+    auto& st = world.mAgentState.at(hero.GetID());
     st.mHealCharges = 3;
     st.mHP = st.mMaxHP;
     CHECK(world.DoAction(hero, hero.GetActionID("use_heal")) == 0);
@@ -194,7 +192,7 @@ TEST_CASE("AIWorld DoAction use_heal fails at full HP", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction attack damages and can kill enemy", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{4, 5});
 
     const int hp_before = world.GetEnemies()[0].mHP;
@@ -211,7 +209,7 @@ TEST_CASE("AIWorld DoAction attack damages and can kill enemy", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction attack misses without adjacent enemy", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
     CHECK(world.DoAction(hero, hero.GetActionID("attack_up")) == 0);
 }
@@ -219,7 +217,7 @@ TEST_CASE("AIWorld DoAction attack misses without adjacent enemy", "[AIWorld]") 
 TEST_CASE("AIWorld DoAction move blocked by enemy cell", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{4, 5});
     CHECK(world.DoAction(hero, hero.GetActionID("right")) == 0);
 }
@@ -227,8 +225,8 @@ TEST_CASE("AIWorld DoAction move blocked by enemy cell", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction move blocked by other agent", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &a = world.AddAgent<LearningExplorerAgent>("A");
-    auto &b = world.AddAgent<LearningExplorerAgent>("B");
+    auto& a = world.AddAgent<LearningExplorerAgent>("A");
+    auto& b = world.AddAgent<LearningExplorerAgent>("B");
     a.SetLocation(WorldPosition{10, 7});
     b.SetLocation(WorldPosition{11, 7});
     CHECK(world.DoAction(a, a.GetActionID("right")) == 0);
@@ -237,7 +235,7 @@ TEST_CASE("AIWorld DoAction move blocked by other agent", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction no-op when agent HP is zero", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
     world.mAgentState.at(hero.GetID()).mHP = 0;
     CHECK(world.DoAction(hero, hero.GetActionID("up")) == 0);
@@ -246,7 +244,7 @@ TEST_CASE("AIWorld DoAction no-op when agent HP is zero", "[AIWorld]") {
 TEST_CASE("AIWorld DoAction pickup fails on empty tile", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
     CHECK(world.DoAction(hero, hero.GetActionID("pickup")) == 0);
 }
@@ -254,7 +252,7 @@ TEST_CASE("AIWorld DoAction pickup fails on empty tile", "[AIWorld]") {
 TEST_CASE("AIWorld HandleEnemyTurn attacks adjacent agent", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{5, 4});
     const int hp_before = world.mAgentState.at(hero.GetID()).mHP;
 
@@ -273,7 +271,7 @@ TEST_CASE("AIWorld HandleEnemyTurn no-op when no agents registered", "[AIWorld]"
 TEST_CASE("AIWorld HandleEnemyTurn skips dead enemy", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{5, 4});
     const int hp0 = world.mAgentState.at(hero.GetID()).mHP;
 
@@ -298,7 +296,7 @@ TEST_CASE("AIWorld WaitForStep quit line returns false", "[AIWorld]") {
     AIWorldHarness world;
     world.SetStepMode(true);
     std::istringstream input("q\n");
-    std::streambuf *old = std::cin.rdbuf(input.rdbuf());
+    std::streambuf* old = std::cin.rdbuf(input.rdbuf());
     const bool cont = world.InvokeWaitForStep();
     std::cin.rdbuf(old);
     CHECK_FALSE(cont);
@@ -308,7 +306,7 @@ TEST_CASE("AIWorld RunAgents skips zero-HP agent", "[AIWorld]") {
     AIWorldHarness world;
     world.SetVerboseMode(false);
     world.SetStepMode(false);
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
     world.mAgentState.at(hero.GetID()).mHP = 0;
 
@@ -322,7 +320,7 @@ TEST_CASE("AIWorld UpdateWorld ends when all enemies dead", "[AIWorld]") {
     world.SetStepMode(false);
     world.AddAgent<TrailblazerAgent>("Hero").SetLocation(WorldPosition{10, 7});
 
-    for (auto &e: world.mEnemies) {
+    for (auto& e: world.mEnemies) {
         e.mAlive = false;
     }
 
@@ -355,9 +353,9 @@ TEST_CASE("AIWorld UpdateWorld ends at turn limit", "[AIWorld]") {
 
 TEST_CASE("AIWorld GetAgentState reflects ConfigAgent defaults", "[AIWorld]") {
     AIWorldHarness world;
-    auto &hero = world.AddAgent<TrailblazerAgent>("Hero");
+    auto& hero = world.AddAgent<TrailblazerAgent>("Hero");
     hero.SetLocation(WorldPosition{10, 7});
-    const auto &st = world.GetAgentState(hero.GetID());
+    const auto& st = world.GetAgentState(hero.GetID());
     CHECK(st.mMaxHP == 12);
     CHECK(st.mHP == 12);
     CHECK(st.mAttack == 2);

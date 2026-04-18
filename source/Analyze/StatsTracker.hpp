@@ -28,26 +28,25 @@ namespace cse498 {
  * programmatic identifier, while the label is human-readable display text.
  */
 struct StatSummary {
-  std::string
-      key; // Stable identifier for the statistic, e.g., "successful_moves"
-  std::string label; // For example, "Successful Moves"
-  double currentValue = 0.0;
-  std::optional<double> minValue;
-  std::optional<double> maxValue;
-  std::optional<double> meanValue;
-  std::optional<double> medianValue;
-  std::size_t sampleCount = 0;
+    std::string key; // Stable identifier for the statistic, e.g., "successful_moves"
+    std::string label; // For example, "Successful Moves"
+    double currentValue = 0.0;
+    std::optional<double> minValue;
+    std::optional<double> maxValue;
+    std::optional<double> meanValue;
+    std::optional<double> medianValue;
+    std::size_t sampleCount = 0;
 };
 
 /*@struct ActionSummary
  * @brief Summary information derived from an action log.
  */
 struct ActionSummary {
-  std::string key;   // Stable identifier for the action summary, e.g.,
+    std::string key; // Stable identifier for the action summary, e.g.,
                      // "most_active_entity"
-  std::string label; // For example, "Most Active Entity" or "Total Actions"
-  int actionCount = 0;
-  std::optional<int> mostActiveEntity;
+    std::string label; // For example, "Most Active Entity" or "Total Actions"
+    int actionCount = 0;
+    std::optional<int> mostActiveEntity;
 };
 
 /*@struct DashboardSnapshot
@@ -57,8 +56,8 @@ struct ActionSummary {
  * them differently if needed.
  */
 struct DashboardSnapshot {
-  std::vector<StatSummary> numericStats;
-  std::vector<ActionSummary> actionStats;
+    std::vector<StatSummary> numericStats;
+    std::vector<ActionSummary> actionStats;
 };
 
 /*@class StatsTracker
@@ -66,34 +65,32 @@ struct DashboardSnapshot {
  */
 class StatsTracker {
 public:
-  StatsTracker() = default;
+    StatsTracker() = default;
 
-  /*@brief Builds a full dashboard snapshot of all tracked data.
-   * @param analytics Analytics manager that owns the underlying logs.
-   * @return Combined snapshot of numeric series summaries and action summaries.
-   */
-  DashboardSnapshot BuildSnapshot(const AnalyticsManager &analytics) const;
+    /*@brief Builds a full dashboard snapshot of all tracked data.
+     * @param analytics Analytics manager that owns the underlying logs.
+     * @return Combined snapshot of numeric series summaries and action summaries.
+     */
+    DashboardSnapshot BuildSnapshot(const AnalyticsManager& analytics) const;
 
-  /*@brief Builds a summary for one numeric series.
-   * @param key Stable identifier for the series.
-   * @param label Human-readable name for dashboard display.
-   * @param log Existing DataLog from the analytics layer.
-   * @return Summary data if the series contains samples, otherwise
-   * std::nullopt.
-   */
-  std::optional<StatSummary> BuildSeriesSummary(const std::string &key,
-                                                const std::string &label,
-                                                const DataLog &log) const;
+    /*@brief Builds a summary for one numeric series.
+     * @param key Stable identifier for the series.
+     * @param label Human-readable name for dashboard display.
+     * @param log Existing DataLog from the analytics layer.
+     * @return Summary data if the series contains samples, otherwise
+     * std::nullopt.
+     */
+    std::optional<StatSummary> BuildSeriesSummary(const std::string& key, const std::string& label,
+                                                  const DataLog& log) const;
 
-  /*@brief Builds a summary for one action log.
-   * @param key Stable identifier for the action summary.
-   * @param label Human-readable name for dashboard display.
-   * @param log Existing ActionLog from the analytics layer.
-   * @return Summary data if the log contains actions, otherwise std::nullopt.
-   */
-  std::optional<ActionSummary> BuildActionSummary(const std::string &key,
-                                                  const std::string &label,
-                                                  const ActionLog &log) const;
+    /*@brief Builds a summary for one action log.
+     * @param key Stable identifier for the action summary.
+     * @param label Human-readable name for dashboard display.
+     * @param log Existing ActionLog from the analytics layer.
+     * @return Summary data if the log contains actions, otherwise std::nullopt.
+     */
+    std::optional<ActionSummary> BuildActionSummary(const std::string& key, const std::string& label,
+                                                    const ActionLog& log) const;
 };
 
 } // namespace cse498

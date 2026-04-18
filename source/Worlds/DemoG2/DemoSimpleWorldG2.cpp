@@ -8,27 +8,25 @@
 #include <string>
 #include <vector>
 
-#include "WorldActions.hpp"
+#include "../../Agents/Classic/AgentFactory.hpp"
 #include "../../Agents/Classic/Enemy.hpp"
 #include "../../Agents/Classic/FarmingAgent.hpp"
 #include "../../Agents/Classic/PlayerAgent.hpp"
 #include "../../tools/DamageCalculator.hpp"
-#include "../../Agents/Classic/AgentFactory.hpp"
+#include "WorldActions.hpp"
 
 namespace cse498 {
 
 
-bool DemoSimpleWorldG2::IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const {
+bool DemoSimpleWorldG2::IsOccupiedByAgent(WorldPosition pos, const AgentBase* skip) const {
     for (size_t i = 0; i < GetNumAgents(); ++i) {
-        const AgentBase& agent =  GetAgentByIndex(i);
+        const AgentBase& agent = GetAgentByIndex(i);
 
-        if (&agent == skip)
-        {
+        if (&agent == skip) {
             continue;
         }
 
-        if (!agent.IsAlive())
-        {
+        if (!agent.IsAlive()) {
             continue;
         }
 
@@ -40,29 +38,27 @@ bool DemoSimpleWorldG2::IsOccupiedByAgent(WorldPosition pos, const AgentBase *sk
 }
 
 void DemoSimpleWorldG2::PrintWorldState() const {
-    std::vector<std::string> draw(main_grid.GetHeight(),
-                                  std::string(main_grid.GetWidth(), ' '));
+    std::vector<std::string> draw(main_grid.GetHeight(), std::string(main_grid.GetWidth(), ' '));
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
         for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
             draw[y][x] = main_grid.GetCellTypeSymbol(main_grid[WorldPosition{x, y}]);
         }
     }
     for (size_t i = 0; i < GetNumAgents(); ++i) {
-        const AgentBase &agent = GetAgentByIndex(i);
-        if (!agent.IsAlive())
-        {
+        const AgentBase& agent = GetAgentByIndex(i);
+        if (!agent.IsAlive()) {
             continue;
         }
         const WorldPosition pos = agent.GetLocation().AsWorldPosition();
         draw[pos.CellY()][pos.CellX()] = agent.GetSymbol();
     }
     std::cout << '\n' << '+' << std::string(main_grid.GetWidth(), '-') << "+\n";
-    for (const std::string &row : draw) {
+    for (const std::string& row: draw) {
         std::cout << "|" << row << "|\n";
     }
     std::cout << '+' << std::string(main_grid.GetWidth(), '-') << "+\n";
-    const PlayerAgent *player = GetPlayer();
-    const AgentBase *enemy = TryGetAgent(mEnemyId);
+    const PlayerAgent* player = GetPlayer();
+    const AgentBase* enemy = TryGetAgent(mEnemyId);
     std::cout << "Player HP: " << (player ? static_cast<int>(player->GetCurrentHealth()) : 0)
               << " | Player Gold: " << (player ? player->GetGold() : 0);
     if (enemy != nullptr && enemy->IsAlive()) {
@@ -73,7 +69,7 @@ void DemoSimpleWorldG2::PrintWorldState() const {
     std::cout << '\n';
 }
 
-bool DemoSimpleWorldG2::MoveAgentBy(AgentBase &agent, double dx, double dy) {
+bool DemoSimpleWorldG2::MoveAgentBy(AgentBase& agent, double dx, double dy) {
     // There needs to be a function like this in the WorldBase Class -- this is just an example implementation
     // for this class. Recall for 8-directional movement you need to check that the two adjacent tiles are free
     // to move in a diagonal direction (not done here).
@@ -92,17 +88,16 @@ bool DemoSimpleWorldG2::MoveAgentBy(AgentBase &agent, double dx, double dy) {
     return true;
 }
 
-int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
+int DemoSimpleWorldG2::HandleInteraction(AgentBase& actor) {
     const WorldPosition actor_pos = actor.GetLocation().AsWorldPosition();
     bool interacted = false;
 
     for (size_t i = 0; i < GetNumAgents(); ++i) {
-        AgentBase &other = GetAgentByIndex(i);
+        AgentBase& other = GetAgentByIndex(i);
         if (&other == &actor) {
             continue;
         }
-        if (!other.IsAlive())
-        {
+        if (!other.IsAlive()) {
             continue;
         }
         const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
@@ -119,7 +114,7 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
             // Otherwise interaction happens
             interacted = true;
             if (other.GetID() == mFarmerId) { // If farmer then do -->
-                auto &farmer = dynamic_cast<FarmingAgent &>(other);
+                auto& farmer = dynamic_cast<FarmingAgent&>(other);
                 if (&actor == GetPlayer()) {
                     return HandleMerchantTrade(farmer);
                 }
@@ -131,25 +126,25 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                     std::cout << farmer.GetTradeClosedMessage() << '\n';
                 }
                 // If player and Enemy -->
-            } else if (other.GetID() == mPlayerId && HasAgent(mEnemyId) && actor.GetID() == GetAgent(mEnemyId).GetID()) {
-                auto &player = dynamic_cast<PlayerAgent &>(other);
-                auto &enemy = dynamic_cast<Enemy &>(actor);
+            } else if (other.GetID() == mPlayerId && HasAgent(mEnemyId) &&
+                       actor.GetID() == GetAgent(mEnemyId).GetID()) {
+                auto& player = dynamic_cast<PlayerAgent&>(other);
+                auto& enemy = dynamic_cast<Enemy&>(actor);
 
                 const double dealt =
-                    DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
+                        DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
                 player.TakeDamage(dealt);
-                std::cout << enemy.GetName() << " hits " << player.GetName() << " for "
-                          << static_cast<int>(dealt) << " damage.\n";
+                std::cout << enemy.GetName() << " hits " << player.GetName() << " for " << static_cast<int>(dealt)
+                          << " damage.\n";
                 if (!player.IsAlive()) {
                     std::cout << player.GetName() << " has fallen.\n";
                     mRunOver = true;
                     return 1;
                 }
                 const double retaliate =
-                    DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
+                        DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
                 enemy.TakeDamage(retaliate);
-                std::cout << player.GetName() << " strikes back for " << static_cast<int>(retaliate)
-                          << " damage.\n";
+                std::cout << player.GetName() << " strikes back for " << static_cast<int>(retaliate) << " damage.\n";
                 if (!enemy.IsAlive()) {
                     HandleEnemyDefeat(enemy, player);
                     return 1;
@@ -157,18 +152,17 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
                 //
             } else if (other.GetID() == mEnemyId) {
                 const double dealt =
-                    DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
+                        DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
                 other.TakeDamage(dealt);
-                std::cout << actor.GetName() << " hits enemy for " << static_cast<int>(dealt)
-                          << " damage.\n";
+                std::cout << actor.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
                 if (!other.IsAlive()) {
-                    auto &enemy = dynamic_cast<Enemy &>(other);
-                    auto &player = dynamic_cast<PlayerAgent &>(actor);
+                    auto& enemy = dynamic_cast<Enemy&>(other);
+                    auto& player = dynamic_cast<PlayerAgent&>(actor);
                     HandleEnemyDefeat(enemy, player);
                     return 1;
                 }
                 const double retaliate =
-                    DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
+                        DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
                 actor.TakeDamage(retaliate);
                 std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
                 if (!actor.IsAlive()) {
@@ -185,9 +179,8 @@ int DemoSimpleWorldG2::HandleInteraction(AgentBase &actor) {
     return interacted ? 1 : 0;
 }
 
-int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const
-{
-    PlayerAgent *player = GetPlayer();
+int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const {
+    PlayerAgent* player = GetPlayer();
     if (player == nullptr) {
         return 0;
     }
@@ -201,10 +194,8 @@ int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const
     std::cout << player->GetInventory() << '\n';
 
     std::cout << "\nShop offers:\n";
-    for (const TradeOffer &offer : merchant.GetOffers()) {
-        std::cout << " - " << offer.mItemName
-                  << " | buy: " << offer.mBuyPrice
-                  << " | sell: " << offer.mSellPrice
+    for (const TradeOffer& offer: merchant.GetOffers()) {
+        std::cout << " - " << offer.mItemName << " | buy: " << offer.mBuyPrice << " | sell: " << offer.mSellPrice
                   << " | stock: ";
         if (offer.IsUnlimited()) {
             std::cout << "unlimited";
@@ -224,8 +215,7 @@ int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const
         return 1;
     }
 
-    if (choice != 'b' && choice != 'B' && choice != 's' && choice != 'S')
-    {
+    if (choice != 'b' && choice != 'B' && choice != 's' && choice != 'S') {
         std::cout << "Invalid trade option.\n";
         return 0;
     }
@@ -238,19 +228,15 @@ int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const
     std::cout << "Quantity: ";
     std::cin >> quantity;
 
-    if (quantity == 0)
-    {
+    if (quantity == 0) {
         std::cout << "Quantity must be at least 1.\n";
         return 0;
     }
 
     TradeResult result;
-    if (choice == 'b' || choice == 'B')
-    {
+    if (choice == 'b' || choice == 'B') {
         result = merchant.BuyFromMerchant(*player, itemName, quantity);
-    }
-    else
-    {
+    } else {
         result = merchant.SellToMerchant(*player, itemName, quantity);
     }
 
@@ -258,15 +244,11 @@ int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const
     std::cout << "Your gold is now: " << player->GetGold() << '\n';
     std::cout << "Merchant gold is now: " << merchant.GetGold() << '\n';
 
-    if (const TradeOffer* updatedOffer = merchant.FindOffer(itemName); updatedOffer != nullptr)
-    {
+    if (const TradeOffer* updatedOffer = merchant.FindOffer(itemName); updatedOffer != nullptr) {
         std::cout << "Updated shop entry for " << updatedOffer->mItemName << ": stock = ";
-        if (updatedOffer->IsUnlimited())
-        {
+        if (updatedOffer->IsUnlimited()) {
             std::cout << "unlimited";
-        }
-        else
-        {
+        } else {
             std::cout << updatedOffer->mStock;
         }
         std::cout << '\n';
@@ -275,8 +257,7 @@ int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const
     return result.IsSuccess() ? 1 : 0;
 }
 
-void DemoSimpleWorldG2::HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player)
-{
+void DemoSimpleWorldG2::HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player) {
     const std::size_t goldReward = enemy.ClaimGoldDrop();
 
     std::cout << "Enemy defeated.\n";
@@ -287,7 +268,7 @@ void DemoSimpleWorldG2::HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player)
     }
 }
 
-void DemoSimpleWorldG2::ConfigAgent(AgentBase &agent) {
+void DemoSimpleWorldG2::ConfigAgent(AgentBase& agent) {
     agent.AddAction(WorldActions::MOVE_UP_STRING, WorldActions::MOVE_UP);
     agent.AddAction(WorldActions::MOVE_DOWN_STRING, WorldActions::MOVE_DOWN);
     agent.AddAction(WorldActions::MOVE_LEFT_STRING, WorldActions::MOVE_LEFT);
@@ -307,12 +288,12 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     mFloorId = main_grid.AddCellType("floor", "Walkable floor", '.');
     mWallId = main_grid.AddCellType("wall", "Solid wall", '#');
     main_grid.Load({
-        "############",
-        "#..........#",
-        "#..........#",
-        "#..........#",
-        "#..........#",
-        "############",
+            "############",
+            "#..........#",
+            "#..........#",
+            "#..........#",
+            "#..........#",
+            "############",
     });
 
 
@@ -326,7 +307,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     player->SetGold(30);
 
     // Creating agents by using the template this way
-    auto &farmer = AddAgent<FarmingAgent>("Farmer");
+    auto& farmer = AddAgent<FarmingAgent>("Farmer");
     mFarmerId = farmer.GetID();
     farmer.SetSymbol('F');
     farmer.SetLocation(Location(WorldPosition{4, 2}));
@@ -338,33 +319,33 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
 
     // just for demonstration of another method for creation of an agent
     mEnemyId = GetNextAgentId(); // this is just for demonstration. ids should be organized by world
-    auto &enemy = AddAgent(std::make_unique<Enemy>(mEnemyId, "Enemy", *this));
+    auto& enemy = AddAgent(std::make_unique<Enemy>(mEnemyId, "Enemy", *this));
     enemy.SetSymbol('S');
     enemy.SetLocation(Location(WorldPosition{8, 3}));
     enemy.SetStats(AgentStats(45, 9, 2, 3, 0));
     enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, mPlayerId));
 }
 
-int DemoSimpleWorldG2::DoAction(AgentBase &agent, size_t action_id) {
+int DemoSimpleWorldG2::DoAction(AgentBase& agent, size_t action_id) {
     if (action_id == WorldActions::QUIT) {
         mRunOver = true;
         std::cout << "Quitting demo.\n";
         return 1;
     }
     switch (action_id) {
-    case WorldActions::MOVE_UP:
-        return MoveAgentBy(agent, 0.0, -1.0);
-    case WorldActions::MOVE_DOWN:
-        return MoveAgentBy(agent, 0.0, 1.0);
-    case WorldActions::MOVE_LEFT:
-        return MoveAgentBy(agent, -1.0, 0.0);
-    case WorldActions::MOVE_RIGHT:
-        return MoveAgentBy(agent, 1.0, 0.0);
-    case WorldActions::INTERACT:
-        return HandleInteraction(agent);
-    case WorldActions::REMAIN_STILL:
-    default:
-        return 0;
+        case WorldActions::MOVE_UP:
+            return MoveAgentBy(agent, 0.0, -1.0);
+        case WorldActions::MOVE_DOWN:
+            return MoveAgentBy(agent, 0.0, 1.0);
+        case WorldActions::MOVE_LEFT:
+            return MoveAgentBy(agent, -1.0, 0.0);
+        case WorldActions::MOVE_RIGHT:
+            return MoveAgentBy(agent, 1.0, 0.0);
+        case WorldActions::INTERACT:
+            return HandleInteraction(agent);
+        case WorldActions::REMAIN_STILL:
+        default:
+            return 0;
     }
 }
 
@@ -373,7 +354,8 @@ void DemoSimpleWorldG2::Run() {
     while (!mRunOver) {
         PrintWorldState();
         PlayerAgent* player = GetPlayer();
-        if (player == nullptr) return;
+        if (player == nullptr)
+            return;
 
         if (!player->IsAlive()) {
             break;
@@ -391,7 +373,7 @@ void DemoSimpleWorldG2::Run() {
             break;
         }
 
-        AgentBase *enemy = TryGetAgent(mEnemyId);
+        AgentBase* enemy = TryGetAgent(mEnemyId);
         if (enemy != nullptr && enemy->IsAlive()) {
             const size_t enemy_action = enemy->SelectAction(main_grid);
             const int enemy_result = DoAction(*enemy, enemy_action);

@@ -24,14 +24,14 @@ public:
      * @param name - name of the agent
      * @param world - world it belongs to
      */
-    PlayerAgent(size_t id, const std::string &name, const WorldBase &world);
+    PlayerAgent(size_t id, const std::string& name, const WorldBase& world);
 
     /**
      * Don't call this function. Needs to be overriden but doesn't serve a good use
      * @param grid
      * @return
      */
-    [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
+    [[nodiscard]] size_t SelectAction(const WorldGrid& grid) override;
 
     /**
      * Accepts char input and returns action
@@ -42,7 +42,7 @@ public:
      */
     size_t SelectPlayerAction(char input);
 
-    [[nodiscard]] Inventory & GetInventory() { return mInventory; }
+    [[nodiscard]] Inventory& GetInventory() { return mInventory; }
     [[nodiscard]] const Inventory& GetInventory() const { return mInventory; }
 
     [[nodiscard]] std::size_t GetGold() const { return mGold; }
@@ -64,5 +64,4 @@ public:
     void SetGold(std::size_t amount) { mGold = amount; }
 };
 
-}
-
+} // namespace cse498

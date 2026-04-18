@@ -16,19 +16,19 @@
  * Do NOT define CATCH_CONFIG_MAIN here if another test file already defines it.
  */
 
-#include <type_traits>
 #include <memory>
-#include <vector>
 #include <string>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
-#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../../source/Interfaces/WebUI/WebCanvas/WebCanvas.hpp"
 #include "../../../source/Interfaces/WebUI/internal/ICanvasElement.hpp"
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-using cse498::WebCanvas;
-using cse498::ICanvasElement;
 using cse498::Alignment;
+using cse498::ICanvasElement;
+using cse498::WebCanvas;
 // using namespace cse498;
 
 // A minimal WebLayout stub for unit tests.
@@ -40,8 +40,7 @@ class cse498::WebLayout {};
 // ---------------------------
 
 struct SpyElement : public ICanvasElement {
-    SpyElement(int id, std::vector<int>& order)
-        : mId(id), order_(order) {}
+    SpyElement(int id, std::vector<int>& order) : mId(id), order_(order) {}
 
     void Draw(WebCanvas& /*canvas*/) override {
         ++drawCount;
@@ -60,11 +59,17 @@ struct LifetimeElement : public ICanvasElement {
     inline static int destroyed = 0;
 
     LifetimeElement() { ++alive; }
-    ~LifetimeElement() override { --alive; ++destroyed; }
+    ~LifetimeElement() override {
+        --alive;
+        ++destroyed;
+    }
 
     void Draw(WebCanvas& /*canvas*/) override {}
 
-    static void reset() { alive = 0; destroyed = 0; }
+    static void reset() {
+        alive = 0;
+        destroyed = 0;
+    }
 };
 
 struct OrderElement : public ICanvasElement {
@@ -72,9 +77,7 @@ struct OrderElement : public ICanvasElement {
 
     explicit OrderElement(std::string tag) : tag_(std::move(tag)) {}
 
-    void Draw(WebCanvas& /*canvas*/) override {
-        order.push_back(tag_);
-    }
+    void Draw(WebCanvas& /*canvas*/) override { order.push_back(tag_); }
 
     static void reset() { order.clear(); }
 
@@ -161,7 +164,8 @@ TEST_CASE("WebCanvas AddElement(nullptr) is safe and does not affect ownership c
 // ========================================================
 // Test 4: Canvas owns elements and releases on clear/destroy
 // ========================================================
-TEST_CASE("WebCanvas owns added elements and releases them on clear/destroy (stronger assertions)", "[web][canvas][raii]") {
+TEST_CASE("WebCanvas owns added elements and releases them on clear/destroy (stronger assertions)",
+          "[web][canvas][raii]") {
     LifetimeElement::reset();
     REQUIRE(LifetimeElement::alive == 0);
     REQUIRE(LifetimeElement::destroyed == 0);
@@ -199,7 +203,8 @@ TEST_CASE("WebCanvas owns added elements and releases them on clear/destroy (str
 // ========================================================
 // Test 5: RenderFrame respects visibility and preserves elements
 // ========================================================
-TEST_CASE("WebCanvas RenderFrame draws visible elements, skips invisible, and does not clear elements", "[web][canvas]") {
+TEST_CASE("WebCanvas RenderFrame draws visible elements, skips invisible, and does not clear elements",
+          "[web][canvas]") {
     WebCanvas canvas;
 
     std::vector<int> order;
@@ -239,7 +244,8 @@ TEST_CASE("WebCanvas RenderFrame draws visible elements, skips invisible, and do
 // ========================================================
 // Test 6: RenderFrame sorts by ZIndex with stable ordering
 // ========================================================
-TEST_CASE("WebCanvas RenderFrame sorts by ZIndex (stable), including equal ZIndex insertion order", "[web][canvas][zindex]") {
+TEST_CASE("WebCanvas RenderFrame sorts by ZIndex (stable), including equal ZIndex insertion order",
+          "[web][canvas][zindex]") {
     WebCanvas canvas;
 
     std::vector<int> order;
@@ -251,8 +257,8 @@ TEST_CASE("WebCanvas RenderFrame sorts by ZIndex (stable), including equal ZInde
     // ZIndex values (lower draws first).
     e1->SetZIndex(10);
     e2->SetZIndex(0);
-    e3->SetZIndex(10);  // same as e1 -> should keep insertion order relative to e1
-    e4->SetZIndex(10);  // same as e1 -> after e3
+    e3->SetZIndex(10); // same as e1 -> should keep insertion order relative to e1
+    e4->SetZIndex(10); // same as e1 -> after e3
 
     canvas.AddElement(std::move(e1)); // id=1, z=10
     canvas.AddElement(std::move(e2)); // id=2, z=0
@@ -325,8 +331,8 @@ TEST_CASE("WebCanvas immediate-mode primitives are safe to call (expanded)", "[w
     REQUIRE_NOTHROW(canvas.Clear("#000"));
     REQUIRE_NOTHROW(canvas.Clear("rgba(255,0,0,0.5)"));
     REQUIRE_NOTHROW(canvas.Clear("red"));
-    REQUIRE_NOTHROW(canvas.Clear(""));              // empty color string
-    REQUIRE_NOTHROW(canvas.Clear("not-a-color"));   // invalid but should not crash
+    REQUIRE_NOTHROW(canvas.Clear("")); // empty color string
+    REQUIRE_NOTHROW(canvas.Clear("not-a-color")); // invalid but should not crash
 
     // Lines
     REQUIRE_NOTHROW(canvas.DrawLine(0, 0, 10, 10, 2.0f, "#ff00ff"));
@@ -335,21 +341,21 @@ TEST_CASE("WebCanvas immediate-mode primitives are safe to call (expanded)", "[w
     // Circles / points
     REQUIRE_NOTHROW(canvas.DrawCircle(50, 50, 25, "#00ff00", 3.0f, "#001100"));
     REQUIRE_NOTHROW(canvas.DrawCircle(50, 50, 25, "#00ff00", 0.0f, "#001100")); // no stroke
-    REQUIRE_NOTHROW(canvas.DrawCircle(50, 50, 25, "#00ff00", 3.0f, ""));        // no fill
+    REQUIRE_NOTHROW(canvas.DrawCircle(50, 50, 25, "#00ff00", 3.0f, "")); // no fill
     REQUIRE_NOTHROW(canvas.DrawPoint(100, 100, 3.0f, "#ffffff"));
 
     // Polygon: normal + boundary cases
-    std::vector<WebCanvas::Vec2> tri{{10,10},{60,10},{35,60}};
+    std::vector<WebCanvas::Vec2> tri{{10, 10}, {60, 10}, {35, 60}};
     REQUIRE_NOTHROW(canvas.DrawPolygon(tri, "#ffffff", 1.5f, "#222222"));
 
     std::vector<WebCanvas::Vec2> empty;
     REQUIRE_NOTHROW(canvas.DrawPolygon(empty, "#fff", 1.0f, "#000")); // 0 points -> should early-return
 
-    std::vector<WebCanvas::Vec2> one{{0,0}};
-    REQUIRE_NOTHROW(canvas.DrawPolygon(one, "#fff", 1.0f, "#000"));   // 1 point -> should early-return
+    std::vector<WebCanvas::Vec2> one{{0, 0}};
+    REQUIRE_NOTHROW(canvas.DrawPolygon(one, "#fff", 1.0f, "#000")); // 1 point -> should early-return
 
-    std::vector<WebCanvas::Vec2> two{{0,0},{10,0}};
-    REQUIRE_NOTHROW(canvas.DrawPolygon(two, "#fff", 1.0f, "#000"));   // 2 points -> allowed, implementation-defined
+    std::vector<WebCanvas::Vec2> two{{0, 0}, {10, 0}};
+    REQUIRE_NOTHROW(canvas.DrawPolygon(two, "#fff", 1.0f, "#000")); // 2 points -> allowed, implementation-defined
 }
 
 
@@ -417,8 +423,7 @@ TEST_CASE("WebCanvas default constructor uses fallback id", "[web][canvas][id]")
 // ========================================================
 // Test 14: Move assignment transfers ownership safely
 // ========================================================
-TEST_CASE("WebCanvas move assignment is safe and preserves ownership",
-          "[web][canvas][raii]") {
+TEST_CASE("WebCanvas move assignment is safe and preserves ownership", "[web][canvas][raii]") {
     LifetimeElement::reset();
 
     WebCanvas a("canvas-a");
@@ -496,8 +501,7 @@ TEST_CASE("WebCanvas ClearElements prevents future draws", "[web][canvas][raii]"
 // ========================================================
 // Test 17: RenderFrame respects z-index and visibility together
 // ========================================================
-TEST_CASE("WebCanvas RenderFrame respects z-index and visibility together",
-          "[web][canvas][zindex]") {
+TEST_CASE("WebCanvas RenderFrame respects z-index and visibility together", "[web][canvas][zindex]") {
     WebCanvas canvas("z-vis-canvas");
 
     std::vector<int> order;
@@ -522,8 +526,7 @@ TEST_CASE("WebCanvas RenderFrame respects z-index and visibility together",
 // ========================================================
 // Test 18: DrawPoint is safe across varied inputs
 // ========================================================
-TEST_CASE("WebCanvas DrawPoint is safe to call with various inputs",
-          "[web][canvas][primitives]") {
+TEST_CASE("WebCanvas DrawPoint is safe to call with various inputs", "[web][canvas][primitives]") {
     WebCanvas canvas("drawpoint-test");
 
     REQUIRE_NOTHROW(canvas.DrawPoint(0, 0, 1.0f, "#ffffff"));
@@ -535,8 +538,7 @@ TEST_CASE("WebCanvas DrawPoint is safe to call with various inputs",
 // ========================================================
 // Test 19: DrawPolygon with fewer than two points is safe
 // ========================================================
-TEST_CASE("WebCanvas DrawPolygon safely ignores too-few points",
-          "[web][canvas][primitives]") {
+TEST_CASE("WebCanvas DrawPolygon safely ignores too-few points", "[web][canvas][primitives]") {
     WebCanvas canvas("polygon-early-return");
 
     std::vector<WebCanvas::Vec2> empty;
@@ -549,8 +551,7 @@ TEST_CASE("WebCanvas DrawPolygon safely ignores too-few points",
 // ========================================================
 // Test 20: RenderFrame preserves insertion order when z-index is equal
 // ========================================================
-TEST_CASE("WebCanvas RenderFrame preserves insertion order for equal z-index",
-          "[web][canvas][zindex]") {
+TEST_CASE("WebCanvas RenderFrame preserves insertion order for equal z-index", "[web][canvas][zindex]") {
     WebCanvas canvas("equal-z-canvas");
 
     OrderElement::reset();

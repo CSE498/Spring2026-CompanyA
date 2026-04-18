@@ -10,46 +10,31 @@
 #include "../../source/Agents/Classic/PlayerAgent.hpp"
 #include "../../source/core/WorldBase.hpp"
 
-namespace cse498
-{
-    class TestWorld : public WorldBase
-    {
-    public:
-        TestWorld() : WorldBase()
-        {
-            // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
-            auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
-            AddAgent(std::move(p));
-            mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
-            assert(mPlayer);
+namespace cse498 {
+class TestWorld : public WorldBase {
+public:
+    TestWorld() : WorldBase() {
+        // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
+        auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+        AddAgent(std::move(p));
+        mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+        assert(mPlayer);
+    }
 
-        }
+    ~TestWorld() override = default;
 
-        ~TestWorld() override = default;
+    int DoAction([[maybe_unused]] AgentBase& agent, [[maybe_unused]] size_t action_id) override { return 0; }
+};
 
-        int DoAction([[maybe_unused]] AgentBase& agent,
-                     [[maybe_unused]] size_t action_id) override
-        {
-            return 0;
-        }
-    };
-
-    class TestItem : public Item
-    {
-    public:
-        TestItem(size_t id,
-                 std::string name,
-                 int goldValue,
-                 const WorldBase& world)
-            : Item(id, std::move(name), "path", goldValue, world)
-        {
-        }
-    };
-}
+class TestItem : public Item {
+public:
+    TestItem(size_t id, std::string name, int goldValue, const WorldBase& world) :
+        Item(id, std::move(name), "path", goldValue, world) {}
+};
+} // namespace cse498
 
 using namespace cse498;
-static void SetupBasicMerchant(MerchantAgent& merchant)
-{
+static void SetupBasicMerchant(MerchantAgent& merchant) {
     merchant.ClearInitialOffers();
     merchant.AddInitialOffer({"apple", 4, 2, 1, TradeStockMode::Unlimited, 0});
     merchant.AddInitialOffer({"bread", 6, 3, 1, TradeStockMode::Limited, 18});
@@ -57,8 +42,7 @@ static void SetupBasicMerchant(MerchantAgent& merchant)
     merchant.AddGold(200);
 }
 
-TEST_CASE("PlayerAgent gold helpers work", "[agents][player][gold]")
-{
+TEST_CASE("PlayerAgent gold helpers work", "[agents][player][gold]") {
     TestWorld world;
     PlayerAgent player(100, "Tester", world);
 
@@ -77,8 +61,7 @@ TEST_CASE("PlayerAgent gold helpers work", "[agents][player][gold]")
     REQUIRE(player.GetGold() == 42);
 }
 
-TEST_CASE("Enemy gold drop can only be claimed once until reset", "[agents][enemy][gold]")
-{
+TEST_CASE("Enemy gold drop can only be claimed once until reset", "[agents][enemy][gold]") {
     TestWorld world;
     Enemy enemy(200, "Slime", world);
 
@@ -94,8 +77,7 @@ TEST_CASE("Enemy gold drop can only be claimed once until reset", "[agents][enem
     REQUIRE(enemy.ClaimGoldDrop() == 9);
 }
 
-TEST_CASE("Buying a limited merchant item reduces stock and player gold", "[agents][trade][buy]")
-{
+TEST_CASE("Buying a limited merchant item reduces stock and player gold", "[agents][trade][buy]") {
     TestWorld world;
     PlayerAgent player(300, "Buyer", world);
     MerchantAgent merchant(301, "Merchant", world);
@@ -123,8 +105,7 @@ TEST_CASE("Buying a limited merchant item reduces stock and player gold", "[agen
     REQUIRE(merchant.GetGold() == 212);
 }
 
-TEST_CASE("Selling unknown item creates limited merchant offer", "[agents][trade][sell][new-offer]")
-{
+TEST_CASE("Selling unknown item creates limited merchant offer", "[agents][trade][sell][new-offer]") {
     TestWorld world;
     PlayerAgent player(400, "Seller", world);
     MerchantAgent merchant(401, "Merchant", world);
@@ -154,8 +135,7 @@ TEST_CASE("Selling unknown item creates limited merchant offer", "[agents][trade
     REQUIRE(offer->mSellPrice == 4);
 }
 
-TEST_CASE("Selling existing limited item increases merchant stock", "[agents][trade][sell][restock]")
-{
+TEST_CASE("Selling existing limited item increases merchant stock", "[agents][trade][sell][restock]") {
     TestWorld world;
     PlayerAgent player(500, "Seller", world);
     MerchantAgent merchant(501, "Merchant", world);
@@ -184,8 +164,7 @@ TEST_CASE("Selling existing limited item increases merchant stock", "[agents][tr
     REQUIRE(after->mStock == 21);
 }
 
-TEST_CASE("Buying with quantity 0 fails", "[TradeSystem][buy][edge]")
-{
+TEST_CASE("Buying with quantity 0 fails", "[TradeSystem][buy][edge]") {
     // Create a merchant with known stock and give the player gold.
     TestWorld world;
     PlayerAgent player(601, "Player", world);
@@ -207,8 +186,7 @@ TEST_CASE("Buying with quantity 0 fails", "[TradeSystem][buy][edge]")
     REQUIRE(bread->mStock == 18);
 }
 
-TEST_CASE("Buying an unknown item fails", "[TradeSystem][buy][unknown]")
-{
+TEST_CASE("Buying an unknown item fails", "[TradeSystem][buy][unknown]") {
     // Merchant only knows about the configured default shop items.
     TestWorld world;
     PlayerAgent player(611, "Player", world);
@@ -226,8 +204,7 @@ TEST_CASE("Buying an unknown item fails", "[TradeSystem][buy][unknown]")
     REQUIRE(player.GetGold() == 100);
 }
 
-TEST_CASE("Buying without enough gold fails", "[TradeSystem][buy][gold]")
-{
+TEST_CASE("Buying without enough gold fails", "[TradeSystem][buy][gold]") {
     // Player cannot afford the requested purchase.
     TestWorld world;
     PlayerAgent player(621, "Player", world);
@@ -253,8 +230,7 @@ TEST_CASE("Buying without enough gold fails", "[TradeSystem][buy][gold]")
     REQUIRE(after->mStock == 18);
 }
 
-TEST_CASE("Buying more than merchant stock fails", "[TradeSystem][buy][stock]")
-{
+TEST_CASE("Buying more than merchant stock fails", "[TradeSystem][buy][stock]") {
     // bread is limited stock, so requesting too much should fail.
     TestWorld world;
     PlayerAgent player(631, "Player", world);
@@ -280,8 +256,7 @@ TEST_CASE("Buying more than merchant stock fails", "[TradeSystem][buy][stock]")
     REQUIRE(after->mStock == 18);
 }
 
-TEST_CASE("Selling with quantity 0 fails", "[TradeSystem][sell][edge]")
-{
+TEST_CASE("Selling with quantity 0 fails", "[TradeSystem][sell][edge]") {
     // Player has an item, but quantity 0 should still be rejected.
     TestWorld world;
     PlayerAgent player(641, "Player", world);
@@ -298,8 +273,7 @@ TEST_CASE("Selling with quantity 0 fails", "[TradeSystem][sell][edge]")
     REQUIRE(result.mStatus == TradeStatus::InvalidQuantity);
 }
 
-TEST_CASE("Selling an item the player does not own fails", "[TradeSystem][sell][missing]")
-{
+TEST_CASE("Selling an item the player does not own fails", "[TradeSystem][sell][missing]") {
     // Merchant is valid, but player inventory does not contain the item.
     TestWorld world;
     PlayerAgent player(651, "Player", world);
@@ -314,8 +288,7 @@ TEST_CASE("Selling an item the player does not own fails", "[TradeSystem][sell][
     REQUIRE(result.mStatus == TradeStatus::PlayerOutOfStock);
 }
 
-TEST_CASE("Selling fails when merchant cannot afford payout", "[TradeSystem][sell][merchant-gold]")
-{
+TEST_CASE("Selling fails when merchant cannot afford payout", "[TradeSystem][sell][merchant-gold]") {
     // Player owns bread, but merchant has no gold.
     TestWorld world;
     PlayerAgent player(661, "Player", world);
@@ -336,8 +309,7 @@ TEST_CASE("Selling fails when merchant cannot afford payout", "[TradeSystem][sel
     REQUIRE(player.GetInventory().GetTotal("bread") == 1);
 }
 
-TEST_CASE("Closed merchant blocks buying and selling", "[TradeSystem][merchant][closed]")
-{
+TEST_CASE("Closed merchant blocks buying and selling", "[TradeSystem][merchant][closed]") {
     // Merchant exists but trading is disabled.
     TestWorld world;
     PlayerAgent player(671, "Player", world);
@@ -359,4 +331,3 @@ TEST_CASE("Closed merchant blocks buying and selling", "[TradeSystem][merchant][
     REQUIRE_FALSE(sellResult.IsSuccess());
     REQUIRE(sellResult.mStatus == TradeStatus::MerchantClosed);
 }
-

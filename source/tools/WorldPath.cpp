@@ -13,72 +13,51 @@
 #include <limits>
 #include <ostream>
 
-namespace cse498
-{
+namespace cse498 {
 
-namespace
-{
+namespace {
 
 // Epsilon used only for geometric intersection math.
 constexpr double kEps = 1e-9;
 
 /// Compute straight-line distance between two world positions.
-double Dist(const WorldPosition& a, const WorldPosition& b)
-{
+double Dist(const WorldPosition& a, const WorldPosition& b) {
     const double dx = a.X() - b.X();
     const double dy = a.Y() - b.Y();
     return std::hypot(dx, dy);
 }
 
 /// Small helper vector used for segment intersection calculations.
-struct Vec2
-{
+struct Vec2 {
     double x = 0.0;
     double y = 0.0;
 };
 
 /// Convert a WorldPosition into a simple Vec2 representation.
-Vec2 ToVec2(const WorldPosition& p)
-{
-    return {p.X(), p.Y()};
-}
+Vec2 ToVec2(const WorldPosition& p) { return {p.X(), p.Y()}; }
 
 /// 2D cross product of vectors.
-double Cross(const Vec2& a, const Vec2& b)
-{
-    return a.x * b.y - a.y * b.x;
-}
+double Cross(const Vec2& a, const Vec2& b) { return a.x * b.y - a.y * b.x; }
 
 /// Vector subtraction (a - b).
-Vec2 Sub(const Vec2& a, const Vec2& b)
-{
-    return {a.x - b.x, a.y - b.y};
-}
+Vec2 Sub(const Vec2& a, const Vec2& b) { return {a.x - b.x, a.y - b.y}; }
 
 /// Returns true if two doubles are approximately equal.
-bool NearlyEqual(double a, double b, double eps = kEps)
-{
-    return std::abs(a - b) <= eps;
-}
+bool NearlyEqual(double a, double b, double eps = kEps) { return std::abs(a - b) <= eps; }
 
 /// Checks whether point p lies on segment ab.
-bool OnSegment(const Vec2& a, const Vec2& b, const Vec2& p)
-{
+bool OnSegment(const Vec2& a, const Vec2& b, const Vec2& p) {
     const double minx = std::min(a.x, b.x);
     const double maxx = std::max(a.x, b.x);
     const double miny = std::min(a.y, b.y);
     const double maxy = std::max(a.y, b.y);
 
-    return p.x >= minx - kEps && p.x <= maxx + kEps &&
-           p.y >= miny - kEps && p.y <= maxy + kEps;
+    return p.x >= minx - kEps && p.x <= maxx + kEps && p.y >= miny - kEps && p.y <= maxy + kEps;
 }
 
 /// Determines whether two line segments intersect.
-bool SegmentsIntersect(const WorldPosition& a0,
-                       const WorldPosition& a1,
-                       const WorldPosition& b0,
-                       const WorldPosition& b1)
-{
+bool SegmentsIntersect(const WorldPosition& a0, const WorldPosition& a1, const WorldPosition& b0,
+                       const WorldPosition& b1) {
     const Vec2 p = ToVec2(a0);
     const Vec2 r = Sub(ToVec2(a1), p);
     const Vec2 q = ToVec2(b0);
@@ -87,12 +66,9 @@ bool SegmentsIntersect(const WorldPosition& a0,
     const double rxs = Cross(r, s);
     const double q_pxs = Cross(Sub(q, p), r);
 
-    if (NearlyEqual(rxs, 0.0) && NearlyEqual(q_pxs, 0.0))
-    {
+    if (NearlyEqual(rxs, 0.0) && NearlyEqual(q_pxs, 0.0)) {
         // Collinear segments: check overlap
-        return OnSegment(p, ToVec2(a1), q) ||
-               OnSegment(p, ToVec2(a1), ToVec2(b1)) ||
-               OnSegment(q, ToVec2(b1), p) ||
+        return OnSegment(p, ToVec2(a1), q) || OnSegment(p, ToVec2(a1), ToVec2(b1)) || OnSegment(q, ToVec2(b1), p) ||
                OnSegment(q, ToVec2(b1), ToVec2(a1));
     }
 
@@ -103,24 +79,16 @@ bool SegmentsIntersect(const WorldPosition& a0,
     const double t = Cross(q_p, s) / rxs;
     const double u = Cross(q_p, r) / rxs;
 
-    return t >= -kEps && t <= 1.0 + kEps &&
-           u >= -kEps && u <= 1.0 + kEps;
+    return t >= -kEps && t <= 1.0 + kEps && u >= -kEps && u <= 1.0 + kEps;
 }
 
 } // anonymous namespace
 
-WorldPath::WorldPath(std::span<const WorldPosition> path)
-    : mPoints(path.begin(), path.end())
-{
-}
+WorldPath::WorldPath(std::span<const WorldPosition> path) : mPoints(path.begin(), path.end()) {}
 
-void WorldPath::Clear()
-{
-    mPoints.clear();
-}
+void WorldPath::Clear() { mPoints.clear(); }
 
-void WorldPath::AddPoint(const WorldPosition& p)
-{
+void WorldPath::AddPoint(const WorldPosition& p) {
     // Avoid consecutive duplicates.
     if (!mPoints.empty() && (mPoints.back() == p))
         return;
@@ -128,28 +96,15 @@ void WorldPath::AddPoint(const WorldPosition& p)
     mPoints.push_back(p);
 }
 
-std::size_t WorldPath::Size() const
-{
-    return mPoints.size();
-}
+std::size_t WorldPath::Size() const { return mPoints.size(); }
 
-bool WorldPath::Empty() const
-{
-    return mPoints.empty();
-}
+bool WorldPath::Empty() const { return mPoints.empty(); }
 
-const WorldPosition& WorldPath::At(std::size_t index) const
-{
-    return mPoints.at(index);
-}
+const WorldPosition& WorldPath::At(std::size_t index) const { return mPoints.at(index); }
 
-std::span<const WorldPosition> WorldPath::Span() const noexcept
-{
-    return mPoints;
-}
+std::span<const WorldPosition> WorldPath::Span() const noexcept { return mPoints; }
 
-double WorldPath::Length() const
-{
+double WorldPath::Length() const {
     if (mPoints.size() < 2)
         return 0.0;
 
@@ -161,13 +116,11 @@ double WorldPath::Length() const
     return total;
 }
 
-bool WorldPath::SelfIntersects() const
-{
+bool WorldPath::SelfIntersects() const {
     if (mPoints.size() < 3)
         return false;
 
-    for (std::size_t i = 1; i < mPoints.size(); ++i)
-    {
+    for (std::size_t i = 1; i < mPoints.size(); ++i) {
         // Detect immediate backtracking (A → B → A).
         if (i >= 2 && (mPoints[i] == mPoints[i - 2]))
             return true;
@@ -175,8 +128,7 @@ bool WorldPath::SelfIntersects() const
         const WorldPosition& a0 = mPoints[i - 1];
         const WorldPosition& a1 = mPoints[i];
 
-        for (std::size_t j = i + 2; j < mPoints.size(); ++j)
-        {
+        for (std::size_t j = i + 2; j < mPoints.size(); ++j) {
             const WorldPosition& b0 = mPoints[j - 1];
             const WorldPosition& b1 = mPoints[j];
 
@@ -188,23 +140,18 @@ bool WorldPath::SelfIntersects() const
     return false;
 }
 
-std::optional<std::pair<std::size_t, std::size_t>>
-WorldPath::FurthestPointPair() const
-{
+std::optional<std::pair<std::size_t, std::size_t>> WorldPath::FurthestPointPair() const {
     if (mPoints.size() < 2)
         return std::nullopt;
 
     double best = -std::numeric_limits<double>::infinity();
     std::pair<std::size_t, std::size_t> bestPair{0u, 1u};
 
-    for (std::size_t i = 0; i < mPoints.size(); ++i)
-    {
-        for (std::size_t j = i + 1; j < mPoints.size(); ++j)
-        {
+    for (std::size_t i = 0; i < mPoints.size(); ++i) {
+        for (std::size_t j = i + 1; j < mPoints.size(); ++j) {
             const double d = Dist(mPoints[i], mPoints[j]);
 
-            if (d > best)
-            {
+            if (d > best) {
                 best = d;
                 bestPair = {i, j};
             }
@@ -214,20 +161,17 @@ WorldPath::FurthestPointPair() const
     return bestPair;
 }
 
-WorldPath& WorldPath::Extend(const WorldPath& other)
-{
-    for (const auto& pt : other.mPoints)
+WorldPath& WorldPath::Extend(const WorldPath& other) {
+    for (const auto& pt: other.mPoints)
         AddPoint(pt);
 
     return *this;
 }
 
-std::ostream& operator<<(std::ostream& os, const WorldPath& path)
-{
-    os << "WorldPath{points=" << path.Size()
-       << ", length=" << path.Length() << "}";
+std::ostream& operator<<(std::ostream& os, const WorldPath& path) {
+    os << "WorldPath{points=" << path.Size() << ", length=" << path.Length() << "}";
 
-    for (const auto& pt : path.mPoints)
+    for (const auto& pt: path.mPoints)
         os << " {" << pt.X() << "," << pt.Y() << "},";
 
     return os;

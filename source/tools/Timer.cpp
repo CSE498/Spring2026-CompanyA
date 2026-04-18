@@ -19,10 +19,10 @@ constexpr double SECONDS_IN_MINUTE = 60.0;
  * @param startRunning Whether the Timer should start running. Defaults to true.
  */
 cse498::Timer::Timer(std::string name, bool startRunning) {
-  mName = name;
-  mRunning = startRunning;
-  mStart = std::chrono::steady_clock::now();
-  mLapStart = std::chrono::steady_clock::now();
+    mName = name;
+    mRunning = startRunning;
+    mStart = std::chrono::steady_clock::now();
+    mLapStart = std::chrono::steady_clock::now();
 }
 
 /**
@@ -30,11 +30,11 @@ cse498::Timer::Timer(std::string name, bool startRunning) {
  * If the Timer is already running, it won't do anything.
  */
 void cse498::Timer::start() {
-  if (!mRunning) {
-    mRunning = true;
-    mStart = std::chrono::steady_clock::now();
-    mLapStart = std::chrono::steady_clock::now();
-  }
+    if (!mRunning) {
+        mRunning = true;
+        mStart = std::chrono::steady_clock::now();
+        mLapStart = std::chrono::steady_clock::now();
+    }
 }
 
 /**
@@ -42,13 +42,11 @@ void cse498::Timer::start() {
  * If the Timer is already stopped, it won't do anything.
  */
 void cse498::Timer::stop() {
-  if (mRunning) {
-    mRunning = false;
-    mElapsed += (std::chrono::steady_clock::now() - mStart);
-    mLaps.at(mLaps.size() - 1) +=
-        (std::chrono::steady_clock::now() - mLapStart).count() /
-        NS_TO_S_CONVERSION;
-  }
+    if (mRunning) {
+        mRunning = false;
+        mElapsed += (std::chrono::steady_clock::now() - mStart);
+        mLaps.at(mLaps.size() - 1) += (std::chrono::steady_clock::now() - mLapStart).count() / NS_TO_S_CONVERSION;
+    }
 }
 
 /**
@@ -56,10 +54,10 @@ void cse498::Timer::stop() {
  * resetting the laps.
  */
 void cse498::Timer::reset() {
-  mRunning = false;
-  mElapsed = std::chrono::duration<double>::zero();
-  mLaps.clear();
-  mLaps.push_back(0.0);
+    mRunning = false;
+    mElapsed = std::chrono::duration<double>::zero();
+    mLaps.clear();
+    mLaps.push_back(0.0);
 }
 
 /**
@@ -67,25 +65,23 @@ void cse498::Timer::reset() {
  * laps, but starting it up immediately.
  */
 void cse498::Timer::restart() {
-  mElapsed = std::chrono::duration<double>::zero();
-  mLaps.clear();
-  mLaps.push_back(0.0);
-  mRunning = true;
-  mStart = std::chrono::steady_clock::now();
-  mLapStart = std::chrono::steady_clock::now();
+    mElapsed = std::chrono::duration<double>::zero();
+    mLaps.clear();
+    mLaps.push_back(0.0);
+    mRunning = true;
+    mStart = std::chrono::steady_clock::now();
+    mLapStart = std::chrono::steady_clock::now();
 }
 
 /**
  * Lap the Timer, stopping the previous lap and immediately starting a new one.
  */
 void cse498::Timer::lap() {
-  if (mRunning) {
-    mLaps.at(mLaps.size() - 1) +=
-        (std::chrono::steady_clock::now() - mLapStart).count() /
-        NS_TO_S_CONVERSION;
-    mLaps.push_back(0.0);
-    mLapStart = std::chrono::steady_clock::now();
-  }
+    if (mRunning) {
+        mLaps.at(mLaps.size() - 1) += (std::chrono::steady_clock::now() - mLapStart).count() / NS_TO_S_CONVERSION;
+        mLaps.push_back(0.0);
+        mLapStart = std::chrono::steady_clock::now();
+    }
 }
 
 /**
@@ -93,13 +89,12 @@ void cse498::Timer::lap() {
  * @return Total run time of Timer (seconds).
  */
 double cse498::Timer::elapsed() const {
-  if (mRunning) {
-    // Subtracts the starting time point from the current time and adds that
-    // duration to any already accumulated duration.
-    return (mElapsed + (std::chrono::steady_clock::now() - mStart)).count() /
-           NS_TO_S_CONVERSION;
-  }
-  return mElapsed.count() / NS_TO_S_CONVERSION;
+    if (mRunning) {
+        // Subtracts the starting time point from the current time and adds that
+        // duration to any already accumulated duration.
+        return (mElapsed + (std::chrono::steady_clock::now() - mStart)).count() / NS_TO_S_CONVERSION;
+    }
+    return mElapsed.count() / NS_TO_S_CONVERSION;
 }
 
 /**
@@ -115,13 +110,11 @@ bool cse498::Timer::isRunning() const { return mRunning; }
  * future calculations.
  */
 std::vector<double> cse498::Timer::getLaps() {
-  if (mRunning) {
-    mLaps.at(mLaps.size() - 1) +=
-        (std::chrono::steady_clock::now() - mLapStart).count() /
-        NS_TO_S_CONVERSION;
-    mLapStart = std::chrono::steady_clock::now();
-  }
-  return mLaps;
+    if (mRunning) {
+        mLaps.at(mLaps.size() - 1) += (std::chrono::steady_clock::now() - mLapStart).count() / NS_TO_S_CONVERSION;
+        mLapStart = std::chrono::steady_clock::now();
+    }
+    return mLaps;
 }
 
 /**
@@ -131,11 +124,10 @@ std::vector<double> cse498::Timer::getLaps() {
  * @param seconds The amount of time to advance by.
  */
 void cse498::Timer::advanceTime(double seconds) {
-  if (mRunning) {
-    mElapsed += std::chrono::duration<double>(seconds);
-    mLaps.at(mLaps.size() - 1) +=
-        std::chrono::duration<double>(seconds).count();
-  }
+    if (mRunning) {
+        mElapsed += std::chrono::duration<double>(seconds);
+        mLaps.at(mLaps.size() - 1) += std::chrono::duration<double>(seconds).count();
+    }
 }
 
 /**
@@ -144,21 +136,19 @@ void cse498::Timer::advanceTime(double seconds) {
  * @param withLaps Should the string include lap information or not
  */
 std::string cse498::Timer::toString(bool withLaps) const {
-  double time = elapsed();
-  std::ostringstream oss;
-  oss << mName << " [" << (mRunning ? "RUNNING" : "STOPPED")
-      << "]: " << std::setfill('0') << std::setw(2)
-      << static_cast<int>(time / SECONDS_IN_MINUTE) << ":" << std::setw(6)
-      << std::fixed << std::setprecision(3)
-      << std::fmod(time, SECONDS_IN_MINUTE);
+    double time = elapsed();
+    std::ostringstream oss;
+    oss << mName << " [" << (mRunning ? "RUNNING" : "STOPPED") << "]: " << std::setfill('0') << std::setw(2)
+        << static_cast<int>(time / SECONDS_IN_MINUTE) << ":" << std::setw(6) << std::fixed << std::setprecision(3)
+        << std::fmod(time, SECONDS_IN_MINUTE);
 
-  if (withLaps) {
-    for (auto [i, lapTime] : std::ranges::views::enumerate(mLaps)) {
-      oss << "\n  Lap " << (i + 1) << ": " << std::setfill('0') << std::setw(2)
-          << static_cast<int>(lapTime / SECONDS_IN_MINUTE) << ":"
-          << std::setw(6) << std::fixed << std::setprecision(3)
-          << std::fmod(lapTime, SECONDS_IN_MINUTE);
+    if (withLaps) {
+        for (std::size_t i = 0; i < mLaps.size(); ++i) {
+            const double lapTime = mLaps.at(i);
+            oss << "\n  Lap " << (i + 1) << ": " << std::setfill('0') << std::setw(2)
+                << static_cast<int>(lapTime / SECONDS_IN_MINUTE) << ":" << std::setw(6) << std::fixed
+                << std::setprecision(3) << std::fmod(lapTime, SECONDS_IN_MINUTE);
+        }
     }
-  }
-  return oss.str();
+    return oss.str();
 }

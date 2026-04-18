@@ -27,10 +27,10 @@
 #include <SDL2/SDL.h>
 #include "../../source/Interfaces/GUI/interface/Game.hpp"
 
-int main()
-{
+int main() {
     cse498::Game game("Slay The Dungeon", 800, 600);
-    if (!game.Initialize()) return 1;
+    if (!game.Initialize())
+        return 1;
     game.Run();
     return 0;
 }

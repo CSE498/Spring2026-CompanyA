@@ -21,137 +21,119 @@
 #include "../WebUtils.hpp"
 
 #include <cassert>
-#include <utility>
 #include <emscripten/val.h>
+#include <utility>
 
 using emscripten::val;
 
 namespace cse498 {
 
-  // constexpr helpers
-  constexpr const char* kDisplayInline   = "inline-block";
-  constexpr const char* kDisplayNone     = "none";
-  constexpr const char* kNormal          = "normal";
-  constexpr const char* kBold            = "bold";
-  constexpr const char* kItalic          = "italic";
-  constexpr const char* kTransparent     = "transparent";
-  constexpr const char* kPreWrap         = "pre-wrap";
-  constexpr const char* kPre             = "pre";
-  constexpr const char* kDisplayerBorder = "border-box";
+// constexpr helpers
+constexpr const char* kDisplayInline = "inline-block";
+constexpr const char* kDisplayNone = "none";
+constexpr const char* kNormal = "normal";
+constexpr const char* kBold = "bold";
+constexpr const char* kItalic = "italic";
+constexpr const char* kTransparent = "transparent";
+constexpr const char* kPreWrap = "pre-wrap";
+constexpr const char* kPre = "pre";
+constexpr const char* kDisplayerBorder = "border-box";
 
-  constexpr const char* ToCssAlign(cse498::WebTextbox::TextAlign a)
-  {
-      switch (a)
-      {
-          case cse498::WebTextbox::TextAlign::Left:   return "left";
-          case cse498::WebTextbox::TextAlign::Center: return "center";
-          case cse498::WebTextbox::TextAlign::Right:  return "right";
-          default:                                    return "left";
-      }
-  }
+constexpr const char* ToCssAlign(cse498::WebTextbox::TextAlign a) {
+    switch (a) {
+        case cse498::WebTextbox::TextAlign::Left:
+            return "left";
+        case cse498::WebTextbox::TextAlign::Center:
+            return "center";
+        case cse498::WebTextbox::TextAlign::Right:
+            return "right";
+        default:
+            return "left";
+    }
+}
 
 int WebTextbox::mNextIdCounter = 1;
 
 
 /// @brief Returns the browser window object.
-static val GetWindow()   
-{ 
-  return val::global("window"); 
-}
+static val GetWindow() { return val::global("window"); }
 
 // ===== Constructor / Destructor / Move semantics =====
 
 /// @brief Default constructor; delegates to WebTextbox(std::string("")).
-WebTextbox::WebTextbox()
-    : WebTextbox(std::string(""))
-{
-}
+WebTextbox::WebTextbox() : WebTextbox(std::string("")) {}
 
 /// @brief Constructs a WebTextbox with the given initial text content.
 /// @param initial_text Text to display on creation.
-WebTextbox::WebTextbox(const std::string& initial_text)
-    : mText(initial_text)
-{
-  // unique id like WebImage
-  mId = "webtextbox-" + std::to_string(mNextIdCounter++);
+WebTextbox::WebTextbox(const std::string& initial_text) : mText(initial_text) {
+    // unique id like WebImage
+    mId = "webtextbox-" + std::to_string(mNextIdCounter++);
 
-  val doc_ = GetDocument();
-  mElement = doc_.call<val>("createElement", std::string("div"));
-  mElement.set("id", mId);
+    val doc_ = GetDocument();
+    mElement = doc_.call<val>("createElement", std::string("div"));
+    mElement.set("id", mId);
 
-  // IMPORTANT: WebLayout owns positioning/mounting. Do not append here.
-  // Use inline-block so bounding box + sizing works predictably.
-  mElement["style"].set("display", std::string(kDisplayInline));
-  mElement["style"].set("boxSizing", std::string(kDisplayerBorder));
+    // IMPORTANT: WebLayout owns positioning/mounting. Do not append here.
+    // Use inline-block so bounding box + sizing works predictably.
+    mElement["style"].set("display", std::string(kDisplayInline));
+    mElement["style"].set("boxSizing", std::string(kDisplayerBorder));
 
-  ApplyText();
-  ApplyStyles();
+    ApplyText();
+    ApplyStyles();
 }
 
 
 /// @brief Destructor: unmounts the element from the DOM and releases the reference.
-WebTextbox::~WebTextbox()
-{
-  Unmount();
-  mElement = val::null();
+WebTextbox::~WebTextbox() {
+    Unmount();
+    mElement = val::null();
 }
 
 
 /// @brief Move constructor: transfers DOM ownership and all state from @p other.
 /// @param other Source WebTextbox to move from.
-WebTextbox::WebTextbox(WebTextbox&& other) noexcept
-    : mText(std::move(other.mText)),
-      mIsVisible(other.mIsVisible),
-      mRequestedFontFamily(std::move(other.mRequestedFontFamily)),
-      mFallbackFontFamily(std::move(other.mFallbackFontFamily)),
-      mFontSizePx(other.mFontSizePx),
-      mLineHeightPx(other.mLineHeightPx),
-      mColor(std::move(other.mColor)),
-      mBold(other.mBold),
-      mItalic(other.mItalic),
-      mTextAlign(std::move(other.mTextAlign)),
-      mMaxWidthPx(other.mMaxWidthPx),
-      mWrap(other.mWrap),
-      mBackgroundColor(std::move(other.mBackgroundColor)),
-      mAlign(other.mAlign)
-{
-  mId = std::move(other.mId);
-  mElement = std::move(other.mElement);
-  other.mElement = val::null();
-  other.mIsVisible = false;
+WebTextbox::WebTextbox(WebTextbox&& other) noexcept :
+    mText(std::move(other.mText)), mIsVisible(other.mIsVisible),
+    mRequestedFontFamily(std::move(other.mRequestedFontFamily)),
+    mFallbackFontFamily(std::move(other.mFallbackFontFamily)), mFontSizePx(other.mFontSizePx),
+    mLineHeightPx(other.mLineHeightPx), mColor(std::move(other.mColor)), mBold(other.mBold), mItalic(other.mItalic),
+    mTextAlign(std::move(other.mTextAlign)), mMaxWidthPx(other.mMaxWidthPx), mWrap(other.mWrap),
+    mBackgroundColor(std::move(other.mBackgroundColor)), mAlign(other.mAlign) {
+    mId = std::move(other.mId);
+    mElement = std::move(other.mElement);
+    other.mElement = val::null();
+    other.mIsVisible = false;
 }
 
 
 /// @brief Move assignment operator: transfers DOM ownership and all state from @p other.
 /// @param other Source WebTextbox to move from.
 /// @return Reference to this object.
-WebTextbox& WebTextbox::operator=(WebTextbox&& other) noexcept
-{
-  if (this != &other)
-  {
-    Unmount();
+WebTextbox& WebTextbox::operator=(WebTextbox&& other) noexcept {
+    if (this != &other) {
+        Unmount();
 
-    mText = std::move(other.mText);
-    mIsVisible = other.mIsVisible;
-    mRequestedFontFamily = std::move(other.mRequestedFontFamily);
-    mFallbackFontFamily = std::move(other.mFallbackFontFamily);
-    mFontSizePx = other.mFontSizePx;
-    mLineHeightPx = other.mLineHeightPx;
-    mColor = std::move(other.mColor);
-    mBold = other.mBold;
-    mItalic = other.mItalic;
-    mTextAlign = std::move(other.mTextAlign);
-    mMaxWidthPx = other.mMaxWidthPx;
-    mWrap = other.mWrap;
-    mBackgroundColor = std::move(other.mBackgroundColor);
-    mElement = other.mElement;
-    mId = std::move(other.mId);
-    mAlign = other.mAlign;
+        mText = std::move(other.mText);
+        mIsVisible = other.mIsVisible;
+        mRequestedFontFamily = std::move(other.mRequestedFontFamily);
+        mFallbackFontFamily = std::move(other.mFallbackFontFamily);
+        mFontSizePx = other.mFontSizePx;
+        mLineHeightPx = other.mLineHeightPx;
+        mColor = std::move(other.mColor);
+        mBold = other.mBold;
+        mItalic = other.mItalic;
+        mTextAlign = std::move(other.mTextAlign);
+        mMaxWidthPx = other.mMaxWidthPx;
+        mWrap = other.mWrap;
+        mBackgroundColor = std::move(other.mBackgroundColor);
+        mElement = other.mElement;
+        mId = std::move(other.mId);
+        mAlign = other.mAlign;
 
-    other.mElement = val::null();
-    other.mIsVisible = false;
-  }
-  return *this;
+        other.mElement = val::null();
+        other.mIsVisible = false;
+    }
+    return *this;
 }
 
 /* ---------------- Text ---------------- */
@@ -161,10 +143,9 @@ WebTextbox& WebTextbox::operator=(WebTextbox&& other) noexcept
  *
  * @param text The new string to assign to the textbox.
  */
-void WebTextbox::SetText(const std::string& text)
-{
-  mText = text;
-  ApplyText();
+void WebTextbox::SetText(const std::string& text) {
+    mText = text;
+    ApplyText();
 }
 
 /**
@@ -172,10 +153,9 @@ void WebTextbox::SetText(const std::string& text)
  *
  * @param text Additional text to append to the current content.
  */
-void WebTextbox::AppendText(const std::string& text)
-{
-  mText += text;
-  ApplyText();
+void WebTextbox::AppendText(const std::string& text) {
+    mText += text;
+    ApplyText();
 }
 
 /**
@@ -183,18 +163,14 @@ void WebTextbox::AppendText(const std::string& text)
  *
  * @return Copy of the current text string.
  */
-std::string WebTextbox::GetText() const
-{
-  return mText;
-}
+std::string WebTextbox::GetText() const { return mText; }
 
 /**
  * @brief Removes all text from the textbox and updates the DOM element.
  */
-void WebTextbox::Clear()
-{
-  mText.clear();
-  ApplyText();
+void WebTextbox::Clear() {
+    mText.clear();
+    ApplyText();
 }
 
 /**
@@ -202,12 +178,10 @@ void WebTextbox::Clear()
  *
  * No-op if the DOM element has not yet been created.
  */
-void WebTextbox::ApplyText()
-{
-  if (!mElement.isNull())
-  {
-    mElement.set("textContent", mText);
-  }
+void WebTextbox::ApplyText() {
+    if (!mElement.isNull()) {
+        mElement.set("textContent", mText);
+    }
 }
 
 /* -------------- Formatting -------------- */
@@ -219,22 +193,20 @@ void WebTextbox::ApplyText()
  *
  * @param family The preferred CSS font-family name (e.g., "Arial").
  */
-void WebTextbox::SetFontFamily(const std::string& family)
-{
-  mRequestedFontFamily = family;
-  ApplyStyles();
+void WebTextbox::SetFontFamily(const std::string& family) {
+    mRequestedFontFamily = family;
+    ApplyStyles();
 
-  // Warning if computed font doesn't contain requested family
-  val win = GetWindow();
-  if (!mElement.isNull() && win.hasOwnProperty("getComputedStyle"))
-  {
-    val computed = win.call<val>("getComputedStyle", mElement);
-    std::string applied = computed["fontFamily"].as<std::string>();
-    if (!mRequestedFontFamily.empty() && applied.find(mRequestedFontFamily) == std::string::npos)
-    {
-      GetConsole().call<void>("warn", std::string("WebTextbox: Requested font '") + mRequestedFontFamily + "' not found; browser used: " + applied);
+    // Warning if computed font doesn't contain requested family
+    val win = GetWindow();
+    if (!mElement.isNull() && win.hasOwnProperty("getComputedStyle")) {
+        val computed = win.call<val>("getComputedStyle", mElement);
+        std::string applied = computed["fontFamily"].as<std::string>();
+        if (!mRequestedFontFamily.empty() && applied.find(mRequestedFontFamily) == std::string::npos) {
+            GetConsole().call<void>("warn", std::string("WebTextbox: Requested font '") + mRequestedFontFamily +
+                                                    "' not found; browser used: " + applied);
+        }
     }
-  }
 }
 
 /**
@@ -242,10 +214,9 @@ void WebTextbox::SetFontFamily(const std::string& family)
  *
  * @param fallback_family CSS fallback font-family name.
  */
-void WebTextbox::SetFallbackFontFamily(const std::string& fallback_family)
-{
-  mFallbackFontFamily = fallback_family;
-  ApplyStyles();
+void WebTextbox::SetFallbackFontFamily(const std::string& fallback_family) {
+    mFallbackFontFamily = fallback_family;
+    ApplyStyles();
 }
 
 /**
@@ -256,17 +227,15 @@ void WebTextbox::SetFallbackFontFamily(const std::string& fallback_family)
  *
  * @param size_px Font size in pixels, must be strictly greater than zero.
  */
-void WebTextbox::SetFontSize(float size_px)
-{
-  assert(size_px > 0.0f);
+void WebTextbox::SetFontSize(float size_px) {
+    assert(size_px > 0.0f);
 
     // Prevent invalid DOM state in release builds
-  if (size_px <= 0.0f) 
-  {
-    return; 
-  }
-  mFontSizePx = size_px;
-  ApplyStyles();
+    if (size_px <= 0.0f) {
+        return;
+    }
+    mFontSizePx = size_px;
+    ApplyStyles();
 }
 
 /**
@@ -277,17 +246,15 @@ void WebTextbox::SetFontSize(float size_px)
  *
  * @param line_height_px Line height in pixels, must be greater than zero.
  */
-void WebTextbox::SetLineHeight(float line_height_px)
-{
-  assert(line_height_px > 0.0f);
+void WebTextbox::SetLineHeight(float line_height_px) {
+    assert(line_height_px > 0.0f);
 
-  // Prevent invalid DOM state in release builds
-  if (line_height_px <= 0.0f) 
-  {
-    return; 
-  }
-  mLineHeightPx = line_height_px;
-  ApplyStyles();
+    // Prevent invalid DOM state in release builds
+    if (line_height_px <= 0.0f) {
+        return;
+    }
+    mLineHeightPx = line_height_px;
+    ApplyStyles();
 }
 
 /**
@@ -295,10 +262,9 @@ void WebTextbox::SetLineHeight(float line_height_px)
  *
  * @param css_color A valid CSS color string.
  */
-void WebTextbox::SetColor(const std::string& css_color)
-{
-  mColor = css_color;
-  ApplyStyles();
+void WebTextbox::SetColor(const std::string& css_color) {
+    mColor = css_color;
+    ApplyStyles();
 }
 
 /**
@@ -306,10 +272,9 @@ void WebTextbox::SetColor(const std::string& css_color)
  *
  * @param enabled True for bold text, false for normal weight.
  */
-void WebTextbox::SetBold(bool enabled)
-{
-  mBold = enabled;
-  ApplyStyles();
+void WebTextbox::SetBold(bool enabled) {
+    mBold = enabled;
+    ApplyStyles();
 }
 
 /**
@@ -317,10 +282,9 @@ void WebTextbox::SetBold(bool enabled)
  *
  * @param enabled True to render text in italic, false for normal style.
  */
-void WebTextbox::SetItalic(bool enabled)
-{
-  mItalic = enabled;
-  ApplyStyles();
+void WebTextbox::SetItalic(bool enabled) {
+    mItalic = enabled;
+    ApplyStyles();
 }
 
 /**
@@ -328,10 +292,8 @@ void WebTextbox::SetItalic(bool enabled)
  *
  * @param alignment Desired text alignment (Left, Center, or Right).
  */
-void WebTextbox::SetAlignment(TextAlign alignment)
-{
-    switch (alignment)
-    {
+void WebTextbox::SetAlignment(TextAlign alignment) {
+    switch (alignment) {
         case TextAlign::Left:
         case TextAlign::Center:
         case TextAlign::Right:
@@ -353,17 +315,15 @@ void WebTextbox::SetAlignment(TextAlign alignment)
  *
  * @param width_px Maximum width in pixels, must be greater than zero.
  */
-void WebTextbox::SetMaxWidth(float width_px)
-{
-  assert(width_px > 0.0f);
+void WebTextbox::SetMaxWidth(float width_px) {
+    assert(width_px > 0.0f);
 
-  // Prevent invalid DOM state in release builds
-  if (width_px <= 0.0f)  
-  {
-    return;
-  }
-  mMaxWidthPx = width_px;
-  ApplyStyles();
+    // Prevent invalid DOM state in release builds
+    if (width_px <= 0.0f) {
+        return;
+    }
+    mMaxWidthPx = width_px;
+    ApplyStyles();
 }
 
 /**
@@ -371,10 +331,9 @@ void WebTextbox::SetMaxWidth(float width_px)
  *
  * @param enabled True to enable wrapping, false to disable.
  */
-void WebTextbox::SetWrap(bool enabled)
-{
-  mWrap = enabled;
-  ApplyStyles();
+void WebTextbox::SetWrap(bool enabled) {
+    mWrap = enabled;
+    ApplyStyles();
 }
 
 /**
@@ -384,19 +343,17 @@ void WebTextbox::SetWrap(bool enabled)
  *
  * @param css_color A valid CSS color string for the background.
  */
-void WebTextbox::SetBackgroundColor(const std::string& css_color)
-{
-  mBackgroundColor = css_color;
-  ApplyStyles();
+void WebTextbox::SetBackgroundColor(const std::string& css_color) {
+    mBackgroundColor = css_color;
+    ApplyStyles();
 }
 
 /**
  * @brief Clears any previously set background color, reverting to transparent.
  */
-void WebTextbox::ClearBackgroundColor()
-{
-  mBackgroundColor.reset();
-  ApplyStyles();
+void WebTextbox::ClearBackgroundColor() {
+    mBackgroundColor.reset();
+    ApplyStyles();
 }
 
 /**
@@ -409,73 +366,58 @@ void WebTextbox::ClearBackgroundColor()
  * This function is called internally by various setter methods and when
  * synchronizing the model to the view.
  */
-void WebTextbox::ApplyStyles()
-{
-  if (mElement.isNull())
-  {
-    return;
-  }
-
-  // Fonts
-  std::string font_chain;
-  if (!mRequestedFontFamily.empty())
-  {
-    font_chain = mRequestedFontFamily;
-    if (!mFallbackFontFamily.empty())
-    {
-      font_chain += ", " + mFallbackFontFamily;
+void WebTextbox::ApplyStyles() {
+    if (mElement.isNull()) {
+        return;
     }
-  }
-  else
-  {
-    font_chain = mFallbackFontFamily;
-  }
 
-  mElement["style"].set("fontFamily", font_chain);
-  mElement["style"].set("fontSize", std::to_string(mFontSizePx) + "px");
-  mElement["style"].set("color", mColor);
-  mElement["style"].set("fontWeight", mBold ? kBold : kNormal);
-  mElement["style"].set("fontStyle", mItalic ? kItalic : kNormal);
-  mElement["style"].set("textAlign", mTextAlign);
+    // Fonts
+    std::string font_chain;
+    if (!mRequestedFontFamily.empty()) {
+        font_chain = mRequestedFontFamily;
+        if (!mFallbackFontFamily.empty()) {
+            font_chain += ", " + mFallbackFontFamily;
+        }
+    } else {
+        font_chain = mFallbackFontFamily;
+    }
 
-  // Line-height: if > 0 use px, else let browser choose
-  if (mLineHeightPx > 0.0f)
-  {
-    mElement["style"].set("lineHeight", std::to_string(mLineHeightPx) + "px");
-  }
-  else
-  {
-    mElement["style"].set("lineHeight", kNormal);
-  }
+    mElement["style"].set("fontFamily", font_chain);
+    mElement["style"].set("fontSize", std::to_string(mFontSizePx) + "px");
+    mElement["style"].set("color", mColor);
+    mElement["style"].set("fontWeight", mBold ? kBold : kNormal);
+    mElement["style"].set("fontStyle", mItalic ? kItalic : kNormal);
+    mElement["style"].set("textAlign", mTextAlign);
 
-  // Wrapping
-  mElement["style"].set("whiteSpace", mWrap ? kPreWrap : kPre);
+    // Line-height: if > 0 use px, else let browser choose
+    if (mLineHeightPx > 0.0f) {
+        mElement["style"].set("lineHeight", std::to_string(mLineHeightPx) + "px");
+    } else {
+        mElement["style"].set("lineHeight", kNormal);
+    }
 
-  // Max width
-  if (mMaxWidthPx > 0.0f)
-  {
-    mElement["style"].set("maxWidth", std::to_string(mMaxWidthPx) + "px");
-  }
-  else
-  {
-    mElement["style"].set("maxWidth", std::string(""));
-  }
+    // Wrapping
+    mElement["style"].set("whiteSpace", mWrap ? kPreWrap : kPre);
 
-  // Background color
-  if (mBackgroundColor.has_value())
-  {
-    mElement["style"].set("backgroundColor", *mBackgroundColor);
-  }
-  else
-  {
-    mElement["style"].set("backgroundColor", kTransparent);
-  }
+    // Max width
+    if (mMaxWidthPx > 0.0f) {
+        mElement["style"].set("maxWidth", std::to_string(mMaxWidthPx) + "px");
+    } else {
+        mElement["style"].set("maxWidth", std::string(""));
+    }
 
-  // Visibility
-  mElement["style"].set("display", mIsVisible ? kDisplayInline : kDisplayNone);
+    // Background color
+    if (mBackgroundColor.has_value()) {
+        mElement["style"].set("backgroundColor", *mBackgroundColor);
+    } else {
+        mElement["style"].set("backgroundColor", kTransparent);
+    }
 
-  // Alignment (align-self) for flex/grid layouts in WebLayout
-  ApplyAlignment(mAlign);
+    // Visibility
+    mElement["style"].set("display", mIsVisible ? kDisplayInline : kDisplayNone);
+
+    // Alignment (align-self) for flex/grid layouts in WebLayout
+    ApplyAlignment(mAlign);
 }
 
 /**
@@ -488,19 +430,28 @@ void WebTextbox::ApplyStyles()
  * param:
  *    align - Layout alignment hint (start, center, end, or stretch).
  */
-void WebTextbox::ApplyAlignment(Alignment align)
-{
-  if (mElement.isNull()) return;
+void WebTextbox::ApplyAlignment(Alignment align) {
+    if (mElement.isNull())
+        return;
 
-  // Works when WebLayout uses flex/grid.
-  switch (align)
-  {
-    case Alignment::Start:   mElement["style"].set("alignSelf", "flex-start"); break;
-    case Alignment::Center:  mElement["style"].set("alignSelf", "center");     break;
-    case Alignment::End:     mElement["style"].set("alignSelf", "flex-end");   break;
-    case Alignment::Stretch: mElement["style"].set("alignSelf", "stretch");    break;
-    default:                 mElement["style"].set("alignSelf", "flex-start"); break;
-  }
+    // Works when WebLayout uses flex/grid.
+    switch (align) {
+        case Alignment::Start:
+            mElement["style"].set("alignSelf", "flex-start");
+            break;
+        case Alignment::Center:
+            mElement["style"].set("alignSelf", "center");
+            break;
+        case Alignment::End:
+            mElement["style"].set("alignSelf", "flex-end");
+            break;
+        case Alignment::Stretch:
+            mElement["style"].set("alignSelf", "stretch");
+            break;
+        default:
+            mElement["style"].set("alignSelf", "flex-start");
+            break;
+    }
 }
 
 /* -------------- Bounding box -------------- */
@@ -512,22 +463,23 @@ void WebTextbox::ApplyAlignment(Alignment align)
  *
  * @return RectPx containing x, y, width, and height in pixels.
  */
-WebTextbox::RectPx WebTextbox::GetBoundingBoxPx() const
-{
-  RectPx r_{};
+WebTextbox::RectPx WebTextbox::GetBoundingBoxPx() const {
+    RectPx r_{};
 
-  if (mElement.isNull()) return r_;
+    if (mElement.isNull())
+        return r_;
 
-  // Must be mounted to get a real bounding box
-  val parent_ = mElement["parentNode"];
-  if (parent_.isNull() || parent_.isUndefined()) return r_;
+    // Must be mounted to get a real bounding box
+    val parent_ = mElement["parentNode"];
+    if (parent_.isNull() || parent_.isUndefined())
+        return r_;
 
-  val rect_ = mElement.call<val>("getBoundingClientRect");
-  r_.x = rect_["left"].as<double>();
-  r_.y = rect_["top"].as<double>();
-  r_.w = rect_["width"].as<double>();
-  r_.h = rect_["height"].as<double>();
-  return r_;
+    val rect_ = mElement.call<val>("getBoundingClientRect");
+    r_.x = rect_["left"].as<double>();
+    r_.y = rect_["top"].as<double>();
+    r_.w = rect_["width"].as<double>();
+    r_.h = rect_["height"].as<double>();
+    return r_;
 }
 
 /**
@@ -535,39 +487,31 @@ WebTextbox::RectPx WebTextbox::GetBoundingBoxPx() const
  *
  * @return Width in pixels, or 0 if the element is not mounted.
  */
-double WebTextbox::GetWidthPx() const  
-{ 
-  return GetBoundingBoxPx().w;
-}
+double WebTextbox::GetWidthPx() const { return GetBoundingBoxPx().w; }
 
 /**
  * @brief Returns the height component of the textbox’s bounding box.
  *
  * @return Height in pixels, or 0 if the element is not mounted.
  */
-double WebTextbox::GetHeightPx() const 
-{ 
-  return GetBoundingBoxPx().h; 
-}
+double WebTextbox::GetHeightPx() const { return GetBoundingBoxPx().h; }
 
 /* -------------- Visibility -------------- */
 
 /**
  * @brief Makes the textbox visible by setting the visibility flag and updating the DOM.
  */
-void WebTextbox::Show()
-{
-  mIsVisible = true;
-  ApplyStyles();
+void WebTextbox::Show() {
+    mIsVisible = true;
+    ApplyStyles();
 }
 
 /**
  * @brief Hides the textbox by clearing the visibility flag and updating the DOM.
  */
-void WebTextbox::Hide()
-{
-  mIsVisible = false;
-  ApplyStyles();
+void WebTextbox::Hide() {
+    mIsVisible = false;
+    ApplyStyles();
 }
 
 /**
@@ -575,10 +519,7 @@ void WebTextbox::Hide()
  *
  * @return True if the textbox should be shown; false otherwise.
  */
-bool WebTextbox::IsVisible() const
-{
-  return mIsVisible;
-}
+bool WebTextbox::IsVisible() const { return mIsVisible; }
 
 /* -------------- IDomElement -------------- */
 
@@ -593,14 +534,13 @@ bool WebTextbox::IsVisible() const
  *    parent - The WebLayout this textbox should be attached to.
  *    align  - Alignment preference relative to the layout container.
  */
-void WebTextbox::MountToLayout(WebLayout& parent, Alignment align)
-{
-  mAlign = align;
+void WebTextbox::MountToLayout(WebLayout& parent, Alignment align) {
+    mAlign = align;
 
-  // If already mounted somewhere else, unmount first.
-  Unmount();
+    // If already mounted somewhere else, unmount first.
+    Unmount();
 
-  parent.AddElement(this, align);
+    parent.AddElement(this, align);
 }
 
 /**
@@ -608,32 +548,31 @@ void WebTextbox::MountToLayout(WebLayout& parent, Alignment align)
  *
  * Called automatically after mounting.
  */
-void WebTextbox::SyncFromModel()
-{
-  ApplyText();
-  ApplyStyles();
+void WebTextbox::SyncFromModel() {
+    ApplyText();
+    ApplyStyles();
 }
 
 // -------- ICanvasElement overrides --------
 
 /// @brief Stores the canvas-space position used by Draw().
-void WebTextbox::SetCanvasPosition(float x, float y)
-{
-  mCanvasX = x;
-  mCanvasY = y;
+void WebTextbox::SetCanvasPosition(float x, float y) {
+    mCanvasX = x;
+    mCanvasY = y;
 }
 
 /// @brief Draws the textbox text onto @p canvas at the position set by
 ///        SetCanvasPosition(), using the current color and font-size settings.
-void WebTextbox::Draw(WebCanvas& canvas)
-{
-  if (mText.empty()) {
-    return;
-  }
-  string fontString = mRequestedFontFamily;
-  if (fontString == "") fontString = mFallbackFontFamily;
-  else if (mFallbackFontFamily != "") fontString += ", " + mFallbackFontFamily;
-  canvas.DrawText(mCanvasX, mCanvasY, mText, mColor, mFontSizePx, fontString);
+void WebTextbox::Draw(WebCanvas& canvas) {
+    if (mText.empty()) {
+        return;
+    }
+    string fontString = mRequestedFontFamily;
+    if (fontString == "")
+        fontString = mFallbackFontFamily;
+    else if (mFallbackFontFamily != "")
+        fontString += ", " + mFallbackFontFamily;
+    canvas.DrawText(mCanvasX, mCanvasY, mText, mColor, mFontSizePx, fontString);
 }
 
-}
+} // namespace cse498
