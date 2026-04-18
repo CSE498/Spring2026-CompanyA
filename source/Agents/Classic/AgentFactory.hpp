@@ -28,6 +28,7 @@ class WorldBase;
 
 class AgentFactory {
 private:
+    static constexpr int SKELETON_MAX_STEP_AWAY_COUNT = 5;
     ////////////////////////////////////////////////////////////////////////////////////
     //                  HELPER FUNCTIONS TO BUILD TREES
     ////////////////////////////////////////////////////////////////////////////////////
@@ -38,10 +39,10 @@ private:
      * @return Action node. True if player is in range
      */
     static std::unique_ptr<BehaviorTrees::Node> IsPlayerInRange(const Enemy& enemy, const WorldBase& world);
-    static std::unique_ptr<BehaviorTrees::Node> Attack(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> AttackPlayer(const Enemy& enemy, const WorldBase& world);
     static std::unique_ptr<BehaviorTrees::Node> ChasePlayer(const Enemy& enemy, const WorldBase& world);
-
-
+    static std::unique_ptr<BehaviorTrees::Node> RangeChasePlayer(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> IsPlayerInBoundedRange(const Enemy& enemy, const WorldBase& world);
     /**
      * Creates the tree for the skeleton
      * @param enemy the skeleton that will own this tree
@@ -74,6 +75,16 @@ private:
      * @return true if in range
      */
     static bool IsInRange(const Enemy& enemy, const WorldPosition& entityPosition, const WorldGrid& grid);
+
+    /**
+     * Helper function to follow the provided direction from A*-like searches
+     * @param enemy - the enemy to move
+     * @param newEnemyLocation - the new location resolved to move to for the enemy
+     * @param ctx - context to update
+     */
+    static void ResolveMovement(const Enemy& enemy, const WorldPosition& newEnemyLocation,
+                                BehaviorTrees::ExecutionContext& ctx);
+
     /**
      * Demo function - Checks two positions are adjacent
      * @param a
@@ -95,6 +106,14 @@ public:
      * @return enemy object
      */
     static std::unique_ptr<Enemy> CreateEnemySkeleton(const AgentDefinition& def, WorldBase& world);
+    /**
+     * This should not be used by a world. This is for testing a series of private functions in simple example
+     * structures to make sure implementations are working before adding even more complexity
+     * @param enemy - the enemy who will own the tree
+     * @param world - the world the enemy lives in
+     * @return the root node
+     */
+    static std::unique_ptr<BehaviorTrees::Node> CreateTestFunctionTree(const Enemy& enemy, const WorldBase& world);
 
     /**
      * Create a goblin enemy from a definition and spawn position.
@@ -114,6 +133,13 @@ public:
 
     static std::unique_ptr<BehaviorTrees::Node> CreateEnemyFollowPlayerTree(Enemy* enemy, const WorldBase& world,
                                                                             std::size_t targetAgentIndex);
+
+    static std::unique_ptr<Enemy> CreateTestFunctionAgent(const AgentDefinition& def, WorldBase& world) {
+        AgentStats stats = AgentLevels::GetSkeletonStats(def.mLevel);
+        auto enemy = CreateAgent(def, stats, world); // createAgent can't return nullptr
+        enemy->SetBehaviorTree(CreateTestFunctionTree(*enemy, world));
+        return enemy;
+    }
 };
 
 
