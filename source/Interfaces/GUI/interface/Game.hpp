@@ -106,7 +106,7 @@ private:
     // -------------------------
     // Stats state
     // -------------------------
-    std::unique_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
+    std::shared_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
     std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
 
     // -------------------------

@@ -4,6 +4,7 @@
  */
 
 #include "Enemy.hpp"
+#include "../../core/WorldBase.hpp"
 
 namespace cse498 {
 size_t Enemy::SelectAction([[maybe_unused]] const WorldGrid& grid) {
@@ -33,4 +34,11 @@ std::size_t Enemy::ClaimGoldDrop() {
     mGoldClaimed = true;
     return mGoldDrop;
 }
+
+void Enemy::TakeDamage(double amount) {
+    AgentBase::TakeDamage(amount);
+    world.GetAnalyticsManager()->LogRunDamage(amount);
+}
+
+void Enemy::OnDeath() { world.GetAnalyticsManager()->LogRunEnemiesKilled(1); }
 } // namespace cse498

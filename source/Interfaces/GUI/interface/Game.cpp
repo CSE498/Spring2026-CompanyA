@@ -151,6 +151,8 @@ void Game::SetupOverworld() {
             mOverworldGrid->SetCell(x, y, cell_name);
         }
     }
+
+    mOverWorld->SetAnalyticsManager(mAnalyticsManager);
 }
 
 
@@ -171,6 +173,8 @@ void Game::SetupDungeon() {
             mDungeonGrid->SetCell(x, y, cell_name);
         }
     }
+
+    mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
 }
 
 void Game::SetupMainMenu() {
@@ -198,9 +202,7 @@ void Game::SetupPauseMenu() {
         mPreviousState = GameState::OVERWORLD;
     });
 
-    mPauseMenu.AddOption("Stats", [this]() {
-        TransitionTo(GameState::STATS);
-    });
+    mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
 
     mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
 
@@ -340,6 +342,12 @@ void Game::HandleEvents() {
 // -----------------------------------------------------------------------
 
 void Game::TransitionTo(GameState new_state) {
+    if ((mPreviousState == GameState::DUNGEON || mPreviousState == GameState::OVERWORLD) &&
+        new_state == GameState::MAIN_MENU) {
+        mAnalyticsManager->LogDamageDealt(mAnalyticsManager->GetCurrentRunStats().damageDealt);
+        mAnalyticsManager->LogEnemiesKilled(mAnalyticsManager->GetCurrentRunStats().enemiesKilled);
+        mAnalyticsManager->ResetCurrentRunStats();
+    }
     mPreviousState = mState;
     mState = new_state;
 }
