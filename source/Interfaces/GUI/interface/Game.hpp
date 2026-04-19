@@ -170,7 +170,7 @@ namespace cse498
          * @param camX Camera X position (modified)
          * @param camY Camera Y position (modified)
          */
-        void UpdateWorld(ImageGrid &grid, int &camX, int &camY);
+        [[deprecated]] void UpdateWorld(ImageGrid &grid, int &camX, int &camY);
 
         /**
          * @brief Render a world grid within the current viewport.
