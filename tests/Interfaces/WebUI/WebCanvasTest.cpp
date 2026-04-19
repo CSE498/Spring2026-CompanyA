@@ -385,6 +385,7 @@ TEST_CASE("WebCanvas ClearElements prevents future draws", "[web][canvas][raii]"
     harness.canvas.RenderFrame();
     REQUIRE(raw1->drawCount == 1);
     REQUIRE(raw2->drawCount == 1);
+    CHECK(order == std::vector<int>{1, 2});
 
     harness.canvas.ClearElements();
     order.clear();
