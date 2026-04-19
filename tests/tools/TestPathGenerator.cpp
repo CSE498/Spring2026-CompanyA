@@ -1040,5 +1040,11 @@ TEST_CASE("line of sight")
         WorldPosition player = {1,2};
         CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
     }
+    {
+        WorldPosition skeleton = {2,1};
+        WorldPosition player = {8,1};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+
 
 }
