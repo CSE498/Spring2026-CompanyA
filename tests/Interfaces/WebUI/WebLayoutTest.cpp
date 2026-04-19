@@ -1065,6 +1065,7 @@ TEST_CASE_METHOD(SharedWebContext, "Child can be remounted from one layout to an
     layout1.Apply();
     layout2.Apply();
 
+    CHECK(GetProperty(parent1, "children")["length"].as<int>() == 0);
     CHECK(GetProperty(parent2, "children")["length"].as<int>() == 1);
     CHECK(GetElement(elem.Id())["parentElement"]["id"].as<std::string>() == layout2.Id());
 }
