@@ -78,15 +78,15 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
         mId = rootId;
         mElement["style"].set("boxSizing", std::string("border-box"));
         return;
+    } else {
+        // no id passed: create a container div and append to body with generated id
+        mId = "weblayout-" + std::to_string(mNextIdCounter++);
+        mElement = mDocument.call<val>("createElement", std::string("div"));
+        mElement.set("id", mId);
+        mElement["style"].set("boxSizing", std::string("border-box"));
+        assert(!mElement.isNull() && !mElement.isUndefined());
+        assert(mElement["id"].as<std::string>() == mId);
     }
-
-    // no id passed: create a container div and append to body with generated id
-    mId = "weblayout-" + std::to_string(mNextIdCounter++);
-    mElement = mDocument.call<val>("createElement", std::string("div"));
-    mElement.set("id", mId);
-    mElement["style"].set("boxSizing", std::string("border-box"));
-    assert(!mElement.isNull() && !mElement.isUndefined());
-    assert(mElement["id"].as<std::string>() == mId);
 }
 
 /// @brief Destructor: unmounts all children and removes the root element from the DOM.
