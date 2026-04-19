@@ -13,6 +13,8 @@
 namespace cse498
 {
 
+    const int TURN_DELAY = 100;
+
     class StubAgent : public AgentBase
     {
     public:
@@ -57,6 +59,10 @@ namespace cse498
         mPauseText.SetContent("Paused");
         mPauseText.SetSize(48);
         mPauseText.SetBold(true);
+
+        // Item pickup notifications
+        mPickupText.SetRenderer(renderer);
+        mPickupText.SetSize(20);
 
         // Set up image manager and load all tile assets
         mImageManager = std::make_unique<ImageManager>(renderer);
@@ -141,6 +147,47 @@ namespace cse498
         if (!LoadCheck("dun_monster", std::string(ASSETS_DIR) + "Mobs/goblin.png"))
             return false;
 
+        // Item sprites — keyed by item name to match what Inventory stores
+        if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png"))
+            return false;
+        if (!LoadCheck("Sword +1", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png"))
+            return false;
+        if (!LoadCheck("Sword +2", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png"))
+            return false;
+        if (!LoadCheck("Sword +3", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png"))
+            return false;
+        if (!LoadCheck("Sword +4", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png"))
+            return false;
+        if (!LoadCheck("Sword +5", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png"))
+            return false;
+
+        if (!LoadCheck("Bow", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png"))
+            return false;
+        if (!LoadCheck("Bow +1", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png"))
+            return false;
+        if (!LoadCheck("Bow +2", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png"))
+            return false;
+        if (!LoadCheck("Bow +3", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png"))
+            return false;
+        if (!LoadCheck("Bow +4", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png"))
+            return false;
+        if (!LoadCheck("Bow +5", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png"))
+            return false;
+
+        if (!LoadCheck("Healing Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_healing.png"))
+            return false;
+        if (!LoadCheck("Defense Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_defense.png"))
+            return false;
+        if (!LoadCheck("Speed Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_speed.png"))
+            return false;
+
+        if (!LoadCheck("Axe", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_axe.png"))
+            return false;
+        if (!LoadCheck("Pickaxe", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_pickaxe.png"))
+            return false;
+        if (!LoadCheck("Shovel", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_shovel.png"))
+            return false;
+
         // Player
         if (!LoadCheck("player", std::string(ASSETS_DIR) + "Player/player.png"))
             return false;
@@ -218,6 +265,8 @@ namespace cse498
         auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
         player.SetLocation(WorldPosition{1, 1});
         mDungeonPlayer = &player;
+
+        std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
 
         // Map every cell type name to its matching image name
         for (size_t y = 0; y < world_h; ++y)
@@ -365,19 +414,67 @@ namespace cse498
                         mPauseMenu.ActivateSelected();
                     break;
 
-                    // Player movement — one turn per keypress with 150ms cooldown
                 case SDLK_w:
                 case SDLK_s:
                 case SDLK_a:
                 case SDLK_d:
                     if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON)
                     {
-                        static Uint32 last_move_time = 0;
-                        Uint32 now = SDL_GetTicks();
-                        if (now - last_move_time >= 150)
-                        {
-                            ProcessPlayerMove(event.key.keysym.sym);
-                            last_move_time = now;
+                        if (mShowBackpack) {
+                            // Navigate backpack grid
+                            int rows = static_cast<int>(Inventory::BACKPACK_SIZE / Inventory::ITEMS_PER_ROW);
+                            int cols = static_cast<int>(Inventory::ITEMS_PER_ROW);
+                            switch (event.key.keysym.sym) {
+                            case SDLK_w: mBackpackCursorRow = (mBackpackCursorRow - 1 + rows) % rows; break;
+                            case SDLK_s: mBackpackCursorRow = (mBackpackCursorRow + 1) % rows; break;
+                            case SDLK_a: mBackpackCursorCol = (mBackpackCursorCol - 1 + cols) % cols; break;
+                            case SDLK_d: mBackpackCursorCol = (mBackpackCursorCol + 1) % cols; break;
+                            default: break;
+                            }
+                        } else {
+                            static Uint32 last_move_time = 0;
+                            Uint32 now = SDL_GetTicks();
+                            if (now - last_move_time >= TURN_DELAY)
+                            {
+                                ProcessPlayerMove(event.key.keysym.sym);
+                                last_move_time = now;
+                            }
+                        }
+                    }
+                    break;
+
+                case SDLK_TAB:
+                    if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON)
+                    {
+                        mShowBackpack = !mShowBackpack;
+                    }
+                    break;
+
+                // Number keys 0-9: move backpack item to hotbar slot
+                case SDLK_0:
+                case SDLK_1:
+                case SDLK_2:
+                case SDLK_3:
+                case SDLK_4:
+                case SDLK_5:
+                case SDLK_6:
+                case SDLK_7:
+                case SDLK_8:
+                case SDLK_9:
+                    if (mShowBackpack && (mState == GameState::OVERWORLD || mState == GameState::DUNGEON))
+                    {
+                        // SDLK_0 = slot 0, SDLK_1 = slot 1, etc.
+                        size_t hotbar_slot = (event.key.keysym.sym == SDLK_0) ? 9 : static_cast<size_t>(event.key.keysym.sym - SDLK_1);
+                        if (hotbar_slot < Inventory::HOTBAR_SIZE) {
+                            size_t backpack_index = Inventory::HOTBAR_SIZE
+                                + mBackpackCursorRow * static_cast<int>(Inventory::ITEMS_PER_ROW)
+                                + mBackpackCursorCol;
+
+                            Inventory& inv = (mState == GameState::OVERWORLD)
+                                ? mOverworldPlayer->GetInventory()
+                                : mDungeonPlayer->GetInventory();
+
+                            inv.SwapSlots(backpack_index, hotbar_slot);
                         }
                     }
                     break;
@@ -463,10 +560,10 @@ namespace cse498
     {
         const Uint8 *keys = SDL_GetKeyboardState(nullptr);
 
-        // Only move once every 150ms TODO
+        // Only move once every TURN_DELAY 100ms
         static Uint32 last_move_time = 0;
         Uint32 now = SDL_GetTicks();
-        if (now - last_move_time < 150)
+        if (now - last_move_time < TURN_DELAY)
             return;
 
         int tw = static_cast<int>(grid.GetTileWidth());
@@ -556,6 +653,7 @@ namespace cse498
 
         // Layer 2 — UI/HUD
         RenderHotbar(mOverworldPlayer->GetInventory());
+        if (mShowBackpack) RenderBackpack(mOverworldPlayer->GetInventory());
     }
 
     void Game::RenderDungeon()
@@ -571,6 +669,8 @@ namespace cse498
         mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
 
         RenderHotbar(mDungeonPlayer->GetInventory());
+        RenderPickupMessage();
+        if (mShowBackpack) RenderBackpack(mDungeonPlayer->GetInventory());
     }
 
     void Game::RenderWorld(const ImageGrid &grid, int camX, int camY)
@@ -632,8 +732,8 @@ namespace cse498
                 int item_y = bar_y + (bar_h - 48) / 2;
 
                 // Draw item icon if loaded — uses the item's image path as key
-                // You'll need to ensure item sprite names are loaded into ImageManager
                 mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                //std::cout << item->GetName() << std::endl;
             }
         }
 
@@ -645,6 +745,82 @@ namespace cse498
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         SDL_Rect highlight = {sel_x, bar_y, slot_size, bar_h};
         SDL_RenderDrawRect(renderer, &highlight);
+    }
+
+
+    void Game::RenderBackpack(const Inventory& inventory) {
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        // Semi-transparent dark overlay
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 180);
+        SDL_Rect overlay = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &overlay);
+
+        const auto& slots = inventory.GetInventoryArray();
+
+        int slot_size = 64;
+        int padding = 4;
+        int cols = static_cast<int>(Inventory::ITEMS_PER_ROW);
+        int rows = static_cast<int>(Inventory::BACKPACK_SIZE) / cols;
+
+        int grid_w = cols * (slot_size + padding) - padding;
+        int grid_h = rows * (slot_size + padding) - padding;
+        int grid_x = (w - grid_w) / 2;
+        int grid_y = (h - grid_h) / 2;
+
+        for (int row = 0; row < rows; ++row) {
+            for (int col = 0; col < cols; ++col) {
+                size_t index = Inventory::HOTBAR_SIZE + row * cols + col;
+
+                int x = grid_x + col * (slot_size + padding);
+                int y = grid_y + row * (slot_size + padding);
+
+                // Slot background
+                SDL_SetRenderDrawColor(renderer, 40, 40, 50, 220);
+                SDL_Rect slot_bg = {x, y, slot_size, slot_size};
+                SDL_RenderFillRect(renderer, &slot_bg);
+
+                // Slot border
+                SDL_SetRenderDrawColor(renderer, 100, 100, 120, 255);
+                SDL_RenderDrawRect(renderer, &slot_bg);
+
+                // Draw item if present
+                if (!slots[index].IsEmpty()) {
+                    const Item* item = slots[index].GetItem();
+                    int item_x = x + (slot_size - 48) / 2;
+                    int item_y = y + (slot_size - 48) / 2;
+                    mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                }
+
+                // Cursor highlight
+                if (row == mBackpackCursorRow && col == mBackpackCursorCol) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 220);
+                    SDL_Rect cursor = {x - 2, y - 2, slot_size + 4, slot_size + 4};
+                    SDL_RenderDrawRect(renderer, &cursor);
+                    SDL_Rect cursor_inner = {x - 1, y - 1, slot_size + 2, slot_size + 2};
+                    SDL_RenderDrawRect(renderer, &cursor_inner);
+                }
+            }
+        }
+    }
+
+    void Game::RenderPickupMessage() {
+        if (mPickupMessage.empty()) return;
+
+        Uint32 elapsed = SDL_GetTicks() - mPickupMessageTime;
+        if (elapsed > 1000) {
+            mPickupMessage.clear();
+            return;
+        }
+
+        int w = mGameView->GetWidth();
+
+        mPickupText.SetContent(mPickupMessage);
+        int text_x = (w - mPickupText.GetWidth()) / 2;
+        mPickupText.Draw(text_x, 20);
     }
 
 
@@ -681,7 +857,30 @@ namespace cse498
         }
 
         else if (mState == GameState::DUNGEON) {
+            // Snapshot inventory count before move
+            size_t items_before = 0;
+            const auto& slots = mDungeonPlayer->GetInventory().GetInventoryArray();
+            for (const auto& slot : slots) {
+                if (!slot.IsEmpty()) items_before += slot.GetQuantity();
+            }
+
             mDungeonWorld->DoAction(*mDungeonPlayer, action);
+
+            // Check if inventory changed
+            size_t items_after = 0;
+            for (const auto& slot : slots) {
+                if (!slot.IsEmpty()) items_after += slot.GetQuantity();
+            }
+            if (items_after > items_before) {
+                // Find the newest item — scan for an item that wasn't there before
+                // Simplest: just grab the hand or last non-empty slot
+                for (const auto& slot : slots) {
+                    if (!slot.IsEmpty()) {
+                        mPickupMessage = "Picked up: " + slot.GetItem()->GetName();
+                    }
+                }
+                mPickupMessageTime = SDL_GetTicks();
+            }
 
             WorldPosition pos = mDungeonPlayer->GetLocation().AsWorldPosition();
             mDungeonPlayerX = static_cast<int>(pos.CellX());

@@ -80,6 +80,15 @@ namespace cse498
         Text mPauseText; /// Pause screen title text
 
         // -------------------------
+        // Backpack/Inventory
+        // -------------------------
+        int mBackpackCursorRow = 0;    /// Current backpack cursor row
+        int mBackpackCursorCol = 0;    /// Current backpack cursor column
+        std::string mPickupMessage;    /// Message on pickup
+        Text mPickupText;              /// Pickup notification text
+        Uint32 mPickupMessageTime = 0; /// When the message was set
+
+        // -------------------------
         // Overworld state
         // -------------------------
         std::unique_ptr<ImageManager> mImageManager; /// Handles image loading and rendering
@@ -116,6 +125,7 @@ namespace cse498
         // -------------------------
         bool mRunning = false; /// Controls main game loop execution
         bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
+        bool mShowBackpack = false; /// Toggle backpack overlay
 
         // -------------------------
         // Core loop methods
@@ -144,6 +154,8 @@ namespace cse498
         void RenderPaused();
         void RenderSettings();
         void RenderHotbar(const Inventory& inventory);
+        void RenderBackpack(const Inventory& inventory);
+        void RenderPickupMessage();
         size_t KeyToAction(SDL_Keycode key);
 
         /**
@@ -217,7 +229,8 @@ namespace cse498
          */
         Game(const std::string &title = "Slay the Dungeon", int width = kDefaultWindowWidth,
              int height = kDefaultWindowHeight) :
-            mGameView(std::make_shared<GameView>(title, width, height)), mTitleText(nullptr), mPauseText(nullptr)
+            mGameView(std::make_shared<GameView>(title, width, height)), mTitleText(nullptr), mPauseText(nullptr),
+            mPickupText(nullptr)
         {
         }
 
