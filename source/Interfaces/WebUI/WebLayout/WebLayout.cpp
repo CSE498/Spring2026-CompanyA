@@ -69,7 +69,7 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
         val found = mDocument.call<val>("getElementById", rootId);
         if (!found.isNull() && !found.isUndefined()) {
             mElement = found;
-            mExisting = true;
+            mAdoptsExistingDom = true;
         } else {
             // create a container div with the requested id and append to body
             mElement = mDocument.call<val>("createElement", std::string("div"));
