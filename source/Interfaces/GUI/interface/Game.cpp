@@ -42,6 +42,7 @@ namespace cse498
             return false;
 
         std::cout << "Working directory: " << std::filesystem::current_path() << std::endl;
+        std::cout << "Asset Dir: " << std::string(ASSETS_DIR) << std::endl;
 
         SDL_Renderer *renderer = mGameView->GetRenderer();
 
@@ -104,16 +105,48 @@ namespace cse498
         if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png"))
             return false;
 
-        // Dungeon tile images
-        if (!LoadCheck("wall", std::string(ASSETS_DIR) + "Tiles/grass.png"))
+        // Dungeon floor tiles
+        if (!LoadCheck("dun_floor", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_1.png"))
             return false;
-        if (!LoadCheck("floor", std::string(ASSETS_DIR) + "Tiles/stone.png"))
+        if (!LoadCheck("dun_variant_tile", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_2.png"))
             return false;
-        if (!LoadCheck("dot", std::string(ASSETS_DIR) + "Tiles/stone.png"))
+
+        // Dungeon walls
+        if (!LoadCheck("dun_wall", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png"))
+            return false;
+        if (!LoadCheck("dun_wall_top", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png"))
+            return false;
+        if (!LoadCheck("dun_wall_bottom", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_bottom_dungeon.png"))
+            return false;
+        if (!LoadCheck("dun_wall_left", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_left_dungeon.png"))
+            return false;
+        if (!LoadCheck("dun_wall_right", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_right_dungeon.png"))
+            return false;
+        if (!LoadCheck("dun_wall_internal", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png"))
+            return false;
+
+        // Dungeon doors
+        if (!LoadCheck("dun_door", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_left_dungeon.png"))
+            return false;
+        if (!LoadCheck("dun_secret_door", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_right_dungeon.png"))
+            return false;
+        if (!LoadCheck("dun_exit_door", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_left_dungeon.png"))
+            return false;
+
+        // Dungeon special tiles — no unique assets yet, reuse floor variants or some other placeholder
+        if (!LoadCheck("dun_trap", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_3.png"))
+            return false;
+        if (!LoadCheck("dun_loot", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_defense.png"))
+            return false;
+        if (!LoadCheck("dun_monster", std::string(ASSETS_DIR) + "Mobs/goblin.png"))
             return false;
 
         // Player
         if (!LoadCheck("player", std::string(ASSETS_DIR) + "Player/player.png"))
+            return false;
+
+        // UI
+        if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/Player/inventory_bar.png"))
             return false;
 
         // World Setups
@@ -146,6 +179,11 @@ namespace cse498
         mOverWorld = std::make_unique<OverWorld>();
         mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
 
+        // add a player to the world (based on discord discussion)
+        auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
+        player.SetLocation(WorldPosition{1, 1});
+        mOverworldPlayer = &player;
+
         const WorldGrid &grid = mOverWorld->GetGrid();
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
@@ -174,6 +212,12 @@ namespace cse498
         size_t world_h = grid.GetHeight();
 
         mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+
+
+        // add a player to the world (based on discord discussion)
+        auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
+        player.SetLocation(WorldPosition{1, 1});
+        mDungeonPlayer = &player;
 
         // Map every cell type name to its matching image name
         for (size_t y = 0; y < world_h; ++y)
@@ -388,13 +432,32 @@ namespace cse498
 
     void Game::UpdateOverworld()
     {
-        if (mTurnTaken)
-        {
-            mOverWorld->RunAgents();
+        // skip the player in the world agent list, they should choose their own move when needed to.
+        if (mTurnTaken) {
+            for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                AgentBase& agent = mOverWorld->GetAgent(i);
+                if (&agent == mOverworldPlayer) continue;
+
+                size_t action = agent.SelectAction(mOverWorld->GetGrid());
+                mOverWorld->DoAction(agent, action);
+            }
             mTurnTaken = false;
         }
     }
-    void Game::UpdateDungeon() {}
+    void Game::UpdateDungeon()
+    {
+        // skip the player in the world agent list, they should choose their own move when needed to.
+        if (mTurnTaken) {
+            for (size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i) {
+                AgentBase& agent = mDungeonWorld->GetAgent(i);
+                if (&agent == mDungeonPlayer) continue;
+
+                size_t action = agent.SelectAction(mDungeonWorld->GetGrid());
+                mDungeonWorld->DoAction(agent, action);
+            }
+            mTurnTaken = false;
+        }
+    }
 
     void Game::UpdateWorld(ImageGrid &grid, int &camX, int &camY)
     {
@@ -474,10 +537,7 @@ namespace cse498
         // Layer 0 — Tiles (bottom)
         RenderWorld(*mOverworldGrid, mCamX, mCamY);
 
-        // Layer 1 — items/objects on the ground
-        // RenderItems();
-
-        // Layer 2 — agents/NPCs
+        // Layer 1 — all agents including player
         int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
         int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
@@ -489,18 +549,13 @@ namespace cse498
             int screen_x = (static_cast<int>(pos.CellX()) - mCamX) * tw;
             int screen_y = (static_cast<int>(pos.CellY()) - mCamY) * th;
 
-            mImageManager->DrawImage(mOverWorld->GetAgentSpriteName(), screen_x, screen_y, tw, th);
+            // Pick sprite based on whether this is the player or an NPC
+            const std::string &sprite = (&agent == mOverworldPlayer) ? "player" : mOverWorld->GetAgentSpriteName();
+            mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
         }
 
-        // Layer 3 — dummy player
-
-        int player_screen_x = (mPlayerX - mCamX) * tw;
-        int player_screen_y = (mPlayerY - mCamY) * th;
-
-        mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
-
-        // Layer 4 — UI/HUD (health bar, etc.)
-        // RenderHUD();
+        // Layer 2 — UI/HUD
+        RenderHotbar(mOverworldPlayer->GetInventory());
     }
 
     void Game::RenderDungeon()
@@ -514,6 +569,8 @@ namespace cse498
         int player_screen_y = (mDungeonPlayerY - mDungeonCamY) * th;
 
         mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
+
+        RenderHotbar(mDungeonPlayer->GetInventory());
     }
 
     void Game::RenderWorld(const ImageGrid &grid, int camX, int camY)
@@ -551,37 +608,71 @@ namespace cse498
         // TODO: render settings screen
     }
 
-    void Game::ProcessPlayerMove(SDL_Keycode key)
-    {
-        if (mState == GameState::OVERWORLD)
-        {
-            int max_x = static_cast<int>(mOverworldGrid->GetWidth()) - 1;
-            int max_y = static_cast<int>(mOverworldGrid->GetHeight()) - 1;
+    void Game::RenderHotbar(const Inventory &inventory) {
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
 
-            switch (key)
-            {
-            case SDLK_w:
-                mPlayerY = std::max(0, mPlayerY - 1);
-                break;
-            case SDLK_s:
-                mPlayerY = std::min(max_y, mPlayerY + 1);
-                break;
-            case SDLK_a:
-                mPlayerX = std::max(0, mPlayerX - 1);
-                break;
-            case SDLK_d:
-                mPlayerX = std::min(max_x, mPlayerX + 1);
-                break;
-            default:
-                break;
+        // Draw the inventory bar image centered at the bottom
+        int bar_w = 640;
+        int bar_h = 64;
+        int bar_x = (w - bar_w) / 2;
+        int bar_y = h - bar_h - 10; // 10px padding from bottom
+
+        mImageManager->DrawImage("inventory_bar", bar_x, bar_y, bar_w, bar_h);
+
+        // Draw items in each hotbar slot
+        const auto& slots = inventory.GetInventoryArray();
+        int slot_size = bar_w / static_cast<int>(Inventory::HOTBAR_SIZE);
+
+        for (size_t i = 0; i < Inventory::HOTBAR_SIZE; ++i) {
+            const auto& slot = slots[i];
+            if (!slot.IsEmpty()) {
+                const Item* item = slot.GetItem();
+                int item_x = bar_x + static_cast<int>(i) * slot_size + (slot_size - 48) / 2;
+                int item_y = bar_y + (bar_h - 48) / 2;
+
+                // Draw item icon if loaded — uses the item's image path as key
+                // You'll need to ensure item sprite names are loaded into ImageManager
+                mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
             }
+        }
+
+        // Highlight the selected hotbar slot
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        size_t selected =  inventory.GetHandSlotIndex();
+        int sel_x = bar_x + static_cast<int>(selected) * slot_size;
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 180);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_Rect highlight = {sel_x, bar_y, slot_size, bar_h};
+        SDL_RenderDrawRect(renderer, &highlight);
+    }
+
+
+    size_t Game::KeyToAction(SDL_Keycode key) {
+        switch (key) {
+        case SDLK_w: return 1; // MOVE_UP
+        case SDLK_s: return 2; // MOVE_DOWN
+        case SDLK_a: return 3; // MOVE_LEFT
+        case SDLK_d: return 4; // MOVE_RIGHT
+        default:     return 0; // REMAIN_STILL
+        }
+    }
+
+    void Game::ProcessPlayerMove(SDL_Keycode key) {
+        size_t action = KeyToAction(key);
+        if (action == 0) return;
+
+        if (mState == GameState::OVERWORLD) {
+            mOverWorld->DoAction(*mOverworldPlayer, action);
+
+            WorldPosition pos = mOverworldPlayer->GetLocation().AsWorldPosition();
+            mPlayerX = static_cast<int>(pos.CellX());
+            mPlayerY = static_cast<int>(pos.CellY());
 
             int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
             int th = static_cast<int>(mOverworldGrid->GetTileHeight());
-
             int Tiles_x = mGameView->GetWidth() / tw;
             int Tiles_y = mGameView->GetHeight() / th;
-
             int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
             int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
 
@@ -589,35 +680,17 @@ namespace cse498
             mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
         }
 
-        else if (mState == GameState::DUNGEON)
-        {
-            int max_x = static_cast<int>(mDungeonGrid->GetWidth()) - 1;
-            int max_y = static_cast<int>(mDungeonGrid->GetHeight()) - 1;
+        else if (mState == GameState::DUNGEON) {
+            mDungeonWorld->DoAction(*mDungeonPlayer, action);
 
-            switch (key)
-            {
-            case SDLK_w:
-                mDungeonPlayerY = std::max(0, mDungeonPlayerY - 1);
-                break;
-            case SDLK_s:
-                mDungeonPlayerY = std::min(max_y, mDungeonPlayerY + 1);
-                break;
-            case SDLK_a:
-                mDungeonPlayerX = std::max(0, mDungeonPlayerX - 1);
-                break;
-            case SDLK_d:
-                mDungeonPlayerX = std::min(max_x, mDungeonPlayerX + 1);
-                break;
-            default:
-                break;
-            }
+            WorldPosition pos = mDungeonPlayer->GetLocation().AsWorldPosition();
+            mDungeonPlayerX = static_cast<int>(pos.CellX());
+            mDungeonPlayerY = static_cast<int>(pos.CellY());
 
             int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
             int th = static_cast<int>(mDungeonGrid->GetTileHeight());
-
             int Tiles_x = mGameView->GetWidth() / tw;
             int Tiles_y = mGameView->GetHeight() / th;
-
             int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - Tiles_x);
             int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - Tiles_y);
 

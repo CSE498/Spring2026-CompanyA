@@ -90,20 +90,20 @@ namespace cse498 {
 
   	public:
 		DungeonWorld() : m_generation(*m_level) {
-			m_floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
-			m_wall_id  = main_grid.AddCellType("wall",  "Impenetrable wall.",'#');
-			m_upper_external = main_grid.AddCellType("wall",  "upper wall.", '^');
-			m_lower_external = main_grid.AddCellType("wall",  "lower wall.", '&');
-			m_left_external = main_grid.AddCellType("wall",  "left external wall.",  '<');
-			m_right_external = main_grid.AddCellType("wall",  "right external  wall.", '>');
-			m_internal_obstacle = main_grid.AddCellType("wall",  "interal obstacle wall.",   '$');
-			m_trap_tile = main_grid.AddCellType("trap",  "trap tile wall.",   't');
-			m_loot_tile = main_grid.AddCellType("loot",  "loot tile wall.",    'l');
-			m_monster_tile = main_grid.AddCellType("monster",  "monster tile wall.",    'm');
-			m_door_tile = main_grid.AddCellType("door",  "door tile wall.", 'd');
-			m_secret_door = main_grid.AddCellType("secret door",  "secret tile wall.", 's');
-			m_exit_door = main_grid.AddCellType("exit door",  "secret tile wall.", 'e');
-			m_variant_tile = main_grid.AddCellType("variant tile",  "variant floor tile.", 'v');
+			m_floor_id = main_grid.AddCellType("dun_floor", "Floor that agents can walk on.", ' ');
+			m_wall_id  = main_grid.AddCellType("dun_wall",  "Impenetrable wall.",'#');
+			m_upper_external = main_grid.AddCellType("dun_wall_top",  "upper wall.", '^');
+			m_lower_external = main_grid.AddCellType("dun_wall_bottom",  "lower wall.", '&');
+			m_left_external = main_grid.AddCellType("dun_wall_left",  "left external wall.",  '<');
+			m_right_external = main_grid.AddCellType("dun_wall_right",  "right external wall.", '>');
+			m_internal_obstacle = main_grid.AddCellType("dun_wall_internal",  "internal obstacle wall.",   '$');
+			m_trap_tile = main_grid.AddCellType("dun_trap",  "trap tile.",   't');
+			m_loot_tile = main_grid.AddCellType("dun_loot",  "loot tile.",    'l');
+			m_monster_tile = main_grid.AddCellType("dun_monster",  "monster tile.",    'm');
+			m_door_tile = main_grid.AddCellType("dun_door",  "door tile.", 'd');
+			m_secret_door = main_grid.AddCellType("dun_secret_door",  "secret door tile.", 's');
+			m_exit_door = main_grid.AddCellType("dun_exit_door",  "exit door tile.", 'e');
+			m_variant_tile = main_grid.AddCellType("dun_variant_tile",  "variant floor tile.", 'v');
 
 			auto sword = m_item_pool.Insert("Sword", 1.0);
 			auto sword1 = m_item_pool.Insert("Sword +1", 0.2);

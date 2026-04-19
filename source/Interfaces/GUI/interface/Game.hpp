@@ -19,8 +19,9 @@
 #include "../ImageManager.hpp"
 #include "../Menu.hpp"
 #include "../Text.hpp"
-#include "DungeonWorld.hpp"
+#include "../source/Worlds/Dungeon/DungeonWorld.hpp"
 #include "OverWorld.hpp"
+#include "../../../source/Agents/Classic/PlayerAgent.hpp"
 
 namespace cse498
 {
@@ -92,6 +93,13 @@ namespace cse498
         int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
         int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
 
+        //std::unique_ptr<PlayerAgent> mPlayer; /// Real player agent with inventory
+
+        // based on discord discussion it appears this is the direction this is heading, TODO eliminate not needed code
+        // based on other groups implementation
+        PlayerAgent* mOverworldPlayer = nullptr;
+        PlayerAgent* mDungeonPlayer = nullptr;
+
         // -------------------------
         // Dungeon state
         // -------------------------
@@ -135,6 +143,8 @@ namespace cse498
         void RenderDungeon();
         void RenderPaused();
         void RenderSettings();
+        void RenderHotbar(const Inventory& inventory);
+        size_t KeyToAction(SDL_Keycode key);
 
         /**
          * @brief Process player movement input.
