@@ -135,7 +135,7 @@ public:
     [[nodiscard]] double GetMaxHealth() const { return mStats.mMaxHp; }
     [[nodiscard]] double GetAtk() const { return mStats.mAtk; }
     [[nodiscard]] double GetDef() const { return mStats.mDef; }
-    [[nodiscard]] size_t GetAtkRange() const { return mStats.mRange; }
+    [[nodiscard]] double GetAtkRange() const { return mStats.mRange; }
     [[nodiscard]] size_t GetLevel() const { return mStats.mLevel; }
 
     /**
