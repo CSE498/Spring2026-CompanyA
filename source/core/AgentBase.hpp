@@ -17,6 +17,9 @@
 #include "Location.hpp"
 #include "WorldGrid.hpp"
 #include "WorldPosition.hpp"
+#include "../tools/ActionLog.hpp" 
+#include "../tools/BehaviorTree.hpp"
+#include "../Agents/Classic/AgentStats.hpp"
 
 namespace cse498 {
 
@@ -40,6 +43,9 @@ protected:
     std::unique_ptr<BehaviorTrees::Node> mBehaviorRoot;
     mutable BehaviorTrees::Blackboard mBlackboard;
 
+    // An ActionLog class that tracks the actions made by the agent
+    AgentActionLog mActionLog;
+
     /**
      * Called each frame/turn: runs behavior tree tick and component updates.
      * Override in derived classes to add component updates.
@@ -60,23 +66,67 @@ public:
         const Location& loc = GetLocation();
         return loc.IsPosition() ? loc.AsWorldPosition() : WorldPosition(0, 0);
     }
-    void SetPosition(const WorldPosition& pos) { SetLocation(Location(pos)); }
+    
+    // Sets the agent's position and automatically logs a "move" action.
+    void SetPosition(const WorldPosition& pos) {
+      WorldPosition oldPos = GetPosition(); 
+      SetLocation(Location(pos));
+      mActionLog.LogAction(
+        static_cast<int>(GetID()), "move", oldPos, pos);
+    }
 
     // -- Update / lifecycle --
     /// Called by world each frame/turn. Default calls Tick().
     virtual void Update(double /*delta*/) { Tick(); }
 
     /// Apply damage; at or below zero calls onDeath() and sets alive to false.
+    // Applied ActionLog tracking
     virtual void TakeDamage(double amount) {
-        if (!mAlive)
-            return;
-        mStats.mHp -= amount;
-        if (mStats.mHp <= 0.0) {
-            mStats.mHp = 0.0;
-            mAlive = false;
-            OnDeath();
-        }
+      if (!mAlive) return;
+      WorldPosition pos = GetPosition();
+      mStats.mHp -= amount;
+      if (mStats.mHp <= 0.0) {
+        mStats.mHp = 0.0;
+        mAlive = false;
+        mActionLog.LogAction(
+          static_cast<int>(GetID()), "death", pos, pos); 
+        OnDeath();
+      } else {
+        mActionLog.LogAction(
+          static_cast<int>(GetID()), "take_damage", pos, pos);
+      }
     }
+
+    // -- ActionLog interface --
+    [[nodiscard]] AgentActionLog& GetActionLog() { return mActionLog; }
+    [[nodiscard]] const AgentActionLog& GetActionLog() const { return mActionLog; }
+    
+    /**
+     * @brief Log an action at the agent's current position. Intended for non-movement actions (e.g., attack, interact, wait) where position is the same.
+     * @param actionType A string describing the type of action.
+     */
+    void LogActionNow(const std::string& actionType) {
+      WorldPosition pos = GetPosition();
+      mActionLog.LogAction(static_cast<int>(GetID()), actionType, pos, pos);
+    }
+
+    /**
+     * @brief Overload for actions with a distinct destination.
+     * @param actionType A string describing the type of action.
+     * @param newPos The destination or target position of the action.
+     */
+    void LogActionNow(const std::string& actionType,
+                      const WorldPosition& newPos) {
+      mActionLog.LogAction(
+        static_cast<int>(GetID()), actionType, GetPosition(), newPos);
+    }
+
+    /**
+     * @brief Advance the action log's internal simulation time. Should be called each tick before calling Update()
+     * @param time The current simulation time.
+     */
+    void AdvanceLogTime(double time) { mActionLog.UpdateTime(time); }
+
 
     [[nodiscard]] bool IsAlive() const { return mAlive; }
     [[nodiscard]] const AgentStats& GetStats() const { return mStats; }

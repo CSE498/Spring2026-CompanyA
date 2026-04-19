@@ -385,6 +385,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
             --preload-file "assets"
             --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
             "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
+            "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
             "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
             "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
@@ -395,6 +396,8 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.cpp"
             -o "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
         DEPENDS
+            "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
+            "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
             "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
             "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
             "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
@@ -523,6 +526,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
           --preload-file "assets"
           --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
           "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
+          "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
           "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
           "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
           "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
@@ -533,6 +537,8 @@ if(COMPANYA_EMPP_EXECUTABLE)
           "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.cpp"
           -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
       DEPENDS
+          "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
+          "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
           "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
           "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
           "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
