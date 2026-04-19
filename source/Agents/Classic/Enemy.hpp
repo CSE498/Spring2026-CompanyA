@@ -55,8 +55,7 @@ public:
      */
     void ResetGoldDropClaim() { mGoldClaimed = false; }
 
-    bool Interact() override
-    {
+    bool Interact() override {
         TakeDamage(DamageCalculator::Calculate(world.GetPlayer()->GetStats(), mStats));
         return true;
     }

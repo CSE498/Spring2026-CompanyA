@@ -49,15 +49,9 @@ public:
         main_grid.Load(std::vector<std::string>{
                 "#######################",
                 "#                     #", // (1,1) --> (9, 1)
-                "#                 ### #",
-                "#             #  #  # #",
-                "# #     #  #  #  #  # #",
-                "#          #     #    #",
-                "##### ############  # #",
-                "#                    ##",
-                "#                    ##",
-                "#  ####################",
-                "#######################"});
+                "#                 ### #", "#             #  #  # #", "# #     #  #  #  #  # #",
+                "#          #     #    #", "##### ############  # #", "#                    ##",
+                "#                    ##", "#  ####################", "#######################"});
     }
 
     int DoAction(AgentBase& agent, size_t action_id) override {
@@ -443,8 +437,7 @@ TEST_CASE("Test agent pursuing player down corridor", "[TestAgent][movement]") {
 }
 
 
-TEST_CASE("Player Attacking Enemies", "[INTERACTION]")
-{
+TEST_CASE("Player Attacking Enemies", "[INTERACTION]") {
     SkeletonTestWorld world;
     PlayerAgent* player = world.GetPlayer();
     CHECK(player != nullptr);
@@ -496,12 +489,10 @@ TEST_CASE("Player Attacking Enemies", "[INTERACTION]")
         CHECK_FALSE(world.HasAgent(storedId));
         CHECK(world.GetPlayer() == player);
     }
-
 }
 
 
-TEST_CASE("Interaction function in WorldBase", "[WorldBase]")
-{
+TEST_CASE("Interaction function in WorldBase", "[WorldBase]") {
     // I don't see an area to test this function for WorldBase so I'll test it here
     SkeletonTestWorld world;
     PlayerAgent* player = world.GetPlayer();
@@ -521,8 +512,7 @@ TEST_CASE("Interaction function in WorldBase", "[WorldBase]")
     CHECK(agent1.GetCurrentHealth() == Approx(100.0));
     CHECK(player->GetCurrentHealth() == Approx(40.0));
 
-    SECTION("4 agents")
-    {
+    SECTION("4 agents") {
         auto& agent2 = world.AddAgent(std::move(testAgent2));
         auto& agent3 = world.AddAgent(std::move(testAgent3));
         auto& agent4 = world.AddAgent(std::move(testAgent4));
@@ -534,8 +524,7 @@ TEST_CASE("Interaction function in WorldBase", "[WorldBase]")
         CHECK(agent4.GetCurrentHealth() == Approx(100.0 - expectedDamage)); // this one
         CHECK(player->GetCurrentHealth() == Approx(40.0));
     }
-    SECTION("3 agents")
-    {
+    SECTION("3 agents") {
         auto& agent2 = world.AddAgent(std::move(testAgent2));
         auto& agent3 = world.AddAgent(std::move(testAgent3));
 
@@ -545,8 +534,7 @@ TEST_CASE("Interaction function in WorldBase", "[WorldBase]")
         CHECK(agent3.GetCurrentHealth() == Approx(100.0));
         CHECK(player->GetCurrentHealth() == Approx(40.0));
     }
-    SECTION("2 agents")
-    {
+    SECTION("2 agents") {
         auto& agent3 = world.AddAgent(std::move(testAgent3));
 
         world.DoAction(*player, interactAction);
@@ -554,15 +542,10 @@ TEST_CASE("Interaction function in WorldBase", "[WorldBase]")
         CHECK(agent3.GetCurrentHealth() == Approx(100.0 - expectedDamage));
         CHECK(player->GetCurrentHealth() == Approx(40.0));
     }
-    SECTION("1 agents")
-    {
+    SECTION("1 agents") {
 
         world.DoAction(*player, interactAction);
         CHECK(agent1.GetCurrentHealth() == Approx(100.0 - expectedDamage));
         CHECK(player->GetCurrentHealth() == Approx(40.0));
     }
-
-
-
-
 }
