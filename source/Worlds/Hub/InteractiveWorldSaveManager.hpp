@@ -10,47 +10,71 @@ namespace cse498 {
 
 using json = nlohmann::json;
 
-class InteractiveWorldSaveManager {
-public:
-    // Save world to file
-    bool Save(const InteractiveWorld& world, const std::string& filename) {
-        json j;
+    class InteractiveWorldSaveManager {
+    public:
+        // Save World to file
+        bool Save(const InteractiveWorld& world, const std::string& filename) {
+            json j;
 
-        const auto& inv = world.GetInventory();
+            const auto& inv = world.GetInventory();
+            j["inventory"]["wood"] = inv.GetAmount(ItemType::Wood);
+            j["inventory"]["stone"] = inv.GetAmount(ItemType::Stone);
+            j["inventory"]["metal"] = inv.GetAmount(ItemType::Metal);
 
-        j["inventory"]["wood"] = inv.GetAmount(ItemType::Wood);
-        j["inventory"]["stone"] = inv.GetAmount(ItemType::Stone);
-        j["inventory"]["metal"] = inv.GetAmount(ItemType::Metal);
+            j["buildings"] = json::array();
 
-        std::ofstream file(filename);
+            for (const auto& buildingPtr: world.GetBuildings()) {
+                if (!buildingPtr)
+                    continue;
 
-        if (!file.is_open())
-            return false;
+                json b;
+                b["name"] = buildingPtr->GetName();
+                b["level"] = buildingPtr->GetCurrentLevel();
 
-        file << j.dump(4);
+                j["buildings"].push_back(b);
+            }
 
-        return true;
-    }
+            std::ofstream file(filename);
+            if (!file.is_open())
+                return false;
 
-    // Load world from file
-    bool Load(InteractiveWorld& world, const std::string& filename) {
-        std::ifstream file(filename);
+            file << j.dump(4);
+            return true;
+        }
 
-        if (!file.is_open())
-            return false;
+        bool Load(InteractiveWorld& world, const std::string& filename) {
+            std::ifstream file(filename);
+            if (!file.is_open())
+                return false;
 
         json j;
         file >> j;
 
-        auto& inv = world.GetInventory();
+            auto& inv = world.GetInventory();
+            inv.Clear();
 
-        inv.Clear();
+            inv.AddItem(ItemType::Wood, j["inventory"].value("wood", 0));
+            inv.AddItem(ItemType::Stone, j["inventory"].value("stone", 0));
+            inv.AddItem(ItemType::Metal, j["inventory"].value("metal", 0));
 
-        inv.AddItem(ItemType::Wood, j["inventory"]["wood"]);
+            if (j.contains("buildings") && j["buildings"].is_array()) {
+                for (const auto& savedBuilding: j["buildings"]) {
+                    const std::string name = savedBuilding.value("name", "");
+                    const int level = savedBuilding.value("level", 0);
 
-        inv.AddItem(ItemType::Stone, j["inventory"]["stone"]);
+                    for (auto& buildingPtr: world.GetBuildings()) {
+                        if (!buildingPtr)
+                            continue;
 
-        inv.AddItem(ItemType::Metal, j["inventory"]["metal"]);
+                        if (buildingPtr->GetName() == name) {
+                            if (!buildingPtr->SetCurrentLevel(level)) {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
 
         return true;
     }
