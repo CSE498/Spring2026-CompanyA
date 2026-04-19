@@ -13,7 +13,7 @@
 namespace cse498
 {
 
-    const int TURN_DELAY = 100;
+    constexpr int TURN_DELAY = 100;
 
     // -----------------------------------------------------------------------
     //  Initialization
@@ -428,7 +428,7 @@ namespace cse498
                 case SDLK_9:
                     if (mShowBackpack && (mState == GameState::OVERWORLD || mState == GameState::DUNGEON))
                     {
-                        // SDLK_0 = slot 0, SDLK_1 = slot 1, etc.
+                        // SDLK_1 = slot 0, SDLK_2 = slot 1, etc.
                         size_t hotbar_slot = (event.key.keysym.sym == SDLK_0) ? 9 : static_cast<size_t>(event.key.keysym.sym - SDLK_1);
                         if (hotbar_slot < Inventory::HOTBAR_SIZE) {
                             size_t backpack_index = Inventory::HOTBAR_SIZE

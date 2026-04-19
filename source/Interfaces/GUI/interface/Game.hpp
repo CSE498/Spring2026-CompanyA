@@ -102,10 +102,8 @@ namespace cse498
         int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
         int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
 
-        //std::unique_ptr<PlayerAgent> mPlayer; /// Real player agent with inventory
-
-        // based on discord discussion it appears this is the direction this is heading, TODO eliminate not needed code
-        // based on other groups implementation
+        // based on discord discussion it appears this is the direction this is heading,
+        // TODO eliminate not needed code based on other groups implementation and update camera logic to use just player pos
         PlayerAgent* mOverworldPlayer = nullptr;
         PlayerAgent* mDungeonPlayer = nullptr;
 
