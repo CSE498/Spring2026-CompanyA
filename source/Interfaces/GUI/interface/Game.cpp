@@ -628,10 +628,17 @@ namespace cse498
         int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
         int th = static_cast<int>(mDungeonGrid->GetTileHeight());
 
-        int player_screen_x = (mDungeonPlayerX - mDungeonCamX) * tw;
-        int player_screen_y = (mDungeonPlayerY - mDungeonCamY) * th;
+        for (size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i)
+        {
+            const AgentBase &agent = mDungeonWorld->GetAgent(i);
+            const WorldPosition &pos = agent.GetLocation().AsWorldPosition();
 
-        mImageManager->DrawImage("player", player_screen_x, player_screen_y, tw, th);
+            int screen_x = (static_cast<int>(pos.CellX()) - mDungeonCamX) * tw;
+            int screen_y = (static_cast<int>(pos.CellY()) - mDungeonCamY) * th;
+
+            const std::string &sprite = (&agent == mDungeonPlayer) ? "player" : "dun_monster";
+            mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
+        }
 
         RenderHotbar(mDungeonPlayer->GetInventory());
         RenderPickupMessage();
