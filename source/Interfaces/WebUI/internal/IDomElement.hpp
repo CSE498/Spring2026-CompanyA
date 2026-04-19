@@ -105,7 +105,7 @@ public:
             return;
         }
 
-        if (element->mExisting) {
+        if (element->mAdoptsExistingDom) {
             // clang-format off
             GetConsole().call<void>("warn", "element with Id: " + element->Id() + " is an existing element and will not be removed.");
             // clang-format on
@@ -163,7 +163,10 @@ protected:
     emscripten::val mElement = emscripten::val::undefined(); ///< HTML element for this dom element
     IDomElement* mParent = nullptr; ///< DOM element for the parent of this element
     std::string mId{}; ///< DOM Id of this element
-    bool mExisting{false}; ///< True if this element is just hooking into an existing element
+
+    /// True when this object is attached to a DOM element that already existed
+    /// in the host page, rather than one created/owned by this object.
+    bool mAdoptsExistingDom{false};
 
     int mGridRow = -1; ///< Grid row position (-1 = unset)
     int mGridCol = -1; ///< Grid column position (-1 = unset)

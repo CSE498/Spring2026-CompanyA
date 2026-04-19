@@ -69,7 +69,7 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
         val found = mDocument.call<val>("getElementById", rootId);
         if (!found.isNull() && !found.isUndefined()) {
             mElement = found;
-            mExisting = true;
+            mAdoptsExistingDom = true;
         } else {
             // create a container div with the requested id and append to body
             mElement = mDocument.call<val>("createElement", std::string("div"));
@@ -78,15 +78,15 @@ WebLayout::WebLayout(const std::string& rootId) noexcept {
         mId = rootId;
         mElement["style"].set("boxSizing", std::string("border-box"));
         return;
+    } else {
+        // no id passed: create a container div and append to body with generated id
+        mId = "weblayout-" + std::to_string(mNextIdCounter++);
+        mElement = mDocument.call<val>("createElement", std::string("div"));
+        mElement.set("id", mId);
+        mElement["style"].set("boxSizing", std::string("border-box"));
+        assert(!mElement.isNull() && !mElement.isUndefined());
+        assert(mElement["id"].as<std::string>() == mId);
     }
-
-    // no id passed: create a container div and append to body with generated id
-    mId = "weblayout-" + std::to_string(mNextIdCounter++);
-    mElement = mDocument.call<val>("createElement", std::string("div"));
-    mElement.set("id", mId);
-    mElement["style"].set("boxSizing", std::string("border-box"));
-    assert(!mElement.isNull() && !mElement.isUndefined());
-    assert(mElement["id"].as<std::string>() == mId);
 }
 
 /// @brief Destructor: unmounts all children and removes the root element from the DOM.
@@ -170,11 +170,21 @@ bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
 /// @param elem Pointer to the child element to update.
 /// @param a    New Alignment value for that child.
 void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
-    if (!elem)
+    if (!elem) {
+        GetConsole().call<void>(
+            "warn",
+            std::string("WebLayout::SetAlignment called with null elem"));
         return;
+    }
+
     auto it = mParams.find(elem);
-    if (it == mParams.end())
+    if (it == mParams.end()) {
+        GetConsole().call<void>(
+            "warn",
+            std::string("WebLayout::SetAlignment failed: element not managed by this layout: ") + elem->Id());
         return;
+    }
+
     it->second = a;
 }
 

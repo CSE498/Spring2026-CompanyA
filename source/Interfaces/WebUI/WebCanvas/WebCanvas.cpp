@@ -57,9 +57,9 @@ WebCanvas::WebCanvas(const std::string& id) {
     }
 #ifdef __EMSCRIPTEN__
     mElement = GetDocument().call<emscripten::val>("getElementById", mId);
-    mExisting = !mElement.isNull() && !mElement.isUndefined();
+    mAdoptsExistingDom = !mElement.isNull() && !mElement.isUndefined();
 
-    if (!mExisting) {
+    if (!mAdoptsExistingDom) {
         const std::string errorMsg = "WebCanvas error: required canvas element with id '" + mId + "' was not found.";
 
         emscripten::val::global("console").call<void>("error", errorMsg);
