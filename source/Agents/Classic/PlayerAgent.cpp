@@ -15,7 +15,7 @@ size_t PlayerAgent::SelectAction(const WorldGrid& /*grid*/) {
     // 1. WorldGrid input is useless since we have that in Entity.
     // 2. This is only designed around this being in the interface implementation, but
     // that creates so many limitations that just annoys me.
-    assert(false);
+    // assert(false); // removed for compatibility with Demos
     return 0;
 }
 
@@ -28,22 +28,22 @@ size_t PlayerAgent::SelectPlayerAction(const char input) {
     switch (input) {
         case 'a':
         case 'A':
-            return GetActionID("a");
+            return GetActionID("left");
         case 'w':
         case 'W':
-            return GetActionID("w");
+            return GetActionID("up");
         case 's':
         case 'S':
-            return GetActionID("s");
+            return GetActionID("down");
         case 'd':
         case 'D':
-            return GetActionID("d");
+            return GetActionID("right");
         case 'e':
         case 'E':
-            return GetActionID("e");
+            return GetActionID("interact");
         case 'q':
         case 'Q':
-            return GetActionID("q");
+            return GetActionID("quit");
         default:
             return GetActionID("stay");
     }

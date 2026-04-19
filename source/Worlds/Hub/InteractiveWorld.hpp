@@ -42,16 +42,6 @@ namespace cse498 {
     private:
         // ResourceProducers in the scene
         std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
-        /**
-         * Update world logic
-         */
-        void UpdateWorld() override {
-            for (const auto& producer: m_producers) {
-                producer->Update();
-            }
-
-            PrintInventory(); // Shows inventory status, for demo/simple game purposes
-        }
 
         /**
          * Print the world inventory
@@ -96,12 +86,28 @@ namespace cse498 {
                     "#                     #", "#                     #", "#                     #",
                     "#                     #", "#                     #", "#                     #",
                     "#                     #", "#######################"});
+
+            auto player = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+            AddAgent(std::move(player));
+            mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+            mPlayer->SetSymbol('@').SetLocation(WorldPosition{1, 1});
         }
 
         /**
          * Destructor
          */
         ~InteractiveWorld() = default;
+
+        /**
+         * Update world logic
+         */
+        void UpdateWorld() override {
+            for (const auto& producer: m_producers) {
+                producer->Update();
+            }
+
+            PrintInventory(); // Shows inventory status, for demo/simple game purposes
+        }
 
         /**
          * Get all buildings in the world

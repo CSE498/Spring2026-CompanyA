@@ -3,6 +3,7 @@
 #include "./InputManager.hpp"
 #include "./interface/WebInterface.hpp"
 
+#include <cctype>
 #include <string>
 
 using namespace cse498;
@@ -39,6 +40,20 @@ EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* ke
 
     std::string lowerKey = ToLower(key);
 
+    // Handle numeric keys for hotbar selection - immediate response
+    if (lowerKey.length() == 1 && std::isdigit(lowerKey[0])) {
+        int digit = lowerKey[0] - '0';
+        size_t slotIndex = (digit == 0) ? 9 : (digit - 1); // 1-9 maps to 0-8, 0 maps to 9
+        manager->mInterface.SetPlayerHotbarIndex(slotIndex);
+        return EM_FALSE; // Allow default browser behavior for number keys (e.g., focusing elements)
+    }
+
+    // Handle inventory menu toggle
+    if (lowerKey == "i") {
+        manager->mInterface.OpenInventory();
+        return EM_TRUE;
+    }
+
     // special case pause button
     if (lowerKey == "escape") {
         manager->mInterface.HandlePause();
@@ -49,7 +64,7 @@ EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* ke
         manager->SetTapAction(lowerKey);
     manager->AddKeyPressed(lowerKey);
 
-    return EM_TRUE;
+    return EM_FALSE;
 }
 
 EM_BOOL InputManager::OnKeyUp(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* userData) {

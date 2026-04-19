@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../../core/InterfaceBase.hpp"
 #include "../../../core/WorldBase.hpp"
 
 #include <algorithm>
@@ -29,42 +28,6 @@ protected:
     /// @brief Array of impassable cell type IDs for easy access.
     std::array<size_t, 5> mImpassableIds;
 
-    /// @brief Unique pointer to the interface used by this world.
-    std::unique_ptr<InterfaceBase> mInterface = nullptr;
-
-    /// @brief Timer for tracking action intervals.
-    double mActionTimer{0};
-
-    /// @brief Delta time for the last update.
-    double mDelta{0};
-
-    /// @brief Increments the action timer by the given milliseconds.
-    /// @param millis The milliseconds to add to the timer.
-    void IncrementActionTimer(double millis) {
-        mDelta = millis;
-        mActionTimer += mDelta;
-    }
-
-    /// @brief Adds an interface of the specified type to the world.
-    /// @tparam T The interface type, must derive from InterfaceBase.
-    /// @param interfaceName The name for the interface.
-    /// @return Reference to the added interface.
-    template<std::derived_from<InterfaceBase> T>
-    InterfaceBase& AddInterface(std::string interfaceName = "None") {
-        mInterface = std::make_unique<T>(agent_set.size(), interfaceName, *this);
-
-        InterfaceBase& interfaceRef = *mInterface;
-        ConfigAgent(*mInterface);
-
-        if (!mInterface->Initialize()) {
-            mInterface.reset();
-            assert(false && "Failed to initialize interface");
-            std::abort();
-        }
-
-        return interfaceRef;
-    }
-
     /// Provide the agent with movement actions.
     void ConfigAgent(AgentBase& agent) override {
         agent.AddAction("up", MOVE_UP);
@@ -78,16 +41,16 @@ protected:
 public:
     /// @brief Constructs a MockWorld with predefined grid layout.
     MockWorld() {
-        mFloorIds[0] = main_grid.AddCellType("floor", "world/forest/floor_tiles/tile_grass_1.png", ' ');
-        mFloorIds[1] = main_grid.AddCellType("floor-variant1", "world/forest/floor_tiles/tile_grass_5.png", 'v');
-        mFloorIds[2] = main_grid.AddCellType("floor-variant2", "world/forest/floor_tiles/tile_grass_2.png", 't');
+        mFloorIds[0] = main_grid.AddCellType("floor", "assets/world/forest/floor_tiles/tile_grass_1.png", ' ');
+        mFloorIds[1] = main_grid.AddCellType("floor-variant1", "assets/world/forest/floor_tiles/tile_grass_5.png", 'v');
+        mFloorIds[2] = main_grid.AddCellType("floor-variant2", "assets/world/forest/floor_tiles/tile_grass_2.png", 't');
 
         // clang-format off
-        mImpassableIds[0] = main_grid.AddCellType("floor-obstacle", "world/forest/floor_tiles/tile_grass_3.png", '$');
-        mImpassableIds[1] = main_grid.AddCellType("top-wall", "world/forest/walls/external/border_top_forest.png", '^');
-        mImpassableIds[2] = main_grid.AddCellType("left-wall", "world/forest/walls/external/border_left_forest.png", '<');
-        mImpassableIds[3] = main_grid.AddCellType("right-wall", "world/forest/walls/external/border_right_forest.png", '>');
-        mImpassableIds[4] = main_grid.AddCellType("bottom-wall", "world/forest/walls/external/border_bottom_forest.png", '&');
+        mImpassableIds[0] = main_grid.AddCellType("floor-obstacle", "assets/world/forest/floor_tiles/tile_grass_3.png", '$');
+        mImpassableIds[1] = main_grid.AddCellType("top-wall", "assets/world/forest/walls/external/border_top_forest.png", '^');
+        mImpassableIds[2] = main_grid.AddCellType("left-wall", "assets/world/forest/walls/external/border_left_forest.png", '<');
+        mImpassableIds[3] = main_grid.AddCellType("right-wall", "assets/world/forest/walls/external/border_right_forest.png", '>');
+        mImpassableIds[4] = main_grid.AddCellType("bottom-wall", "assets/world/forest/walls/external/border_bottom_forest.png", '&');
         // clang-format on
 
         // clang-format off
@@ -105,6 +68,12 @@ public:
             "&&&&&&&&&&&&&&&&&&"
         });
         // clang-format on
+
+        auto player = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+        AddAgent(std::move(player));
+        mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
+        mPlayer->SetSymbol('@');
+        mPlayer->SetLocation(WorldPosition{1, 1});
     }
 
     ~MockWorld() = default;
@@ -150,30 +119,6 @@ public:
         // Set the agent to its new position.
         agent.SetLocation(new_position);
         return true;
-    }
-
-    /// @brief Runs the main game loop iteration.
-    virtual void Run() override {
-        if (mActionTimer < 250) {
-            mInterface->RenderFrame();
-            return;
-        }
-        mActionTimer = 0;
-        size_t action_id = mInterface->SelectAction(main_grid);
-        if (action_id == QUIT)
-            Teardown();
-        int result = DoAction(*mInterface, action_id);
-        mInterface->SetActionResult(result);
-        if (!mInterface->IsPaused()) {
-            RunAgents();
-        }
-        mInterface->RenderFrame();
-    }
-
-    /// @brief Cleans up and exits the application.
-    virtual void Teardown() {
-        mInterface.release();
-        exit(0);
     }
 };
 

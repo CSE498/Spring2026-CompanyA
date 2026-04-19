@@ -7,84 +7,119 @@
 /// Images use absolute paths from the project root so you must use --serve-root .
 /// Alternatively, run:
 ///   emrun demos/WebUI/index.html --no_browser --serve-root .
-/// The open in browser:
+/// Then open in browser:
 ///   http://localhost:6931/demos/WebUI/index.html
+///
+/// This file was modified with AI assistance for WebUI integration
+/// with InteractiveWorld and DungeonWorld systems.
 
 #ifdef __EMSCRIPTEN__
 
 #include <algorithm>
 #include <emscripten/emscripten.h>
+#include <memory>
 #include "../../source/Agents/PacingAgent.hpp"
-#include "../../source/Interfaces/WebUI/interface/MockWorld.hpp"
 #include "../../source/Interfaces/WebUI/interface/WebInterface.hpp"
+#include "../../source/Worlds/Dungeon/DungeonWorld.hpp"
+#include "../../source/Worlds/Hub/InteractiveWorld.hpp"
 
 namespace {
 
 using namespace cse498;
 
-/// @class RunningMockWorld
-/// @brief Extends MockWorld for the running application with setup and ticking.
-class RunningMockWorld : public cse498::MockWorld {
-public:
-    /// @brief Updates the world state with the given time delta.
-    /// @param millis The time delta in milliseconds.
-    void Tick(double millis) { IncrementActionTimer(millis); }
-
-    /// @brief Sets up the world with agents and interface.
-    void Setup() {
-        AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
-        AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
-        AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7, 7});
-        AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8, 8});
-        AddInterface<WebInterface>("Web UI").SetSymbol('@').SetLocation(WorldPosition{1, 1});
-    }
-};
-
-/// @struct App
-/// @brief Main application structure managing the game loop.
-struct App {
-    /// @brief The running mock world instance.
-    RunningMockWorld world;
-
-    /// @brief Timestamp of the last frame in milliseconds.
-    double last_time_ms{0.0};
-
-    /// @brief Constructs the application and sets up the world.
-    App() {
-        // Add WebInterface to the world and initialize it.
-        world.Setup();
-    }
-
-    /// @brief Main loop callback for Emscripten animation frame.
-    /// @param currentTimeMs Current time in milliseconds.
-    /// @param userData Pointer to the App instance.
-    /// @return EM_BOOL indicating whether to continue the loop.
-    static EM_BOOL MainLoop(double currentTimeMs, void* userData) {
-        auto* app = static_cast<App*>(userData);
-
-        // Handle the very first frame
-        if (app->last_time_ms == 0.0) {
-            app->last_time_ms = currentTimeMs;
-        }
-
-        const double delta = std::max(0.0, currentTimeMs - app->last_time_ms);
-        app->last_time_ms = currentTimeMs;
-
-        app->world.Tick(delta);
-        app->world.Run();
-
-        return EM_TRUE;
-    }
-};
-
 } // anonymous namespace
 
-/// @brief Main entry point for the application.
-/// @return Exit code.
-int main() {
-    static App app;
+class App {
+public:
+    inline static std::unique_ptr<cse498::WebInterface> webInterface = nullptr;
+    App() {
+        auto overworld = std::make_unique<InteractiveWorld>();
+        auto dungeon = std::make_unique<DungeonWorld>();
 
-    emscripten_request_animation_frame_loop(&App::MainLoop, &app);
+        overworld->GetInventory().AddItem(ItemType::Wood, 10);
+        overworld->GetInventory().AddItem(ItemType::Stone, 5);
+
+        overworld->AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
+        overworld->AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
+        overworld->AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7, 7});
+        overworld->AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8, 8});
+
+        // Buildings
+        Building& lumberYard = overworld->AddAgent<Building>("Lumber Yard");
+        lumberYard.SetSymbol('L');
+        lumberYard.AddUpgrade(ItemType::Wood, 15);
+        lumberYard.SetLocation(WorldPosition{2, 1});
+
+        Building& quarry = overworld->AddAgent<Building>("Quarry");
+        quarry.SetSymbol('Q');
+        quarry.AddUpgrade(ItemType::Wood, 50);
+        quarry.AddUpgrade(ItemType::Stone, 50);
+        quarry.AddUpgrade(ItemType::Metal, 35);
+
+        Building& mine = overworld->AddAgent<Building>("Mine");
+        mine.SetSymbol('M');
+        mine.AddUpgrade(ItemType::Stone, 100);
+        mine.AddUpgrade(ItemType::Metal, 50);
+        mine.AddUpgrade(ItemType::Metal, 100);
+
+        // Resource spawns
+        auto woodSpawnPtr =
+                std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Wood Spawn", *overworld, ItemType::Wood);
+        woodSpawnPtr->SetSymbol('l');
+        ResourceSpawn& woodSpawn = overworld->AddAgent(std::move(woodSpawnPtr));
+        woodSpawn.SetLocation(WorldPosition{5, 8});
+
+        auto stoneSpawnPtr = std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Stone Spawn", *overworld,
+                                                             ItemType::Stone);
+        stoneSpawnPtr->SetSymbol('q');
+        ResourceSpawn& stoneSpawn = overworld->AddAgent(std::move(stoneSpawnPtr));
+        stoneSpawn.SetLocation(WorldPosition{9, 9});
+
+        auto metalSpawnPtr = std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Metal Spawn", *overworld,
+                                                             ItemType::Metal);
+        metalSpawnPtr->SetSymbol('m');
+        ResourceSpawn& metalSpawn = overworld->AddAgent(std::move(metalSpawnPtr));
+        metalSpawn.SetLocation(WorldPosition{13, 5});
+
+
+        // Resource Producers
+        std::shared_ptr<ResourceProducer> woodProducer =
+                std::make_shared<ResourceProducer>(lumberYard, overworld->GetInventory(), ItemType::Wood, 2);
+
+        std::shared_ptr<ResourceProducer> stoneProducer =
+                std::make_shared<ResourceProducer>(quarry, overworld->GetInventory(), ItemType::Stone, 1);
+
+        std::shared_ptr<ResourceProducer> metalProducer =
+                std::make_shared<ResourceProducer>(mine, overworld->GetInventory(), ItemType::Metal, 0.5);
+
+        overworld->AddProducer(woodProducer);
+        overworld->AddProducer(stoneProducer);
+        overworld->AddProducer(metalProducer);
+
+        overworld->AddBuilding(lumberYard, WorldPosition{5, 5});
+        overworld->AddBuilding(quarry, WorldPosition{11, 7});
+        overworld->AddBuilding(mine, WorldPosition{16, 9});
+
+        lumberYard.SetSymbol('L');
+        quarry.SetSymbol('Q');
+        mine.SetSymbol('M');
+
+        webInterface = std::make_unique<WebInterface>(std::move(overworld), std::move(dungeon));
+    }
+
+    static void MainLoop() {
+        if (webInterface->GetCurrentState() == WebInterface::WebState::QUIT) {
+            emscripten_cancel_main_loop();
+            return;
+        }
+        webInterface->RunFrame(emscripten_performance_now());
+    }
+};
+
+int main() {
+    App app{};
+
+    emscripten_set_main_loop(&App::MainLoop, 0, true);
 
     return 0;
 }

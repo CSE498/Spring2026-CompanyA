@@ -1,106 +1,105 @@
 /**
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
- * @brief 
+ * @brief
  * @note Status: PROPOSAL
  **/
 
 
 #pragma once
 
-#include <cassert>
 #include <array>
+#include <cassert>
 #include "../../tools/WeightedSet.hpp"
 #include "LevelBase.hpp"
 
 namespace cse498 {
 
-	/**
-   * @class ForestLevel
-   * @brief
-   *
-   * @details
-   * 
-   */
-	class ForestLevel : public LevelBase{
-		private:
+/**
+ * @class ForestLevel
+ * @brief
+ *
+ * @details
+ *
+ */
+class ForestLevel : public LevelBase {
+private:
+    /**
+     * @brief Static room ID and weight pairs.
+     *
+     * @details
+     * Each pair consists of a room number and its associated weight.
+     * The weight determines the probability of selecting that room
+     * during generation.
+     * Higher weights (10) make a room more likely to be selected.
+     * Lower weights (1) make it less likely.
+     */
+    inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{{
+            {1, 10},
+            {2, 10},
+            {3, 10},
+            {4, 10},
+            {5, 10},
+            {6, 1},
+    }};
 
-		 /**
-		 * @brief Static room ID and weight pairs.
-		 *
-		 * @details
-		 * Each pair consists of a room number and its associated weight.
-		 * The weight determines the probability of selecting that room
-		 * during generation.
-		 * Higher weights (10) make a room more likely to be selected. 
-		 * Lower weights (1) make it less likely.
-		 */
-		inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{{
-			{1, 10},
-			{2, 10},
-			{3, 10},
-			{4, 10},
-			{5, 10},
-			{6, 1},
-		}};
+    /**
+     * @brief Room file paths for forest level.
+     *
+     * @details
+     * This string is used to load forest rooms
+     */
+#ifndef __EMSCRIPTEN__
+    inline static const std::string m_room_dir =
+            static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_one_pool/room_";
+#else
+    inline static const std::string m_room_dir = "/rooms/Dungeon_one_pool/room_";
+#endif
 
-		/**
-		 * @brief Room file paths for forest level.
-		 *
-		 * @details
-		 * This string is used to load forest rooms
-		 */
-		inline static const std::string m_room_dir = static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_one_pool/room_";
+    /**
+     * @brief Constructs the weighted room pool.
+     *
+     * @details
+     * Iterates through ROOM_DATA and inserts each room into a
+     * WeightedSet using its corresponding file path and weight.
+     *
+     * @return A WeightedSet containing room file paths and weights.
+     *
+     * @note Each insertion is expected to succeed. Assertions are used
+     * to enforce this during development.
+     */
+    static cse498::WeightedSet<int> MakeRoomPool() {
+        cse498::WeightedSet<int> rooms;
 
-		/**
-		 * @brief Constructs the weighted room pool.
-		 *
-		 * @details
-		 * Iterates through ROOM_DATA and inserts each room into a
-		 * WeightedSet using its corresponding file path and weight.
-		 *
-		 * @return A WeightedSet containing room file paths and weights.
-		 *
-		 * @note Each insertion is expected to succeed. Assertions are used
-		 * to enforce this during development.
-		 */
-		static cse498::WeightedSet<int> MakeRoomPool() {
-			cse498::WeightedSet<int> rooms;
-			
-			for (const auto& [num, weight] : ROOM_DATA) {
-				auto result = rooms.Insert(num, weight);
-				assert(result.has_value());
-			}
-
-            return rooms;
+        for (const auto& [num, weight]: ROOM_DATA) {
+            auto result = rooms.Insert(num, weight);
+            assert(result.has_value());
         }
 
-		cse498::WeightedSet<int> m_room_pool;
+        return rooms;
+    }
 
-	public:
-		/**
-		 * @brief Constructs a ForestLevel.
-		 *
-		 * @details
-		 * Initializes the base ForestLevel with a generated room pool
-		 */
-		ForestLevel()
-		: m_room_pool(MakeRoomPool()) {}
+    cse498::WeightedSet<int> m_room_pool;
 
-		/**
-		 * @brief Default destructor.
-		 */
-		~ForestLevel() = default;
+public:
+    /**
+     * @brief Constructs a ForestLevel.
+     *
+     * @details
+     * Initializes the base ForestLevel with a generated room pool
+     */
+    ForestLevel() : m_room_pool(MakeRoomPool()) {}
 
-		/**
-		 * 
-		 */
-		[[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override {
-    		return m_room_pool;
-		}
+    /**
+     * @brief Default destructor.
+     */
+    ~ForestLevel() = default;
 
-		[[nodiscard]] const std::string& GetRoomDir() const override {
-			return m_room_dir;
-		}
-	};
+    /**
+     *
+     */
+    [[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override { return m_room_pool; }
+
+    [[nodiscard]] const std::string& GetRoomDir() const override { return m_room_dir; }
+};
 
 } // End of namespace cse498

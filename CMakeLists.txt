@@ -96,6 +96,16 @@ function(companya_collect_native_demo_sources out_var)
     set(${out_var} "${demo_mains}" PARENT_SCOPE)
 endfunction()
 
+function(companya_collect_web_sources out_var)
+    file(GLOB_RECURSE web_sources CONFIGURE_DEPENDS "${COMPANYA_SOURCE_DIR}/*.cpp")
+    list(FILTER web_sources EXCLUDE REGEX "/Interfaces/GUI/")
+    list(FILTER web_sources EXCLUDE REGEX "/main.cpp")
+    list(FILTER web_sources EXCLUDE REGEX "/WebCanvasDemo.cpp")
+    list(REMOVE_ITEM web_sources "${COMPANYA_SOURCE_DIR}/simple_main.cpp")
+    list(SORT web_sources)
+    set(${out_var} "${web_sources}" PARENT_SCOPE)
+endfunction()
+
 function(companya_apply_native_profile target_name)
     target_compile_options(${target_name} PRIVATE
         -Wall
@@ -346,9 +356,17 @@ endforeach()
 find_program(COMPANYA_EMPP_EXECUTABLE em++)
 set(COMPANYA_WEB_DEMO_OUTPUT_DIR "${COMPANYA_DEMOS_DIR}/WebUI")
 set(COMPANYA_WEB_SOURCE "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI")
-set(COMPANYA_WEB_DEMO_COMMON_ARGS
-    --bind
+set(COMPANYA_WEB_SHARED_FLAGS
     -std=c++23
+)
+
+set(COMPANYA_WEB_COMPILE_FLAGS
+    ${COMPANYA_WEB_SHARED_FLAGS}
+)
+
+set(COMPANYA_WEB_LINK_FLAGS
+    ${COMPANYA_WEB_SHARED_FLAGS}
+    --bind
     -sWASM=1
     -sASSERTIONS=1
     -sASYNCIFY=1
@@ -356,77 +374,86 @@ set(COMPANYA_WEB_DEMO_COMMON_ARGS
     -sALLOW_MEMORY_GROWTH=1
     -gsource-map
 )
-set(COMPANYA_WEB_DEMO_INCLUDE_ARGS
-    "-I${COMPANYA_SOURCE_DIR}"
-)
 
 set(COMPANYA_WEB_TEST_OUTPUT_DIR "${COMPANYA_TEST_DIR}/build/web_tests")
-set(COMPANYA_WEB_TEST_INCLUDE_ARGS
+set(COMPANYA_WEB_INCLUDE_ARGS
     "-I${COMPANYA_SOURCE_DIR}"
     "-I${COMPANYA_THIRD_PARTY_DIR}/Catch/single_include"
 )
 set(COMPANYA_WEB_TEST_COMMON_ARGS
-    --bind
-    -std=c++23
-    -s
-    WASM=1
-    -s
-    ASSERTIONS=1
-    -gsource-map
+    ${COMPANYA_WEB_LINK_FLAGS}
+    -sNO_DISABLE_EXCEPTION_CATCHING
     -DCATCH_CONFIG_MAIN
 )
+
+# Collect web sources (all sources excluding GUI)
+companya_collect_web_sources(COMPANYA_WEB_SOURCES)
+
+# Helper to compile a single source to an object file
+function(companya_web_compile source_file out_obj_var)
+    get_filename_component(source_name "${source_file}" NAME)
+    set(obj_dir "${CMAKE_CURRENT_BINARY_DIR}/web_objs")
+    set(obj_file "${CMAKE_CURRENT_BINARY_DIR}/web_objs/${source_name}.o")
+
+    add_custom_command(
+        OUTPUT "${obj_file}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${obj_dir}"
+        COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
+        ${COMPANYA_WEB_DEMO_INCLUDE_ARGS}
+        ${COMPANYA_WEB_COMPILE_FLAGS}
+        -c "${source_file}"
+        -o "${obj_file}"
+        DEPENDS "${source_file}"
+        COMMENT "Compiling Web Object: ${source_name}"
+        VERBATIM
+    )
+    set(${out_obj_var} "${obj_file}" PARENT_SCOPE)
+endfunction()
+
+set(COMPANYA_WEB_OBJECTS "")
+
+foreach(src IN LISTS COMPANYA_WEB_SOURCES)
+    companya_web_compile("${src}" obj_path)
+    list(APPEND COMPANYA_WEB_OBJECTS "${obj_path}")
+endforeach()
 
 if(COMPANYA_EMPP_EXECUTABLE)
     add_custom_command(
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         OUTPUT "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-            ${COMPANYA_WEB_DEMO_COMMON_ARGS}
-            --preload-file "assets"
-            --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
-            "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
-            "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
-            "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
-            "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
-            "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.cpp"
-            -o "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
+        ${COMPANYA_WEB_LINK_FLAGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        --preload-file "assets"
+        --preload-file "source/Worlds/Dungeon/rooms@/rooms"
+        --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+        ${COMPANYA_WEB_OBJECTS}
+        "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.cpp"
+        -o "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.js"
         DEPENDS
-            "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
-            "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
-            "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
-            "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
-            "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.cpp"
-            "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+        ${COMPANYA_WEB_OBJECTS}
+        "${COMPANYA_WEB_DEMO_OUTPUT_DIR}/Group18_main.cpp"
+        "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
     )
 
     add_custom_command(
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebTextboxTest.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-            ${COMPANYA_WEB_TEST_COMMON_ARGS}
-            ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
-            -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebTextboxTest.html"
+        ${COMPANYA_WEB_TEST_COMMON_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebTextboxTest.html"
         DEPENDS
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebTextboxTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebTextbox/WebTextbox.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -434,41 +461,41 @@ if(COMPANYA_EMPP_EXECUTABLE)
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebImageTest.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-            ${COMPANYA_WEB_TEST_COMMON_ARGS}
-            ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
-            -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebImageTest.html"
+        ${COMPANYA_WEB_TEST_COMMON_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebImageTest.html"
         DEPENDS
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebImageTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebImage/WebImage.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
-    )   
+    )
 
     add_custom_command(
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-            ${COMPANYA_WEB_TEST_COMMON_ARGS}
-            ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
-            -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
+        ${COMPANYA_WEB_TEST_COMMON_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
         DEPENDS
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebButtonTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebButton/WebButton.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -476,18 +503,18 @@ if(COMPANYA_EMPP_EXECUTABLE)
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-            ${COMPANYA_WEB_TEST_COMMON_ARGS}
-            ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
-            -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
+        ${COMPANYA_WEB_TEST_COMMON_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
         DEPENDS
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebCanvasTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
@@ -495,58 +522,41 @@ if(COMPANYA_EMPP_EXECUTABLE)
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-            ${COMPANYA_WEB_TEST_COMMON_ARGS}
-            ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebLayoutTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
-            -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
+        ${COMPANYA_WEB_TEST_COMMON_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebLayoutTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
         DEPENDS
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebLayoutTest.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
-            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebLayoutTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
         VERBATIM
     )
 
     add_custom_command(
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-      OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
-      COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.html"
-            "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.html"
-      COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-          ${COMPANYA_WEB_TEST_COMMON_ARGS}
-          ${COMPANYA_WEB_TEST_INCLUDE_ARGS}
-          -sASYNCIFY=1
-          -sNO_EXIT_RUNTIME=1
-          -sALLOW_MEMORY_GROWTH=1
-          --preload-file "assets"
-          --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
-          "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
-          "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
-          "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
-          "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
-          "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.cpp"
-          -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
-      DEPENDS
-          "${COMPANYA_SOURCE_DIR}/tools/BehaviorTree.cpp"
-          "${COMPANYA_SOURCE_DIR}/tools/ActionLog.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebTextbox/WebTextbox.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebLayout/WebLayout.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebImage/WebImage.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebButton/WebButton.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.cpp"
-          "${COMPANYA_WEB_SOURCE}/interface/WebInterface.cpp"
-          "${COMPANYA_WEB_SOURCE}/InputManager.cpp"
-          "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.html"
+        "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.html"
+        COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
+        ${COMPANYA_WEB_TEST_COMMON_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        --preload-file "assets"
+        --preload-file "source/Worlds/Dungeon/rooms@/rooms"
+        --js-library "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
+        ${COMPANYA_WEB_OBJECTS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.cpp"
+        -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
+        DEPENDS
+        ${COMPANYA_WEB_OBJECTS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebInterfaceTest.cpp"
+        "${COMPANYA_WEB_SOURCE}/WebCanvas/WebCanvas.js"
     )
 
     add_custom_target(group18_demo

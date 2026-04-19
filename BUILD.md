@@ -103,6 +103,7 @@ Then open any of the following in your browser:
 | Button | `http://localhost:8000/WebButtonTest.html` |
 | Canvas | `http://localhost:8000/WebCanvasTest.html` |
 | Layout | `http://localhost:8000/WebLayoutTest.html` |
+| WebInterface | `http://localhost:8000/WebInterfaceTest.html` |
 
 ---
 
