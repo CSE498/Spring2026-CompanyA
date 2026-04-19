@@ -201,6 +201,16 @@ public:
     /// Retrieve the result of the most recent action.
     [[nodiscard]] int GetActionResult() const { return mActionResult; }
 
+    /**
+     * Expected overrides if the agent is able to be interacted with
+     * This is for PLAYER interaction with the agent. If the player presses E and your agent is nearby
+     * what should happen?
+     * @return true/false returns
+     * ******** IF AN INTERACTION OCCURS YOU MUST RETURN TRUE*********
+     */
+    virtual bool Interact() { return false; }
+
+
     //////////////////////////////////////////////////////////////////////////
     //
     //  Agent API -- the member functions below are intended to be called

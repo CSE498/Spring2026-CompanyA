@@ -80,6 +80,7 @@ public:
                 break;
             case WorldActions::REMAIN_STILL:
             case WorldActions::INTERACT:
+                return Interact();
             case WorldActions::QUIT:
                 return 1;
             default:
@@ -439,4 +440,129 @@ TEST_CASE("Test agent pursuing player down corridor", "[TestAgent][movement]") {
     REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
     REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(20, 5));
     // Starting to get hard to keep up with, but seems it's acting as intended?
+}
+
+
+TEST_CASE("Player Attacking Enemies", "[INTERACTION]")
+{
+    SkeletonTestWorld world;
+    PlayerAgent* player = world.GetPlayer();
+    CHECK(player != nullptr);
+
+    world.SetPlayerPosition({1, 1});
+
+    auto testAgent = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Training Dummy", 0, {2, 1}), world);
+    CHECK(testAgent != nullptr);
+    auto& stored = world.AddAgent(std::move(testAgent));
+
+    const size_t storedId = stored.GetID();
+    const size_t interactAction = player->SelectPlayerAction('E');
+    const double expectedDamage = DamageCalculator::Calculate(player->GetStats(), stored.GetStats());
+
+    CHECK(interactAction == WorldActions::INTERACT);
+    CHECK(stored.GetCurrentHealth() == Approx(100.0));
+    CHECK(player->GetCurrentHealth() == Approx(40.0));
+
+    SECTION("Player damages an adjacent enemy when pressing E") {
+        const int result = world.DoAction(*player, interactAction);
+
+        CHECK(result == 1);
+        CHECK(stored.GetCurrentHealth() == Approx(100.0 - expectedDamage));
+        CHECK(player->GetCurrentHealth() == Approx(40.0));
+        CHECK(stored.IsAlive());
+    }
+
+    SECTION("Player interaction does nothing when the enemy is out of range") {
+        stored.SetPosition({4, 1});
+
+        const int result = world.DoAction(*player, interactAction);
+
+        CHECK(result == 0);
+        CHECK(stored.GetCurrentHealth() == Approx(100.0));
+        CHECK(player->GetCurrentHealth() == Approx(40.0));
+        CHECK(stored.IsAlive());
+    }
+
+    SECTION("Player can defeat an enemy with E and the world removes it afterward") {
+        stored.SetHealth(expectedDamage);
+
+        const int result = world.DoAction(*player, interactAction);
+
+        CHECK(result == 1);
+        CHECK_FALSE(stored.IsAlive());
+        CHECK(stored.GetCurrentHealth() == Approx(0.0));
+
+        world.RemoveDeadAgents();
+        CHECK_FALSE(world.HasAgent(storedId));
+        CHECK(world.GetPlayer() == player);
+    }
+
+}
+
+
+TEST_CASE("Interaction function in WorldBase", "[WorldBase]")
+{
+    // I don't see an area to test this function for WorldBase so I'll test it here
+    SkeletonTestWorld world;
+    PlayerAgent* player = world.GetPlayer();
+    auto testAgent1 = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Training Dummy", 0, {1, 2}), world);
+    auto testAgent2 = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Training Dummy", 0, {2, 1}), world);
+    auto testAgent3 = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Training Dummy", 0, {2, 3}), world);
+    auto testAgent4 = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Training Dummy", 0, {3, 2}), world);
+    world.SetPlayerPosition({2, 2});
+    auto& agent1 = world.AddAgent(std::move(testAgent1));
+
+
+    const size_t interactAction = player->SelectPlayerAction('E');
+    // all the same
+    const double expectedDamage = DamageCalculator::Calculate(player->GetStats(), agent1.GetStats());
+
+    CHECK(interactAction == WorldActions::INTERACT);
+    CHECK(agent1.GetCurrentHealth() == Approx(100.0));
+    CHECK(player->GetCurrentHealth() == Approx(40.0));
+
+    SECTION("4 agents")
+    {
+        auto& agent2 = world.AddAgent(std::move(testAgent2));
+        auto& agent3 = world.AddAgent(std::move(testAgent3));
+        auto& agent4 = world.AddAgent(std::move(testAgent4));
+
+        world.DoAction(*player, interactAction);
+        CHECK(agent1.GetCurrentHealth() == Approx(100.0));
+        CHECK(agent2.GetCurrentHealth() == Approx(100.0));
+        CHECK(agent3.GetCurrentHealth() == Approx(100.0));
+        CHECK(agent4.GetCurrentHealth() == Approx(100.0 - expectedDamage)); // this one
+        CHECK(player->GetCurrentHealth() == Approx(40.0));
+    }
+    SECTION("3 agents")
+    {
+        auto& agent2 = world.AddAgent(std::move(testAgent2));
+        auto& agent3 = world.AddAgent(std::move(testAgent3));
+
+        world.DoAction(*player, interactAction);
+        CHECK(agent1.GetCurrentHealth() == Approx(100.0));
+        CHECK(agent2.GetCurrentHealth() == Approx(100.0 - expectedDamage));
+        CHECK(agent3.GetCurrentHealth() == Approx(100.0));
+        CHECK(player->GetCurrentHealth() == Approx(40.0));
+    }
+    SECTION("2 agents")
+    {
+        auto& agent3 = world.AddAgent(std::move(testAgent3));
+
+        world.DoAction(*player, interactAction);
+        CHECK(agent1.GetCurrentHealth() == Approx(100.0));
+        CHECK(agent3.GetCurrentHealth() == Approx(100.0 - expectedDamage));
+        CHECK(player->GetCurrentHealth() == Approx(40.0));
+    }
+    SECTION("1 agents")
+    {
+
+        world.DoAction(*player, interactAction);
+        CHECK(agent1.GetCurrentHealth() == Approx(100.0 - expectedDamage));
+        CHECK(player->GetCurrentHealth() == Approx(40.0));
+    }
+
+
+
+
 }
