@@ -10,6 +10,8 @@
 
 
 #include "../../core/AgentBase.hpp"
+#include "core/WorldBase.hpp"
+#include "tools/DamageCalculator.hpp"
 
 namespace cse498 {
 class Enemy : public AgentBase {
@@ -52,6 +54,11 @@ public:
      * Resets claim state if the enemy is reused in a test/demo.
      */
     void ResetGoldDropClaim() { mGoldClaimed = false; }
+
+    bool Interact() override {
+        TakeDamage(DamageCalculator::Calculate(world.GetPlayer()->GetStats(), mStats));
+        return true;
+    }
 };
 
 
