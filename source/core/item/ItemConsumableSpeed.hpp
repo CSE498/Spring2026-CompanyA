@@ -10,7 +10,6 @@
 #include "../WorldBase.hpp"
 #include "Item.hpp"
 #include "ItemConsumable.hpp"
-#include "WorldBase.hpp"
 
 namespace cse498 {
 class ItemConsumableSpeed : public ItemConsumable {
@@ -19,9 +18,7 @@ private:
 
 public:
     ItemConsumableSpeed(size_t id, const std::string& name, const std::string& image_path, int gold,
-                        const WorldBase& world) : ItemConsumable(id, name, image_path, gold, world) {
-        SetImagePath("assets/items/consumables/speed.png");
-    }
+                        const WorldBase& world) : ItemConsumable(id, name, image_path, gold, world) {}
 
     bool IsSpeed() const override { return true; }
 
