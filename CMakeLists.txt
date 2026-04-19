@@ -39,7 +39,7 @@ set(COMPANYA_IMAGE_DIR
     "${COMPANYA_TEST_DIR}/Interfaces/GUI/images"
 )
 set(COMPANYA_ASSETS_DIR
-        "${COMPANYA_SOURCE_DIR}/Assets/"
+        "${PROJECT_SOURCE_DIR}/assets"
 )
 
 # ===========================================

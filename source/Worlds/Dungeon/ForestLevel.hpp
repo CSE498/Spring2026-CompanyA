@@ -1,6 +1,6 @@
 /**
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
- * @brief A World that consists only of walls and open cells.
+ * @brief 
  * @note Status: PROPOSAL
  **/
 
@@ -8,24 +8,20 @@
 #pragma once
 
 #include <cassert>
-
-#include "DungeonBase.hpp"
+#include <array>
+#include "../../tools/WeightedSet.hpp"
+#include "LevelBase.hpp"
 
 namespace cse498 {
 
 	/**
-   * @class DungeonOne
-   * @brief A concrete dungeon world that generates rooms from a predefined pool.
+   * @class ForestLevel
+   * @brief
    *
    * @details
-   * DungeonOne extends DungeonBase and defines a fixed set of room templates
-   * with associated weights. These weights determine the likelihood of each
-   * room being selected during dungeon generation.
-   *
-   * The room pool is constructed using a WeightedSet of file paths, where each
-   * file corresponds to a room layout.
+   * 
    */
-	class DungeonOne: public DungeonBase {
+	class ForestLevel : public LevelBase{
 		private:
 
 		 /**
@@ -48,13 +44,12 @@ namespace cse498 {
 		}};
 
 		/**
-		 * @brief Prefix for room file paths.
+		 * @brief Room file paths for forest level.
 		 *
 		 * @details
-		 * This string is prepended to each room number when constructing
-		 * file paths for loading room layouts.
+		 * This string is used to load forest rooms
 		 */
-		inline static const std::string PREFIX = "one_pool/room_";
+		inline static const std::string m_room_dir = static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_one_pool/room_";
 
 		/**
 		 * @brief Constructs the weighted room pool.
@@ -68,31 +63,44 @@ namespace cse498 {
 		 * @note Each insertion is expected to succeed. Assertions are used
 		 * to enforce this during development.
 		 */
-		static cse498::WeightedSet<std::string> MakeRoomPool() {
-			cse498::WeightedSet<std::string> rooms;
+		static cse498::WeightedSet<int> MakeRoomPool() {
+			cse498::WeightedSet<int> rooms;
 			
 			for (const auto& [num, weight] : ROOM_DATA) {
-				auto result = rooms.Insert(PREFIX + std::to_string(num) + ".txt", weight);
+				auto result = rooms.Insert(num, weight);
 				assert(result.has_value());
 			}
 
 			return rooms;
 		}
 
+		cse498::WeightedSet<int> m_room_pool;
+
 	public:
 		/**
-		 * @brief Constructs a DungeonOne world.
+		 * @brief Constructs a ForestLevel.
 		 *
 		 * @details
-		 * Initializes the base DungeonBase with a generated room pool
-		 * specific to DungeonOne.
+		 * Initializes the base ForestLevel with a generated room pool
 		 */
-		DungeonOne() : DungeonBase(MakeRoomPool()) {}
+		ForestLevel()
+		: m_room_pool(MakeRoomPool()) {}
 
 		/**
 		 * @brief Default destructor.
 		 */
-		~DungeonOne() = default;
+		~ForestLevel() = default;
+
+		/**
+		 * 
+		 */
+		[[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override {
+    		return m_room_pool;
+		}
+
+		[[nodiscard]] const std::string& GetRoomDir() const override {
+			return m_room_dir;
+		}
 	};
 
 } // End of namespace cse498

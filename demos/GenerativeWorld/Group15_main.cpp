@@ -14,12 +14,27 @@
 #include "../../source/Interfaces/TrashInterface.hpp"
 #include "../../source/tools/DataFileManager.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
-#include "../../source/Worlds/Dungeon/DungeonOne.hpp"
+#include "../../source/Worlds/Dungeon/DungeonWorld.hpp"
 
 #include <iostream>
 #include <string>
 
 using namespace cse498;
+
+///Commented this out for the time being
+// int main()
+// {
+//     //MazeWorld world;
+// 	    DungeonWorld world;
+//      world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3,1});
+//      world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6,1});
+//      world.AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7,7});
+//      world.AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8,8});
+//      world.AddAgent<TrashInterface>("Interface").SetSymbol('@').SetLocation(WorldPosition{1,1});
+
+//      world.Run();
+// }
+
 
 /**
  * @brief Populate the demo world with default agents and interfaces.
@@ -33,6 +48,7 @@ static void PopulateDemoWorld(WorldBase & world)
     world.AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8,8});
     world.AddAgent<TrashInterface>("Interface").SetSymbol('@').SetLocation(WorldPosition{1,1});
 }
+
 
 /**
  * @brief Run the Group 15 generative world demo.
@@ -52,7 +68,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    auto world = std::make_unique<DungeonOne>();
+    auto world = std::make_unique<DungeonWorld>();
     PopulateDemoWorld(*world);
 
     DataFileManager data_manager(json_path, std::move(world));
