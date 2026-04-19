@@ -24,7 +24,7 @@ public:
         double hp = 100 + 20 * static_cast<double>(level);
         double atk = 5 + 2 * static_cast<double>(level);
         double def = 5 + static_cast<double>(level);
-        double range = 3 + level / 5;
+        double range = 3 + static_cast<int>(level / 5);
         return {hp, atk, def, range, level};
     }
 
@@ -38,7 +38,7 @@ public:
         double hp = 80 + 16 * static_cast<double>(level);
         double atk = 8 + 3 * static_cast<double>(level);
         double def = 4 + static_cast<double>(level);
-        double range = 2 + level / 6;
+        double range = 2 + static_cast<int>(level / 6);
         return {hp, atk, def, range, level};
     }
 };
