@@ -46,11 +46,11 @@ namespace cse498 {
     };
     
 
-    static constexpr int DEFAULT_WIDTH = 150;
+    static constexpr int DEFAULT_WIDTH = 125;
     static constexpr int DEFAULT_HEIGHT = 100;
     static constexpr int DEFAULT_WIDTH_THRESHOLD = 30;
-    static constexpr int DEFAULT_HEIGHT_THRESHOLD = 20;
-    static constexpr int DEFAULT_ITERATIONS = 20;
+    static constexpr int DEFAULT_HEIGHT_THRESHOLD = 15;
+    static constexpr int DEFAULT_ITERATIONS = 2;
 
     constexpr double DOOR_EXIT_PROBABILITY_INCREMENT = 0.2;
     constexpr double DOOR_EXIT_PROBABILITY_LIMIT = 1.0;
@@ -78,8 +78,8 @@ namespace cse498 {
         BSP(const LevelBase& level) 
 			: m_room_holder(level)
 		{ 
-            insert_split(m_iterations); //Creates BSP Tree
-            PostOrderDFS(); //Grabs all the generated room slots from the tree
+            // insert_split(m_iterations); //Creates BSP Tree
+            // PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
 
         /// @brief Constructor call creates BSP Tree with a set seed
@@ -106,6 +106,18 @@ namespace cse498 {
             BSPNode root_node = BSPNode{-1, -1, 0 , 0, m_width, m_height, std::string("Container")}; // creation of root node
 
             return insert_split(root_node, iter);
+        }
+
+        /// @brief When Ran, this will create the BSP Tree used in Dungeon creation in WorldGeneration
+        void CreateBSPTree() { 
+            insert_split(m_iterations); //Creates BSP Tree
+            PostOrderDFS(); //Grabs all the generated room slots from the tree
+        }
+
+        void ClearState() { 
+            m_BSP_tree.clear();
+            m_leaf_nodes.clear();
+            m_exit_door = false;
         }
 
         /// @brief Ensures that no matter the width/height of a node split, a suitable room is found for that split 
@@ -157,26 +169,6 @@ namespace cse498 {
 
             assert(m_BSP_tree.size() != 0 && "PostOrderDFS not initialized!");
             PostOrderDFS(m_BSP_tree[0]);
-        }
-
-        void ClearState() { 
-            m_BSP_tree.clear();
-            m_leaf_nodes.clear();
-            m_exit_door = false;
-        }
-
-        void RepopulateTree() { 
-            insert_split(m_iterations); //Creates BSP Tree
-            PostOrderDFS(); //Grabs all the generated room slots from the tree
-        }
-
-        /**
-         * @brief Regenerates the BSP Tree incase any modifications to width/height/properties after its creation are made in order to 
-         * ensure the object's state is up to date when new dungeons are later created
-         */
-        void RegenerateObjectState() {
-            ClearState();
-            RepopulateTree();
         }
 
         ////////////////////////////////////

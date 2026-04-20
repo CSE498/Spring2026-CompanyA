@@ -12,6 +12,8 @@
 #include "WorldGeneration.hpp"
 #include "../../tools/WeightedSet.hpp"
 #include "ForestLevel.hpp"
+#include "CaveLevel.hpp"
+#include "CastleLevel.hpp"
 #include "LevelBase.hpp"
 #include "../../Interfaces/TrashInterface.hpp"
 
@@ -44,15 +46,21 @@ namespace cse498 {
 		 * @return WeightedSet of room file paths and weights.
 		 */
 		void LoadLevelData() {
+			std::cout << "Currently on level: " << m_level_num << std::endl;
 			switch (m_level_num) {
+				
 				case 1:
 					m_level = std::make_unique<ForestLevel>();
 					break;
 
 				case 2:
-					//m_current_level = std::make_unique<CaveLevel>();
+					m_level = std::make_unique<CaveLevel>();
 					break;
 
+				case 3: 
+					m_level = std::make_unique<CastleLevel>();
+					break;
+					
 				default:
 					m_level = std::make_unique<ForestLevel>();
 					break;
@@ -240,7 +248,7 @@ namespace cse498 {
 		/// @brief Generates the DungeonWorld based on the currently selected level from m_level
 		void GenerateLevel() {
 			LoadLevelData();
-			m_generation.CreateDungeon();
+			m_generation.CreateDungeon(m_level_num);
 			main_grid.Load(m_generation.GetDungeon());
 		}
 
@@ -267,26 +275,27 @@ namespace cse498 {
 		while(user_checker) {
 			std::cin >> input;
 			if (std::tolower(input) == 'c') {
-			user_checker = false;
+				user_checker = false;
+
 			}
 			else if (std::tolower(input) == 'q') {
-			std::cout << "DungeonGame terminated" << std::endl;
-			exit(-1);
+				std::cout << "DungeonGame terminated" << std::endl;
+				exit(-1);
 			}
 
 			else { 
-			std::cout << "Invalid Command!" << std::endl;
-			continue;
+				std::cout << "Invalid Command!" << std::endl;
+				continue;
 			}
 		}
 		return;
 		}
 
 		void Update() { 
-		m_generation.Update();
-		std::vector<std::string> dungeon = m_generation.GetDungeon();
-
-		main_grid.Load(dungeon);
+			++m_level_num;
+			m_generation.Update(m_level_num);
+			std::vector<std::string> dungeon = m_generation.GetDungeon();
+			main_grid.Load(dungeon);
 		}
 
 		/// Allow the agents to move around the maze.
