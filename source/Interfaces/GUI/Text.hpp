@@ -3,10 +3,10 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-#include <string>
+#include <iostream>
 #include <memory>
 #include <optional>
-#include <iostream>
+#include <string>
 
 namespace cse498 {
 
@@ -18,8 +18,8 @@ struct Color {
     unsigned char a = 255;
 
     Color() = default;
-    constexpr Color(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255)
-        : r(red), g(green), b(blue), a(alpha) {}
+    constexpr Color(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255) :
+        r(red), g(green), b(blue), a(alpha) {}
 };
 
 /**
@@ -43,13 +43,13 @@ private:
     int mFontSize;
     bool mBold;
     bool mItalic;
-    bool mInitialized;  // Track if TTF_Init succeeded
+    bool mInitialized; // Track if TTF_Init succeeded
 
     SDL_Renderer* mRenderer;
     std::unique_ptr<TTF_Font, FontDeleter> mFont;
 
     static const std::string DEFAULT_FONT;
-    static constexpr int DEFAULT_SIZE = 16;  // constexpr for compile-time
+    static constexpr int DEFAULT_SIZE = 16; // constexpr for compile-time
     static constexpr Color DEFAULT_COLOR{255, 255, 255, 255};
 
     /// Reload the font with current settings

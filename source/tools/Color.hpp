@@ -43,65 +43,33 @@ public:
 
     constexpr Color() = default;
 
-    constexpr Color(
-        std::uint8_t r,
-        std::uint8_t g,
-        std::uint8_t b,
-        std::uint8_t a = 255) noexcept
-        : r_(r), g_(g), b_(b), a_(a) {}
+    constexpr Color(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 255) noexcept :
+        r_(r), g_(g), b_(b), a_(a) {}
 
-    [[nodiscard]] static constexpr Color FromRGBA255(
-        std::uint8_t r,
-        std::uint8_t g,
-        std::uint8_t b,
-        std::uint8_t a = 255) noexcept {
+    [[nodiscard]] static constexpr Color FromRGBA255(std::uint8_t r, std::uint8_t g, std::uint8_t b,
+                                                     std::uint8_t a = 255) noexcept {
         return Color(r, g, b, a);
     }
 
-    [[nodiscard]] static constexpr Color FromRGB255(
-        std::uint8_t r,
-        std::uint8_t g,
-        std::uint8_t b) noexcept {
+    [[nodiscard]] static constexpr Color FromRGB255(std::uint8_t r, std::uint8_t g, std::uint8_t b) noexcept {
         return Color(r, g, b, 255);
     }
 
-    template <std::integral T>
-    [[nodiscard]] static constexpr Color FromRGBIntegral(
-        T r,
-        T g,
-        T b,
-        T a = static_cast<T>(255)) noexcept {
-        return Color(
-            ClampToByte(r),
-            ClampToByte(g),
-            ClampToByte(b),
-            ClampToByte(a));
+    template<std::integral T>
+    [[nodiscard]] static constexpr Color FromRGBIntegral(T r, T g, T b, T a = static_cast<T>(255)) noexcept {
+        return Color(ClampToByte(r), ClampToByte(g), ClampToByte(b), ClampToByte(a));
     }
 
-    template <std::floating_point T>
-    [[nodiscard]] static Color FromRGBNormalized(
-        T r,
-        T g,
-        T b,
-        T a = static_cast<T>(1)) noexcept {
-        return FromRGBA01(
-            static_cast<float>(r),
-            static_cast<float>(g),
-            static_cast<float>(b),
-            static_cast<float>(a));
+    template<std::floating_point T>
+    [[nodiscard]] static Color FromRGBNormalized(T r, T g, T b, T a = static_cast<T>(1)) noexcept {
+        return FromRGBA01(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), static_cast<float>(a));
     }
 
     [[nodiscard]] static Color FromRGBA01(float r, float g, float b, float a = 1.0f) noexcept {
-        return Color(
-            Float01ToByte(r),
-            Float01ToByte(g),
-            Float01ToByte(b),
-            Float01ToByte(a));
+        return Color(Float01ToByte(r), Float01ToByte(g), Float01ToByte(b), Float01ToByte(a));
     }
 
-    [[nodiscard]] static Color FromRGB01(float r, float g, float b) noexcept {
-        return FromRGBA01(r, g, b, 1.0f);
-    }
+    [[nodiscard]] static Color FromRGB01(float r, float g, float b) noexcept { return FromRGBA01(r, g, b, 1.0f); }
 
     [[nodiscard]] static constexpr std::optional<Color> FromHex(std::string_view text) noexcept {
         const std::string_view s = Trim(text);
@@ -125,20 +93,14 @@ public:
                 return std::nullopt;
             }
 
-            return Color(
-                ExpandNibble(*r),
-                ExpandNibble(*g),
-                ExpandNibble(*b),
-                ExpandNibble(*a));
+            return Color(ExpandNibble(*r), ExpandNibble(*g), ExpandNibble(*b), ExpandNibble(*a));
         }
 
         if (len == 6 || len == 8) {
             const auto r = HexByte(s[pos + 0], s[pos + 1]);
             const auto g = HexByte(s[pos + 2], s[pos + 3]);
             const auto b = HexByte(s[pos + 4], s[pos + 5]);
-            const auto a = (len == 8)
-                               ? HexByte(s[pos + 6], s[pos + 7])
-                               : std::optional<std::uint8_t>(255);
+            const auto a = (len == 8) ? HexByte(s[pos + 6], s[pos + 7]) : std::optional<std::uint8_t>(255);
 
             if (!r || !g || !b || !a) {
                 return std::nullopt;
@@ -189,11 +151,7 @@ public:
     constexpr void SetB(std::uint8_t value) noexcept { b_ = value; }
     constexpr void SetA(std::uint8_t value) noexcept { a_ = value; }
 
-    constexpr void SetRGBA255(
-        std::uint8_t r,
-        std::uint8_t g,
-        std::uint8_t b,
-        std::uint8_t a = 255) noexcept {
+    constexpr void SetRGBA255(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 255) noexcept {
         r_ = r;
         g_ = g;
         b_ = b;
@@ -207,20 +165,12 @@ public:
         a_ = Float01ToByte(a);
     }
 
-    [[nodiscard]] constexpr RGBA255 ToRGBA255() const noexcept {
-        return RGBA255{r_, g_, b_, a_};
-    }
+    [[nodiscard]] constexpr RGBA255 ToRGBA255() const noexcept { return RGBA255{r_, g_, b_, a_}; }
 
-    [[nodiscard]] constexpr std::array<std::uint8_t, 4> ToArray() const noexcept {
-        return {r_, g_, b_, a_};
-    }
+    [[nodiscard]] constexpr std::array<std::uint8_t, 4> ToArray() const noexcept { return {r_, g_, b_, a_}; }
 
     [[nodiscard]] RGBA01 ToRGBA01() const noexcept {
-        return RGBA01{
-            ByteToFloat01(r_),
-            ByteToFloat01(g_),
-            ByteToFloat01(b_),
-            ByteToFloat01(a_)};
+        return RGBA01{ByteToFloat01(r_), ByteToFloat01(g_), ByteToFloat01(b_), ByteToFloat01(a_)};
     }
 
     [[nodiscard]] std::string ToHex(bool include_alpha = false, bool uppercase = false) const {
@@ -237,16 +187,13 @@ public:
     }
 
     [[nodiscard]] std::string ToRgbString() const {
-        return "rgb(" + std::to_string(static_cast<unsigned>(r_)) + ", " +
-               std::to_string(static_cast<unsigned>(g_)) + ", " +
-               std::to_string(static_cast<unsigned>(b_)) + ")";
+        return "rgb(" + std::to_string(static_cast<unsigned>(r_)) + ", " + std::to_string(static_cast<unsigned>(g_)) +
+               ", " + std::to_string(static_cast<unsigned>(b_)) + ")";
     }
 
     [[nodiscard]] std::string ToRgbaString() const {
-        return "rgba(" + std::to_string(static_cast<unsigned>(r_)) + ", " +
-               std::to_string(static_cast<unsigned>(g_)) + ", " +
-               std::to_string(static_cast<unsigned>(b_)) + ", " +
-               AlphaString() + ")";
+        return "rgba(" + std::to_string(static_cast<unsigned>(r_)) + ", " + std::to_string(static_cast<unsigned>(g_)) +
+               ", " + std::to_string(static_cast<unsigned>(b_)) + ", " + AlphaString() + ")";
     }
 
     [[nodiscard]] constexpr bool operator==(const Color& other) const noexcept = default;
@@ -266,33 +213,20 @@ private:
     std::uint8_t a_ = 255;
 
     static constexpr std::array<NamedColorEntry, 20> kNamedColors{{
-        {"black",   0,   0,   0,   255},
-        {"white",   255, 255, 255, 255},
-        {"red",     255, 0,   0,   255},
-        {"green",   0,   128, 0,   255},
-        {"blue",    0,   0,   255, 255},
-        {"yellow",  255, 255, 0,   255},
-        {"cyan",    0,   255, 255, 255},
-        {"magenta", 255, 0,   255, 255},
-        {"gray",    128, 128, 128, 255},
-        {"grey",    128, 128, 128, 255},
-        {"orange",  255, 165, 0,   255},
-        {"purple",  128, 0,   128, 255},
-        {"pink",    255, 192, 203, 255},
-        {"brown",   165, 42,  42,  255},
-        {"lime",    0,   255, 0,   255},
-        {"navy",    0,   0,   128, 255},
-        {"teal",    0,   128, 128, 255},
-        {"silver",  192, 192, 192, 255},
-        {"maroon",  128, 0,   0,   255},
-        {"olive",   128, 128, 0,   255},
+            {"black", 0, 0, 0, 255},      {"white", 255, 255, 255, 255}, {"red", 255, 0, 0, 255},
+            {"green", 0, 128, 0, 255},    {"blue", 0, 0, 255, 255},      {"yellow", 255, 255, 0, 255},
+            {"cyan", 0, 255, 255, 255},   {"magenta", 255, 0, 255, 255}, {"gray", 128, 128, 128, 255},
+            {"grey", 128, 128, 128, 255}, {"orange", 255, 165, 0, 255},  {"purple", 128, 0, 128, 255},
+            {"pink", 255, 192, 203, 255}, {"brown", 165, 42, 42, 255},   {"lime", 0, 255, 0, 255},
+            {"navy", 0, 0, 128, 255},     {"teal", 0, 128, 128, 255},    {"silver", 192, 192, 192, 255},
+            {"maroon", 128, 0, 0, 255},   {"olive", 128, 128, 0, 255},
     }};
 
     [[nodiscard]] static constexpr std::uint8_t ExpandNibble(std::uint8_t value) noexcept {
         return static_cast<std::uint8_t>((value << 4U) | value);
     }
 
-    template <std::integral T>
+    template<std::integral T>
     [[nodiscard]] static constexpr std::uint8_t ClampToByte(T value) noexcept {
         if (value < static_cast<T>(0)) {
             return 0;
@@ -308,17 +242,14 @@ private:
         return static_cast<std::uint8_t>(std::lround(clamped * 255.0f));
     }
 
-    [[nodiscard]] static float ByteToFloat01(std::uint8_t value) noexcept {
-        return static_cast<float>(value) / 255.0f;
-    }
+    [[nodiscard]] static float ByteToFloat01(std::uint8_t value) noexcept { return static_cast<float>(value) / 255.0f; }
 
     [[nodiscard]] static constexpr float Clamp01(float value) noexcept {
         return value < 0.0f ? 0.0f : (value > 1.0f ? 1.0f : value);
     }
 
     [[nodiscard]] static constexpr bool IsSpace(char c) noexcept {
-        return c == ' ' || c == '\t' || c == '\n' || c == '\r' ||
-               c == '\f' || c == '\v';
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
     }
 
     [[nodiscard]] static constexpr std::string_view Trim(std::string_view s) noexcept {
@@ -332,14 +263,10 @@ private:
     }
 
     [[nodiscard]] static constexpr char ToLowerAscii(char c) noexcept {
-        return (c >= 'A' && c <= 'Z')
-                   ? static_cast<char>(c - 'A' + 'a')
-                   : c;
+        return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
     }
 
-    [[nodiscard]] static constexpr bool EqualsInsensitive(
-        std::string_view a,
-        std::string_view b) noexcept {
+    [[nodiscard]] static constexpr bool EqualsInsensitive(std::string_view a, std::string_view b) noexcept {
         if (a.size() != b.size()) {
             return false;
         }
@@ -352,9 +279,8 @@ private:
         return true;
     }
 
-    [[nodiscard]] static constexpr bool StartsWithInsensitive(
-        std::string_view value,
-        std::string_view prefix) noexcept {
+    [[nodiscard]] static constexpr bool StartsWithInsensitive(std::string_view value,
+                                                              std::string_view prefix) noexcept {
         if (value.size() < prefix.size()) {
             return false;
         }
@@ -420,9 +346,7 @@ private:
             ++i;
         }
 
-        const auto is_digit = [](char c) noexcept {
-            return c >= '0' && c <= '9';
-        };
+        const auto is_digit = [](char c) noexcept { return c >= '0' && c <= '9'; };
 
         for (; i < token.size(); ++i) {
             const char c = token[i];
@@ -497,14 +421,10 @@ private:
         return Float01ToByte(*value);
     }
 
-    [[nodiscard]] static std::optional<Color> ParseRgbFunc(
-        std::string_view text,
-        bool expect_alpha) noexcept {
+    [[nodiscard]] static std::optional<Color> ParseRgbFunc(std::string_view text, bool expect_alpha) noexcept {
         const auto left = text.find('(');
         const auto right = text.rfind(')');
-        if (left == std::string_view::npos ||
-            right == std::string_view::npos ||
-            right <= left) {
+        if (left == std::string_view::npos || right == std::string_view::npos || right <= left) {
             return std::nullopt;
         }
 
@@ -530,9 +450,7 @@ private:
         const auto r = ParseRgbChannel(parts[0]);
         const auto g = ParseRgbChannel(parts[1]);
         const auto b = ParseRgbChannel(parts[2]);
-        const auto a = expect_alpha
-                           ? ParseAlphaChannel(parts[3])
-                           : std::optional<std::uint8_t>(255);
+        const auto a = expect_alpha ? ParseAlphaChannel(parts[3]) : std::optional<std::uint8_t>(255);
 
         if (!r || !g || !b || !a) {
             return std::nullopt;
@@ -542,11 +460,9 @@ private:
     }
 
     [[nodiscard]] static std::optional<Color> ParseNamedColor(std::string_view text) noexcept {
-        const auto it = std::ranges::find_if(
-            kNamedColors,
-            [&](const NamedColorEntry& named) noexcept {
-                return EqualsInsensitive(text, named.name);
-            });
+        const auto it = std::ranges::find_if(kNamedColors, [&](const NamedColorEntry& named) noexcept {
+            return EqualsInsensitive(text, named.name);
+        });
 
         if (it == kNamedColors.end()) {
             return std::nullopt;

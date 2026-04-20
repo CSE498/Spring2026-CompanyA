@@ -7,28 +7,22 @@
 
 #include "MerchantAgent.hpp"
 
-namespace cse498
-{
+namespace cse498 {
 
-    /** Basic NPC agent used for simple trading interactions. */
-    class FarmingAgent : public MerchantAgent
-    {
-    public:
-        /**
-         * Constructs a farming merchant NPC.
-         *
-         * Shop offers are configured by owning world setup.
-         *
-         * @param id Unique agent id
-         * @param name NPC display name
-         * @param world Owning world
-         */
-        FarmingAgent(std::size_t id, const std::string& name, WorldBase& world) : MerchantAgent(id, name, world)
-        {
-            mTradeGreeting = "Fresh crops and seeds today.";
-        }
-
-
-    };
-}
-
+/** Basic NPC agent used for simple trading interactions. */
+class FarmingAgent : public MerchantAgent {
+public:
+    /**
+     * Constructs a farming merchant NPC.
+     *
+     * Shop offers are configured by owning world setup.
+     *
+     * @param id Unique agent id
+     * @param name NPC display name
+     * @param world Owning world
+     */
+    FarmingAgent(std::size_t id, const std::string& name, WorldBase& world) : MerchantAgent(id, name, world) {
+        mTradeGreeting = "Fresh crops and seeds today.";
+    }
+};
+} // namespace cse498

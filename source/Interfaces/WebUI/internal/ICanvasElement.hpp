@@ -49,11 +49,11 @@ public:
 protected:
     /// @brief Per-element metadata used by the canvas scheduler.
     struct Metadata {
-        int mZIndex = 0;         ///< Draw order index; lower values drawn first.
-        bool mIsVisible = true;  ///< Whether the element participates in rendering.
+        int mZIndex = 0; ///< Draw order index; lower values drawn first.
+        bool mIsVisible = true; ///< Whether the element participates in rendering.
     };
 
-    Metadata mMetadata;  ///< Scheduling metadata for this canvas element.
+    Metadata mMetadata; ///< Scheduling metadata for this canvas element.
 };
 
 } // namespace cse498
