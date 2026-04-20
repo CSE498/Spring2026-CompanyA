@@ -24,6 +24,7 @@ private:
 
 public:
     Enemy(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
+    [[nodiscard]] bool IsEnemy() const override { return true; }
 
     /**
      * Carries out the action of the enemy -- Triggers the behavior tree and allows a turn

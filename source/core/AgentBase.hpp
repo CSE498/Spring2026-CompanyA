@@ -179,6 +179,7 @@ public:
 
     // -- Entity Overrides --
     bool IsAgent() const override { return true; }
+    [[nodiscard]] virtual bool IsEnemy() const { return false; }
 
     // -- Action management --
 

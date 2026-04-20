@@ -259,11 +259,21 @@ public:
     virtual int Interact() {
         assert(mPlayer);
         auto playerLocation = Round(mPlayer->GetPosition());
-        // maps positions to priorities
-        std::unordered_map<WorldPosition, int> neighbors = {{playerLocation.GetOffset(0, 1), 3},
-                                                            {playerLocation.GetOffset(0, -1), 2},
-                                                            {playerLocation.GetOffset(1, 0), 1},
-                                                            {playerLocation.GetOffset(-1, 0), 4}};
+        const int interactionRange = 1;
+        const int enemyInteractionRange = std::max(interactionRange, static_cast<int>(mPlayer->GetAtkRange()));
+        auto buildNeighborsByRange = [&playerLocation](const int range) {
+            std::unordered_map<WorldPosition, int> neighbors;
+            for (int i = 1; i <= range; ++i) {
+                const int basePriority = (i - 1) * 4;
+                neighbors.emplace(playerLocation.GetOffset(1 * i, 0), basePriority + 1);
+                neighbors.emplace(playerLocation.GetOffset(0, -1 * i), basePriority + 2);
+                neighbors.emplace(playerLocation.GetOffset(0, 1 * i), basePriority + 3);
+                neighbors.emplace(playerLocation.GetOffset(-1 * i, 0), basePriority + 4);
+            }
+            return neighbors;
+        };
+        const auto interactionNeighbors = buildNeighborsByRange(interactionRange);
+        const auto enemyNeighbors = buildNeighborsByRange(enemyInteractionRange);
 
         // ik "pair" is strange but useful here.
         // we need to run through ALL AGENTS because we don't know which one has successful interactions
@@ -274,6 +284,7 @@ public:
         // go through the agents and find based on priority
         for (const auto& agent_ptr: agent_set) {
             assert(agent_ptr);
+            const auto& neighbors = agent_ptr->IsEnemy() ? enemyNeighbors : interactionNeighbors;
             if (neighbors.contains(agent_ptr->GetPosition())) {
                 int val = neighbors.at(agent_ptr->GetPosition());
                 if (val == 1) {
