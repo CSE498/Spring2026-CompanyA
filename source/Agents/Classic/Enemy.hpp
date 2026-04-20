@@ -10,6 +10,8 @@
 
 
 #include "../../core/AgentBase.hpp"
+#include "core/WorldBase.hpp"
+#include "tools/DamageCalculator.hpp"
 
 namespace cse498 {
 class Enemy : public AgentBase {
@@ -62,6 +64,11 @@ public:
      * Override of OnDeath to log enemy deaths in the analytics manager.
      */
     void OnDeath() override;
+    
+    bool Interact() override {
+        TakeDamage(DamageCalculator::Calculate(world.GetPlayer()->GetStats(), mStats));
+        return true;
+    }
 };
 
 

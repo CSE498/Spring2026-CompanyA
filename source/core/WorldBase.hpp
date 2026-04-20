@@ -6,14 +6,22 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <string>
 #include <type_traits>
+<<<<<<< HEAD
 #include <vector>
 
 #include "../Agents/Classic/PlayerAgent.hpp"
 #include "../Analyze/AnalyticsManager.hpp"
+=======
+#include <unordered_set>
+#include <vector>
+
+#include "../Agents/Classic/PlayerAgent.hpp"
+>>>>>>> main
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
@@ -246,6 +254,7 @@ public:
         }
     }
 
+<<<<<<< HEAD
     /// @brief UpdateWorld() is run after every agent has a turn.
     /// Override this function to manage background events for a world.
     /// (E.g., weather, growth, regular physics, etc.)
@@ -266,6 +275,74 @@ public:
     }
 
     [[nodiscard]] std::shared_ptr<AnalyticsManager> GetAnalyticsManager() const { return mAnalyticsManager; }
+=======
+    /**
+     * virtual just in case it is needed somewhere. I'm not expecting this to be overridden
+     * This is to be called from 'DoAction' when the main player presses "E"
+     * Only the main player is going to be pressing "E"
+     * TILE PRIORITY - Temporary but limited time ..
+     * #2#
+     * 4P1
+     * #3#
+     * priority order: 1,2,3,4
+     * @return - (DoAction Return Copy) The result of this action (usually 0/1 to indicate success)
+     */
+    virtual int Interact() {
+        assert(mPlayer);
+        auto playerLocation = Round(mPlayer->GetPosition());
+        // maps positions to priorities
+        std::unordered_map<WorldPosition, int> neighbors = {{playerLocation.GetOffset(0, 1), 3},
+                                                            {playerLocation.GetOffset(0, -1), 2},
+                                                            {playerLocation.GetOffset(1, 0), 1},
+                                                            {playerLocation.GetOffset(-1, 0), 4}};
+
+        // ik "pair" is strange but useful here.
+        // we need to run through ALL AGENTS because we don't know which one has successful interactions
+        // until we try the interaction, and we need to try them with proper priority
+        // this list will be sorted at the end.
+        // NOTE: this list will be like 1-3 elements so sort is FASTer than pq?
+        std::vector<std::pair<int, AgentBase*>> candidateAgents;
+        // go through the agents and find based on priority
+        for (const auto& agent_ptr: agent_set) {
+            assert(agent_ptr);
+            if (neighbors.contains(agent_ptr->GetPosition())) {
+                int val = neighbors.at(agent_ptr->GetPosition());
+                if (val == 1) {
+                    // this is the 'common' case so it is optimized
+                    bool temp = agent_ptr->Interact();
+                    if (temp)
+                        return true;
+                } else
+                    candidateAgents.push_back({val, agent_ptr.get()});
+            }
+        }
+        std::ranges::sort(candidateAgents, [](const auto& a, const auto& b) { return a.first < b.first; });
+        // Now go through and call in order
+        for (auto [_, agent_ptr]: candidateAgents) {
+            // already asserted for checking issues. so just call and see if successful
+            bool temp = agent_ptr->Interact();
+            if (temp)
+                return true;
+        }
+        return false;
+    }
+
+
+    /// @brief UpdateWorld() is run after every agent has a turn.
+    /// Override this function to manage background events for a world.
+    /// (E.g., weather, growth, regular physics, etc.)
+    virtual void UpdateWorld() {}
+
+    /// @brief Run all agents repeatedly until an end condition is met.
+    virtual void Run() {
+        mRunOver = false;
+        while (!mRunOver) {
+            RunAgents();
+            RemoveDeadAgents();
+            UpdateWorld();
+        }
+    }
+>>>>>>> main
 
 
     //////////////////////////////////////////////////////////////////////////
