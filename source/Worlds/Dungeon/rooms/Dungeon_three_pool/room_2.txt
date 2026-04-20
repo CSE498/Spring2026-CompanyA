@@ -1,12 +1,14 @@
-^^^^^^^^^^^^^^
-<        m   >
-<            >
-<            >
-<      t     >
-<     tlt    >
-< m    t     >
-<            >
-<            >
-<    m       >
-<            >
-&&&&&&&&&&&&&&
+11111111111111111111111111
+3aaa65aaaaaaaaaaaaaaaaaaa4
+3aaaaaaaaaaaaaaaaaaaaaaaaf
+3aaaaaaa55aaaaaa55aaaaaaa4
+3aaaaaaa65aaaaaa66aaaaaaa4
+3aa<aaaa55aacaaa55aaaaaaa4
+3aagaaaaaaactcaaaaaaa<aaa4
+3aaaaaaa55aacaaa66aaaaaaa4
+3aaaaaaa66aaaaaa65aaaaaaa4
+3aaaaaaaaaaaaaaaaaaaaaaaa4
+3aaaaaaa66aaaaaa56aaaaaaa4
+3aaaaaaaaaaaaaaaaaa<aaaaa4
+3aaaaaaaaaaaaaaaaaaaaaaaa4
+22222222222222222222222222

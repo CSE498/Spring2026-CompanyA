@@ -51,19 +51,83 @@ Loads room templates from text files and picks which room to use
 
 **Character meanings:**
 
+*Characters that are consistent across levels:*
 | Char | What it is |
 |------|------------|
-| ` ` | Floor (walkable) |
-| `^` | Top wall |
-| `&` | Bottom wall |
-| `<` | Left wall |
-| `>` | Right wall |
-| `$` | Internal obstacle |
-| `d` | Door |
-| `s` | Secret door |
-| `m` | Monster spawn |
-| `l` | Loot spawn |
-| `t` | Trap |
+| `e` | Exit door (use the same wall type that is on either side of the door as the wall) |
+| `f` | Secret door (use the same wall type that is on either side of the door as the wall) |
+| `s` | Monster spawn (skeleton) |
+| `g` | Monster spawn (goblin) |
+| `l` | Loot spawn (use floor alt 1 as the floor, layer a chest image on top)|
+| `t` | Trap (use floor alt 1 for the level as the image, layer a trap agent on top of it)|
+
+*Level 1 characters:*
+| Char | What it is |
+|------|------------|
+| `a` | Floor (walkable) |
+| `b` | Floor(alt 1) (walkable) |
+| `c` | Floor(alt 2) (walkable) |
+| `d` | Floor(alt 3) (walkable) |
+| `<` | Floor(alt 4) (walkable) |
+| `1` | Top wall |
+| `2` | Bottom wall |
+| `3` | Left wall |
+| `4` | Right wall |
+| `5` | Internal obstacle (version 1)|
+| `6` | Internal obstacle (version 2)|
+| `7` | Door (left verison) |
+| `8` | Door (right verison) |
+
+*Level 2 characters:*
+| Char | What it is |
+|------|------------|
+| `A` | Floor (walkable) |
+| `B` | Floor(alt 1) (walkable) |
+| `C` | Floor(alt 2) (walkable) |
+| `D` | Floor(alt 3) (walkable) |
+| `E` | Floor(alt 4) (walkable) |
+| `!` | Top wall |
+| `@` | Bottom wall |
+| `?` | Left wall |
+| `$` | Right wall |
+| `%` | Internal obstacle (version 1)|
+| `^` | Internal obstacle (version 2)|
+| `&` | Door (left verison) |
+| `*` | Door (right verison) |
+
+*Level 3 characters:*
+| Char | What it is |
+|------|------------|
+| `m` | Floor (walkable) |
+| `n` | Floor(alt 1) (walkable) |
+| `o` | Floor(alt 2) (walkable) |
+| `p` | Floor(alt 3) (walkable) |
+| `q` | Floor(alt 4) (walkable) |
+| `9` | Top wall |
+| `0` | Bottom wall |
+| `-` | Left wall |
+| `=` | Right wall |
+| `[` | Internal obstacle (version 1)|
+| `]` | Internal obstacle (version 2)|
+| `.` | Door (left verison) |
+| `;` | Door (right verison) |
+
+*Level 4 characters:*
+| Char | What it is |
+|------|------------|
+| `M` | Floor (walkable) |
+| `N` | Floor(alt 1) (walkable) |
+| `O` | Floor(alt 2) (walkable) |
+| `P` | Floor(alt 3) (walkable) |
+| `Q` | Floor(alt 4) (walkable) |
+| `(` | Top wall |
+| `)` | Bottom wall |
+| `_` | Left wall |
+| `+` | Right wall |
+| `{` | Internal obstacle (version 1)|
+| `}` | Internal obstacle (version 2)|
+| `~` | Door (left verison) |
+| `:` | Door (right verison) |
 
 ### WorldGen
 **Location:**
