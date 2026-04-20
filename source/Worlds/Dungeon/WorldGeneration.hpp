@@ -48,14 +48,14 @@ namespace cse498 {
     };
 
 
-struct Point {
-    int x, y; // x-y points of a room
-};
-
-struct LinkedRooms {
-    int x1, y1; //first room's coordinates
-    int x2, y2; //second room's coordinates
-};
+    /**
+     * @struct LinkedRooms
+     * @brief Stores coordinates of two rooms that should be connected.
+     */
+    struct LinkedRooms {
+        int x1, y1; //first room's coordinates
+        int x2, y2; //second room's coordinates
+    };
 
     /// @brief utilizes BSP-Tree.hpp and RoomHolder.hpp to generate a dungeon level, represented as a vector of strings to be loaded in DungeonBase.
     /**
