@@ -49,6 +49,39 @@ protected:
     virtual void ConfigAgent(AgentBase& /* agent */) {}
 
 public:
+    /**
+     * Build all world positions in a Manhattan-distance (diamond) range around a center position.
+     * Priorities are assigned in deterministic interaction order:
+     * right, up, down, left for each distance ring, then the ring's diagonals/edge points.
+     */
+    [[nodiscard]] static std::unordered_map<WorldPosition, int> BuildDiamondNeighborsByRange(
+        const WorldPosition& center, int range
+    ) {
+        std::unordered_map<WorldPosition, int> neighbors;
+        if (range <= 0)
+            return neighbors;
+
+        int priority = 1;
+        for (int distance = 1; distance <= range; ++distance) {
+            neighbors.emplace(center.GetOffset(distance, 0), priority++);
+            neighbors.emplace(center.GetOffset(0, -distance), priority++);
+            neighbors.emplace(center.GetOffset(0, distance), priority++);
+            neighbors.emplace(center.GetOffset(-distance, 0), priority++);
+
+            for (int dy = 0; dy <= distance; ++dy) {
+                const int dx = distance - dy;
+                if (dx == 0 || dy == 0)
+                    continue; // skip cardinals already inserted above
+
+                neighbors.emplace(center.GetOffset(dx, -dy), priority++);
+                neighbors.emplace(center.GetOffset(dx, dy), priority++);
+                neighbors.emplace(center.GetOffset(-dx, dy), priority++);
+                neighbors.emplace(center.GetOffset(-dx, -dy), priority++);
+            }
+        }
+        return neighbors;
+    }
+
     WorldBase() {
         // KAREN: Temporarily commented out to avoid interfering with other groups' demos
         // This has moved to DemoSimpleWorldG2.cpp's constructor
@@ -262,30 +295,8 @@ public:
         auto playerLocation = Round(mPlayer->GetPosition());
         const int interactionRange = 1;
         const int enemyInteractionRange = std::max(interactionRange, static_cast<int>(mPlayer->GetAtkRange()));
-        auto buildNeighborsByRange = [&playerLocation](const int range) {
-            std::unordered_map<WorldPosition, int> neighbors;
-            int priority = 1;
-            for (int distance = 1; distance <= range; ++distance) {
-                neighbors.emplace(playerLocation.GetOffset(distance, 0), priority++);
-                neighbors.emplace(playerLocation.GetOffset(0, -distance), priority++);
-                neighbors.emplace(playerLocation.GetOffset(0, distance), priority++);
-                neighbors.emplace(playerLocation.GetOffset(-distance, 0), priority++);
-
-                for (int dy = 0; dy <= distance; ++dy) {
-                    const int dx = distance - dy;
-                    if (dx == 0 || dy == 0)
-                        continue; // skip cardinals already inserted above
-
-                    neighbors.emplace(playerLocation.GetOffset(dx, -dy), priority++);
-                    neighbors.emplace(playerLocation.GetOffset(dx, dy), priority++);
-                    neighbors.emplace(playerLocation.GetOffset(-dx, dy), priority++);
-                    neighbors.emplace(playerLocation.GetOffset(-dx, -dy), priority++);
-                }
-            }
-            return neighbors;
-        };
-        const auto interactionNeighbors = buildNeighborsByRange(interactionRange);
-        const auto enemyNeighbors = buildNeighborsByRange(enemyInteractionRange);
+        const auto interactionNeighbors = BuildDiamondNeighborsByRange(playerLocation, interactionRange);
+        const auto enemyNeighbors = BuildDiamondNeighborsByRange(playerLocation, enemyInteractionRange);
 
         // ik "pair" is strange but useful here.
         // we need to run through ALL AGENTS because we don't know which one has successful interactions
