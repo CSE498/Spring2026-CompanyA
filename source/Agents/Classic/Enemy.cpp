@@ -37,8 +37,14 @@ std::size_t Enemy::ClaimGoldDrop() {
 
 void Enemy::TakeDamage(double amount) {
     AgentBase::TakeDamage(amount);
-    world.GetAnalyticsManager()->LogRunDamage(amount);
+    if (auto analytics = world.GetAnalyticsManager()) {
+        analytics->LogRunDamage(amount);
+    }
 }
 
-void Enemy::OnDeath() { world.GetAnalyticsManager()->LogRunEnemiesKilled(1); }
+void Enemy::OnDeath() {
+    if (auto analytics = world.GetAnalyticsManager()) {
+        analytics->LogRunEnemiesKilled(1);
+    }
+}
 } // namespace cse498
