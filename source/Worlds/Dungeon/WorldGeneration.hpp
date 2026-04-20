@@ -19,6 +19,18 @@
 
 namespace cse498 {
 
+constexpr int LEVEL_ONE_WIDTH = 125;
+constexpr int LEVEL_ONE_HEIGHT = 80;
+constexpr int LEVEL_ONE_ITERATIONS = 4;
+
+constexpr int LEVEL_TWO_WIDTH = 125;
+constexpr int LEVEL_TWO_HEIGHT = 125;
+constexpr int LEVEL_TWO_ITERATIONS = 16;
+
+constexpr int LEVEL_THREE_WIDTH = 150;
+constexpr int LEVEL_THREE_HEIGHT = 150;
+constexpr int LEVEL_THREE_ITERATIONS = 20;
+
 struct Point {
     int x, y; // x-y points of a room
 };
@@ -43,15 +55,18 @@ struct LinkedRooms {
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
         WorldGeneration(const LevelBase& level) 
-            : m_bsp(level), //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
+            : m_bsp(level) //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
               //mRoomHolder(room_pool), 
-              m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'))
-            {}
+              //m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'))
+            { }
         
 
         /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room 
         ///relationship is created through PostOrderRoomConnect()
-        void CreateDungeon() { 
+        void CreateDungeon(int& level_value) { 
+            LevelManager(level_value); //Loads in the width/height parameters of level
+
+            m_bsp.CreateBSPTree();
             auto& tree = m_bsp.GetBSPTree();
             for (const auto& node : m_bsp.GetLeafNodes()) {
                 RasterizeGrid(node); //Populates grid with initial, unconnected rooms 
@@ -62,11 +77,11 @@ struct LinkedRooms {
             TunnelConnectDungeon();
         }
 
-        void Update() {
+        void Update(int& level_value) {
             m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); //reset grid
+            m_bsp.ClearState(); //Clear BSP State
             m_connected_rooms.clear(); //get rid of tunneling list
-            m_bsp.RegenerateObjectState(); // regenerate tree
-            CreateDungeon();
+            CreateDungeon(level_value);
         }
 
 
@@ -145,7 +160,7 @@ struct LinkedRooms {
          */
         void ConnectTunnel(LinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
-            auto const wall_set = {'^','>','<','&'};
+            auto const wall_set = {'1','2','3','4'};
 
             auto point_x = x2_value - x1_value;
             auto point_y = y2_value - y1_value;
@@ -172,7 +187,7 @@ struct LinkedRooms {
                 auto it = std::ranges::find(wall_set, y_char);
 
                 if (y_char == '#' || it != wall_set.end()) {
-                    y_char = ' ';
+                    y_char = 'a';
                 }
             }
 
@@ -184,7 +199,7 @@ struct LinkedRooms {
                 auto &x_char = m_grid[y2_value][x_point];
                 auto it = std::ranges::find(wall_set, x_char);
 
-                if (x_char == '#' || it != wall_set.end()) x_char = ' ';
+                if (x_char == '#' || it != wall_set.end()) x_char = 'a';
 
             }
         }
@@ -214,6 +229,53 @@ struct LinkedRooms {
 
             return left;
             
+        }
+
+        /// @brief Loads in the parameters for ELevelOne in the BSPnode Object instance
+        void LevelOneState() { 
+            m_bsp.SetWidth(LEVEL_ONE_WIDTH);
+            m_bsp.SetHeight(LEVEL_ONE_HEIGHT);
+            m_bsp.SetIterations(LEVEL_ONE_ITERATIONS);
+        }
+        
+        /// @brief Loads in the parameters for ELevelOne in the BSPnode Object instance
+        void LevelTwoState() { 
+            m_bsp.SetWidth(LEVEL_TWO_WIDTH);
+            m_bsp.SetHeight(LEVEL_TWO_HEIGHT);
+            m_bsp.SetIterations(LEVEL_TWO_ITERATIONS);
+
+        }
+
+        /// @brief Loads in the parameters for ELevelOne in the BSPnode Object instance
+        void LevelThreeState() { 
+            m_bsp.SetWidth(LEVEL_THREE_WIDTH);
+            m_bsp.SetHeight(LEVEL_THREE_HEIGHT);
+            m_bsp.SetIterations(LEVEL_THREE_ITERATIONS);
+
+        }
+
+        /// @brief Will change the width and height of the Dungeon level depending on what level the Player is im
+        /// @param level_value int value that determines the level the player is currently on
+        void LevelManager(int& level_value) { 
+            switch(level_value) {
+                case 1:
+                    LevelOneState();
+                    break;
+
+                case 2:
+                    LevelTwoState();
+                    break;
+                case 3:
+                    LevelThreeState();
+                    break;
+
+                default:
+                    LevelOneState();
+                    break;
+
+            }
+            m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'));
+
         }
     };
  };
