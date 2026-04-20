@@ -147,77 +147,69 @@ namespace cse498 {
 
   	public:
 		DungeonWorld() : m_generation(*m_level) {
-			// Level 1 floors
-			m_floor_id_l1v1 = main_grid.AddCellType("dun_floor_l1v1", "Floor that agents can walk on. l1 v1", 'a');
-			m_floor_id_l1v2 = main_grid.AddCellType("dun_floor_l1v2", "Floor that agents can walk on. l1 v2", 'b');
-			m_floor_id_l1v3 = main_grid.AddCellType("dun_floor_l1v3", "Floor that agents can walk on. l1 v3", 'c');
-			m_floor_id_l1v4 = main_grid.AddCellType("dun_floor_l1v4", "Floor that agents can walk on. l1 v4", 'd');
-			m_floor_id_l1v5 = main_grid.AddCellType("dun_floor_l1v5", "Floor that agents can walk on. l1 v5", '<');
-			// Level 2 floors
-			m_floor_id_l2v1 = main_grid.AddCellType("dun_floor_l2v1", "Floor that agents can walk on. l2 v1", 'A');
-			m_floor_id_l2v2 = main_grid.AddCellType("dun_floor_l2v2", "Floor that agents can walk on. l2 v2", 'B');
-			m_floor_id_l2v3 = main_grid.AddCellType("dun_floor_l2v3", "Floor that agents can walk on. l2 v3", 'C');
-			m_floor_id_l2v4 = main_grid.AddCellType("dun_floor_l2v4", "Floor that agents can walk on. l2 v4", 'D');
-			m_floor_id_l2v5 = main_grid.AddCellType("dun_floor_l2v5", "Floor that agents can walk on. l2 v5", 'E');
-			// Level 3 floors
-			m_floor_id_l3v1 = main_grid.AddCellType("dun_floor_l3v1", "Floor that agents can walk on. l3 v1", 'm');
-			m_floor_id_l3v2 = main_grid.AddCellType("dun_floor_l3v2", "Floor that agents can walk on. l3 v2", 'n');
-			m_floor_id_l3v3 = main_grid.AddCellType("dun_floor_l3v3", "Floor that agents can walk on. l3 v3", 'o');
-			m_floor_id_l3v4 = main_grid.AddCellType("dun_floor_l3v4", "Floor that agents can walk on. l3 v4", 'p');
-			m_floor_id_l3v5 = main_grid.AddCellType("dun_floor_l3v5", "Floor that agents can walk on. l3 v5", 'q');
-			// Level 4 floors
-			m_floor_id_l4v1 = main_grid.AddCellType("dun_floor_l4v1", "Floor that agents can walk on. l4 v1", 'M');
-			m_floor_id_l4v2 = main_grid.AddCellType("dun_floor_l4v2", "Floor that agents can walk on. l4 v2", 'N');
-			m_floor_id_l4v3 = main_grid.AddCellType("dun_floor_l4v3", "Floor that agents can walk on. l4 v3", 'O');
-			m_floor_id_l4v4 = main_grid.AddCellType("dun_floor_l4v4", "Floor that agents can walk on. l4 v4", 'P');
-			m_floor_id_l4v5 = main_grid.AddCellType("dun_floor_l4v5", "Floor that agents can walk on. l4 v5", 'Q');
+			m_floor_id_l1v1 = main_grid.AddCellType("floor_l1v1", "Floor that agents can walk on. l1 v1", 'a');
+      		m_floor_id_l1v2 = main_grid.AddCellType("floor_l1v2", "Floor that agents can walk on. l1 v2", 'b');
+	        m_floor_id_l1v3 = main_grid.AddCellType("floor_l1v3", "Floor that agents can walk on. l1 v3", 'c');
+            m_floor_id_l1v4 = main_grid.AddCellType("floor_l1v4", "Floor that agents can walk on. l1 v4", 'd');
+            m_floor_id_l1v5 = main_grid.AddCellType("floor_l1v5", "Floor that agents can walk on. l1 v5", '<');
+            m_floor_id_l2v1 = main_grid.AddCellType("floor_l2v1", "Floor that agents can walk on. l2 v1", 'A');
+            m_floor_id_l2v2 = main_grid.AddCellType("floor_l2v2", "Floor that agents can walk on. l2 v2", 'B');
+            m_floor_id_l2v3 = main_grid.AddCellType("floor_l2v3", "Floor that agents can walk on. l2 v3", 'C');
+            m_floor_id_l2v4 = main_grid.AddCellType("floor_l2v4", "Floor that agents can walk on. l2 v4", 'D');
+            m_floor_id_l2v5 = main_grid.AddCellType("floor_l2v5", "Floor that agents can walk on. l2 v5", 'E');
+            m_floor_id_l3v1 = main_grid.AddCellType("floor_l3v1", "Floor that agents can walk on. l3 v1", 'm');
+            m_floor_id_l3v2 = main_grid.AddCellType("floor_l3v2", "Floor that agents can walk on. l3 v2", 'n');
+            m_floor_id_l3v3 = main_grid.AddCellType("floor_l3v3", "Floor that agents can walk on. l3 v3", 'o');
+            m_floor_id_l3v4 = main_grid.AddCellType("floor_l3v4", "Floor that agents can walk on. l3 v4", 'p');
+            m_floor_id_l3v5 = main_grid.AddCellType("floor_l3v5", "Floor that agents can walk on. l3 v5", 'q');
+            m_floor_id_l4v1 = main_grid.AddCellType("floor_l4v1", "Floor that agents can walk on. l4 v1", 'M');
+            m_floor_id_l4v2 = main_grid.AddCellType("floor_l4v2", "Floor that agents can walk on. l4 v2", 'N');
+            m_floor_id_l4v3 = main_grid.AddCellType("floor_l4v3", "Floor that agents can walk on. l4 v3", 'O');
+            m_floor_id_l4v4 = main_grid.AddCellType("floor_l4v4", "Floor that agents can walk on. l4 v4", 'P');
+            m_floor_id_l4v5 = main_grid.AddCellType("floor_l4v5", "Floor that agents can walk on. l4 v5", 'Q');
 
-			m_wall_id = main_grid.AddCellType("dun_wall", "Impenetrable wall.", '#');
+            m_wall_id  = main_grid.AddCellType("wall",  "Impenetrable wall.",'#');
 
-			// Level 1 walls
-			m_upper_external_l1 = main_grid.AddCellType("dun_wall_top_l1", "upper wall. l1", '1');
-			m_lower_external_l1 = main_grid.AddCellType("dun_wall_bottom_l1", "lower wall. l1", '2');
-			m_left_external_l1 = main_grid.AddCellType("dun_wall_left_l1", "left external wall. l1", '3');
-			m_right_external_l1 = main_grid.AddCellType("dun_wall_right_l1", "right external wall. l1", '4');
-			m_internal_obstacle_l1v1 = main_grid.AddCellType("dun_wall_internal_l1v1", "internal obstacle wall. l1 v1", '5');
-			m_internal_obstacle_l1v2 = main_grid.AddCellType("dun_wall_internal_l1v2", "internal obstacle wall. l1 v2", '6');
-			m_door_tile_left_l1 = main_grid.AddCellType("dun_door_left_l1", "left door tile. l1", '7');
-			m_door_tile_right_l1 = main_grid.AddCellType("dun_door_right_l1", "right door tile. l1", '8');
-			// Level 2 walls
-			m_upper_external_l2 = main_grid.AddCellType("dun_wall_top_l2", "upper wall. l2", '!');
-			m_lower_external_l2 = main_grid.AddCellType("dun_wall_bottom_l2", "lower wall. l2", '@');
-			m_left_external_l2 = main_grid.AddCellType("dun_wall_left_l2", "left external wall. l2", '?');
-			m_right_external_l2 = main_grid.AddCellType("dun_wall_right_l2", "right external wall. l2", '$');
-			m_internal_obstacle_l2v1 = main_grid.AddCellType("dun_wall_internal_l2v1", "internal obstacle wall. l2 v1", '%');
-			m_internal_obstacle_l2v2 = main_grid.AddCellType("dun_wall_internal_l2v2", "internal obstacle wall. l2 v2", '^');
-			m_door_tile_left_l2 = main_grid.AddCellType("dun_door_left_l2", "left door tile. l2", '&');
-			m_door_tile_right_l2 = main_grid.AddCellType("dun_door_right_l2", "right door tile. l2", '*');
-			// Level 3 walls
-			m_upper_external_l3 = main_grid.AddCellType("dun_wall_top_l3", "upper wall. l3", '9');
-			m_lower_external_l3 = main_grid.AddCellType("dun_wall_bottom_l3", "lower wall. l3", '0');
-			m_left_external_l3 = main_grid.AddCellType("dun_wall_left_l3", "left external wall. l3", '-');
-			m_right_external_l3 = main_grid.AddCellType("dun_wall_right_l3", "right external wall. l3", '=');
-			m_internal_obstacle_l3v1 = main_grid.AddCellType("dun_wall_internal_l3v1", "internal obstacle wall. l3 v1", '[');
-			m_internal_obstacle_l3v2 = main_grid.AddCellType("dun_wall_internal_l3v2", "internal obstacle wall. l3 v2", ']');
-			m_door_tile_left_l3 = main_grid.AddCellType("dun_door_left_l3", "left door tile. l3", '.');
-			m_door_tile_right_l3 = main_grid.AddCellType("dun_door_right_l3", "right door tile. l3", ';');
-			// Level 4 walls
-			m_upper_external_l4 = main_grid.AddCellType("dun_wall_top_l4", "upper wall. l4", '(');
-			m_lower_external_l4 = main_grid.AddCellType("dun_wall_bottom_l4", "lower wall. l4", ')');
-			m_left_external_l4 = main_grid.AddCellType("dun_wall_left_l4", "left external wall. l4", '_');
-			m_right_external_l4 = main_grid.AddCellType("dun_wall_right_l4", "right external wall. l4", '+');
-			m_internal_obstacle_l4v1 = main_grid.AddCellType("dun_wall_internal_l4v1", "internal obstacle wall. l4 v1", '{');
-			m_internal_obstacle_l4v2 = main_grid.AddCellType("dun_wall_internal_l4v2", "internal obstacle wall. l4 v2", '}');
-			m_door_tile_left_l4 = main_grid.AddCellType("dun_door_left_l4", "left door tile. l4", '~');
-			m_door_tile_right_l4 = main_grid.AddCellType("dun_door_right_l4", "right door tile. l4", ':');
+            m_upper_external_l1 = main_grid.AddCellType("wall_l1v1", "upper wall. l1", '1');
+            m_lower_external_l1 = main_grid.AddCellType("wall_l1v2", "lower wall. l1", '2');
+            m_left_external_l1 = main_grid.AddCellType("wall_l1v13", "left external wall. l1", '3');
+            m_right_external_l1 = main_grid.AddCellType("wall_l1v4", "right external  wall. l1", '4');
+            m_internal_obstacle_l1v1 = main_grid.AddCellType("wall_l1v5", "interal obstacle wall. l1 v1", '5');
+            m_internal_obstacle_l1v2 = main_grid.AddCellType("wall_l1v6", "interal obstacle wall. l1 v2", '6');
+            m_door_tile_left_l1 = main_grid.AddCellType("wall_l1v7", "left door tile wall. l1", '7');
+            m_door_tile_right_l1 = main_grid.AddCellType("wall_l1v8", "right door tile wall. l1", '8');
+            m_upper_external_l2 = main_grid.AddCellType("wall_l2v1", "upper wall. l2", '!');
+            m_lower_external_l2 = main_grid.AddCellType("wall_l2v2", "lower wall. l2", '@');
+            m_left_external_l2 = main_grid.AddCellType("wall_l2v3", "left external wall. l2", '?');
+            m_right_external_l2 = main_grid.AddCellType("wall_l2v4", "right external  wall. l2", '$');
+            m_internal_obstacle_l2v1 = main_grid.AddCellType("wall_l2v5", "interal obstacle wall. l2 v1", '%');
+            m_internal_obstacle_l2v2 = main_grid.AddCellType("wall_l2v6", "interal obstacle wall. l2 v2", '^');
+            m_door_tile_left_l2 = main_grid.AddCellType("wall_l2v7", "left door tile wall. l2", '&');
+            m_door_tile_right_l2 = main_grid.AddCellType("wall_l2v8", "right door tile wall. l2", '*');
+            m_upper_external_l3 = main_grid.AddCellType("wall_l3v1", "upper wall. l3", '9');
+            m_lower_external_l3 = main_grid.AddCellType("wall_l3v2", "lower wall. l3", '0');
+            m_left_external_l3 = main_grid.AddCellType("wall_l3v3", "left external wall. l3", '-');
+            m_right_external_l3 = main_grid.AddCellType("wall_l3v4", "right external  wall. l3", '=');
+            m_internal_obstacle_l3v1 = main_grid.AddCellType("wall_l3v5", "interal obstacle wall. l3 v1", '[');
+            m_internal_obstacle_l3v2 = main_grid.AddCellType("wall_l3v6", "interal obstacle wall. l3 v2", ']');
+            m_door_tile_left_l3 = main_grid.AddCellType("wall_l3v7", "left door tile wall. l3", '.');
+            m_door_tile_right_l3 = main_grid.AddCellType("wall_l3v8", "right door tile wall. l3", ';');
+            m_upper_external_l4 = main_grid.AddCellType("wall_l4v1", "upper wall. l4", '(');
+            m_lower_external_l4 = main_grid.AddCellType("wall_l4v2", "lower wall. l4", ')');
+            m_left_external_l4 = main_grid.AddCellType("wall_l4v3", "left external wall. l4", '_');
+            m_right_external_l4 = main_grid.AddCellType("wall_l4v4", "right external  wall. l4", '+');
+            m_internal_obstacle_l4v1 = main_grid.AddCellType("wall_l4v5", "interal obstacle wall. l4 v1", '{');
+            m_internal_obstacle_l4v2 = main_grid.AddCellType("wall_l4v6", "interal obstacle wall. l4 v2", '}');
+            m_door_tile_left_l4 = main_grid.AddCellType("wall_l4v7", "left door tile wall. l4", '~');
+            m_door_tile_right_l4 = main_grid.AddCellType("wall_l4v8", "right door tile wall. l4", ':');
 
-			// Shared special tiles
-			m_trap_tile = main_grid.AddCellType("dun_trap", "trap tile.", 't');
-			m_loot_tile = main_grid.AddCellType("dun_loot", "loot tile.", 'l');
-			m_monster_tile_skeleton = main_grid.AddCellType("dun_monster_skeleton", "monster tile. skeleton", 's');
-			m_monster_tile_goblin = main_grid.AddCellType("dun_monster_goblin", "monster tile. goblin", 'g');
-			m_secret_door = main_grid.AddCellType("dun_secret_door", "secret door tile.", 'f');
-			m_exit_door = main_grid.AddCellType("dun_exit_door", "exit door tile.", 'e');
+            m_trap_tile = main_grid.AddCellType("wall_trap",  "trap tile wall.",   't');
+            m_loot_tile = main_grid.AddCellType("wall_loot",  "loot tile wall.",    'l');
+            m_monster_tile_skeleton = main_grid.AddCellType("wall_skeleton",  "monster tile wall. skeleton",    's');
+            m_monster_tile_goblin = main_grid.AddCellType("wall_goblin",  "monster tile wall. goblin",    'g');
+            m_secret_door = main_grid.AddCellType("wall_secret",  "secret tile wall.", 'f');
+            m_exit_door = main_grid.AddCellType("exit",  "secret tile wall.", 'e');
+            //m_variant_floor = main_grid.AddCellType("wall",  "variant tile wall.", 'v');
 
 			auto sword = m_item_pool.Insert("Sword", 1.0);
 			auto sword1 = m_item_pool.Insert("Sword +1", 0.2);
