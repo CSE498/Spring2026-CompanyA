@@ -326,6 +326,7 @@ std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const AgentDefinition& 
 std::unique_ptr<Enemy> AgentFactory::CreateEnemyGoblin(const AgentDefinition& def, WorldBase& world) {
     AgentStats stats = AgentLevels::GetGoblinStats(def.mLevel);
     auto enemy = CreateAgent(def, stats, world); // createAgent can't return nullptr
+    enemy->SetBuiltInWeaponName("Dagger");
     enemy->SetBehaviorTree(CreateGoblinTree(*enemy, world));
     return enemy;
 }
