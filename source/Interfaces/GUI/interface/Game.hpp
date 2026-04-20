@@ -108,6 +108,8 @@ private:
     // -------------------------
     std::shared_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
     std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
+    DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
+    Text mStatsText; /// Text object use for stats screen
 
     // -------------------------
     // Runtime flags
