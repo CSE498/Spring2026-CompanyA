@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -263,12 +264,23 @@ public:
         const int enemyInteractionRange = std::max(interactionRange, static_cast<int>(mPlayer->GetAtkRange()));
         auto buildNeighborsByRange = [&playerLocation](const int range) {
             std::unordered_map<WorldPosition, int> neighbors;
-            for (int i = 1; i <= range; ++i) {
-                const int basePriority = (i - 1) * 4;
-                neighbors.emplace(playerLocation.GetOffset(1 * i, 0), basePriority + 1);
-                neighbors.emplace(playerLocation.GetOffset(0, -1 * i), basePriority + 2);
-                neighbors.emplace(playerLocation.GetOffset(0, 1 * i), basePriority + 3);
-                neighbors.emplace(playerLocation.GetOffset(-1 * i, 0), basePriority + 4);
+            int priority = 1;
+            for (int distance = 1; distance <= range; ++distance) {
+                neighbors.emplace(playerLocation.GetOffset(distance, 0), priority++);
+                neighbors.emplace(playerLocation.GetOffset(0, -distance), priority++);
+                neighbors.emplace(playerLocation.GetOffset(0, distance), priority++);
+                neighbors.emplace(playerLocation.GetOffset(-distance, 0), priority++);
+
+                for (int dy = 0; dy <= distance; ++dy) {
+                    const int dx = distance - dy;
+                    if (dx == 0 || dy == 0)
+                        continue; // skip cardinals already inserted above
+
+                    neighbors.emplace(playerLocation.GetOffset(dx, -dy), priority++);
+                    neighbors.emplace(playerLocation.GetOffset(dx, dy), priority++);
+                    neighbors.emplace(playerLocation.GetOffset(-dx, dy), priority++);
+                    neighbors.emplace(playerLocation.GetOffset(-dx, -dy), priority++);
+                }
             }
             return neighbors;
         };
