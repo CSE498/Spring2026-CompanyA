@@ -30,11 +30,11 @@ InputManager::InputManager(WebInterface& interface) : mInterface(interface) {
 
 InputManager::~InputManager() { emscripten_html5_remove_all_event_listeners(); }
 
-EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* userData) {
-    if (eventType != EMSCRIPTEN_EVENT_KEYDOWN || userData == nullptr || keyEvent->repeat)
+EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* inputManagerPointer) {
+    if (eventType != EMSCRIPTEN_EVENT_KEYDOWN || inputManagerPointer == nullptr || keyEvent->repeat)
         return EM_FALSE;
 
-    auto manager = static_cast<InputManager*>(userData);
+    auto manager = static_cast<InputManager*>(inputManagerPointer);
 
     auto key = std::string(keyEvent->key);
 
@@ -45,40 +45,43 @@ EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* ke
         int digit = lowerKey[0] - '0';
         size_t slotIndex = (digit == 0) ? 9 : (digit - 1); // 1-9 maps to 0-8, 0 maps to 9
         manager->mInterface.SetPlayerHotbarIndex(slotIndex);
-        return EM_FALSE; // Allow default browser behavior for number keys (e.g., focusing elements)
+        return EM_FALSE;
     }
 
     // Handle inventory menu toggle
     if (lowerKey == "i") {
         manager->mInterface.OpenInventory();
-        return EM_TRUE;
+        return EM_FALSE;
     }
 
-    // special case pause button
+    // Handle pause button
     if (lowerKey == "escape") {
         manager->mInterface.HandlePause();
-        return EM_TRUE;
+        return EM_TRUE; // consume the event to prevent default browser behavior (e.g., exiting fullscreen or opening
+                        // browser menu)
     }
 
-    if (!manager->IsKeyPressed())
-        manager->SetTapAction(lowerKey);
+    // Add keys for movement and interaction to the front of the pressed keys deque
+    // so that it is checked first in GetAction and allows for responsive input
+    // even when multiple keys are pressed
     manager->AddKeyPressed(lowerKey);
 
-    return EM_FALSE;
+    return EM_FALSE; // Allow default browser behavior for other keys for accessibility (e.g., tab navigation, browser
+                     // shortcuts)
 }
 
-EM_BOOL InputManager::OnKeyUp(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* userData) {
-    if (eventType != EMSCRIPTEN_EVENT_KEYUP || userData == nullptr)
+EM_BOOL InputManager::OnKeyUp(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* inputManagerPointer) {
+    if (eventType != EMSCRIPTEN_EVENT_KEYUP || inputManagerPointer == nullptr)
         return EM_FALSE;
 
-    auto manager = static_cast<InputManager*>(userData);
+    auto manager = static_cast<InputManager*>(inputManagerPointer);
 
     auto key = std::string(keyEvent->key);
 
     std::string lowerKey = ToLower(key);
 
-    // ignore pause button key up
-    if (lowerKey == "escape") {
+    // ignore pause/inventory/number button key up
+    if (lowerKey == "escape" || lowerKey == "i" || (lowerKey.length() == 1 && std::isdigit(lowerKey[0]))) {
         return EM_TRUE;
     }
 
@@ -88,17 +91,11 @@ EM_BOOL InputManager::OnKeyUp(int eventType, const EmscriptenKeyboardEvent* keyE
 }
 
 InputManager::ActiveAction InputManager::GetAction() {
-    if (mInterface.IsPaused()) {
-        mTapAction = "";
+    if (mInterface.IsPaused() || mKeysPressed.empty()) {
         return ActiveAction::None;
     }
 
-    // if no keys currently pressed, check the tap action
-    // to see if they just tapped a key while input was blocked
-    // then set to empty string so it is only done once
-    std::string key;
-    mKeysPressed.empty() ? key = mTapAction : key = mKeysPressed.front();
-    mTapAction = "";
+    const std::string& key = mKeysPressed.front();
 
     // clang-format off
     if (key == "w") { return ActiveAction::Up; }
@@ -107,7 +104,6 @@ InputManager::ActiveAction InputManager::GetAction() {
     if (key == "d") { return ActiveAction::Right; }
     if (key == "e") { return ActiveAction::Interact; }
     if (key == "q") { return ActiveAction::Quit; }
-    if (key == "escape") { return ActiveAction::Pause; }
     return ActiveAction::None;
     // clang-format on
 }

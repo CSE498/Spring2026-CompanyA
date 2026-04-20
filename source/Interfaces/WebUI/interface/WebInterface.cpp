@@ -784,11 +784,6 @@ void WebInterface::RenderHUD() {
 
 const char WebInterface::SelectAction(const WorldGrid& grid) {
     auto userAction = mInputManager.GetAction();
-    if (userAction == InputManager::ActiveAction::Pause) {
-        HandlePause();
-        return ACTION_NONE;
-    }
-
     if (mState != WebState::OVERWORLD && mState != WebState::DUNGEON) {
         return ACTION_NONE;
     }
@@ -807,7 +802,6 @@ const char WebInterface::SelectAction(const WorldGrid& grid) {
             return ACTION_RIGHT;
 
         case InputManager::ActiveAction::Interact:
-            ++mPoints;
             return ACTION_INTERACT;
 
         case InputManager::ActiveAction::Quit:
