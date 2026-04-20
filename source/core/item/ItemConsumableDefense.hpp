@@ -9,7 +9,7 @@
 #include <string>
 #include "Item.hpp"
 #include "ItemConsumable.hpp"
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemConsumableDefense : public ItemConsumable {

@@ -31,6 +31,12 @@ public:
 
 
 using cse498::PlayerAgent;
+using cse498::AgentStats;
+using cse498::DamageCalculator;
+using cse498::Inventory;
+using cse498::ItemWeaponBow;
+using cse498::ItemWeaponSword;
+using cse498::ItemWeaponToolShovel;
 
 
 TEST_CASE("Main Player", "[Inventory]") {

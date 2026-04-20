@@ -8,7 +8,7 @@
 
 #include <string>
 #include "Item.hpp"
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemConsumable : public Item {
