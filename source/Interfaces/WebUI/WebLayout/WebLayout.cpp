@@ -430,48 +430,18 @@ void WebLayout::Apply() noexcept {
     ApplyChildren();
 }
 
-/// @todo See the discussion recorded at
-/// https://github.com/CSE498/Spring2026-CompanyA/pull/70#discussion_r3107346298
-/// for additional background and design rationale.
-///
-/// Gradual deprecation should be considered for child-removal APIs that
-/// currently overlap in responsibility. In particular, WebLayout::RemoveElement()
-/// is a strong candidate for deprecation in favor of WebLayout::RemoveChild().
-///
-/// WebLayout::RemoveChild(), WebLayout::Clear(), and IDomElement::Unmount()
-/// should likely be retained for now, since they still represent distinct
-/// external behaviors. IDomElement::RemoveChild() may be revisited later if
-/// the DOM-only removal path is further internalized or renamed.
-///
 /// @brief Unmounts and removes all child elements from this layout.
 void WebLayout::Clear() noexcept {
-    /// @brief Detaches one tracked child element from this layout.
-    /// @param element Pointer to the child element to detach.
-    auto detachChildElement = [this](IDomElement* element) noexcept {
-        if (!element)
-            return;
-
-        auto it = std::find(mChildren.begin(), mChildren.end(), element);
-        if (it == mChildren.end())
-            return;
-
-        // Remove the DOM child while the parent relationship is still intact.
-        IDomElement::RemoveChild(element);
-
-        // Clear the parent pointer if it still refers to this layout.
-        if (element->GetParent() == this)
-            element->SetParent(nullptr);
-
-        // Remove layout bookkeeping.
-        mParams.erase(element);
-        mChildren.erase(it);
-    };
-
     while (!mChildren.empty()) {
-        detachChildElement(mChildren.back());
+        IDomElement* element = mChildren.back();
+        if (!element) {
+            mChildren.pop_back();
+            continue;
+        }
+        element->Unmount();
     }
+    mParams.clear();
 }
-
 } // namespace cse498
 
 #endif
