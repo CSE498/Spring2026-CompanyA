@@ -1,8 +1,7 @@
 /**
  * @file AgentStats.hpp
+ * @brief Lightweight stat container shared by player/enemy agents.
  * @author Logan
- *
- *
  */
 
 #pragma once
@@ -20,6 +19,14 @@ struct AgentStats {
     double mDef = 0; // can have negative def. Debuffs = extra dmg
     double mRange = 0; // range is positive
     size_t mLevel = 0; // level >= 0
+    /**
+     * Construct with baseline combat values.
+     * @param hp Max and initial HP.
+     * @param atk Base attack value.
+     * @param def Base defense value.
+     * @param range Attack range in grid units.
+     * @param level Agent level.
+     */
     AgentStats(double hp, double atk, double def, double range, size_t level) :
         mMaxHp(hp), mHp(hp), mAtk(atk), mDef(def), mRange(range), mLevel(level)
     {

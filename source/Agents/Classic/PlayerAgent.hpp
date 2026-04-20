@@ -63,8 +63,17 @@ public:
      */
     void SetGold(std::size_t amount) { mGold = amount; }
 
+    /**
+     * Stores base combat stats and recomputes effective combat values from the
+     * currently selected hand item.
+     * @param stats Incoming baseline stats from world/factory setup.
+     */
     void SetStats(const AgentStats& stats) override;
 
+    /**
+     * Wires inventory-change notifications so hand-weapon effects stay in sync.
+     * @return true when initialization succeeds.
+     */
     bool Initialize() override;
 
     /**

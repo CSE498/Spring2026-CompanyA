@@ -95,14 +95,24 @@ public:
      */
     void SetChangeNotifier(std::function<void()> cb) { mOnChanged = std::move(cb); }
 
+    /**
+     * Set active hotbar slot directly.
+     * @param index New hotbar index.
+     */
     void HotBarIndexMove(int index) {
         mCurrentHotbarSlot = static_cast<size_t>(index);
         NotifyChanged();
     }
+    /**
+     * Move active hotbar slot one step to the right (with wraparound).
+     */
     void HotBarIndexInc() {
         mCurrentHotbarSlot = (mCurrentHotbarSlot + 1) % HOTBAR_SIZE;
         NotifyChanged();
     }
+    /**
+     * Move active hotbar slot one step to the left (with wraparound).
+     */
     void HotBarIndexDec() {
         mCurrentHotbarSlot = (mCurrentHotbarSlot - 1 + HOTBAR_SIZE) % HOTBAR_SIZE;
         NotifyChanged();
@@ -249,7 +259,9 @@ private:
     /// this is the selected hotbar slot
     size_t mCurrentHotbarSlot = 0;
 
+    /// Optional callback invoked after inventory/hotbar mutations.
     std::function<void()> mOnChanged;
+    /// Dispatches mOnChanged() when a listener is registered.
     void NotifyChanged() {
         if (mOnChanged) {
             mOnChanged();

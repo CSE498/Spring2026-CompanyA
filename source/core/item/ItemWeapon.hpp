@@ -18,6 +18,10 @@ private:
     double m_hit_bonus; // Bonus the weapon has to hit
 
 public:
+    /**
+     * Base weapon item constructor.
+     * Initializes weapon modifiers to zero so derived weapons can opt in.
+     */
     ItemWeapon(size_t id, const std::string& name, const std::string& image_path, int gold, const WorldBase& world) :
         Item(id, name, image_path, gold, world), m_range(0.0), m_damage(0.0), m_hit_bonus(0.0) {}
 
@@ -27,8 +31,11 @@ public:
     virtual bool IsSword() const { return false; }
     virtual bool IsBow() const { return false; }
 
+    /// @return Effective attack range bonus/override for this weapon.
     [[nodiscard]] double GetRange() const { return m_range; }
+    /// @return Flat damage contribution this weapon adds to attacks.
     [[nodiscard]] double GetDamage() const { return m_damage; }
+    /// @return Hit/chance modifier associated with this weapon.
     [[nodiscard]] double GetHitBonus() const { return m_hit_bonus; }
     void SetRange(double range) { m_range = range; }
     void SetDamage(double damage) { m_damage = damage; }
