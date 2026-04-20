@@ -13,6 +13,7 @@
 #include "../../source/Worlds/Hub/InteractiveWorldSaveManager.hpp"
 #include "../../source/Worlds/Hub/ResourceProducer.hpp"
 #include "../../source/Worlds/Hub/ResourceSpawn.hpp"
+#include "../../source/Worlds/Hub/TownHall.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 
 
@@ -43,7 +44,13 @@ int main() {
       .SetSymbol('@')
       .SetLocation(WorldPosition{1, 1});
 
-  // Buildings
+auto townHallPtr = std::make_unique<TownHall>(
+    world->GetNextAgentId(), "Town Hall", *world, world->GetInventoryPtr());
+townHallPtr->SetSymbol('T');
+TownHall& townHall = world->AddAgent(std::move(townHallPtr));
+world->AddTownHall(townHall, WorldPosition{11, 5});
+
+	// Buildings
 Building& lumberYard = world->AddAgent<Building>("Lumber Yard");
 lumberYard.SetSymbol('L');
 lumberYard.AddUpgrade(ItemType::Wood, 15);
@@ -65,33 +72,30 @@ Building& quarry = world->AddAgent<Building>("Quarry");
 	    world->GetNextAgentId(), "Wood Spawn", *world, ItemType::Wood);
 	woodSpawnPtr->SetSymbol('l');
 	ResourceSpawn& woodSpawn = world->AddAgent(std::move(woodSpawnPtr));
-	woodSpawn.SetLocation(WorldPosition{5, 5});
+	world->AddResourceSpawn(woodSpawn, WorldPosition{5, 5});
 
 	auto stoneSpawnPtr = std::make_unique<ResourceSpawn>(
 	    world->GetNextAgentId(), "Stone Spawn", *world, ItemType::Stone);
 	stoneSpawnPtr->SetSymbol('q');
 	ResourceSpawn& stoneSpawn = world->AddAgent(std::move(stoneSpawnPtr));
-	stoneSpawn.SetLocation(WorldPosition{4, 9});
+	world->AddResourceSpawn(stoneSpawn, WorldPosition{4, 9});
 
 	auto metalSpawnPtr = std::make_unique<ResourceSpawn>(
 	    world->GetNextAgentId(), "Metal Spawn", *world, ItemType::Metal);
 	metalSpawnPtr->SetSymbol('m');
 	ResourceSpawn& metalSpawn = world->AddAgent(std::move(metalSpawnPtr));
-	metalSpawn.SetLocation(WorldPosition{1, 7});
+	world->AddResourceSpawn(metalSpawn, WorldPosition{1, 7});
 
 
   // Resource Producers
-  std::shared_ptr<ResourceProducer> woodProducer =
-      std::make_shared<ResourceProducer>(lumberYard, world->GetInventory(),
-                                         ItemType::Wood, 2);
+std::shared_ptr<ResourceProducer> woodProducer =
+    std::make_shared<ResourceProducer>(lumberYard, woodSpawn, ItemType::Wood, 2);
 
-  std::shared_ptr<ResourceProducer> stoneProducer =
-      std::make_shared<ResourceProducer>(quarry, world->GetInventory(),
-                                         ItemType::Stone, 1);
+std::shared_ptr<ResourceProducer> stoneProducer =
+    std::make_shared<ResourceProducer>(quarry, stoneSpawn, ItemType::Stone, 1);
 
-  std::shared_ptr<ResourceProducer> metalProducer =
-      std::make_shared<ResourceProducer>(mine, world->GetInventory(),
-                                         ItemType::Metal, 0.5);
+std::shared_ptr<ResourceProducer> metalProducer =
+    std::make_shared<ResourceProducer>(mine, metalSpawn, ItemType::Metal, 0.5);
 
   world->AddProducer(woodProducer);
   world->AddProducer(stoneProducer);

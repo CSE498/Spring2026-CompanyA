@@ -15,6 +15,8 @@ namespace cse498 {
     private:
         ItemType m_itemType = ItemType::Wood;
         int m_quantity = 0;
+	// Maximum amount an agent is allowed to collect at once
+	int m_maxCollectionQuantity = 10;
 
     public:
         /**
@@ -51,15 +53,24 @@ namespace cse498 {
                 return;
             m_quantity += quantity;
         }
-
+	/**
+	 * Set the max quantity an agent can collect at once
+	 * @param maxQuant new max
+	 */
+	void SetMaxCollectionQuantity(int maxQuant) { m_maxCollectionQuantity = maxQuant; }
+	/**
+	 * Get the max quantity an agent can collect at once
+	 * @return Current max quantity an agent can collect at once
+	 */
+	[[nodiscard]] int GetMaxCollectionQuantity() const { return m_maxCollectionQuantity; }
         /**
          * Collect all resources from the resource spawn
          * @return the quantity of items in the resource spawn
          */
         [[nodiscard]] int Collect() {
-            int returnQuantity = m_quantity;
-            m_quantity = 0;
-            return returnQuantity;
+	        int collectAmount = std::min(m_quantity, m_maxCollectionQuantity);
+	        m_quantity -= collectAmount;
+	        return collectAmount;
         }
 
         /**

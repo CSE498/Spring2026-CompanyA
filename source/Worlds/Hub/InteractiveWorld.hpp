@@ -15,6 +15,7 @@
 #include "InteractiveWorldInventory.hpp"
 #include "ResourceProducer.hpp"
 #include "ResourceSpawn.hpp"
+#include "TownHall.hpp"
 
 namespace cse498 {
     /**
@@ -23,12 +24,13 @@ namespace cse498 {
     class InteractiveWorld : public WorldBase {
     protected:
         // World Inventory
-        InteractiveWorldInventory m_inventory;
+        std::shared_ptr<InteractiveWorldInventory> m_inventory = std::make_shared<InteractiveWorldInventory>();
 
         enum ActionType { REMAIN_STILL = 0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT };
 
         size_t floor_id; ///< Easy access to floor CellType ID.
         size_t wall_id; ///< Easy access to wall CellType ID.
+        size_t building_id;
 
         /// Provide the agent with movement actions.
         void ConfigAgent(AgentBase& agent) override {
@@ -58,9 +60,9 @@ namespace cse498 {
          */
         void PrintInventory() {
             std::ostringstream output;
-            output << m_inventory.GetAmount(ItemType::Wood) << ' ' << ItemTypeToString(ItemType::Wood) << " | "
-                   << m_inventory.GetAmount(ItemType::Stone) << ' ' << ItemTypeToString(ItemType::Stone) << " | "
-                   << m_inventory.GetAmount(ItemType::Metal) << ' ' << ItemTypeToString(ItemType::Metal);
+            output << m_inventory->GetAmount(ItemType::Wood) << ' ' << ItemTypeToString(ItemType::Wood) << " | "
+                   << m_inventory->GetAmount(ItemType::Stone) << ' ' << ItemTypeToString(ItemType::Stone) << " | "
+                   << m_inventory->GetAmount(ItemType::Metal) << ' ' << ItemTypeToString(ItemType::Metal);
 
             std::cout << output.str() << std::endl;
         }
@@ -90,6 +92,7 @@ namespace cse498 {
         InteractiveWorld() {
             floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
             wall_id = main_grid.AddCellType("wall", "Impenetrable wall.", '#');
+	    building_id = main_grid.AddCellType("building", "An impassable building.", 'B');
 
             main_grid.Load(std::vector<std::string>{
                     "#######################", "#                     #", "#                     #",
@@ -131,8 +134,9 @@ namespace cse498 {
          * Get the world inventory object
          * @return reference to world inventory
          */
-        InteractiveWorldInventory& GetInventory() { return m_inventory; }
-        const InteractiveWorldInventory& GetInventory() const { return m_inventory; }
+        InteractiveWorldInventory& GetInventory() { return *m_inventory; }
+        const InteractiveWorldInventory& GetInventory() const { return *m_inventory; }
+        std::shared_ptr<InteractiveWorldInventory> GetInventoryPtr() { return m_inventory; }
         /**
          * Have agent perform an action
          * @param agent Agent to perform action on
@@ -172,11 +176,6 @@ namespace cse498 {
                 // ForEachAdjacentNPC(neighbors, [](NPC &npc) { npc.Interact(); });
             }
 
-            // Don't walk on Buildings
-            if (IsBuildingAt(new_position)) {
-                return false;
-            }
-
             // Set the agent to its new position.
             agent.SetLocation(new_position);
 
@@ -194,15 +193,35 @@ namespace cse498 {
          * @param building building to add
          * @param position where to add in world
          */
-        void AddBuilding(Building& building, WorldPosition position) { building.SetLocation(Location(position)); }
+        void AddBuilding(Building& building, WorldPosition position) {
+		building.SetLocation(Location(position));
+	        main_grid[position] = building_id;
+	}
 
         /**
          * Add resource spawn to world
          * @param spawn resource spawn to add
          * @param position where to add spawn
          */
-        void AddResourceSpawn(std::shared_ptr<ResourceSpawn> spawn, WorldPosition position) {
-            spawn->SetLocation(Location(position));
+        void AddResourceSpawn(ResourceSpawn& spawn, WorldPosition position) {
+	        spawn.SetLocation(Location(position));
+	        main_grid[position] = building_id;
+        }
+
+	/**
+	 * Add Town hall to the world
+	 * @param th town hall
+	 * @param position where to add spawn
+	 */
+        void AddTownHall(TownHall& th, WorldPosition position) {
+	        th.SetLocation(Location(position));
+	        main_grid[position] = building_id;
+        }
+
+        void RemoveBuilding(Building& building) {
+	        if (building.GetLocation().IsPosition()) {
+		        main_grid[building.GetLocation().AsWorldPosition()] = floor_id; // restore tile
+	        }
         }
     };
 }; // namespace cse498

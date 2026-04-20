@@ -6,8 +6,12 @@
 
 using cse498::ItemType;
 #include "../../source/Worlds/Hub/InteractiveWorld.hpp"
+#include "../../source/Worlds/Hub/ResourceSpawn.hpp"
 
 static cse498::InteractiveWorld world;
+using cse498::ItemType;
+using cse498::ResourceSpawn;
+using cse498::WorldPosition;
 
 bool ApproxEqual(float a, float b, float tolerance = 1e-5f) { return std::abs(a - b) <= tolerance; }
 
@@ -15,9 +19,15 @@ TEST_CASE("Test ResourceProducer Constructor", "[core][InteractiveWorld][Resourc
     cse498::Building& farm = world.AddAgent<cse498::Building>("Farm");
     CHECK(farm.GetName() == "Farm");
 
+	auto spawnPtr = std::make_unique<ResourceSpawn>(
+	    world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
+	spawnPtr->SetSymbol('l');
+	ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
+	spawn.SetLocation(WorldPosition{5, 5});
+
     cse498::InteractiveWorldInventory inv;
     float baseRate = 1.0f;
-    cse498::ResourceProducer producer(farm, inv, ItemType::Wood, baseRate);
+    cse498::ResourceProducer producer(farm, spawn, ItemType::Wood, baseRate);
 
     CHECK(producer.GetRate() == baseRate);
 }
@@ -30,10 +40,16 @@ TEST_CASE("Test ResourceProducer Rate increase", "[core][InteractiveWorld][Resou
     farm.AddUpgrade(ItemType::Wood, 5);
     farm.SetRateModifier(0.25f);
 
+	auto spawnPtr = std::make_unique<ResourceSpawn>(
+	    world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
+	spawnPtr->SetSymbol('l');
+	ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
+	spawn.SetLocation(WorldPosition{5, 5});
+
     cse498::InteractiveWorldInventory inv;
     inv.AddItem(ItemType::Wood, 15);
     float baseRate = 1.0f;
-    cse498::ResourceProducer producer(farm, inv, ItemType::Wood, baseRate);
+    cse498::ResourceProducer producer(farm, spawn, ItemType::Wood, baseRate);
 
     CHECK(producer.GetRate() == baseRate);
     ItemType type = ItemType::Wood;

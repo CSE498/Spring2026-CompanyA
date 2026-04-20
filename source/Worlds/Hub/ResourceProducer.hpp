@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "Building.hpp"
-#include "InteractiveWorldInventory.hpp"
+#include "ResourceSpawn.hpp"
 
 namespace cse498 {
     /**
@@ -22,12 +22,12 @@ namespace cse498 {
         /**
          * Construct the ResourceProducer
          * @param building the building modifying the output rate
-         * @param inv       pointer to the world
+         * @param spawn the spawn for this resource
          * @param itemType    type of item being produced by this producer
          * @param startRate   base rate of production with no upgrades
          */
-        ResourceProducer(Building& building, InteractiveWorldInventory& inv, ItemType itemType, float startRate) :
-            m_inventory(inv) {
+        ResourceProducer(Building& building, ResourceSpawn& spawn, ItemType itemType, float startRate):
+            m_resourceSpawn(&spawn) {
             m_lastTime = std::chrono::steady_clock::now();
             m_outputType = itemType;
             m_baseRate = startRate;
@@ -72,13 +72,13 @@ namespace cse498 {
             // accumulator
             int whole = static_cast<int>(m_accumulator);
             if (whole > 0) {
-                m_inventory.AddItem(m_outputType, whole);
+		    m_resourceSpawn->AddResource(whole);
                 m_accumulator -= whole;
             }
         }
 
     private:
-        InteractiveWorldInventory& m_inventory; // World Inventory
+        ResourceSpawn* m_resourceSpawn;
         Building* m_building = nullptr; // Building modifying the output rate
         float m_baseRate{}; // Base production rate
         float m_rate{}; // Current Production Rate
