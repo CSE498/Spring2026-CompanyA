@@ -17,42 +17,49 @@
 #include "LevelBase.hpp"
 
 namespace cse498 {
-
     ///Placeholders until we're able to define level states
     const int LEVEL_ONE = 1;
     const int LEVEL_TWO = 2;
     const int LEVEL_THREE = 3;
     const std::string EXIT_FILE_STRING = "exit.txt";
 
+
+    /**
+     * @class RoomHolder
+     * @brief Manages room templates and loading for dungeon generation.
+     *
+     * @details Handles loading room layouts from files, selecting rooms based on
+     * weighted probability, and providing room data for the BSP tree to use.
+     */
     class BSPTree;
-    class RoomHolder { 
+
+    class RoomHolder {
     protected:
         std::vector<std::string> m_current_room; //Holds the currently selected/stored room
         std::string m_room_dir; //File path used to access the directory of different .txt rooms
-        std::string m_image_path = "../../../assets/";  //File path location for images
+        std::string m_image_path = "../../../assets/"; //File path location for images
 
         cse498::Random m_rng; //Random
-		cse498::WeightedSet<int> m_room_pool;
+        cse498::WeightedSet<int> m_room_pool;
 
     public:
-		RoomHolder(const LevelBase& level) 
-			: m_room_dir(level.GetRoomDir()),
-			  m_rng(),
-			  m_room_pool(level.GetRoomPool())
-		{}
+        RoomHolder(const LevelBase &level)
+            : m_room_dir(level.GetRoomDir()),
+              m_rng(),
+              m_room_pool(level.GetRoomPool()) {
+        }
 
         /// @brief Grabs the currently selected room from the WeightedSets room_pool
         /// @return returns currently selected room from the m_room_pool
-        [[nodiscard]] const std::vector<std::string>& GetCurrentRoom() {
+        [[nodiscard]] const std::vector<std::string> &GetCurrentRoom() {
             return m_current_room;
         }
 
 
         /// @brief Sets the m_current_room with a random room from a set pool of pre-defined rooms
-        void SetCurrentRoom() { 
+        void SetCurrentRoom() {
             auto determined_room = LoadRoom();
             m_current_room = determined_room;
-            
         }
 
         ///@brief Overloaded function dedicated to loading in the exit room to the next level, separate from the room_pool
@@ -63,22 +70,18 @@ namespace cse498 {
         /// @brief Grabs the width of the currently selected room
         /// @return int value of the room's width
         [[nodiscard]] int GetRoomWidth() const {
-
             return (m_current_room)[0].length();
-
         }
 
         /// @brief Grabs the height of the currently selected room
         /// @return int value of the room's height
-        [[nodiscard]] int GetRoomHeight() const{
-
+        [[nodiscard]] int GetRoomHeight() const {
             return (m_current_room).size();
         }
 
         /// @brief Grabs the center of the room
         /// @return integer pair (x,y) of coordinates that represent the center of the room
-        [[nodiscard]] std::pair<int,int> GetRoomCenter() const {
-
+        [[nodiscard]] std::pair<int, int> GetRoomCenter() const {
             auto width_midpoint = std::ceil(GetRoomWidth() / 2);
             auto height_midpoint = std::ceil(GetRoomHeight() / 2);
 
@@ -87,13 +90,13 @@ namespace cse498 {
 
         /// @brief Generates a room from the pool
         /// @return Generated room number
-        [[nodiscard]] std::string GenerateFilePath() { 
-			auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight()).value();
-			
-			auto sample_result = m_room_pool.Sample(room_select);
-			assert(sample_result.has_value());
+        [[nodiscard]] std::string GenerateFilePath() {
+            auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight()).value();
 
-			std::string room = std::to_string(sample_result.value());
+            auto sample_result = m_room_pool.Sample(room_select);
+            assert(sample_result.has_value());
+
+            std::string room = std::to_string(sample_result.value());
             assert(room != "");
 
             return room;
@@ -102,7 +105,8 @@ namespace cse498 {
         /// @brief Picks an image file for an item/tile/agent/other creature
         /// @param tile_c is a char representing the current square of the dungeon
         std::string GetImageFile(char tile_c /*, char adj_tile*/) {
-            if (!tile_c) {}
+            if (!tile_c) {
+            }
 
             int level = LEVEL_ONE; // TODO: Add a counter for number of levels generated
             std::string file_path = m_image_path;
@@ -110,22 +114,19 @@ namespace cse498 {
             // World objects (floor tiles, walls, doors, barriers, ect.)
             if (tile_c == '&' || tile_c == '^' || tile_c == '<' || tile_c == '>' || tile_c == '$'
                 || tile_c == 'd' || tile_c == 's' || tile_c == ' ' || tile_c == 'v') {
-
                 // Level folder
                 file_path += "world/";
-                if (level == LEVEL_ONE) {file_path += "forest/";}
-                else if (level == LEVEL_TWO) {file_path += "cave/";}
-                else if (level == LEVEL_THREE) {file_path += "dungeon/";}
-                else {file_path += "castle/";}
+                if (level == LEVEL_ONE) { file_path += "forest/"; } else if (level == LEVEL_TWO) {
+                    file_path += "cave/";
+                } else if (level == LEVEL_THREE) { file_path += "dungeon/"; } else { file_path += "castle/"; }
 
                 // Floor tiles
                 if (tile_c == ' ' || tile_c == 'v') {
                     file_path += "floor_tiles/tile_";
 
-                    if (level == LEVEL_ONE) {file_path += "grass_";}
-                    else if (level == LEVEL_TWO) {file_path += "cave_";}
-                    else if (level == LEVEL_THREE) {file_path += "stoneBrick_";}
-                    else {file_path += "wood_";}
+                    if (level == LEVEL_ONE) { file_path += "grass_"; } else if (level == LEVEL_TWO) {
+                        file_path += "cave_";
+                    } else if (level == LEVEL_THREE) { file_path += "stoneBrick_"; } else { file_path += "wood_"; }
 
                     // Regular floor tile
                     if (tile_c == ' ') {
@@ -134,7 +135,7 @@ namespace cse498 {
                     }
 
                     // Variant floor tiles
-                    file_path += std::to_string(m_rng.GetValue(2,5).value());
+                    file_path += std::to_string(m_rng.GetValue(2, 5).value());
                     file_path += ".png";
                     return file_path;
                 }
@@ -147,52 +148,44 @@ namespace cse498 {
                     // External walls/barriers
                     if (tile_c == '&' || tile_c == '^' || tile_c == '<' || tile_c == '>' || tile_c == '$'
                         || tile_c == 'd' || tile_c == 's') {
-                            file_path += "external/";
+                        file_path += "external/";
 
-                            // Regular door
-                            if(tile_c == 'd') {file_path += "door_";}
-                            // Everything else
-                            else {file_path += "border_";}
+                        // Regular door
+                        if (tile_c == 'd') { file_path += "door_"; }
+                        // Everything else
+                        else { file_path += "border_"; }
 
-                            // Position on grid
-                            if (tile_c == '&') {file_path += "bottom_";}
-                            else if (tile_c == '^') {file_path += "top_";}
-                            else if (tile_c == '<') {file_path += "left_";}
-                            else if (tile_c == '>') {file_path += "right_";}\
-                            else {
-                                // TODO: figure out how to determine if door is left or right
-                                file_path += "left_";
-                            }
-
-                            if (level == LEVEL_ONE) {file_path += "forest.png";}
-                            else if (level == LEVEL_TWO) {file_path += "cave.png";}
-                            else if (level == LEVEL_THREE) {file_path += "dungeon.png";}
-                            else {file_path += "castle.png";}
+                        // Position on grid
+                        if (tile_c == '&') { file_path += "bottom_"; } else if (
+                            tile_c == '^') { file_path += "top_"; } else if (
+                            tile_c == '<') { file_path += "left_"; } else if (
+                            tile_c == '>') { file_path += "right_"; } else {
+                            // TODO: figure out how to determine if door is left or right
+                            file_path += "left_";
                         }
+
+                        if (level == LEVEL_ONE) { file_path += "forest.png"; } else if (level == LEVEL_TWO) {
+                            file_path += "cave.png";
+                        } else if (level == LEVEL_THREE) { file_path += "dungeon.png"; } else {
+                            file_path += "castle.png";
+                        }
+                    }
                 }
-            }
-
-
-            else if (tile_c == 't') {
+            } else if (tile_c == 't') {
                 // TODO: Trap tile, waiting for image assests to be created
-            }
-            else if (tile_c == 'l') {
+            } else if (tile_c == 'l') {
                 // TODO: Loot tile, waiting for image assests to be created
-            }
-            else if (tile_c == 'm') {
+            } else if (tile_c == 'm') {
                 file_path += "agents/monsters/agent_monster_";
 
-                int monster = m_rng.GetValue(1,2).value();
+                int monster = m_rng.GetValue(1, 2).value();
                 if (monster == 1) {
                     file_path += "goblin.png";
-                }
-                else if (monster == 2) {
+                } else if (monster == 2) {
                     file_path += "skeleton.png";
                 }
                 return file_path;
-            }
-            else {
-
+            } else {
             }
             return file_path;
         }
@@ -202,7 +195,7 @@ namespace cse498 {
         std::vector<std::string> LoadRoom(bool state = false) {
             std::string selected_room = GenerateFilePath();
 
-			//std::cout << m_room_dir + selected_room + ".txt" << std::endl;
+            //std::cout << m_room_dir + selected_room + ".txt" << std::endl;
 
             std::ifstream file(m_room_dir + selected_room + ".txt"); // this will open one of the rooms
             if (!file.is_open()) {
@@ -213,12 +206,12 @@ namespace cse498 {
             std::vector<std::string> lines;
             std::string line;
 
-            if(state) { 
+            if (state) {
                 std::string exit_room = m_room_dir + EXIT_FILE_STRING;
                 file.close();
                 file.open(exit_room);
-            }            
-            
+            }
+
             assert(file.is_open());
 
             while (std::getline(file, line)) {
@@ -230,11 +223,6 @@ namespace cse498 {
             }
 
             return lines;
-
-
         }
-
     };
-
-
 }
