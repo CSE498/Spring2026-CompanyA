@@ -16,7 +16,7 @@ namespace cse498 {
 
 	/**
    * @class CaveLevel
-   * @brief
+   * @brief Class that contains information specific to Cave level
    *
    * @details
    * 

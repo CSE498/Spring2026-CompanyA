@@ -47,7 +47,7 @@ struct LinkedRooms {
         //RoomHolder mRoomHolder;
         std::vector<std::string> m_grid; //Grid we're rasterizing information from mBSP_Tree to
         std::vector<LinkedRooms> m_connected_rooms; //The x-y coord pairs of two rooms used for connecting the room pair
-        Random m_rng;
+        Random m_rng; //Random number generator
         // int m_offset_x; //x offset of room placement
         // int m_offset_y; //y offset of room placement
             
@@ -55,14 +55,13 @@ struct LinkedRooms {
 
         /// @brief Creates and initializes BSP Tree, RoomHolder, and grid for outputting dungeon level
         WorldGeneration(const LevelBase& level) 
-            : m_bsp(level) //For now, the constructor for BSP_tree room creation is going to generate rooms immediately when initialized, will reformat as level specifications become more detailed
+            : m_bsp(level) 
               //mRoomHolder(room_pool), 
               //m_grid(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'))
             { }
         
 
-        /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room 
-        ///relationship is created through PostOrderRoomConnect()
+        /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-room relationship is created through PostOrderRoomConnect()
         void CreateDungeon(int& level_value) { 
             LevelManager(level_value); //Loads in the width/height parameters of level
 
@@ -77,6 +76,8 @@ struct LinkedRooms {
             TunnelConnectDungeon();
         }
 
+        /// @brief Updates and clears the world grid, BSP tree, and connected rooms in order to create new dungeon world level 
+        /// @param level_value integer value that determines the current level of the game
         void Update(int& level_value) {
             m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); //reset grid
             m_bsp.ClearState(); //Clear BSP State
@@ -92,7 +93,7 @@ struct LinkedRooms {
         }
 
         /// @brief Grabs the Generated BSP Tree in order to extract room information to extract onto the grid
-        /// @return 
+        /// @return BSP tree object
         [[nodiscard]] BSP GetBSP() const {
             return m_bsp;
         }
@@ -110,7 +111,6 @@ struct LinkedRooms {
         void RasterizeGrid(const BSPNode& node) { 
             int room_height = node.vector_room.size();
              
-
             assert(room_height != 0); //Ensures room is properly assigned and not empty
 
             int room_width = node.vector_room[0].length();
@@ -150,15 +150,17 @@ struct LinkedRooms {
         /// @brief Parses through the list of Room Nodes (BSPNodes) that have a relation with each other and connects those
         void TunnelConnectDungeon() {
             for(auto &i : m_connected_rooms) {
-                ConnectTunnel(i);
+                ConnectBSPRooms(i);
             }
         }
 
         /**
-         * @brief Calculates the distance (x-y) between two rooms) and connects a corridor tunnel between them 
+         * @brief Connects the Rooms stored within the BSP Nodes
+         * 
+         * @details Calculates the distance (x-y) between two rooms) and connects a corridor tunnel between them 
          * taking into consideration their ascii symbol
          */
-        void ConnectTunnel(LinkedRooms RoomCoordinates) {
+        void ConnectBSPRooms(LinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
             auto const wall_set = {'1','2','3','4'};
 
@@ -204,10 +206,11 @@ struct LinkedRooms {
             }
         }
 
-        /// @brief DFS to go through the populated BSP tree in order to connect rooms together
+        /// @brief Post-order DFS algorithm that searches BSP Tree
+        /// @details DFS to go through the populated BSP tree in order to connect rooms together
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         /// @return (x,y) pair coordinate struct of room's location in the grid
-        Point PostOrderRoomConnect(BSPNode node) { //Need to change Node node to idx int later 
+        Point PostOrderRoomConnect(BSPNode node) { 
             if (node.left_child == -1 && node.right_child == -1) {
                 auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
 
@@ -274,7 +277,8 @@ struct LinkedRooms {
                     break;
 
             }
-            m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#'));
+            //Creates grid of size that's dependent on LevelState
+            m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); 
 
         }
     };

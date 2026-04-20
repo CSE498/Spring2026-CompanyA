@@ -35,27 +35,27 @@ namespace cse498 {
         int x, y, width, height; // (x,y) - (origin point of the grid (top-left corner))
                                  // (width, height) - dimension of the grid cut (lxw)
         std::string name; //Name of the node for debugging purposes
-        std::string file_name; //
+        std::string file_name; //placeholder just in case we're loading in images directly from BSPNodes
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
         
 
-        BSPNode() = default;
+        BSPNode() = default; //Default constructor
         BSPNode(int l, int r, int x, int y, int width, int height, std::string name) 
            : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {}
 
     };
     
 
-    static constexpr int DEFAULT_WIDTH = 125;
-    static constexpr int DEFAULT_HEIGHT = 100;
-    static constexpr int DEFAULT_WIDTH_THRESHOLD = 30;
-    static constexpr int DEFAULT_HEIGHT_THRESHOLD = 15;
-    static constexpr int DEFAULT_ITERATIONS = 2;
+    static constexpr int DEFAULT_WIDTH = 125; //Default width in case of error-state
+    static constexpr int DEFAULT_HEIGHT = 100; //Default height in case of error-state
+    static constexpr int DEFAULT_WIDTH_THRESHOLD = 30; //Default width-threshold in case of error-state
+    static constexpr int DEFAULT_HEIGHT_THRESHOLD = 15; //Default height-threshold in case of error-state
+    static constexpr int DEFAULT_ITERATIONS = 2; //Default iterations in case of error-state
 
-    constexpr double DOOR_EXIT_PROBABILITY_INCREMENT = 0.2;
-    constexpr double DOOR_EXIT_PROBABILITY_LIMIT = 1.0;
+    constexpr double DOOR_EXIT_PROBABILITY_INCREMENT = 0.2; //the probability rate at which exit door will spawn
+    constexpr double DOOR_EXIT_PROBABILITY_LIMIT = 1.0; // probability upper limit
 
-    ///Class which handles the creation, management, and modification of a Binary Space Partition (BSP) Tree in its dungeon creation
+    /// @brief Class which handles the creation, management, and modification of a Binary Space Partition (BSP) Tree in its dungeon creation
     class BSP {
     protected:
         RoomHolder m_room_holder; //Holds the rooms that populates the BSPNodes
@@ -74,13 +74,9 @@ namespace cse498 {
 
     public: 
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated 
-        /// @param 
+        /// @param level LevelBase Object that sets up the foundations for level Worlds
         BSP(const LevelBase& level) 
-			: m_room_holder(level)
-		{ 
-            // insert_split(m_iterations); //Creates BSP Tree
-            // PostOrderDFS(); //Grabs all the generated room slots from the tree
-        }
+			: m_room_holder(level) {}
 
         /// @brief Constructor call creates BSP Tree with a set seed
         /// @attention This constructor is purely meant to be used for debugging purposes to test proper Tree/Leaf Node initialization
@@ -114,6 +110,7 @@ namespace cse498 {
             PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
 
+        /// @brief Empties out the BSP-Tree + Leaf-node list vector, and resets the T/F state of exit_door's spawn
         void ClearState() { 
             m_BSP_tree.clear();
             m_leaf_nodes.clear();
@@ -122,7 +119,7 @@ namespace cse498 {
 
         /// @brief Ensures that no matter the width/height of a node split, a suitable room is found for that split 
         /// @param node leaf node that has a room stored in it
-        void RoomCompatibility(/* BSPNode &node */) { 
+        void RoomCompatibility() { 
             // bool valid_room = false; // To ensure that a valid room is found when generating dungeon
 
             auto& lower_threshold = mExitProbabilityState; //lower prob bound
@@ -172,7 +169,7 @@ namespace cse498 {
         }
 
         ////////////////////////////////////
-        //    BSP Tree Debug Info
+        //    BSP Tree Debug Functions
         ///////////////////////////////////
         
         /// @brief Generates Dungeon Map World outline of solely the splits from the BSP Tree without the rooms populated in them 
@@ -219,6 +216,12 @@ namespace cse498 {
                     std::cout << j << '\n';
                 }
             }
+        }
+
+        /// @brief Clears and rebuilds the BSP tree with current parameters
+        void RegenerateObjectState() {
+            ClearState();
+            CreateBSPTree();
         }
  
         /// @brief Sets RNG seed primarily for test case purposes

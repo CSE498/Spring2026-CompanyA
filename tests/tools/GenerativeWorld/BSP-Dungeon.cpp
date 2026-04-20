@@ -91,7 +91,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
         CHECK(BSP.GetBSPTree().size() == 0);
         CHECK(BSP.GetLeafNodes().size() == 0);
 
-        BSP.RepopulateTree();
+        BSP.CreateBSPTree();
 
         CHECK(BSP.GetBSPTree().size() != 0);
         CHECK(BSP.GetLeafNodes().size() != 0);

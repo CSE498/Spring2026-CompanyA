@@ -16,7 +16,7 @@ namespace cse498 {
 
 	/**
    * @class ForestLevel
-   * @brief
+   * @brief Class that contains information specific to Forest level
    *
    * @details
    * 

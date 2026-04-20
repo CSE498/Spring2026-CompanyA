@@ -60,7 +60,7 @@ namespace cse498 {
 				case 3: 
 					m_level = std::make_unique<CastleLevel>();
 					break;
-					
+
 				default:
 					m_level = std::make_unique<ForestLevel>();
 					break;
@@ -610,7 +610,7 @@ namespace cse498 {
 		}
 
 		else if (main_grid[new_position] == m_exit_door && dynamic_cast<TrashInterface*>(&agent)) { 
-			UserInput();
+			// UserInput();
 			Update();
 			new_position = WorldPosition(1,1); //default player location upon loading into new world
 		}

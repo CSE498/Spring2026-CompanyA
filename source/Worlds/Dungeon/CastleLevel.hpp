@@ -15,8 +15,8 @@
 namespace cse498 {
 
 	/**
-   * @class CaveLevel
-   * @brief
+   * @class CastleLevel
+   * @brief Class that contains information specific to Castle level
    *
    * @details
    * 
@@ -78,10 +78,10 @@ namespace cse498 {
 
 	public:
 		/**
-		 * @brief Constructs a CaveLevel.
+		 * @brief Constructs a CastleLevel.
 		 *
 		 * @details
-		 * Initializes the base CaveLevel with a generated room pool
+		 * Initializes the base CastleLevel with a generated room pool
 		 */
 		CastleLevel()
 		: m_room_pool(MakeRoomPool()) {}
@@ -92,12 +92,14 @@ namespace cse498 {
 		~CastleLevel() = default;
 
 		/**
-		 * 
+		 * @brief grabs the set of rooms that can spawn in the dungeon
 		 */
 		[[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override {
     		return m_room_pool;
 		}
 
+		/// @brief Grabs a string reference to the filepath of CastleLevel's room directory
+		/// @return string reference
 		[[nodiscard]] const std::string& GetRoomDir() const override {
 			return m_room_dir;
 		}
