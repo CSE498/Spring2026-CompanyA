@@ -125,7 +125,7 @@ public:
 
     [[nodiscard]] bool IsAlive() const { return mAlive; }
     [[nodiscard]] const AgentStats& GetStats() const { return mStats; }
-    void SetStats(const AgentStats& stats) { mStats = stats; }
+    virtual void SetStats(const AgentStats& stats) { mStats = stats; }
     [[nodiscard]] double GetCurrentHealth() const { return mStats.mHp; }
     [[nodiscard]] double GetMaxHealth() const { return mStats.mMaxHp; }
     [[nodiscard]] double GetAtk() const { return mStats.mAtk; }

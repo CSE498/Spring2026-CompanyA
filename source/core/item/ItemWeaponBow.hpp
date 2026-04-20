@@ -18,6 +18,9 @@ public:
     ItemWeaponBow(size_t id, const std::string& name, const std::string& image_path, int gold, const WorldBase& world) :
         ItemWeapon(id, name, image_path, gold, world) {
         SetImagePath("assets/items/weapons/bow.png");
+        SetRange(5.0);
+        SetDamage(3.0);
+        SetHitBonus(0.0);
     }
 
     bool IsBow() const override { return true; }

@@ -19,7 +19,7 @@ private:
 
 public:
     ItemWeapon(size_t id, const std::string& name, const std::string& image_path, int gold, const WorldBase& world) :
-        Item(id, name, image_path, gold, world) {}
+        Item(id, name, image_path, gold, world), m_range(0.0), m_damage(0.0), m_hit_bonus(0.0) {}
 
     bool IsWeapon() const override { return true; }
 
@@ -27,9 +27,9 @@ public:
     virtual bool IsSword() const { return false; }
     virtual bool IsBow() const { return false; }
 
-    double GetRange() { return m_range; }
-    double GetDamage() { return m_damage; }
-    double GetHitBonus() { return m_hit_bonus; }
+    [[nodiscard]] double GetRange() const { return m_range; }
+    [[nodiscard]] double GetDamage() const { return m_damage; }
+    [[nodiscard]] double GetHitBonus() const { return m_hit_bonus; }
     void SetRange(double range) { m_range = range; }
     void SetDamage(double damage) { m_damage = damage; }
     void SetHitBonus(double hit_bonus) { m_hit_bonus = hit_bonus; }

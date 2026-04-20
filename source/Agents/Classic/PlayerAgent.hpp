@@ -62,6 +62,19 @@ public:
      * Sets gold to a known value. Mainly useful for demos/tests.
      */
     void SetGold(std::size_t amount) { mGold = amount; }
+
+    void SetStats(const AgentStats& stats) override;
+
+    bool Initialize() override;
+
+    /**
+     * Recomputes effective attack and range from base stats plus the weapon in the selected hotbar hand slot.
+     */
+    void RefreshCombatFromHand();
+
+private:
+    /// Unmodified stats from the world (before hand weapon bonuses).
+    AgentStats mBaseCombatStats{};
 };
 
 } // namespace cse498
