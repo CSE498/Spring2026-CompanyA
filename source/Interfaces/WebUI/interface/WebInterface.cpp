@@ -26,44 +26,49 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <iomanip>
 #include <sstream>
 
 using namespace cse498;
 
 namespace {
 // Color constants
-constexpr cse498::Color kDimGray = cse498::Color::FromRGB255(0xcc, 0xcc, 0xcc);
+constexpr cse498::Color kTextPrimary = cse498::Color::FromRGB255(0xf4, 0xf7, 0xfb);
+constexpr cse498::Color kTextMuted = cse498::Color::FromRGB255(0x9f, 0xb0, 0xc8);
+constexpr cse498::Color kAccent = cse498::Color::FromRGB255(0x6b, 0xe2, 0xff);
+constexpr cse498::Color kAccentStrong = cse498::Color::FromRGB255(0x7c, 0xaa, 0xff);
 constexpr cse498::Color kCanvasBg = cse498::Color::FromRGB255(0x0c, 0x10, 0x17);
-constexpr cse498::Color kButtonColorDark = cse498::Color::FromRGB255(0x33, 0x33, 0x33);
-constexpr cse498::Color kButtonColorMedium = cse498::Color::FromRGB255(0x44, 0x44, 0x44);
-constexpr cse498::Color kButtonTextColorWhite = cse498::Color::FromRGB255(0xff, 0xff, 0xff);
-static_assert(kDimGray.R() == 0xcc && kDimGray.G() == 0xcc && kDimGray.B() == 0xcc);
+constexpr cse498::Color kPanelBorder = cse498::Color::FromRGB255(0x31, 0x3d, 0x57);
+constexpr cse498::Color kButtonColorDark = cse498::Color::FromRGB255(0x1a, 0x23, 0x36);
+constexpr cse498::Color kButtonColorMedium = cse498::Color::FromRGB255(0x22, 0x2d, 0x44);
+constexpr cse498::Color kButtonTextColorWhite = cse498::Color::FromRGB255(0xf4, 0xf7, 0xfb);
+static_assert(kTextPrimary.R() == 0xf4 && kTextPrimary.G() == 0xf7 && kTextPrimary.B() == 0xfb);
+static_assert(kTextMuted.R() == 0x9f && kTextMuted.G() == 0xb0 && kTextMuted.B() == 0xc8);
+static_assert(kAccent.R() == 0x6b && kAccent.G() == 0xe2 && kAccent.B() == 0xff);
 static_assert(kCanvasBg.R() == 0x0c && kCanvasBg.G() == 0x10 && kCanvasBg.B() == 0x17);
-static_assert(kButtonColorDark.R() == 0x33 && kButtonColorDark.G() == 0x33 && kButtonColorDark.B() == 0x33);
-static_assert(kButtonColorMedium.R() == 0x44 && kButtonColorMedium.G() == 0x44 && kButtonColorMedium.B() == 0x44);
-static_assert(kButtonTextColorWhite.R() == 0xff && kButtonTextColorWhite.G() == 0xff &&
-              kButtonTextColorWhite.B() == 0xff);
 
 // HUD and UI positioning constants
-constexpr float kHUDPositionX = 10.0f;
-constexpr float kHUDPositionY = 50.0f;
-constexpr int kHUDFontSize = 24;
+constexpr float kHUDPositionX = 18.0f;
+constexpr float kHUDPositionY = 34.0f;
+constexpr int kHUDFontSize = 17;
 
 // Menu layout constants
-constexpr int kMenuMainSpacing = 15;
-constexpr int kMenuPauseSpacing = 10;
-constexpr int kMenuInventorySpacing = 10;
-constexpr int kMenuPadding = 20;
+constexpr int kMenuMainSpacing = 18;
+constexpr int kMenuPauseSpacing = 14;
+constexpr int kMenuInventorySpacing = 14;
+constexpr int kMenuPadding = 28;
 
 // Menu title and text font sizes
-constexpr float kMainMenuTitleFontSize = 48.0f;
-constexpr float kPauseMenuTitleFontSize = 50.0f;
-constexpr float kSettingsMenuDescriptionFontSize = 24.0f;
-constexpr float kInventoryMenuTitleFontSize = 48.0f;
+constexpr float kMenuEyebrowFontSize = 12.0f;
+constexpr float kMainMenuTitleFontSize = 46.0f;
+constexpr float kPauseMenuTitleFontSize = 46.0f;
+constexpr float kSettingsMenuDescriptionFontSize = 18.0f;
+constexpr float kInventoryMenuTitleFontSize = 40.0f;
+constexpr float kMenuBodyFontSize = 16.0f;
 
 // Button dimensions and styling
-constexpr int kButtonWidth = 220;
-constexpr int kButtonHeight = 50;
+constexpr int kButtonWidth = 250;
+constexpr int kButtonHeight = 54;
 
 // Inventory menu constants
 constexpr int kInventorySlotSize = 100;
@@ -82,6 +87,68 @@ void SetLayoutVisible(WebLayout* layout, bool visible) {
         return;
     if (layout->IsVisible() != visible)
         layout->ToggleVisibility();
+}
+
+void StyleMenuLayout(WebLayout* layout, int width) {
+    if (!layout)
+        return;
+    layout->SetWidth(width);
+    layout->SetBorderWidth(1);
+    layout->SetBorderColor(kPanelBorder.ToHex());
+    layout->SetBorderRadius(26);
+    layout->SetBoxShadow("0 28px 90px rgba(0, 0, 0, 0.42)");
+}
+
+void StyleMenuTitle(WebTextbox* textbox, const std::string& color, float sizePx) {
+    if (!textbox)
+        return;
+    textbox->SetAlignment(WebTextbox::TextAlign::Center);
+    textbox->SetFontFamily("Inter");
+    textbox->SetFallbackFontFamily("system-ui, sans-serif");
+    textbox->SetFontSize(sizePx);
+    textbox->SetLineHeight(sizePx + 4.0f);
+    textbox->SetColor(color);
+    textbox->SetBold(true);
+    textbox->SetMaxWidth(540.0f);
+}
+
+void StyleMenuBody(WebTextbox* textbox, float sizePx = kMenuBodyFontSize) {
+    if (!textbox)
+        return;
+    textbox->SetAlignment(WebTextbox::TextAlign::Center);
+    textbox->SetFontFamily("Inter");
+    textbox->SetFallbackFontFamily("system-ui, sans-serif");
+    textbox->SetFontSize(sizePx);
+    textbox->SetLineHeight(sizePx + 8.0f);
+    textbox->SetColor(kTextMuted.ToHex());
+    textbox->SetMaxWidth(540.0f);
+}
+
+void StyleMenuButton(WebButton* button, const std::string& backgroundColor) {
+    if (!button)
+        return;
+    button->SetSize(kButtonWidth, kButtonHeight);
+    button->SetBackgroundColor(backgroundColor);
+    button->SetTextColor(kButtonTextColorWhite.ToHex());
+}
+
+std::string BuildOverworldHudText(const InteractiveWorld& overworld) {
+    std::ostringstream out;
+    const auto& items = overworld.GetInventory().GetItems();
+
+    auto readAmount = [&items](ItemType itemType) {
+        auto it = items.find(itemType);
+        return it == items.end() ? 0 : it->second;
+    };
+
+    out << "OVERWORLD\n";
+    out << "[I] Backpack\n";
+    out << "[Esc] Pause\n";
+    out << "--------------\n";
+    out << std::left << std::setw(6) << "Wood" << " " << readAmount(ItemType::Wood) << "\n";
+    out << std::left << std::setw(6) << "Stone" << " " << readAmount(ItemType::Stone) << "\n";
+    out << std::left << std::setw(6) << "Metal" << " " << readAmount(ItemType::Metal);
+    return out.str();
 }
 } // namespace
 
@@ -170,8 +237,12 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
     auto hudTextPtr = std::make_unique<WebTextbox>();
     mHUDTextbox = hudTextPtr.get();
     mHUDTextbox->SetCanvasPosition(kHUDPositionX, kHUDPositionY);
-    mHUDTextbox->SetFontSize(kHUDFontSize);
-    mHUDTextbox->SetColor(kDimGray.ToHex());
+    mHUDTextbox->SetFontFamily("ui-monospace");
+    mHUDTextbox->SetFallbackFontFamily("SFMono-Regular, Menlo, Monaco, Consolas, monospace");
+    mHUDTextbox->SetFontSize(15.0f);
+    mHUDTextbox->SetLineHeight(20.0f);
+    mHUDTextbox->SetColor(kTextPrimary.ToHex());
+    mHUDTextbox->SetBold(true);
     mCanvas->AddElement(std::move(hudTextPtr));
 
     SetupPauseMenu();
@@ -361,21 +432,30 @@ void WebInterface::SetupMainMenu() {
     mMainMenu->SetAlignItems(Alignment::Center);
     mMainMenu->SetSpacing(kMenuMainSpacing);
     mMainMenu->SetPadding(kMenuPadding);
+    StyleMenuLayout(mMainMenu, 520);
     mMainMenu->MountToLayout(*mRoot);
 
-    mElements.emplace_back(std::make_unique<WebTextbox>("Main Menu"));
+    mElements.emplace_back(std::make_unique<WebTextbox>("WEB INTERFACE"));
+    WebTextbox* eyebrowPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(eyebrowPtr, kAccent.ToHex(), kMenuEyebrowFontSize);
+    eyebrowPtr->MountToLayout(*mMainMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>("Nightfall Command"));
     WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
-    titlePtr->SetAlignment(WebTextbox::TextAlign::Center);
-    titlePtr->SetFontSize(kMainMenuTitleFontSize);
-    titlePtr->SetColor(kDimGray.ToHex());
+    StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), kMainMenuTitleFontSize);
     titlePtr->MountToLayout(*mMainMenu);
+
+    mElements.emplace_back(
+        std::make_unique<WebTextbox>("Explore the overworld, descend into the dungeon, and manage your inventory from one unified interface.")
+    );
+    WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(descPtr);
+    descPtr->MountToLayout(*mMainMenu);
 
     auto addButton = [this](const std::string& label, std::function<void()> callback) {
         auto button = std::make_unique<WebButton>(label);
         button->SetCallback(std::move(callback));
-        button->SetSize(kButtonWidth, kButtonHeight);
-        button->SetBackgroundColor(kButtonColorDark.ToHex());
-        button->SetTextColor(kDimGray.ToHex());
+        StyleMenuButton(button.get(), kButtonColorDark.ToHex());
         button->MountToLayout(*mMainMenu, Alignment::Center);
         mElements.emplace_back(std::move(button));
     };
@@ -393,22 +473,29 @@ void WebInterface::SetupPauseMenu() {
     mPauseMenu->SetAlignItems(Alignment::Center);
     mPauseMenu->SetSpacing(kMenuPauseSpacing);
     mPauseMenu->SetPadding(kMenuPadding);
+    StyleMenuLayout(mPauseMenu, 560);
     mPauseMenu->ToggleVisibility();
     mPauseMenu->MountToLayout(*mRoot);
 
-    mElements.emplace_back(std::make_unique<WebTextbox>("Game Paused"));
+    mElements.emplace_back(std::make_unique<WebTextbox>("SESSION PAUSED"));
+    WebTextbox* eyebrowPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(eyebrowPtr, kAccent.ToHex(), kMenuEyebrowFontSize);
+    eyebrowPtr->MountToLayout(*mPauseMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>("Take a breath."));
     WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
-    titlePtr->SetAlignment(WebTextbox::TextAlign::Center);
-    titlePtr->SetFontSize(kPauseMenuTitleFontSize);
-    titlePtr->SetColor(kDimGray.ToHex());
+    StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), kPauseMenuTitleFontSize);
     titlePtr->MountToLayout(*mPauseMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>("Resume your run, switch worlds, open settings, or return to the title screen."));
+    WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(descPtr);
+    descPtr->MountToLayout(*mPauseMenu);
 
     auto addButton = [this](const std::string& label, std::function<void()> callback) {
         auto button = std::make_unique<WebButton>(label);
         button->SetCallback(std::move(callback));
-        button->SetSize(kButtonWidth, kButtonHeight);
-        button->SetBackgroundColor(kButtonColorMedium.ToHex());
-        button->SetTextColor(kDimGray.ToHex());
+        StyleMenuButton(button.get(), kButtonColorMedium.ToHex());
         button->MountToLayout(*mPauseMenu, Alignment::Center);
         mElements.emplace_back(std::move(button));
     };
@@ -428,28 +515,30 @@ void WebInterface::SetupSettingsMenu() {
     mSettingsMenu->SetAlignItems(Alignment::Center);
     mSettingsMenu->SetSpacing(kMenuMainSpacing);
     mSettingsMenu->SetPadding(kMenuPadding);
+    StyleMenuLayout(mSettingsMenu, 520);
     mSettingsMenu->ToggleVisibility();
     mSettingsMenu->MountToLayout(*mRoot);
 
-    mElements.emplace_back(std::make_unique<WebTextbox>("Settings"));
+    mElements.emplace_back(std::make_unique<WebTextbox>("SETTINGS"));
+    WebTextbox* eyebrowPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(eyebrowPtr, kAccentStrong.ToHex(), kMenuEyebrowFontSize);
+    eyebrowPtr->MountToLayout(*mSettingsMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>("Interface Settings"));
     WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
-    titlePtr->SetAlignment(WebTextbox::TextAlign::Center);
-    titlePtr->SetFontSize(kMainMenuTitleFontSize);
-    titlePtr->SetColor(kDimGray.ToHex());
+    StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), 38.0f);
     titlePtr->MountToLayout(*mSettingsMenu);
 
-    mElements.emplace_back(std::make_unique<WebTextbox>("Settings are not available yet."));
+    mElements.emplace_back(
+        std::make_unique<WebTextbox>("This branch does not expose interactive settings yet, but the layout has been prepared for future controls.")
+    );
     WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
-    descPtr->SetAlignment(WebTextbox::TextAlign::Center);
-    descPtr->SetFontSize(kSettingsMenuDescriptionFontSize);
-    descPtr->SetColor(kDimGray.ToHex());
+    StyleMenuBody(descPtr, kSettingsMenuDescriptionFontSize);
     descPtr->MountToLayout(*mSettingsMenu);
 
     auto backButton = std::make_unique<WebButton>("Back");
     backButton->SetCallback([this]() { TransitionTo(mPreviousState); });
-    backButton->SetSize(kButtonWidth, kButtonHeight);
-    backButton->SetBackgroundColor(kButtonColorMedium.ToHex());
-    backButton->SetTextColor(kButtonTextColorWhite.ToHex());
+    StyleMenuButton(backButton.get(), kButtonColorMedium.ToHex());
     backButton->MountToLayout(*mSettingsMenu, Alignment::Center);
     mElements.emplace_back(std::move(backButton));
 }
@@ -462,16 +551,26 @@ void WebInterface::SetupInventoryMenu() {
     mInventoryMenu->SetAlignItems(Alignment::Center);
     mInventoryMenu->SetSpacing(kMenuInventorySpacing);
     mInventoryMenu->SetPadding(kMenuPadding);
+    StyleMenuLayout(mInventoryMenu, 780);
     mInventoryMenu->ToggleVisibility();
     mInventoryMenu->MountToLayout(*mRoot);
 
-    // Title
+    mElements.emplace_back(std::make_unique<WebTextbox>("BACKPACK"));
+    WebTextbox* eyebrowPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(eyebrowPtr, kAccent.ToHex(), kMenuEyebrowFontSize);
+    eyebrowPtr->MountToLayout(*mInventoryMenu);
+
     mElements.emplace_back(std::make_unique<WebTextbox>("Inventory"));
     WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
-    titlePtr->SetAlignment(WebTextbox::TextAlign::Center);
-    titlePtr->SetFontSize(kInventoryMenuTitleFontSize);
-    titlePtr->SetColor(kDimGray.ToHex());
+    StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), kInventoryMenuTitleFontSize);
     titlePtr->MountToLayout(*mInventoryMenu);
+
+    mElements.emplace_back(
+        std::make_unique<WebTextbox>("Click a backpack slot to swap it with the item currently held in your hotbar hand slot.")
+    );
+    WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(descPtr, 15.0f);
+    descPtr->MountToLayout(*mInventoryMenu);
 
     // Create grid layout for inventory items (backpack only, not hotbar)
     mElements.emplace_back(std::make_unique<WebLayout>("inventory-grid"));
@@ -520,9 +619,7 @@ void WebInterface::SetupInventoryMenu() {
     // Back button
     auto backButton = std::make_unique<WebButton>("Close");
     backButton->SetCallback([this]() { TransitionTo(mPreviousState); });
-    backButton->SetSize(kButtonWidth, kButtonHeight);
-    backButton->SetBackgroundColor(kButtonColorMedium.ToHex());
-    backButton->SetTextColor(kButtonTextColorWhite.ToHex());
+    StyleMenuButton(backButton.get(), kButtonColorMedium.ToHex());
     backButton->MountToLayout(*mInventoryMenu, Alignment::Center);
     mElements.emplace_back(std::move(backButton));
 }
@@ -642,22 +739,7 @@ void WebInterface::RenderHUD() {
     }
 
     if (mGameState == WebState::OVERWORLD) {
-        // Display the interactive world inventory in the HUD textbox
-        std::string inventoryText;
-        const auto& items = mInteractiveWorld->GetInventory().GetItems();
-
-        for (const auto& [itemType, amount]: items) {
-            inventoryText += std::string(ItemTypeToString(itemType));
-            inventoryText += ": ";
-            inventoryText += std::to_string(amount);
-            inventoryText += "\n";
-        }
-
-        if (inventoryText.empty()) {
-            inventoryText = "Inventory empty";
-        }
-
-        mHUDTextbox->SetText(inventoryText);
+        mHUDTextbox->SetText(BuildOverworldHudText(*mInteractiveWorld));
     } else {
         int canvasWidth;
         int canvasHeight;
@@ -696,7 +778,7 @@ void WebInterface::RenderHUD() {
                                  canvasHeight - kInventoryBottomOffset, itemScale);
             leftOffset += itemDrawSize;
         }
-        mHUDTextbox->SetText(""); // Clear HUD text when in dungeon since inventory is shown on the canvas
+        mHUDTextbox->SetText("DUNGEON\n[E] Interact\n[I] Backpack\n[1-0] Hotbar\n[Esc] Pause");
     }
 }
 
