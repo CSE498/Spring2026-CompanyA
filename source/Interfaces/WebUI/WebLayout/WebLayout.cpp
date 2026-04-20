@@ -418,7 +418,6 @@ void WebLayout::ApplyChildren() noexcept {
 
 /// @brief Applies all pending layout and style changes to the DOM.
 /// Calls ApplyStyling(), ApplyLayout(), and ApplyChildren() in order.
-/// No-op when the layout is currently hidden (mIsVisible == false).
 void WebLayout::Apply() noexcept {
     val style = mElement["style"];
     ApplyStyling(style);
