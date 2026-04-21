@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <array>
+#include <memory>
 
 #include "../../core/WorldBase.hpp"
 #include "WorldGeneration.hpp"
@@ -71,7 +72,7 @@ namespace cse498 {
     protected:
         enum ActionType { REMAIN_STILL = 0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
 
-        WorldGeneration m_generation;
+        std::unique_ptr<WorldGeneration> m_generation;
 
         size_t m_floor_id_l1v1; ///< Level 1 floor CellType IDs
         size_t m_floor_id_l1v2;
@@ -149,7 +150,7 @@ namespace cse498 {
         }
 
     public:
-        DungeonWorld() : m_generation(*m_level) {
+        DungeonWorld() {
             m_floor_id_l1v1 = main_grid.AddCellType("floor_l1v1", "Floor that agents can walk on. l1 v1", 'a');
             m_floor_id_l1v2 = main_grid.AddCellType("floor_l1v2", "Floor that agents can walk on. l1 v2", 'b');
             m_floor_id_l1v3 = main_grid.AddCellType("floor_l1v3", "Floor that agents can walk on. l1 v3", 'c');
@@ -251,12 +252,16 @@ namespace cse498 {
         /// @brief Generates the DungeonWorld based on the currently selected level from m_level
         void GenerateLevel() {
             LoadLevelData();
-            m_generation.CreateDungeon(m_level_num);
-            main_grid.Load(m_generation.GetDungeon());
+
+			m_generation = std::make_unique<WorldGeneration>(*m_level);
+			m_generation->CreateDungeon(m_level_num);
+			main_grid.Load(m_generation->GetDungeon());
         }
 
 		void AdvanceLevel() {
-			m_generation.ClearLevel();
+			if (m_generation) {
+				m_generation->ClearLevel();
+			}
 
             ++m_level_num;
             GenerateLevel();
