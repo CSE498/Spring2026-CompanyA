@@ -11,17 +11,12 @@
 #include <memory>
 #include <string>
 #include <type_traits>
-<<<<<<< HEAD
 #include <vector>
+#include <unordered_set>
+
 
 #include "../Agents/Classic/PlayerAgent.hpp"
 #include "../Analyze/AnalyticsManager.hpp"
-=======
-#include <unordered_set>
-#include <vector>
-
-#include "../Agents/Classic/PlayerAgent.hpp"
->>>>>>> main
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
@@ -254,7 +249,6 @@ public:
         }
     }
 
-<<<<<<< HEAD
     /// @brief UpdateWorld() is run after every agent has a turn.
     /// Override this function to manage background events for a world.
     /// (E.g., weather, growth, regular physics, etc.)
@@ -275,7 +269,6 @@ public:
     }
 
     [[nodiscard]] std::shared_ptr<AnalyticsManager> GetAnalyticsManager() const { return mAnalyticsManager; }
-=======
     /**
      * virtual just in case it is needed somewhere. I'm not expecting this to be overridden
      * This is to be called from 'DoAction' when the main player presses "E"
@@ -326,23 +319,6 @@ public:
         }
         return false;
     }
-
-
-    /// @brief UpdateWorld() is run after every agent has a turn.
-    /// Override this function to manage background events for a world.
-    /// (E.g., weather, growth, regular physics, etc.)
-    virtual void UpdateWorld() {}
-
-    /// @brief Run all agents repeatedly until an end condition is met.
-    virtual void Run() {
-        mRunOver = false;
-        while (!mRunOver) {
-            RunAgents();
-            RemoveDeadAgents();
-            UpdateWorld();
-        }
-    }
->>>>>>> main
 
 
     //////////////////////////////////////////////////////////////////////////
