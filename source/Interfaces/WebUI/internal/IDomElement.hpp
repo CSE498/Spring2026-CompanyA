@@ -78,7 +78,7 @@ public:
     ///        Can be overridden to allow side effects.
     /// @param element a pointer to the child element to remove
     virtual void RemoveChild(IDomElement* element) {
-        if (mElement.isNull() && mElement.isUndefined()) {
+        if (mElement.isNull() || mElement.isUndefined()) {
             GetConsole().call<void>("warn", "element with Id: " + Id() + " is undefined");
             return;
         };
