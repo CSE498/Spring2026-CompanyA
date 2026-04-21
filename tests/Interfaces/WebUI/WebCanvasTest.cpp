@@ -167,6 +167,14 @@ TEST_CASE("WebCanvas default constructor uses fallback id", "[web][canvas][id]")
     CHECK(canvas.Id() == std::string("web-canvas"));
 }
 
+TEST_CASE("WebCanvas reports missing DOM canvas gracefully", "[web][canvas][dom][error]") {
+    RemoveDomCanvas("missing-canvas-test");
+
+    WebCanvas canvas("missing-canvas-test");
+
+    CHECK(canvas.Id() == std::string("missing-canvas-test"));
+}
+
 TEST_CASE("WebCanvas Id() reflects explicit constructor id", "[web][canvas][id]") {
     CanvasHarness harness("canvas-test-1");
     CHECK(harness.canvas.Id() == std::string("canvas-test-1"));

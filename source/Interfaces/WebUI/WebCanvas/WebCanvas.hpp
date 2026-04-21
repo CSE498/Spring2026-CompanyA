@@ -165,6 +165,8 @@ private:
 
     Alignment mAlign = Alignment::Start; ///< Alignment within the parent layout.
     bool mMounted = false; ///< Whether this canvas is currently mounted.
+    bool mExisting = false; ///< Does the actual DOM <canvas> element exist
+
 };
 
 } // namespace cse498
