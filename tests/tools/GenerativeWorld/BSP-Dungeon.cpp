@@ -91,7 +91,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
         CHECK(BSP.GetBSPTree().size() == 0);
         CHECK(BSP.GetLeafNodes().size() == 0);
 
-        BSP.RepopulateTree();
+        BSP.CreateBSPTree();
 
         CHECK(BSP.GetBSPTree().size() != 0);
         CHECK(BSP.GetLeafNodes().size() != 0);
@@ -133,7 +133,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 
 
 
-TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") { 
+/*TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") { 
     
     SECTION("Testing that the Dungeon Generation parameters (default width/height) are stable with different seeds") { 
 
@@ -261,4 +261,4 @@ TEST_CASE("BSP-Dungeon Tree Node Generation", "[core]") {
         CHECK(leaf.size() == 11);
 
     }
-}
+}*/

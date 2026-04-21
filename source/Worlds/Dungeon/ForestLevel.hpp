@@ -15,12 +15,13 @@
 namespace cse498 {
 
 	/**
-   * @class ForestLevel
-   * @brief
-   *
-   * @details
-   * 
-   */
+	 * @class ForestLevel
+	 * @brief Forest-themed dungeon level providing room pool and directory.
+	 *
+	 * @details Implements LevelBase to provide forest-specific room configurations.
+	 * Rooms are weighted to control spawn probability, with standard rooms
+	 * having higher weights than special rooms.
+	 */
 	class ForestLevel : public LevelBase{
 		private:
 

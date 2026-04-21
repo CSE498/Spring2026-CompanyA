@@ -9,6 +9,6 @@
 -mmmm[mmm]mmm[mmm]mmm[mmm=
 -momm[mmm]mmm[mmm]mmm[mmm=
 -mmmmmmmm]mmmmmmm]mmmmmmm=
--mmmgsmmm]mmmlmmm]mmssmmm=
+-mmmgsmmm]mmmtmmm]mmssmmm=
 -mmmmmmqm]mmmmmmm]mmnmmmm=
 00000000000000000000000000
