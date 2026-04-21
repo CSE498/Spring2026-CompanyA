@@ -20,7 +20,7 @@
 #include "../ImageManager.hpp"
 #include "../Menu.hpp"
 #include "../Text.hpp"
-#include "DungeonWorld.hpp"
+#include "../source/Worlds/Dungeon/DungeonWorld.hpp"
 #include "OverWorld.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
 

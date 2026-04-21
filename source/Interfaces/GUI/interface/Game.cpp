@@ -64,140 +64,142 @@ namespace cse498
         };
 
         // Grass variants
-        if (!LoadCheck("grass", std::string(ASSETS_DIR) + "Tiles/grass.png"))
+        if (!LoadCheck("grass", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_1.png"))
             return false;
-        if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "Tiles/grass_flowers.png"))
+        if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_2.png"))
             return false;
-        if (!LoadCheck("grass_bones", std::string(ASSETS_DIR) + "Tiles/grass_bones.png"))
+        if (!LoadCheck("grass_bones", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_3.png"))
             return false;
-        if (!LoadCheck("grass_mud", std::string(ASSETS_DIR) + "Tiles/grass_mud.png"))
+        if (!LoadCheck("grass_mud", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_4.png"))
             return false;
-        if (!LoadCheck("grass_rock", std::string(ASSETS_DIR) + "Tiles/grass_rock.png"))
+        if (!LoadCheck("grass_rock", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_5.png"))
             return false;
 
         // Structure
-        if (!LoadCheck("entrance", std::string(ASSETS_DIR) + "Tiles/grass_left_entrance.png"))
+        if (!LoadCheck("entrance", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_left_forest.png"))
             return false;
 
         // Border walls
-        if (!LoadCheck("wall_left", std::string(ASSETS_DIR) + "Tiles/grass_wall_left.png"))
+        if (!LoadCheck("wall_left", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_left_forest.png"))
             return false;
-        if (!LoadCheck("wall_right", std::string(ASSETS_DIR) + "Tiles/grass_wall_right.png"))
+        if (!LoadCheck("wall_right", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_right_forest.png"))
             return false;
-        if (!LoadCheck("wall_top", std::string(ASSETS_DIR) + "Tiles/grass_wall_up.png"))
+        if (!LoadCheck("wall_top", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png"))
             return false;
-        if (!LoadCheck("wall_bottom", std::string(ASSETS_DIR) + "Tiles/grass_wall_bottom.png"))
+        if (!LoadCheck("wall_bottom", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_bottom_forest.png"))
             return false;
-        if (!LoadCheck("wall_corner", std::string(ASSETS_DIR) + "Tiles/grass_wall_up.png"))
+        if (!LoadCheck("wall_corner", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png"))
             return false;
 
         // Mobs
-        if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png"))
+        if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_skeleton.png"))
             return false;
 
         // --- Level 1 floors (forest) ---
-        if (!LoadCheck("floor_l1v1", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_1.png")) return false;
-        if (!LoadCheck("floor_l1v2", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_2.png")) return false;
-        if (!LoadCheck("floor_l1v3", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_3.png")) return false;
-        if (!LoadCheck("floor_l1v4", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_4.png")) return false;
-        if (!LoadCheck("floor_l1v5", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_5.png")) return false;
+        if (!LoadCheck("floor_l1v1", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_1.png")) return false;
+        if (!LoadCheck("floor_l1v2", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_2.png")) return false;
+        if (!LoadCheck("floor_l1v3", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_3.png")) return false;
+        if (!LoadCheck("floor_l1v4", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_4.png")) return false;
+        if (!LoadCheck("floor_l1v5", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_5.png")) return false;
         // --- Level 2 floors (cave) ---
-        if (!LoadCheck("floor_l2v1", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_1.png")) return false;
-        if (!LoadCheck("floor_l2v2", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_2.png")) return false;
-        if (!LoadCheck("floor_l2v3", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_3.png")) return false;
-        if (!LoadCheck("floor_l2v4", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_4.png")) return false;
-        if (!LoadCheck("floor_l2v5", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_5.png")) return false;
+        if (!LoadCheck("floor_l2v1", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_1.png")) return false;
+        if (!LoadCheck("floor_l2v2", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_2.png")) return false;
+        if (!LoadCheck("floor_l2v3", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_3.png")) return false;
+        if (!LoadCheck("floor_l2v4", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_4.png")) return false;
+        if (!LoadCheck("floor_l2v5", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_5.png")) return false;
         // --- Level 3 floors (dungeon) ---
-        if (!LoadCheck("floor_l3v1", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_1.png")) return false;
-        if (!LoadCheck("floor_l3v2", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_2.png")) return false;
-        if (!LoadCheck("floor_l3v3", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("floor_l3v4", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_4.png")) return false;
-        if (!LoadCheck("floor_l3v5", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_5.png")) return false;
+        if (!LoadCheck("floor_l3v1", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_1.png")) return false;
+        if (!LoadCheck("floor_l3v2", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_2.png")) return false;
+        if (!LoadCheck("floor_l3v3", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
+        if (!LoadCheck("floor_l3v4", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_4.png")) return false;
+        if (!LoadCheck("floor_l3v5", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_5.png")) return false;
         // --- Level 4 floors (castle) ---
-        if (!LoadCheck("floor_l4v1", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_1.png")) return false;
-        if (!LoadCheck("floor_l4v2", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_2.png")) return false;
-        if (!LoadCheck("floor_l4v3", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_3.png")) return false;
-        if (!LoadCheck("floor_l4v4", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_4.png")) return false;
-        if (!LoadCheck("floor_l4v5", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_5.png")) return false;
+        if (!LoadCheck("floor_l4v1", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_1.png")) return false;
+        if (!LoadCheck("floor_l4v2", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_2.png")) return false;
+        if (!LoadCheck("floor_l4v3", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_3.png")) return false;
+        if (!LoadCheck("floor_l4v4", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_4.png")) return false;
+        if (!LoadCheck("floor_l4v5", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_5.png")) return false;
 
         // --- Generic wall (#) ---
-        if (!LoadCheck("wall", std::string(ASSETS_DIR) + "Tiles/black_tile.png")) return false;
+        if (!LoadCheck("wall", std::string(ASSETS_DIR) + "/" + + "gui/black_tile.png")) return false;
 
         // --- Level 1 walls (forest) ---
-        if (!LoadCheck("wall_l1v1", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v2", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_bottom_forest.png")) return false;
-        if (!LoadCheck("wall_l1v13", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_left_forest.png")) return false;
-        if (!LoadCheck("wall_l1v4", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_right_forest.png")) return false;
-        if (!LoadCheck("wall_l1v5", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v6", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v7", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/door_left_forest.png")) return false;
-        if (!LoadCheck("wall_l1v8", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/door_right_forest.png")) return false;
+        if (!LoadCheck("wall_l1v1", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v2", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_bottom_forest.png")) return false;
+        if (!LoadCheck("wall_l1v13", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_left_forest.png")) return false;
+        if (!LoadCheck("wall_l1v4", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_right_forest.png")) return false;
+        if (!LoadCheck("wall_l1v5", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v6", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v7", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_left_forest.png")) return false;
+        if (!LoadCheck("wall_l1v8", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_right_forest.png")) return false;
         // --- Level 2 walls (cave) ---
-        if (!LoadCheck("wall_l2v1", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v2", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_bottom_cave.png")) return false;
-        if (!LoadCheck("wall_l2v3", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_left_cave.png")) return false;
-        if (!LoadCheck("wall_l2v4", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_right_cave.png")) return false;
-        if (!LoadCheck("wall_l2v5", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v6", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v7", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/door_left_cave.png")) return false;
-        if (!LoadCheck("wall_l2v8", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/door_right_cave.png")) return false;
+        if (!LoadCheck("wall_l2v1", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v2", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_bottom_cave.png")) return false;
+        if (!LoadCheck("wall_l2v3", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_left_cave.png")) return false;
+        if (!LoadCheck("wall_l2v4", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_right_cave.png")) return false;
+        if (!LoadCheck("wall_l2v5", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v6", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v7", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/door_left_cave.png")) return false;
+        if (!LoadCheck("wall_l2v8", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/door_right_cave.png")) return false;
         // --- Level 3 walls (dungeon) ---
-        if (!LoadCheck("wall_l3v1", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v2", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_bottom_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v3", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_left_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v4", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_right_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v5", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v6", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v7", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_left_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v8", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v1", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v2", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_bottom_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v3", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v4", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v5", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v6", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v7", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v8", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_right_dungeon.png")) return false;
         // --- Level 4 walls (castle) ---
-        if (!LoadCheck("wall_l4v1", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v2", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_bottom_castle.png")) return false;
-        if (!LoadCheck("wall_l4v3", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_left_castle.png")) return false;
-        if (!LoadCheck("wall_l4v4", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_right_castle.png")) return false;
-        if (!LoadCheck("wall_l4v5", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v6", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v7", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/door_left_castle.png")) return false;
-        if (!LoadCheck("wall_l4v8", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/door_right_castle.png")) return false;
+        if (!LoadCheck("wall_l4v1", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v2", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_bottom_castle.png")) return false;
+        if (!LoadCheck("wall_l4v3", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_left_castle.png")) return false;
+        if (!LoadCheck("wall_l4v4", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_right_castle.png")) return false;
+        if (!LoadCheck("wall_l4v5", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v6", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v7", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/door_left_castle.png")) return false;
+        if (!LoadCheck("wall_l4v8", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/door_right_castle.png")) return false;
 
         // --- Shared special tiles ---
-        if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_defense.png")) return false;
-        if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png")) return false;
-        if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "Mobs/goblin.png")) return false;
-        if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_right_dungeon.png")) return false;
-        if (!LoadCheck("exit", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
+        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" + + "items/item_potion_defense.png")) return false;
+        if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_skeleton.png")) return false;
+        if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_goblin.png")) return false;
+        if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("exit", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_left_dungeon.png")) return false;
 
         // Item sprites — keyed by item name to match what Inventory stores
-        if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +1", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +2", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +3", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +4", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +5", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +1", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +2", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +3", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +4", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +5", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
 
-        if (!LoadCheck("Bow", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +1", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +2", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +3", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +4", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +5", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +1", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +2", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +3", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +4", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +5", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
 
-        if (!LoadCheck("Healing Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_healing.png")) return false;
-        if (!LoadCheck("Defense Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_defense.png")) return false;
-        if (!LoadCheck("Speed Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_speed.png")) return false;
+        if (!LoadCheck("Healing Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_healing.png")) return false;
+        if (!LoadCheck("Defense Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_defense.png")) return false;
+        if (!LoadCheck("Speed Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_speed.png")) return false;
 
-        if (!LoadCheck("Axe", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_axe.png")) return false;
-        if (!LoadCheck("Pickaxe", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_pickaxe.png")) return false;
-        if (!LoadCheck("Shovel", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_shovel.png")) return false;
+        if (!LoadCheck("Axe", std::string(ASSETS_DIR) + "/" + + "items/item_axe.png")) return false;
+        if (!LoadCheck("Pickaxe", std::string(ASSETS_DIR) + "/" + + "items/item_pickaxe.png")) return false;
+        if (!LoadCheck("Shovel", std::string(ASSETS_DIR) + "/" + + "items/item_shovel.png")) return false;
 
         // Player
-        if (!LoadCheck("player", std::string(ASSETS_DIR) + "Player/player.png"))
+        if (!LoadCheck("player", std::string(ASSETS_DIR) + "/" + + "agents/playerCharacter/agent_player.png"))
             return false;
 
         // UI
-        if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/Player/inventory_bar.png"))
+        if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/" + + "/gui/inventory_bar.png"))
             return false;
+
+        std::cout << "Asset loads complete." << std::endl;
 
         // Analytics setup
         mAnalyticsManager = std::make_shared<AnalyticsManager>();
