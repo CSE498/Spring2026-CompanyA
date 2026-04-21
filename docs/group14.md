@@ -69,22 +69,16 @@ Legend:
 - **ResourceProducer:** Generates one resource type over time into its matching spawn. The paired building level modifies the output rate.
 - **InteractiveWorldSaveManager:** Saves and loads world state used by the interactive world demo.
 
-## Current Limitation
-
-The current upgrade and selling flow works through a simple resource-management menu. Buildings are present in the demo, hooked into production, and serve as their lane's intermediate storage, but the interaction system is still an early version.
-
-More specifically:
-
-- `Building::Upgrade(...)` exists at the model level and is now exposed through the resource-management agent.
-- The text interface supports interaction through the manager agent, but the system still uses single-resource upgrade costs.
-- Resource selling is available through the same manager interaction point.
+## Next Steps
 
 The likely next step is to extend that resource-management interaction point so it can:
 
-- inspect all upgradeable buildings
 - spend wood, stone, and metal on building upgrades
-- allow selling stored resources for gold
+- support richer upgrade rules than the current one-resource-per-upgrade model
+- optionally handle selling from building-local storage if the design keeps building banks player-facing
 - centralize future town hall upgrade logic
+
+On that note, TownHall will be extended to have an upgrade path, changing/affecting game state in some way
 
 ## Manual Testing
 

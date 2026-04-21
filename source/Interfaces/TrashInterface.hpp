@@ -102,8 +102,7 @@ public:
             case 'e':
                 action_id = GetActionID("interact");
                 break;
-            case 'q': 
-            {
+            case 'q': {
                 const auto* interactive_world = dynamic_cast<const InteractiveWorld*>(&world);
                 if (interactive_world) {
                     InteractiveWorldSaveManager save_manager;
