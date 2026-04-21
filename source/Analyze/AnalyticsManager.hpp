@@ -15,21 +15,17 @@
 
 namespace cse498 {
 
+// Struct to hold stats for a single run, can be expanded as needed
+struct RunStats {
+    double damageDealt = 0.0;
+    int enemiesKilled = 0;
+};
+
 class AnalyticsManager {
 private:
-    /**
-     * Stores the players health values over time
-     */
-    DataLog mHealthLog;
-
-    /**
-     * Stores the number of enemies over time
-     */
-    DataLog mEnemiesTrackedLog;
-
-    /**
-     * Stores the damage dealt by the player over time
-     */
+    // Initial DataLogs for keeping track of data(Initial placeholders Logs for
+    // now, can be changed based on what we want to track)
+    DataLog mEnemiesKilledLog;
     DataLog mDamageDealtLog;
 
 
@@ -38,6 +34,8 @@ private:
      */
     ActionLog mActionLog;
 
+    RunStats mCurrentRunStats; // Struct to hold stats for the current run
+
 public:
     /**
      * Default constructor for the AnalyticsManager
@@ -45,14 +43,23 @@ public:
     AnalyticsManager() = default;
 
     /**
-     * Clears the health log
+     * Resets the current run stats to their default values.
      */
-    void ResetHealthLog();
+    void ResetCurrentRunStats() { mCurrentRunStats = {}; }
+
+    void LogRunDamage(double amount);
+
+    void LogRunEnemiesKilled(int count);
 
     /**
-     * Clears the enemies tracked log
+     * Returns the current run stats as a struct.
      */
-    void ResetEnemiesTrackedLog();
+    RunStats GetCurrentRunStats() const { return mCurrentRunStats; };
+
+    /*
+    Resets the enemies killed log
+    */
+    void ResetEnemiesKilledLog();
 
     /**
      * Clears the damage dealt log
@@ -69,17 +76,10 @@ public:
      */
     void Reset();
 
-    /**
-     * Adds a new health value to the health log
-     * @param health The health value to be added to the log
-     */
-    void LogHealth(double health);
-
-    /**
-     * Adds a new enemy count value to the enemies tracked log
-     * @param count_enemies The enemy count value to be added to the log
-     */
-    void LogEnemiesTracked(double count_enemies);
+    /*
+    Adds a new enemy count value to the enemies killed log
+    */
+    void LogEnemiesKilled(double count_enemies);
 
     /**
      * Adds a new damage dealt value to the damage dealt log
@@ -87,18 +87,10 @@ public:
      */
     void LogDamageDealt(double damage);
 
-    /**
-     * Returns a const reference to the health log
-     * @return A const reference to the health log
-     */
-    [[nodiscard]] const DataLog& GetHealthLog() const noexcept;
-
-
-    /**
-     * Returns a const reference to the enemies tracked log
-     * @return A const reference to the enemies tracked log
-     */
-    [[nodiscard]] const DataLog& GetEnemiesTrackedLog() const noexcept;
+    /*
+    Returns a const reference to the enemies killed log
+    */
+    [[nodiscard]] const DataLog& GetEnemiesKilledLog() const noexcept;
 
     /**
      * Returns a const reference to the damage dealt log

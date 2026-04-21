@@ -43,12 +43,7 @@ std::optional<StatSummary> StatsTracker::BuildSeriesSummary(const std::string& k
 DashboardSnapshot StatsTracker::BuildSnapshot(const AnalyticsManager& analytics) const {
     DashboardSnapshot snapshot;
 
-
-    if (auto summary = BuildSeriesSummary("health", "Health", analytics.GetHealthLog()); summary.has_value()) {
-        snapshot.numericStats.push_back(*summary);
-    }
-
-    if (auto summary = BuildSeriesSummary("enemies_tracked", "Enemies Tracked", analytics.GetEnemiesTrackedLog());
+    if (auto summary = BuildSeriesSummary("enemies_killed", "Enemies Killed", analytics.GetEnemiesKilledLog());
         summary.has_value()) {
         snapshot.numericStats.push_back(*summary);
     }
