@@ -1,54 +1,102 @@
-The interactive world (or overworld) will act as a resource and building management system. The player will gather resources in the dungeon and the overworld that can be used to upgrade buildings via NPC’s. Each building will have upgrades that will increase the output multiplier for a specific resource. Upgrading a building will be done by interacting with the NPC associated with the building. For example, If you want to upgrade the Lumber Yard to increase the production of Wood, you would go up to the Lumberjack NPC to access the next upgrade. Resources will be generated at some rate (# items / second). These resources will be used to upgrade the buildings and the base’s health.
+The interactive world currently functions as a resource logistics and building-management demo. As it exists in the Group 14 demo today, the world contains a central town hall, one resource bank per resource type, one resource spawn per resource type, and one upgradeable building per resource type.
 
-## Classes
+The main gameplay loop currently visible in the demo is:
 
-- **InteractiveWorld:** Main class for the world. Stores NPC’s, Player, Agents, Buildings ect…
-- **InteractiveWorldInventory:** Holds the resources for the world. Resources are stored in a map<ItemType, size_t>. The 3 types of resources are Wood, Stone, and Metal
-- **ResourceProducer:** Responsible for producing one kind of ItemType at a rate of ItemType/second. Because items are stored as ints, an accumulator float variable will count the fraction of a resource that has been produced. When the accumulator is >= 1.0 then the resource will add the accumulated amount as an int to the InteractiveWorldInventory  and keep any decimal in the accumulator. ResourceProducer will have an association to 1 Building. A building will modify the output rate of a ResourceProducer. The more a building is upgraded, the higher the output rate.
-- **Building:** Modifies the output rate of 1 ResourceProducer. Has a vector of upgrades. The higher the level, the higher the rate multiplier for the ResourceProducer. Upgrading the building requires a specific quantity of a certain ItemType.
-- **NPC:** The interaction point for the player to upgrade a Building. Based on some requirements the player will request an upgrade to the building that the NPC is associated with. NPCs do not have any agent behavior.
-- **Interactive World Save Manager:** Saves and loads the world data such as Inventory, Building levels, base health, ect…
+- Resources are generated into a `ResourceSpawn` by a `ResourceProducer`.
+- A fetch agent moves from that spawn to the matching `ResourceBank`.
+- A second fetch agent moves from that bank to the `TownHall` for final deposit.
+- Each resource lane has an adjacent upgradeable building that controls that lane's production rate.
 
-## Enums and Structs
+This is the current in-demo stand-in for the longer-term resource flow. The likely direction is that the building and bank responsibilities will be merged more tightly so the world does not need as many separate structures for each resource line.
 
-- **ItemType (enum):** Represents a resource used for upgrading such as Wood, Stone, Metal.
-- **BuildingUpgrade (struct):** Represents the item type needed for a building upgrade and the amount of said item needed.
-- **UpgradeRejectionType (enum):** Why the upgrade was rejected
+## Current Demo State
 
+The current Group 14 demo has:
 
-Testing with the `simple` executable
-=====================
+- `1` `TownHall`
+- `3` `ResourceSpawn`s
+- `3` `ResourceBank`s
+- `3` upgradeable `Building`s
+- `6` `FetchAgent`s
+- a farming agent present in the demo
 
-The Group 14 classes are all wired into the demo in `source/simple_main.cpp`.
-That makes `simple` the easiest way to do a manual integration test for:
+The resource lanes are:
 
-- `InteractiveWorld`
-- `InteractiveWorldInventory`
-- `Building`
-- `NPC`
-- `ResourceProducer`
-- `InteractiveWorldSaveManager`
+- Wood: `l` spawn -> `B` bank -> `T` town hall, with `L` as the upgradeable building
+- Stone: `q` spawn -> `B` bank -> `T` town hall, with `Q` as the upgradeable building
+- Metal: `m` spawn -> `B` bank -> `T` town hall, with `M` as the upgradeable building
 
-Controls in the demo:
+The town hall is placed in the center of the map. The three resource spawns are placed in the corners farthest from the player start. Each bank is placed between its matching spawn and the town hall, and each upgradeable building is placed directly next to its matching bank.
 
-- `W`, `A`, `S`, `D` move the player
-- `E` interacts with an adjacent NPC
-- `Q` quits and saves to `source/interactive_world_save.json`
+## Demo Layout
 
-What to do in `simple`
---------------------------
+Example layout of the current demo:
 
-1. Confirm the overworld loads and shows the player `@` plus the three NPCs:
-   `L`, `M`, and `X`.
-2. At the starting position, press `E`. The player begins next to the
-   lumberjack NPC, so this should exercise the NPC/building upgrade path.
-   On a fresh run it should fail first because the world starts with only
-   `10 Wood` and the first lumber yard upgrade costs `15 Wood`.
-3. Watch the inventory line printed after each turn. Resource producers update
-   every loop, so the wood/stone/metal totals should increase over time.
-4. After enough turns have passed for wood to reach at least `15`, stand next
-   to `L` and press `E` again. This should succeed and exercise:
-   inventory use, NPC upgrade logic, and building level progression.
-5. Press `Q` to quit. This should create or update
-   `source/interactive_world_save.json`, which is the manual test for the save
-   manager path currently used by the demo.
+```text
+Wood | Stone | Metal totals are printed above the map each turn
++-----------------------+
+|#######################|
+|#@                   l#|
+|#                   1 #|
+|#              LB     #|
+|#             72      #|
+|#          T          #|
+|#      4       6      #|
+|#    QB        MB     #|
+|# 3                 5 #|
+|#q                   m#|
+|#######################|
++-----------------------+
+```
+
+Legend:
+
+- `T` is the town hall
+- `B` is a resource bank
+- `L` is the lumber yard building and `l` is the wood spawn
+- `Q` is the quarry building and `q` is the stone spawn
+- `M` is the mine building and `m` is the metal spawn
+- `1` and `2` are the wood-lane fetch agents
+- `3` and `4` are the stone-lane fetch agents
+- `5` and `6` are the metal-lane fetch agents
+- `7` is the farming agent present in the demo
+
+## Classes In Use
+
+- **InteractiveWorld:** Main overworld class. Owns the map, agents, buildings, world inventory, and producer list.
+- **InteractiveWorldInventory:** Stores the town hall's resource totals by `ItemType`.
+- **TownHall:** Final deposit point for delivered resources. Writes into the world inventory.
+- **ResourceSpawn:** Holds raw resources for one item type. This is where the first hauling leg picks up from.
+- **ResourceBank:** Intermediate storage point for one hauling lane. Receives resources from the spawn-side fetch agent and supplies them to the town-hall-side fetch agent.
+- **FetchAgent:** Moves between an origin point and a deposit point. In the current demo, fetch agents are assigned fixed routes for each hauling leg.
+- **Building:** Upgradeable production structure. Each resource lane has one associated building.
+- **ResourceProducer:** Generates one resource type over time into its matching spawn. The paired building level modifies the output rate.
+- **InteractiveWorldSaveManager:** Saves and loads world state used by the interactive world demo.
+
+## Current Limitation
+
+The major current gap is building upgrades. The upgradeable buildings are present in the demo and are hooked into production, but the player-facing upgrade interaction path is not working yet in the current game flow.
+
+The likely next step is to add a dedicated resource-management interaction point that can:
+
+- spend wood, stone, and metal to upgrade buildings
+- allow selling resources for gold
+- gate town hall upgrades behind building progression
+- apply a town hall upgrade bonus such as faster agents or a global production boost
+
+This likely means the town hall will need to be treated more like a normal upgradeable building as that system is finalized.
+
+## Manual Testing
+
+The current demo entry point is:
+
+- `demos/InteractiveWorld/Group14_main.cpp`
+
+What to watch for in the current demo:
+
+1. The map should load with the player in the top-left corner, the town hall in the center, and three resource lanes around it.
+2. Each resource lane should have:
+   a spawn in a corner, a bank between the spawn and town hall, and a matching upgradeable building next to the bank.
+3. Agents `1` through `6` should continuously move resources along the two hauling legs for wood, stone, and metal.
+4. The resource totals printed above the map should rise over time as resources are produced and delivered to the town hall.
+5. Agent `7` is present in the demo, but the upgrade interaction flow is still pending.
