@@ -102,24 +102,44 @@ std::shared_ptr<ResourceProducer> metalProducer =
   quarry.SetSymbol('Q');
   mine.SetSymbol('M');
 
-  // FetchAgent: walks from Wood Spawn to Town Hall, collecting and depositing.
+  auto configureFetcher = [&townHall](FetchAgent& fetcher, ResourceSpawn& spawn) {
+    fetcher.SetOrigin(spawn)
+        .SetDepositPoint(townHall)
+        .SetItemType(spawn.GetItemType())
+        .SetOnOriginReached([&spawn](FetchAgent& agent) {
+          agent.SetItemType(spawn.GetItemType());
+          agent.SetCarryQuantity(spawn.Collect());
+        })
+        .SetOnDepositReached([&townHall](FetchAgent& agent) {
+          const int quantity = agent.GetCarryQuantity();
+          if (quantity <= 0) {
+            return;
+          }
+
+          townHall.DepositResource(agent.GetItemType(), quantity);
+          agent.AddDelivered(quantity);
+          agent.SetCarryQuantity(0);
+        });
+  };
+
+  // Fetch agents now use the generic origin/deposit-point API.
   FetchAgent& woodFetcher = world->AddAgent<FetchAgent>("Wood Fetcher");
-  woodFetcher.SetSpawn(woodSpawn).SetTownHall(townHall);
+  configureFetcher(woodFetcher, woodSpawn);
   woodFetcher.SetSymbol('1').SetLocation(WorldPosition{2, 4});
 
-	FetchAgent& stoneFetcher = world->AddAgent<FetchAgent>("Stone Fetcher");
-	stoneFetcher.SetSpawn(stoneSpawn).SetTownHall(townHall);
-	stoneFetcher.SetSymbol('2').SetLocation(WorldPosition{5, 4});
+  FetchAgent& stoneFetcher = world->AddAgent<FetchAgent>("Stone Fetcher");
+  configureFetcher(stoneFetcher, stoneSpawn);
+  stoneFetcher.SetSymbol('2').SetLocation(WorldPosition{5, 4});
 
-	FetchAgent& metalFetcher = world->AddAgent<FetchAgent>("Metal Fetcher");
-	metalFetcher.SetSpawn(metalSpawn).SetTownHall(townHall);
-	metalFetcher.SetSymbol('3').SetLocation(WorldPosition{7, 4});
+  FetchAgent& metalFetcher = world->AddAgent<FetchAgent>("Metal Fetcher");
+  configureFetcher(metalFetcher, metalSpawn);
+  metalFetcher.SetSymbol('3').SetLocation(WorldPosition{7, 4});
 
-	FarmingAgent& woodAgent = world->AddAgent<FarmingAgent>("Wood Farmer");
-	woodAgent.SetAssignedBuilding(&lumberYard);
-	woodAgent.SetHomePosition(WorldPosition{5, 2});
-	woodAgent.SetSymbol('4');
-	woodAgent.SetLocation(WorldPosition{6, 7});
+  FarmingAgent& woodAgent = world->AddAgent<FarmingAgent>("Wood Farmer");
+  woodAgent.SetAssignedBuilding(&lumberYard);
+  woodAgent.SetHomePosition(WorldPosition{5, 2});
+  woodAgent.SetSymbol('4');
+  woodAgent.SetLocation(WorldPosition{6, 7});
 
 
   InteractiveWorldSaveManager saveManager;

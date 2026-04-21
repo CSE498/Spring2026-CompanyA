@@ -1,15 +1,16 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
- * @brief Agent that collects a resource from a ResourceSpawn and deposits it
- *        at a TownHall. Integrates with the Group 14 interactive-world system.
+ * @brief Agent that shuttles between an origin point and a deposit point.
  */
 
 #pragma once
 
 #include <cstdlib>
+#include <functional>
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 #include "../../core/AgentBase.hpp"
 #include "../../core/WorldGrid.hpp"
@@ -22,54 +23,103 @@ namespace cse498 {
 
 /**
  * @class FetchAgent
- * @brief Collects a resource from an assigned ResourceSpawn and deposits it at
- *        an assigned TownHall.
+ * @brief Minimal hauling agent that travels between two endpoints.
  *
- * Per the Group 14 UML, a fetch agent needs:
- *   - the type of resource it gathers (derived from its spawn)
- *   - the current quantity of that resource it is carrying
- *   - the ResourceSpawn it is assigned to
- *   - the TownHall to deposit into
+ * The agent is intentionally generic:
+ *   - `origin` is where it travels when empty
+ *   - `deposit point` is where it travels when carrying cargo
+ *   - optional callbacks define what happens at each endpoint
  *
- * Behavior, per SelectAction:
- *   - If carrying 0 and adjacent to the spawn     -> Collect from the spawn.
- *   - If carrying > 0 and adjacent to the townhall -> Deposit at the townhall.
- *   - Otherwise -> BFS one step through walkable tiles toward the current goal.
+ * By default, reaching the origin sets the carry quantity to 1 and reaching the
+ * deposit point unloads everything. Convenience wrappers keep the original
+ * ResourceSpawn -> TownHall flow available for the Group 14 demo.
  *
- * ResourceSpawn and TownHall live on 'B' (building) tiles which are NOT
- * walkable. The FetchAgent therefore targets a tile adjacent to the goal
- * rather than the goal tile itself.
- *
- * Header-only to match the style of the Hub classes it integrates with
- * (TownHall, ResourceSpawn, Building).
+ * ResourceSpawn and building-like endpoints typically live on non-walkable
+ * tiles, so the agent paths toward a tile adjacent to its current goal.
  */
 class FetchAgent : public AgentBase {
 public:
+    using EndpointAction = std::function<void(FetchAgent&)>;
+
     FetchAgent(size_t id, const std::string& name, const WorldBase& world) :
         AgentBase(id, name, world) {}
 
-    /// @brief Assign the ResourceSpawn this agent harvests from. Also sets the
-    ///        agent's resource type to match the spawn.
+    /// @brief Assign the endpoint this agent targets while empty.
+    FetchAgent& SetOrigin(AgentBase& origin) {
+        m_origin = &origin;
+        return *this;
+    }
+
+    /// @brief Assign the endpoint this agent targets while carrying cargo.
+    FetchAgent& SetDepositPoint(AgentBase& depositPoint) {
+        m_depositPoint = &depositPoint;
+        return *this;
+    }
+
+    /// @brief Set logic to run when the agent reaches the origin.
+    FetchAgent& SetOnOriginReached(EndpointAction action) {
+        m_onOriginReached = std::move(action);
+        return *this;
+    }
+
+    /// @brief Set logic to run when the agent reaches the deposit point.
+    FetchAgent& SetOnDepositReached(EndpointAction action) {
+        m_onDepositReached = std::move(action);
+        return *this;
+    }
+
+    /// @brief Convenience wrapper for the original spawn-based setup.
     FetchAgent& SetSpawn(ResourceSpawn& spawn) {
-        m_spawn = &spawn;
-        m_itemType = spawn.GetItemType();
-        return *this;
+        SetOrigin(spawn);
+        SetItemType(spawn.GetItemType());
+        return SetOnOriginReached([&spawn](FetchAgent& agent) {
+            agent.SetItemType(spawn.GetItemType());
+            agent.SetCarryQuantity(spawn.Collect());
+        });
     }
 
-    /// @brief Assign the TownHall this agent deposits into.
+    /// @brief Convenience wrapper for the original TownHall-based setup.
     FetchAgent& SetTownHall(TownHall& townHall) {
-        m_townHall = &townHall;
-        return *this;
+        SetDepositPoint(townHall);
+        return SetOnDepositReached([&townHall](FetchAgent& agent) {
+            const int quantity = agent.GetCarryQuantity();
+            if (quantity <= 0) {
+                return;
+            }
+
+            townHall.DepositResource(agent.GetItemType(), quantity);
+            agent.AddDelivered(quantity);
+            agent.SetCarryQuantity(0);
+        });
     }
 
-    [[nodiscard]] const ResourceSpawn* GetSpawn() const { return m_spawn; }
-    [[nodiscard]] const TownHall* GetTownHall() const { return m_townHall; }
+    [[nodiscard]] const AgentBase* GetOrigin() const { return m_origin; }
+    [[nodiscard]] const AgentBase* GetDepositPoint() const { return m_depositPoint; }
+    [[nodiscard]] const ResourceSpawn* GetSpawn() const { return dynamic_cast<const ResourceSpawn*>(m_origin); }
+    [[nodiscard]] const TownHall* GetTownHall() const { return dynamic_cast<const TownHall*>(m_depositPoint); }
     [[nodiscard]] ItemType GetItemType() const { return m_itemType; }
     [[nodiscard]] int GetCarryQuantity() const { return m_carryQuantity; }
     [[nodiscard]] int GetTotalDelivered() const { return m_totalDelivered; }
 
+    FetchAgent& SetItemType(ItemType itemType) {
+        m_itemType = itemType;
+        return *this;
+    }
+
+    FetchAgent& SetCarryQuantity(int quantity) {
+        m_carryQuantity = (quantity < 0) ? 0 : quantity;
+        return *this;
+    }
+
+    FetchAgent& AddDelivered(int amount) {
+        if (amount > 0) {
+            m_totalDelivered += amount;
+        }
+        return *this;
+    }
+
     [[nodiscard]] size_t SelectAction(const WorldGrid& grid) override {
-        if (m_spawn == nullptr || m_townHall == nullptr) {
+        if (m_origin == nullptr || m_depositPoint == nullptr) {
             return 0;
         }
         if (!GetLocation().IsPosition()) {
@@ -77,34 +127,44 @@ public:
         }
 
         const WorldPosition myPos = GetLocation().AsWorldPosition();
+        const AgentBase* goalAgent =
+            (m_carryQuantity > 0) ? static_cast<const AgentBase*>(m_depositPoint)
+                                  : static_cast<const AgentBase*>(m_origin);
 
-        const AgentBase* goalAgent = (m_carryQuantity > 0)
-                                         ? static_cast<const AgentBase*>(m_townHall)
-                                         : static_cast<const AgentBase*>(m_spawn);
         if (!goalAgent->GetLocation().IsPosition()) {
             return 0;
         }
+
         const WorldPosition goalPos = goalAgent->GetLocation().AsWorldPosition();
 
         if (IsAdjacent(myPos, goalPos)) {
             if (m_carryQuantity > 0) {
-                m_townHall->DepositResource(m_itemType, m_carryQuantity);
-                m_totalDelivered += m_carryQuantity;
-                m_carryQuantity = 0;
+                if (m_onDepositReached) {
+                    m_onDepositReached(*this);
+                } else {
+                    AddDelivered(m_carryQuantity);
+                    m_carryQuantity = 0;
+                }
                 LogActionNow("deposit");
             } else {
-                m_carryQuantity = m_spawn->Collect();
-                LogActionNow("collect");
+                if (m_onOriginReached) {
+                    m_onOriginReached(*this);
+                } else {
+                    m_carryQuantity = 1;
+                }
+                LogActionNow("pickup");
             }
-            return 0; // stay still; the turn was spent on the collect/deposit
+            return 0;
         }
 
         return NextStepToward(grid, myPos, goalPos);
     }
 
 private:
-    ResourceSpawn* m_spawn = nullptr;
-    TownHall* m_townHall = nullptr;
+    AgentBase* m_origin = nullptr;
+    AgentBase* m_depositPoint = nullptr;
+    EndpointAction m_onOriginReached;
+    EndpointAction m_onDepositReached;
     ItemType m_itemType = ItemType::Wood;
     int m_carryQuantity = 0;
     int m_totalDelivered = 0;
@@ -120,7 +180,7 @@ private:
     /// @brief BFS through walkable tiles to find the first step that moves
     ///        `from` closer to a tile adjacent to `goal`. The goal tile itself
     ///        is treated as reachable even though it is non-walkable, so the
-    ///        expansion terminates on the tile adjacent to the building.
+    ///        expansion terminates on the tile adjacent to the endpoint.
     [[nodiscard]] size_t NextStepToward(const WorldGrid& grid, WorldPosition from,
                                         WorldPosition goal) const {
         if (from == goal) {
