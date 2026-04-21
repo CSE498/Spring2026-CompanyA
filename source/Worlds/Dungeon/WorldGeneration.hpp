@@ -107,11 +107,11 @@ namespace cse498 {
          * @brief Resets and regenerates the dungeon for level progression.
          * @param level_value The new level number to generate
          */
-        void Update(int &level_value) {
+        void ClearLevel() {
             m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); //reset grid
             m_bsp.ClearState(); //Clear BSP State
             m_connected_rooms.clear(); //get rid of tunneling list
-            CreateDungeon(level_value);
+            //CreateDungeon(level_value);
         }
 
 

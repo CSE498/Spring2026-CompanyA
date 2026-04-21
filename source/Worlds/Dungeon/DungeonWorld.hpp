@@ -255,7 +255,12 @@ namespace cse498 {
             main_grid.Load(m_generation.GetDungeon());
         }
 
-        void AdvanceLevel();
+		void AdvanceLevel() {
+			m_generation.ClearLevel();
+
+            ++m_level_num;
+            GenerateLevel();
+        }
 
         // void UpdateWorld() override {
         // 	if ((m_level_num == 5)) {
@@ -288,13 +293,6 @@ namespace cse498 {
                 }
             }
             return;
-        }
-
-        void Update() {
-            ++m_level_num;
-            m_generation.Update(m_level_num);
-            std::vector<std::string> dungeon = m_generation.GetDungeon();
-            main_grid.Load(dungeon);
         }
 
         /// Allow the agents to move around the maze.
@@ -606,7 +604,7 @@ namespace cse498 {
                 }
             } else if (main_grid[new_position] == m_exit_door && dynamic_cast<TrashInterface *>(&agent)) {
                 // UserInput();
-                Update();
+                AdvanceLevel();
                 new_position = WorldPosition(1, 1); //default player location upon loading into new world
             }
 
