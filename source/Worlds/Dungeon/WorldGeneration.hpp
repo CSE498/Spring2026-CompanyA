@@ -16,6 +16,7 @@
 #include <cmath>
 #include <ranges>
 #include <algorithm>
+#include <vector>
 
 namespace cse498 {
     /// @brief Level 1 grid width
@@ -111,7 +112,8 @@ namespace cse498 {
             m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); //reset grid
             m_bsp.ClearState(); //Clear BSP State
             m_connected_rooms.clear(); //get rid of tunneling list
-            //CreateDungeon(level_value);
+            m_goblin_spawns.clear();
+    		m_skeleton_spawns.clear();
         }
 
 
@@ -133,7 +135,27 @@ namespace cse498 {
             return m_connected_rooms;
         }
 
+		/// @brief Getter for the Goblin spawn locations
+		/// @return  Vector of locations
+		[[nodiscard]] const std::vector<std::pair<int, int>> &GetGoblinSpawns() const {
+			return m_goblin_spawns;
+		}
+
+		/// @brief Getter  for the skeleton spawn locations
+		/// @return Vector of locations
+		[[nodiscard]] const std::vector<std::pair<int, int>> &GetSkeletonSpawns() const {
+			return m_skeleton_spawns;
+		}
+
     private:
+
+		/// @brief Locations where goblins will spawn
+		std::vector<std::pair<int, int>> m_goblin_spawns;
+
+
+    	/// @brief Locations where skeletons will spawn
+    	std::vector<std::pair<int, int>> m_skeleton_spawns;
+
         /// @brief takes the leaf node's (x,y) coordinates and room information from the BSP_Tree and translates it onto mGrid
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode &node) {
@@ -158,6 +180,14 @@ namespace cse498 {
                     char c = node.vector_room[y][x];
 
                     //if (c == '#') continue; //Skips the outer outline of the room
+					// Find goblin spawn locations
+					if (c == 'g') {
+						m_goblin_spawns.push_back({grid_x, grid_y});
+					}
+					// Find skeleton spawn locations
+					if (c == 's') {
+						m_skeleton_spawns.push_back({grid_x, grid_y});
+					}
 
                     m_grid[grid_y][grid_x] = c;
                 }

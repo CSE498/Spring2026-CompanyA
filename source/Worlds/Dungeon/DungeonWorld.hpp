@@ -9,6 +9,7 @@
 #include <cassert>
 #include <array>
 #include <memory>
+#include <vector>
 
 #include "../../core/WorldBase.hpp"
 #include "WorldGeneration.hpp"
@@ -18,6 +19,7 @@
 #include "CastleLevel.hpp"
 #include "LevelBase.hpp"
 #include "../../Interfaces/TrashInterface.hpp"
+#include "../../Agents/PacingAgent.hpp"
 
 #include "../../core/item/ItemWeaponSword.hpp"
 #include "../../core/item/ItemWeaponBow.hpp"
@@ -43,6 +45,7 @@ namespace cse498 {
         int m_level_num = 1; //Current int value level that the game is on
         std::unique_ptr<LevelBase> m_level = std::make_unique<ForestLevel>();
         //The currently pointed to level that the player agent is on
+		std::vector<size_t> m_spawned_enemy_ids;
 
         /**
          * @brief Builds the room pool for the current level.
@@ -256,9 +259,13 @@ namespace cse498 {
 			m_generation = std::make_unique<WorldGeneration>(*m_level);
 			m_generation->CreateDungeon(m_level_num);
 			main_grid.Load(m_generation->GetDungeon());
+
+			//SpawnDungeonAgents();
         }
 
 		void AdvanceLevel() {
+			//DespawnDungeonAgents();
+
 			if (m_generation) {
 				m_generation->ClearLevel();
 			}
@@ -266,6 +273,41 @@ namespace cse498 {
             ++m_level_num;
             GenerateLevel();
         }
+
+		//NOTE: agents are currently spawning 1 tile below setLocation. 
+		// Needs fix - for now to testing its set to y - 1 to correct mismatch
+		// void SpawnDungeonAgents() {
+		// 	if (!m_generation) return;
+
+		// 	m_spawned_enemy_ids.clear();
+
+		// 	int goblin_num = 1;
+		// 	for (const auto &[x, y] : m_generation->GetGoblinSpawns()) {
+		// 		auto &agent = AddAgent<PacingAgent>("Goblin " + std::to_string(goblin_num++));
+		// 		agent.SetLocation(WorldPosition{x, y - 1});
+		// 		m_spawned_enemy_ids.push_back(agent.GetID());
+		// 	}
+
+		// 	int skeleton_num = 1;
+		// 	for (const auto &[x, y] : m_generation->GetSkeletonSpawns()) {
+		// 		auto &agent = AddAgent<PacingAgent>("Skeleton " + std::to_string(skeleton_num++));
+		// 		agent.SetLocation(WorldPosition{x, y - 1});
+		// 		m_spawned_enemy_ids.push_back(agent.GetID());
+		// 	}
+		// }
+
+		// void DespawnDungeonAgents() {
+		// 	for (size_t id : m_spawned_enemy_ids) {
+		// 		if (AgentBase *agent = TryGetAgent(id)) {
+		// 			if (agent->IsAlive()) {
+		// 				agent->TakeDamage(agent->GetCurrentHealth());
+		// 			}
+		// 		}
+		// 	}
+
+		// 	RemoveDeadAgents();
+		// 	m_spawned_enemy_ids.clear();
+		// }
 
         // void UpdateWorld() override {
         // 	if ((m_level_num == 5)) {
