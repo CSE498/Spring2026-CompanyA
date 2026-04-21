@@ -1,6 +1,6 @@
 /**
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
- * @brief 
+ * @brief Weighted collection of items with O(log n) random sampling via implicit binary-tree layout.
  * @note Status: PROPOSAL
  * Credit notes: This files makes use parts of the Array implementation of a Binary Tree described at:
  * https://www.geeksforgeeks.org/dsa/binary-tree-array-implementation/

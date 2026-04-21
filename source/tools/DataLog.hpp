@@ -1,13 +1,12 @@
 /**
- *
+ * @file DataLog.hpp
+ * @brief Time-stamped sequence of numeric samples with basic statistics and threshold timing.
  * @author Aneesh Joshi
  * @note Status: PROPOSAL
  *
- * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
- * Samples are stored in the format of (Value, timestamp/seconds since start)
- * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
- **/
-
+ * Each sample stores a value and elapsed seconds since construction (via an internal Timer).
+ * The caller adds values; timestamps are recorded automatically.
+ */
 #pragma once
 #include <cstddef>
 #include <optional>
@@ -15,83 +14,62 @@
 #include "Timer.hpp"
 
 namespace cse498 {
+
+/**
+ * @brief Append-only log of (value, timestamp) pairs relative to construction time.
+ */
 class DataLog {
 public:
-    /*
-    A struct to represent a recorded sample in the log
-    - value: the numeric value of the sample
-    - timestamp: seconds since the datalog instance was constructed
-    */
+    /** @brief One recorded sample. */
     struct DataSample {
-        double value;
-        double timestamp;
+        double value; ///< Sampled value.
+        double timestamp; ///< Seconds since this DataLog was constructed.
     };
 
-    /*
-    Constructor for DataLog
-    */
+    /// @brief Construct an empty log with a fresh timer.
     DataLog();
 
-    /*
-    Adds a new data value and the function associates a timestamp with the data
-    */
+    /// @brief Append @p value with timestamp from the internal timer.
     void Add(double value);
 
-    /*
-    Function returns a const reference to the collection of data samples
-    */
+    /// @brief All samples in insertion order.
     const std::vector<DataSample>& DataSamples() const;
 
-    /*
-    Function clears all samples from the data log
-    Timestamp is not reset
-    */
+    /// @brief Remove all samples (timer state is unchanged).
     void Clear();
 
-    /*
-    Function returns the number of samples stored in the data log
-    */
+    /// @brief Number of stored samples.
     std::size_t Count() const;
 
-    /*
-    Function returns the smallest value in the data log
-    */
+    /// @brief Smallest value, or nullopt if empty.
     std::optional<double> Min() const;
 
-    /*
-    Function returns the largest value in the data log
-    */
+    /// @brief Largest value, or nullopt if empty.
     std::optional<double> Max() const;
 
-    /*
-    Function returns the average of the values in the data log/Arithmetic mean
-    */
+    /// @brief Arithmetic mean of values, or nullopt if empty.
     std::optional<double> Mean() const;
 
-    /*
-    Function returns the median of the values in the data log
-    */
+    /// @brief Median of values, or nullopt if empty.
     std::optional<double> Median() const;
 
-    /*
-    Function returns the total time that the values in datalog were under a specific threshold
-    */
+    /**
+     * @brief Total duration (in seconds) for which consecutive samples stayed strictly below @p threshold.
+     * @param threshold Comparison threshold for the "under" intervals.
+     */
     double TimeUnderThreshold(double threshold) const;
 
-    /*
-    Function returns the total time that the values in datalog were over a specific threshold
-    */
+    /**
+     * @brief Total duration (in seconds) for which consecutive samples stayed strictly above @p threshold.
+     * @param threshold Comparison threshold for the "over" intervals.
+     */
     double TimeOverThreshold(double threshold) const;
 
-    /*
-    Helper function whose purpose is to advance the Timer for timestamp testing purposes without manually waiting
-    */
+    /// @brief Advance the internal timer by @p seconds (for tests).
     void advanceTimeForTesting(double seconds);
 
 private:
     std::vector<DataSample> mDataValues;
-
-    // Timer to measure elapsed time since datalog was constructed
     Timer mTimer{"DataLog"};
 };
 } // namespace cse498

@@ -1,9 +1,14 @@
-// AnnotationSet.cpp
+/**
+ * @file AnnotationSet.cpp
+ * @brief Implementations for AnnotationSet.
+ */
+
 #include "AnnotationSet.hpp"
 
-// #include "TagManager.hpp"
-
-// Notify TagManager that a tag was added to this object
+/**
+ * @brief Reserved hook: notify TagManager that a tag was added.
+ * @param tag Tag that was inserted (currently unused when manager hooks are disabled).
+ */
 void cse498::AnnotationSet::NotifyAdded([[maybe_unused]] std::string_view tag) noexcept {
     // if (mManager) {
 
@@ -11,7 +16,10 @@ void cse498::AnnotationSet::NotifyAdded([[maybe_unused]] std::string_view tag) n
     // }
 }
 
-// Notify TagManager that a tag was removed from this object
+/**
+ * @brief Reserved hook: notify TagManager that a tag was removed.
+ * @param tag Tag that was removed (currently unused when manager hooks are disabled).
+ */
 void cse498::AnnotationSet::NotifyRemoved([[maybe_unused]] std::string_view tag) noexcept {
     // if (mManager) {
 
@@ -19,14 +27,13 @@ void cse498::AnnotationSet::NotifyRemoved([[maybe_unused]] std::string_view tag)
     // }
 }
 
+/// @brief Assert that @p tag is non-empty.
 void cse498::AnnotationSet::AssertValidTag(std::string_view tag) {
     assert(!tag.empty() && "AnnotationSet: tag must not be empty");
 }
 
-
 bool cse498::AnnotationSet::AddTag(std::string_view tag) {
     AssertValidTag(tag);
-
 
     std::string owned(tag);
 
@@ -58,7 +65,6 @@ bool cse498::AnnotationSet::HasTag(std::string_view tag) const {
     return mTags.find(std::string(tag)) != mTags.end();
 }
 
-// Removes all tags
 void cse498::AnnotationSet::Clear() {
     if (!mManager) {
         mTags.clear();

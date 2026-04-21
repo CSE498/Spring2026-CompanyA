@@ -1,6 +1,6 @@
 /**
- * ExpressionParser: parse a math expression string and return a callable
- * that evaluates it with values from a map.
+ * @file ExpressionParser.hpp
+ * @brief Parse a numeric expression string into a function evaluated with variable values from a map.
  */
 
 #pragma once

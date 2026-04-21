@@ -1,3 +1,8 @@
+/**
+ * @file BehaviorTree.cpp
+ * @brief Implementations for cse498::BehaviorTrees declared in BehaviorTree.hpp.
+ */
+
 #include "BehaviorTree.hpp"
 
 namespace cse498 {

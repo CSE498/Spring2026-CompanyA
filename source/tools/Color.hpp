@@ -25,52 +25,112 @@
 
 namespace cse498 {
 
+/**
+ * @brief RGBA color with channels stored as 8-bit unsigned values.
+ *
+ * Internal representation is always 0–255 per channel. Use the static factories to
+ * build colors from hex, CSS-style strings, integral or floating-point inputs.
+ */
 class Color {
 public:
+    /** @brief Red, green, blue, and alpha in the 0–255 range. */
     struct RGBA255 {
-        std::uint8_t r;
-        std::uint8_t g;
-        std::uint8_t b;
-        std::uint8_t a;
+        std::uint8_t r; ///< Red channel.
+        std::uint8_t g; ///< Green channel.
+        std::uint8_t b; ///< Blue channel.
+        std::uint8_t a; ///< Alpha channel.
     };
 
+    /** @brief Red, green, blue, and alpha as linear 0.0–1.0 floats. */
     struct RGBA01 {
-        float r;
-        float g;
-        float b;
-        float a;
+        float r; ///< Red channel.
+        float g; ///< Green channel.
+        float b; ///< Blue channel.
+        float a; ///< Alpha channel.
     };
 
+    /// @brief Default constructor; yields opaque black (0, 0, 0, 255).
     constexpr Color() = default;
 
+    /**
+     * @brief Construct from explicit 8-bit channels.
+     * @param r Red (0–255).
+     * @param g Green (0–255).
+     * @param b Blue (0–255).
+     * @param a Alpha (0–255); defaults to opaque.
+     */
     constexpr Color(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 255) noexcept :
         r_(r), g_(g), b_(b), a_(a) {}
 
+    /**
+     * @brief Build from 8-bit RGBA channels (equivalent to the value constructor).
+     * @param r Red (0–255).
+     * @param g Green (0–255).
+     * @param b Blue (0–255).
+     * @param a Alpha (0–255); defaults to opaque.
+     */
     [[nodiscard]] static constexpr Color FromRGBA255(std::uint8_t r, std::uint8_t g, std::uint8_t b,
                                                      std::uint8_t a = 255) noexcept {
         return Color(r, g, b, a);
     }
 
+    /**
+     * @brief Build from 8-bit RGB with alpha forced to 255.
+     * @param r Red (0–255).
+     * @param g Green (0–255).
+     * @param b Blue (0–255).
+     */
     [[nodiscard]] static constexpr Color FromRGB255(std::uint8_t r, std::uint8_t g, std::uint8_t b) noexcept {
         return Color(r, g, b, 255);
     }
 
+    /**
+     * @brief Build from integral channels, each clamped to [0, 255].
+     * @tparam T Integral type for each channel.
+     * @param r Red.
+     * @param g Green.
+     * @param b Blue.
+     * @param a Alpha; defaults to 255 when omitted.
+     */
     template<std::integral T>
     [[nodiscard]] static constexpr Color FromRGBIntegral(T r, T g, T b, T a = static_cast<T>(255)) noexcept {
         return Color(ClampToByte(r), ClampToByte(g), ClampToByte(b), ClampToByte(a));
     }
 
+    /**
+     * @brief Build from normalized floating-point channels in [0, 1].
+     * @tparam T Floating-point type for each channel.
+     * @param r Red.
+     * @param g Green.
+     * @param b Blue.
+     * @param a Alpha; defaults to 1.
+     */
     template<std::floating_point T>
     [[nodiscard]] static Color FromRGBNormalized(T r, T g, T b, T a = static_cast<T>(1)) noexcept {
         return FromRGBA01(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), static_cast<float>(a));
     }
 
+    /**
+     * @brief Build from floats in [0, 1] per channel (values are clamped before scaling to bytes).
+     * @param r Red.
+     * @param g Green.
+     * @param b Blue.
+     * @param a Alpha; defaults to 1.0.
+     */
     [[nodiscard]] static Color FromRGBA01(float r, float g, float b, float a = 1.0f) noexcept {
         return Color(Float01ToByte(r), Float01ToByte(g), Float01ToByte(b), Float01ToByte(a));
     }
 
+    /// @brief Same as FromRGBA01 with alpha fixed at 1.0.
     [[nodiscard]] static Color FromRGB01(float r, float g, float b) noexcept { return FromRGBA01(r, g, b, 1.0f); }
 
+    /**
+     * @brief Parse a hex color after trimming ASCII whitespace.
+     *
+     * Accepts optional leading `#`, then 3 or 4 nibbles (#RGB / #RGBA) or 6 or 8 hex digits (#RRGGBB / #RRGGBBAA).
+     * @param text Hex string to parse.
+     * @return Parsed color, or std::nullopt if the format is invalid.
+     */
     [[nodiscard]] static constexpr std::optional<Color> FromHex(std::string_view text) noexcept {
         const std::string_view s = Trim(text);
         if (s.empty()) {
@@ -112,6 +172,11 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Parse a color from a trimmed string: hex, rgb()/rgba(), named color, or `transparent`.
+     * @param text Input (leading/trailing ASCII whitespace is ignored).
+     * @return Parsed color, or std::nullopt if unrecognized.
+     */
     [[nodiscard]] static std::optional<Color> FromString(std::string_view text) noexcept {
         const std::string_view s = Trim(text);
         if (s.empty()) {
@@ -141,16 +206,31 @@ public:
         return std::nullopt;
     }
 
+    /// @brief Red channel (0–255).
     [[nodiscard]] constexpr std::uint8_t R() const noexcept { return r_; }
+    /// @brief Green channel (0–255).
     [[nodiscard]] constexpr std::uint8_t G() const noexcept { return g_; }
+    /// @brief Blue channel (0–255).
     [[nodiscard]] constexpr std::uint8_t B() const noexcept { return b_; }
+    /// @brief Alpha channel (0–255).
     [[nodiscard]] constexpr std::uint8_t A() const noexcept { return a_; }
 
+    /// @param value New red channel.
     constexpr void SetR(std::uint8_t value) noexcept { r_ = value; }
+    /// @param value New green channel.
     constexpr void SetG(std::uint8_t value) noexcept { g_ = value; }
+    /// @param value New blue channel.
     constexpr void SetB(std::uint8_t value) noexcept { b_ = value; }
+    /// @param value New alpha channel.
     constexpr void SetA(std::uint8_t value) noexcept { a_ = value; }
 
+    /**
+     * @brief Replace all channels with 8-bit RGBA.
+     * @param r Red.
+     * @param g Green.
+     * @param b Blue.
+     * @param a Alpha; defaults to opaque.
+     */
     constexpr void SetRGBA255(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 255) noexcept {
         r_ = r;
         g_ = g;
@@ -158,6 +238,13 @@ public:
         a_ = a;
     }
 
+    /**
+     * @brief Set channels from floats in [0, 1] (clamped and rounded to bytes).
+     * @param r Red.
+     * @param g Green.
+     * @param b Blue.
+     * @param a Alpha; defaults to 1.0.
+     */
     void SetRGBA01(float r, float g, float b, float a = 1.0f) noexcept {
         r_ = Float01ToByte(r);
         g_ = Float01ToByte(g);
@@ -165,14 +252,22 @@ public:
         a_ = Float01ToByte(a);
     }
 
+    /// @brief Current color as an RGBA255 aggregate.
     [[nodiscard]] constexpr RGBA255 ToRGBA255() const noexcept { return RGBA255{r_, g_, b_, a_}; }
 
+    /// @brief Channels as `{ r, g, b, a }` bytes.
     [[nodiscard]] constexpr std::array<std::uint8_t, 4> ToArray() const noexcept { return {r_, g_, b_, a_}; }
 
+    /// @brief Current color with each channel scaled to [0.0, 1.0].
     [[nodiscard]] RGBA01 ToRGBA01() const noexcept {
         return RGBA01{ByteToFloat01(r_), ByteToFloat01(g_), ByteToFloat01(b_), ByteToFloat01(a_)};
     }
 
+    /**
+     * @brief `#RRGGBB` or `#RRGGBBAA` string.
+     * @param include_alpha When true, append two hex digits for alpha.
+     * @param uppercase When true, use `A–F`; otherwise `a–f`.
+     */
     [[nodiscard]] std::string ToHex(bool include_alpha = false, bool uppercase = false) const {
         std::string out;
         out.reserve(include_alpha ? 9 : 7);
@@ -186,32 +281,37 @@ public:
         return out;
     }
 
+    /// @brief CSS-style `rgb(r, g, b)` with decimal 0–255 components.
     [[nodiscard]] std::string ToRgbString() const {
         return "rgb(" + std::to_string(static_cast<unsigned>(r_)) + ", " + std::to_string(static_cast<unsigned>(g_)) +
                ", " + std::to_string(static_cast<unsigned>(b_)) + ")";
     }
 
+    /// @brief CSS-style `rgba(r, g, b, a)` with alpha as a decimal fraction.
     [[nodiscard]] std::string ToRgbaString() const {
         return "rgba(" + std::to_string(static_cast<unsigned>(r_)) + ", " + std::to_string(static_cast<unsigned>(g_)) +
                ", " + std::to_string(static_cast<unsigned>(b_)) + ", " + AlphaString() + ")";
     }
 
+    /// @brief Defaulted memberwise equality.
     [[nodiscard]] constexpr bool operator==(const Color& other) const noexcept = default;
 
 private:
+    /** @brief One row in the built-in named color table. */
     struct NamedColorEntry {
-        std::string_view name;
+        std::string_view name; ///< Lowercase CSS-like name.
         std::uint8_t r;
         std::uint8_t g;
         std::uint8_t b;
         std::uint8_t a;
     };
 
-    std::uint8_t r_ = 0;
-    std::uint8_t g_ = 0;
-    std::uint8_t b_ = 0;
-    std::uint8_t a_ = 255;
+    std::uint8_t r_ = 0; ///< Red channel.
+    std::uint8_t g_ = 0; ///< Green channel.
+    std::uint8_t b_ = 0; ///< Blue channel.
+    std::uint8_t a_ = 255; ///< Alpha channel; default is opaque.
 
+    /** @brief Built-in named colors used by ParseNamedColor. */
     static constexpr std::array<NamedColorEntry, 20> kNamedColors{{
             {"black", 0, 0, 0, 255},      {"white", 255, 255, 255, 255}, {"red", 255, 0, 0, 255},
             {"green", 0, 128, 0, 255},    {"blue", 0, 0, 255, 255},      {"yellow", 255, 255, 0, 255},
@@ -222,10 +322,12 @@ private:
             {"maroon", 128, 0, 0, 255},   {"olive", 128, 128, 0, 255},
     }};
 
+    /// @brief Replicate a 4-bit value into high and low nibbles (short hex form).
     [[nodiscard]] static constexpr std::uint8_t ExpandNibble(std::uint8_t value) noexcept {
         return static_cast<std::uint8_t>((value << 4U) | value);
     }
 
+    /// @brief Clamp an integral to [0, 255].
     template<std::integral T>
     [[nodiscard]] static constexpr std::uint8_t ClampToByte(T value) noexcept {
         if (value < static_cast<T>(0)) {
@@ -237,21 +339,26 @@ private:
         return static_cast<std::uint8_t>(value);
     }
 
+    /// @brief Map a float in [0, 1] to the nearest byte (after clamping).
     [[nodiscard]] static std::uint8_t Float01ToByte(float value) noexcept {
         const float clamped = Clamp01(value);
         return static_cast<std::uint8_t>(std::lround(clamped * 255.0f));
     }
 
+    /// @brief Byte to linear 0.0–1.0 float.
     [[nodiscard]] static float ByteToFloat01(std::uint8_t value) noexcept { return static_cast<float>(value) / 255.0f; }
 
+    /// @brief Clamp a float to [0.0, 1.0].
     [[nodiscard]] static constexpr float Clamp01(float value) noexcept {
         return value < 0.0f ? 0.0f : (value > 1.0f ? 1.0f : value);
     }
 
+    /// @brief True for standard ASCII whitespace used by Trim.
     [[nodiscard]] static constexpr bool IsSpace(char c) noexcept {
         return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
     }
 
+    /// @brief Remove leading and trailing ASCII whitespace.
     [[nodiscard]] static constexpr std::string_view Trim(std::string_view s) noexcept {
         while (!s.empty() && IsSpace(s.front())) {
             s.remove_prefix(1);
@@ -262,10 +369,12 @@ private:
         return s;
     }
 
+    /// @brief Lowercase for `A–Z` only; other characters unchanged.
     [[nodiscard]] static constexpr char ToLowerAscii(char c) noexcept {
         return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
     }
 
+    /// @brief Case-insensitive equality for equal-length views.
     [[nodiscard]] static constexpr bool EqualsInsensitive(std::string_view a, std::string_view b) noexcept {
         if (a.size() != b.size()) {
             return false;
@@ -279,6 +388,7 @@ private:
         return true;
     }
 
+    /// @brief Case-insensitive prefix check.
     [[nodiscard]] static constexpr bool StartsWithInsensitive(std::string_view value,
                                                               std::string_view prefix) noexcept {
         if (value.size() < prefix.size()) {
@@ -287,6 +397,7 @@ private:
         return EqualsInsensitive(value.substr(0, prefix.size()), prefix);
     }
 
+    /// @brief Parse a single hex digit (`0–9`, `a–f`, `A–F`).
     [[nodiscard]] static constexpr std::optional<std::uint8_t> HexDigit(char c) noexcept {
         if (c >= '0' && c <= '9') {
             return static_cast<std::uint8_t>(c - '0');
@@ -300,6 +411,7 @@ private:
         return std::nullopt;
     }
 
+    /// @brief Parse two hex digits as one byte (high nibble first).
     [[nodiscard]] static constexpr std::optional<std::uint8_t> HexByte(char hi, char lo) noexcept {
         const auto h = HexDigit(hi);
         const auto l = HexDigit(lo);
@@ -309,6 +421,7 @@ private:
         return static_cast<std::uint8_t>((*h << 4U) | *l);
     }
 
+    /// @brief Append two hex characters for @p value to @p out.
     static void AppendHexByte(std::string& out, std::uint8_t value, bool uppercase) {
         static constexpr char kLower[] = "0123456789abcdef";
         static constexpr char kUpper[] = "0123456789ABCDEF";
@@ -318,6 +431,7 @@ private:
         out.push_back(digits[value & 0x0F]);
     }
 
+    /// @brief Alpha as a short decimal string for `rgba()` output.
     [[nodiscard]] std::string AlphaString() const {
         const float a = ByteToFloat01(a_);
         std::string s = std::to_string(a);
@@ -332,6 +446,7 @@ private:
         return s;
     }
 
+    /// @brief Parse a finite decimal float (optional sign; one optional dot); uses `std::stof`.
     [[nodiscard]] static std::optional<float> ParseFloatToken(std::string_view token) noexcept {
         token = Trim(token);
         if (token.empty()) {
@@ -372,6 +487,7 @@ private:
         }
     }
 
+    /// @brief Parse an rgb()/rgba() R/G/B token: 0–255 or a percentage of 255.
     [[nodiscard]] static std::optional<std::uint8_t> ParseRgbChannel(std::string_view token) noexcept {
         token = Trim(token);
         if (token.empty()) {
@@ -397,6 +513,7 @@ private:
         return static_cast<std::uint8_t>(std::lround(v));
     }
 
+    /// @brief Parse rgba() alpha: 0–1 float or percentage, mapped with Float01ToByte.
     [[nodiscard]] static std::optional<std::uint8_t> ParseAlphaChannel(std::string_view token) noexcept {
         token = Trim(token);
         if (token.empty()) {
@@ -421,6 +538,11 @@ private:
         return Float01ToByte(*value);
     }
 
+    /**
+     * @brief Parse `rgb(...)` or `rgba(...)` after the opening parenthesis.
+     * @param text Full function text including name and parentheses.
+     * @param expect_alpha true for `rgba` (four comma-separated args), false for `rgb` (three args).
+     */
     [[nodiscard]] static std::optional<Color> ParseRgbFunc(std::string_view text, bool expect_alpha) noexcept {
         const auto left = text.find('(');
         const auto right = text.rfind(')');
@@ -459,6 +581,7 @@ private:
         return Color(*r, *g, *b, *a);
     }
 
+    /// @brief Look up text in kNamedColors (case-insensitive).
     [[nodiscard]] static std::optional<Color> ParseNamedColor(std::string_view text) noexcept {
         const auto it = std::ranges::find_if(kNamedColors, [&](const NamedColorEntry& named) noexcept {
             return EqualsInsensitive(text, named.name);
