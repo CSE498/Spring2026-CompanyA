@@ -24,7 +24,6 @@
 #include "../../tools/Random.hpp"
 #include "LevelBase.hpp"
 
-
 namespace cse498 {
     /**
      * @struct BSPNode

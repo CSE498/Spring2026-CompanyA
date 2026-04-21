@@ -6,12 +6,10 @@
 #include "PathVector.hpp"
 #include "../core/WorldPosition.hpp"
 
-namespace cse498
-{
+namespace cse498 {
 
 
-PathVector & PathVector::Rotate(double angle)
-{
+PathVector& PathVector::Rotate(double angle) {
     // radians rotation CCW -- classic matrix rotation from LA
     auto temp_mx = mX;
     mX = std::cos(angle) * mX - std::sin(angle) * mY;
@@ -21,4 +19,4 @@ PathVector & PathVector::Rotate(double angle)
 }
 
 
-}
+} // namespace cse498

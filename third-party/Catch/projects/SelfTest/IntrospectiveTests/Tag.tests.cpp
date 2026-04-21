@@ -18,10 +18,10 @@ TEST_CASE( "Tag alias can be registered against tag patterns" ) {
     SECTION( "The same tag alias can only be registered once" ) {
 
         try {
-            registry.add( "[@zzz]", "[one][two]", Catch::SourceLineInfo( "file", 10 ) );
+            registry.add(
+                "[@zzz]", "[one][two]", Catch::SourceLineInfo( "file", 10 ) );
             FAIL( "expected exception" );
-        }
-        catch( std::exception& ex ) {
+        } catch ( std::exception& ex ) {
 #ifndef CATCH_CONFIG_DISABLE_MATCHERS
             std::string what = ex.what();
             using namespace Catch::Matchers;
@@ -34,21 +34,36 @@ TEST_CASE( "Tag alias can be registered against tag patterns" ) {
     }
 
     SECTION( "Tag aliases must be of the form [@name]" ) {
-        CHECK_THROWS( registry.add( "[no ampersat]", "", Catch::SourceLineInfo( "file", 3 ) ) );
-        CHECK_THROWS( registry.add( "[the @ is not at the start]", "", Catch::SourceLineInfo( "file", 3 ) ) );
-        CHECK_THROWS( registry.add( "@no square bracket at start]", "", Catch::SourceLineInfo( "file", 3 ) ) );
-        CHECK_THROWS( registry.add( "[@no square bracket at end", "", Catch::SourceLineInfo( "file", 3 ) ) );
+        CHECK_THROWS( registry.add(
+            "[no ampersat]", "", Catch::SourceLineInfo( "file", 3 ) ) );
+        CHECK_THROWS( registry.add( "[the @ is not at the start]",
+                                    "",
+                                    Catch::SourceLineInfo( "file", 3 ) ) );
+        CHECK_THROWS( registry.add( "@no square bracket at start]",
+                                    "",
+                                    Catch::SourceLineInfo( "file", 3 ) ) );
+        CHECK_THROWS( registry.add( "[@no square bracket at end",
+                                    "",
+                                    Catch::SourceLineInfo( "file", 3 ) ) );
     }
 }
 
-TEST_CASE("shortened hide tags are split apart") {
-    auto testcase = Catch::makeTestCase(nullptr, "", {"fake test name", "[.magic-tag]"}, CATCH_INTERNAL_LINEINFO);
-    REQUIRE_THAT(testcase.tags, Catch::VectorContains(std::string("magic-tag")) && Catch::VectorContains(std::string(".")));
+TEST_CASE( "shortened hide tags are split apart" ) {
+    auto testcase = Catch::makeTestCase( nullptr,
+                                         "",
+                                         { "fake test name", "[.magic-tag]" },
+                                         CATCH_INTERNAL_LINEINFO );
+    REQUIRE_THAT( testcase.tags,
+                  Catch::VectorContains( std::string( "magic-tag" ) ) &&
+                      Catch::VectorContains( std::string( "." ) ) );
 }
 
-TEST_CASE("adding a hide tag implicitly enables all others", "[tags]") {
+TEST_CASE( "adding a hide tag implicitly enables all others", "[tags]" ) {
     using Catch::VectorContains;
-    auto tag = GENERATE(as<char const*>{}, "[!hide]", "[.]", "[.foo]");
-    auto testcase = Catch::makeTestCase(nullptr, "", {"fake test name", tag}, CATCH_INTERNAL_LINEINFO);
-    REQUIRE_THAT(testcase.tags, VectorContains(std::string(".")) && VectorContains(std::string("!hide")));
+    auto tag = GENERATE( as<char const*>{}, "[!hide]", "[.]", "[.foo]" );
+    auto testcase = Catch::makeTestCase(
+        nullptr, "", { "fake test name", tag }, CATCH_INTERNAL_LINEINFO );
+    REQUIRE_THAT( testcase.tags,
+                  VectorContains( std::string( "." ) ) &&
+                      VectorContains( std::string( "!hide" ) ) );
 }

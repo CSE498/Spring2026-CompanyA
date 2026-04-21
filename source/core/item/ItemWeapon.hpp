@@ -7,31 +7,31 @@
 #pragma once
 
 #include <string>
-#include "../WorldBase.hpp"
 #include "Item.hpp"
+#include "WorldBase.hpp"
 
 namespace cse498 {
-    class ItemWeapon : public Item {
-        private:
-            double m_range;     // Range of the weapon (in tiles)
-            double m_damage;    // Amount of damage the weapon can do
-            double m_hit_bonus; // Bonus the weapon has to hit
+class ItemWeapon : public Item {
+private:
+    double m_range; // Range of the weapon (in tiles)
+    double m_damage; // Amount of damage the weapon can do
+    double m_hit_bonus; // Bonus the weapon has to hit
 
-        public:
-            ItemWeapon(size_t id, const std::string & name, const std::string & image_path, int gold, 
-                const WorldBase & world) : Item(id, name, image_path, gold, world) {}
+public:
+    ItemWeapon(size_t id, const std::string& name, const std::string& image_path, int gold, const WorldBase& world) :
+        Item(id, name, image_path, gold, world) {}
 
-            bool IsWeapon() const override {return true;}
+    bool IsWeapon() const override { return true; }
 
-            virtual bool IsTool() const {return false;}
-            virtual bool IsSword() const {return false;}
-            virtual bool IsBow() const {return false;}
+    virtual bool IsTool() const { return false; }
+    virtual bool IsSword() const { return false; }
+    virtual bool IsBow() const { return false; }
 
-            double GetRange() {return m_range;}
-            double GetDamage() {return m_damage;}
-            double GetHitBonus() {return m_hit_bonus;}
-            void SetRange(double range) {m_range = range;}
-            void SetDamage(double damage) {m_damage = damage;}
-            void SetHitBonus(double hit_bonus) {m_hit_bonus = hit_bonus;}
-    };
-}
+    double GetRange() { return m_range; }
+    double GetDamage() { return m_damage; }
+    double GetHitBonus() { return m_hit_bonus; }
+    void SetRange(double range) { m_range = range; }
+    void SetDamage(double damage) { m_damage = damage; }
+    void SetHitBonus(double hit_bonus) { m_hit_bonus = hit_bonus; }
+};
+} // namespace cse498

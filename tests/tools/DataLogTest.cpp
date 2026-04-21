@@ -1,17 +1,17 @@
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/DataLog.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 /*
 Test checks functions of the datalog with no samples
 */
-TEST_CASE("Empty Log Test", "[tools]"){
+TEST_CASE("Empty Log Test", "[tools]") {
 
     cse498::DataLog log;
     CHECK(log.Count() == 0);
 
     CHECK(log.DataSamples().empty());
 
-    //Checks if there exists no values in the data log
+    // Checks if there exists no values in the data log
     CHECK_FALSE(log.Min().has_value());
     CHECK_FALSE(log.Max().has_value());
     CHECK_FALSE(log.Mean().has_value());
@@ -21,7 +21,7 @@ TEST_CASE("Empty Log Test", "[tools]"){
 /*
 Test checks the functions of a datalog with one sample
 */
-TEST_CASE("Single Entry Test", "[tools]"){
+TEST_CASE("Single Entry Test", "[tools]") {
 
     cse498::DataLog log;
     log.Add(10.1);
@@ -34,13 +34,12 @@ TEST_CASE("Single Entry Test", "[tools]"){
     CHECK(log.Mean().value() == Approx(10.1));
     CHECK(log.Min().value() == Approx(10.1));
     CHECK(log.Max().value() == Approx(10.1));
-
 }
 
 /*
 Test checks the functions of the datalog with multiple samples
 */
-TEST_CASE("Multiple Entry Test", "[tools]"){
+TEST_CASE("Multiple Entry Test", "[tools]") {
 
     cse498::DataLog log;
     log.Add(10.0);
@@ -50,18 +49,17 @@ TEST_CASE("Multiple Entry Test", "[tools]"){
 
     CHECK(log.Count() == 4);
 
-    //Even samples median calculation
+    // Even samples median calculation
     CHECK(log.Median().value() == Approx(11.85));
     CHECK(log.Mean().value() == Approx(11.95));
     CHECK(log.Min().value() == Approx(10.0));
     CHECK(log.Max().value() == Approx(14.1));
-
 }
 
 /*
 Test checks the clear function of the datalog
 */
-TEST_CASE("Clear Test", "[tools]"){
+TEST_CASE("Clear Test", "[tools]") {
 
     cse498::DataLog log;
     log.Add(1.0);
@@ -84,7 +82,7 @@ TEST_CASE("Clear Test", "[tools]"){
 /*
 Test checks the functions of the datalog with positive and negative values
 */
-TEST_CASE("Negative Value Entry Test", "[tools]"){
+TEST_CASE("Negative Value Entry Test", "[tools]") {
 
     cse498::DataLog log;
     log.Add(10.0);
@@ -95,18 +93,18 @@ TEST_CASE("Negative Value Entry Test", "[tools]"){
 
     CHECK(log.Count() == 5);
 
-    //Odd samples median calculation
+    // Odd samples median calculation
     CHECK(log.Median().value() == Approx(-11.1));
     CHECK(log.Mean().value() == Approx(-5.56));
     CHECK(log.Min().value() == Approx(-14.1));
     CHECK(log.Max().value() == Approx(10.0));
-
 }
 
 /*
-Test checks that the timestamps associated with the data values are in increasing order
+Test checks that the timestamps associated with the data values are in
+increasing order
 */
-TEST_CASE("Timestamp order check", "[tools]"){
+TEST_CASE("Timestamp order check", "[tools]") {
 
     cse498::DataLog log;
     log.Add(1.0);
@@ -122,11 +120,10 @@ TEST_CASE("Timestamp order check", "[tools]"){
 /*
 Test checks that the initial timestamp value
 */
-TEST_CASE("Initial Timestamp Test", "[tools]"){
+TEST_CASE("Initial Timestamp Test", "[tools]") {
 
     cse498::DataLog log;
     log.Add(1.0);
-
 
     CHECK(log.DataSamples().size() == 1);
     CHECK(log.DataSamples()[0].timestamp >= 0.0);
@@ -136,7 +133,7 @@ TEST_CASE("Initial Timestamp Test", "[tools]"){
 /*
 Test checks that the initial Under/Over Threshold Timestamp value
 */
-TEST_CASE("Empty Threshold Test", "[tools]"){
+TEST_CASE("Empty Threshold Test", "[tools]") {
 
     cse498::DataLog log;
 
@@ -147,7 +144,7 @@ TEST_CASE("Empty Threshold Test", "[tools]"){
 /*
 Test checks Under Threshold Timestamp value
 */
-TEST_CASE("Multiple Value TimeUnderThreshold Test", "[tools]"){
+TEST_CASE("Multiple Value TimeUnderThreshold Test", "[tools]") {
 
     cse498::DataLog log;
 
@@ -156,13 +153,12 @@ TEST_CASE("Multiple Value TimeUnderThreshold Test", "[tools]"){
     log.Add(20.0);
 
     CHECK(log.TimeUnderThreshold(15.0) == Approx(10.0));
-
 }
 
 /*
 Test checks Over Threshold Timestamp value
 */
-TEST_CASE("Multiple Value TimeOverThreshold Test", "[tools]"){
+TEST_CASE("Multiple Value TimeOverThreshold Test", "[tools]") {
 
     cse498::DataLog log;
 
@@ -171,13 +167,12 @@ TEST_CASE("Multiple Value TimeOverThreshold Test", "[tools]"){
     log.Add(10.0);
 
     CHECK(log.TimeOverThreshold(15.0) == Approx(2.0));
-
 }
 
 /*
 Test checks single sample threshold time value
 */
-TEST_CASE("Single Value Threshold Time Test", "[tools]"){
+TEST_CASE("Single Value Threshold Time Test", "[tools]") {
 
     cse498::DataLog log;
 
@@ -186,13 +181,12 @@ TEST_CASE("Single Value Threshold Time Test", "[tools]"){
 
     CHECK(log.TimeOverThreshold(10.0) == Approx(0.0));
     CHECK(log.TimeUnderThreshold(30.0) == Approx(0.0));
-
 }
 
 /*
 Test checks that final sample is not added to threshold time calculations
 */
-TEST_CASE("Final Sample Time Inclusion Test", "[tools]"){
+TEST_CASE("Final Sample Time Inclusion Test", "[tools]") {
 
     cse498::DataLog log;
 
@@ -203,5 +197,4 @@ TEST_CASE("Final Sample Time Inclusion Test", "[tools]"){
 
     CHECK(log.TimeOverThreshold(15.0) == Approx(5.0));
     CHECK(log.TimeUnderThreshold(15.0) == Approx(0.0));
-
 }

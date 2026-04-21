@@ -12,84 +12,68 @@ namespace cse498 {
 /*
  * Builds the dashboard-facing summary for one numeric series.
  */
-std::optional<StatSummary>
-StatsTracker::BuildSeriesSummary(const std::string &key,
-                                 const std::string &label,
-                                 const DataLog &log) const {
-  if (log.Count() == 0) {
-    return std::nullopt;
-  }
+std::optional<StatSummary> StatsTracker::BuildSeriesSummary(const std::string& key, const std::string& label,
+                                                            const DataLog& log) const {
+    if (log.Count() == 0) {
+        return std::nullopt;
+    }
 
-  StatSummary summary;
-  summary.key = key;
-  summary.label = label;
-  summary.sampleCount = log.Count();
-  summary.minValue = log.Min();
-  summary.maxValue = log.Max();
-  summary.meanValue = log.Mean();
-  summary.medianValue = log.Median();
+    StatSummary summary;
+    summary.key = key;
+    summary.label = label;
+    summary.sampleCount = log.Count();
+    summary.minValue = log.Min();
+    summary.maxValue = log.Max();
+    summary.meanValue = log.Mean();
+    summary.medianValue = log.Median();
 
-  const auto &samples = log.DataSamples();
-  if (!samples.empty()) {
-    summary.currentValue = samples.back().value;
-  }
+    const auto& samples = log.DataSamples();
+    if (!samples.empty()) {
+        summary.currentValue = samples.back().value;
+    }
 
-  return summary;
+    return summary;
 }
 
 /*
  * Combines all numeric series summaries and counters into one snapshot payload.
  */
-DashboardSnapshot
-StatsTracker::BuildSnapshot(const AnalyticsManager &analytics) const {
-  DashboardSnapshot snapshot;
+DashboardSnapshot StatsTracker::BuildSnapshot(const AnalyticsManager& analytics) const {
+    DashboardSnapshot snapshot;
 
+    if (auto summary = BuildSeriesSummary("enemies_killed", "Enemies Killed", analytics.GetEnemiesKilledLog());
+        summary.has_value()) {
+        snapshot.numericStats.push_back(*summary);
+    }
 
-  if (auto summary =
-          BuildSeriesSummary("health", "Health", analytics.GetHealthLog());
-      summary.has_value()) {
-    snapshot.numericStats.push_back(*summary);
-  }
+    if (auto summary = BuildSeriesSummary("damage_dealt", "Damage Dealt", analytics.GetDamageDealtLog());
+        summary.has_value()) {
+        snapshot.numericStats.push_back(*summary);
+    }
 
-  if (auto summary = BuildSeriesSummary("enemies_tracked", "Enemies Tracked",
-                                        analytics.GetEnemiesTrackedLog());
-      summary.has_value()) {
-    snapshot.numericStats.push_back(*summary);
-  }
+    if (auto summary = BuildActionSummary("action_log", "Action Log", analytics.GetActionLog()); summary.has_value()) {
+        snapshot.actionStats.push_back(*summary);
+    }
 
-  if (auto summary = BuildSeriesSummary("damage_dealt", "Damage Dealt",
-                                        analytics.GetDamageDealtLog());
-      summary.has_value()) {
-    snapshot.numericStats.push_back(*summary);
-  }
-
-    if (auto summary =
-          BuildActionSummary("action_log", "Action Log", analytics.GetActionLog());
-      summary.has_value()) {
-    snapshot.actionStats.push_back(*summary);
-  }
-
-  return snapshot;
+    return snapshot;
 }
 
 /*
  * Builds the dashboard-facing summary for one action log.
  */
-std::optional<ActionSummary>
-StatsTracker::BuildActionSummary(const std::string &key,
-                                 const std::string &label,
-                                 const ActionLog &log) const {
-  if (log.GetActionCount() == 0) {
-    return std::nullopt;
-  }
+std::optional<ActionSummary> StatsTracker::BuildActionSummary(const std::string& key, const std::string& label,
+                                                              const ActionLog& log) const {
+    if (log.GetActionCount() == 0) {
+        return std::nullopt;
+    }
 
-  ActionSummary summary;
-  summary.key = key;
-  summary.label = label;
-  summary.actionCount = log.GetActionCount();
-  summary.mostActiveEntity = log.GetMostActiveEntity();
+    ActionSummary summary;
+    summary.key = key;
+    summary.label = label;
+    summary.actionCount = log.GetActionCount();
+    summary.mostActiveEntity = log.GetMostActiveEntity();
 
-  return summary;
+    return summary;
 }
 
 } // namespace cse498

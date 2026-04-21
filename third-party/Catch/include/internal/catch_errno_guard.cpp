@@ -10,6 +10,6 @@
 #include <cerrno>
 
 namespace Catch {
-        ErrnoGuard::ErrnoGuard():m_oldErrno(errno){}
-        ErrnoGuard::~ErrnoGuard() { errno = m_oldErrno; }
-}
+    ErrnoGuard::ErrnoGuard(): m_oldErrno( errno ) {}
+    ErrnoGuard::~ErrnoGuard() { errno = m_oldErrno; }
+} // namespace Catch

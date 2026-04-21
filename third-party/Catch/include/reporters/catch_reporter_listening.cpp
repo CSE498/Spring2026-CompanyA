@@ -6,7 +6,8 @@
  *  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
  */
 
- #include "catch_reporter_listening.h"
+#include "catch_reporter_listening.h"
+
 #include <cassert>
 
 namespace Catch {
@@ -20,10 +21,12 @@ namespace Catch {
         m_listeners.push_back( std::move( listener ) );
     }
 
-    void ListeningReporter::addReporter(IStreamingReporterPtr&& reporter) {
-        assert(!m_reporter && "Listening reporter can wrap only 1 real reporter");
+    void ListeningReporter::addReporter( IStreamingReporterPtr&& reporter ) {
+        assert( !m_reporter &&
+                "Listening reporter can wrap only 1 real reporter" );
         m_reporter = std::move( reporter );
-        m_preferences.shouldRedirectStdOut = m_reporter->getPreferences().shouldRedirectStdOut;
+        m_preferences.shouldRedirectStdOut =
+            m_reporter->getPreferences().shouldRedirectStdOut;
     }
 
     ReporterPreferences ListeningReporter::getPreferences() const {
@@ -31,9 +34,8 @@ namespace Catch {
     }
 
     std::set<Verbosity> ListeningReporter::getSupportedVerbosities() {
-        return std::set<Verbosity>{ };
+        return std::set<Verbosity>{};
     }
-
 
     void ListeningReporter::noMatchingTestCases( std::string const& spec ) {
         for ( auto const& listener : m_listeners ) {
@@ -41,40 +43,42 @@ namespace Catch {
         }
         m_reporter->noMatchingTestCases( spec );
     }
-    
-    void ListeningReporter::reportInvalidArguments(std::string const&arg){
+
+    void ListeningReporter::reportInvalidArguments( std::string const& arg ) {
         for ( auto const& listener : m_listeners ) {
             listener->reportInvalidArguments( arg );
         }
         m_reporter->reportInvalidArguments( arg );
-    }    
+    }
 
-#if defined(CATCH_CONFIG_ENABLE_BENCHMARKING)
+#if defined( CATCH_CONFIG_ENABLE_BENCHMARKING )
     void ListeningReporter::benchmarkPreparing( std::string const& name ) {
-		for (auto const& listener : m_listeners) {
-			listener->benchmarkPreparing(name);
-		}
-		m_reporter->benchmarkPreparing(name);
-	}
-    void ListeningReporter::benchmarkStarting( BenchmarkInfo const& benchmarkInfo ) {
+        for ( auto const& listener : m_listeners ) {
+            listener->benchmarkPreparing( name );
+        }
+        m_reporter->benchmarkPreparing( name );
+    }
+    void
+    ListeningReporter::benchmarkStarting( BenchmarkInfo const& benchmarkInfo ) {
         for ( auto const& listener : m_listeners ) {
             listener->benchmarkStarting( benchmarkInfo );
         }
         m_reporter->benchmarkStarting( benchmarkInfo );
     }
-    void ListeningReporter::benchmarkEnded( BenchmarkStats<> const& benchmarkStats ) {
+    void ListeningReporter::benchmarkEnded(
+        BenchmarkStats<> const& benchmarkStats ) {
         for ( auto const& listener : m_listeners ) {
             listener->benchmarkEnded( benchmarkStats );
         }
         m_reporter->benchmarkEnded( benchmarkStats );
     }
 
-	void ListeningReporter::benchmarkFailed( std::string const& error ) {
-		for (auto const& listener : m_listeners) {
-			listener->benchmarkFailed(error);
-		}
-		m_reporter->benchmarkFailed(error);
-	}
+    void ListeningReporter::benchmarkFailed( std::string const& error ) {
+        for ( auto const& listener : m_listeners ) {
+            listener->benchmarkFailed( error );
+        }
+        m_reporter->benchmarkFailed( error );
+    }
 #endif // CATCH_CONFIG_ENABLE_BENCHMARKING
 
     void ListeningReporter::testRunStarting( TestRunInfo const& testRunInfo ) {
@@ -91,7 +95,6 @@ namespace Catch {
         m_reporter->testGroupStarting( groupInfo );
     }
 
-
     void ListeningReporter::testCaseStarting( TestCaseInfo const& testInfo ) {
         for ( auto const& listener : m_listeners ) {
             listener->testCaseStarting( testInfo );
@@ -106,7 +109,8 @@ namespace Catch {
         m_reporter->sectionStarting( sectionInfo );
     }
 
-    void ListeningReporter::assertionStarting( AssertionInfo const& assertionInfo ) {
+    void
+    ListeningReporter::assertionStarting( AssertionInfo const& assertionInfo ) {
         for ( auto const& listener : m_listeners ) {
             listener->assertionStarting( assertionInfo );
         }
@@ -114,8 +118,9 @@ namespace Catch {
     }
 
     // The return value indicates if the messages buffer should be cleared:
-    bool ListeningReporter::assertionEnded( AssertionStats const& assertionStats ) {
-        for( auto const& listener : m_listeners ) {
+    bool
+    ListeningReporter::assertionEnded( AssertionStats const& assertionStats ) {
+        for ( auto const& listener : m_listeners ) {
             static_cast<void>( listener->assertionEnded( assertionStats ) );
         }
         return m_reporter->assertionEnded( assertionStats );
@@ -128,14 +133,16 @@ namespace Catch {
         m_reporter->sectionEnded( sectionStats );
     }
 
-    void ListeningReporter::testCaseEnded( TestCaseStats const& testCaseStats ) {
+    void
+    ListeningReporter::testCaseEnded( TestCaseStats const& testCaseStats ) {
         for ( auto const& listener : m_listeners ) {
             listener->testCaseEnded( testCaseStats );
         }
         m_reporter->testCaseEnded( testCaseStats );
     }
 
-    void ListeningReporter::testGroupEnded( TestGroupStats const& testGroupStats ) {
+    void
+    ListeningReporter::testGroupEnded( TestGroupStats const& testGroupStats ) {
         for ( auto const& listener : m_listeners ) {
             listener->testGroupEnded( testGroupStats );
         }
@@ -149,7 +156,6 @@ namespace Catch {
         m_reporter->testRunEnded( testRunStats );
     }
 
-
     void ListeningReporter::skipTest( TestCaseInfo const& testInfo ) {
         for ( auto const& listener : m_listeners ) {
             listener->skipTest( testInfo );
@@ -157,8 +163,6 @@ namespace Catch {
         m_reporter->skipTest( testInfo );
     }
 
-    bool ListeningReporter::isMulti() const {
-        return true;
-    }
+    bool ListeningReporter::isMulti() const { return true; }
 
 } // end namespace Catch

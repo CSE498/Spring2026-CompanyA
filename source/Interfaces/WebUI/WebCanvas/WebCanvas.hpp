@@ -19,8 +19,8 @@
 #include <string>
 #include <vector>
 
-#include "../internal/IDomElement.hpp"
 #include "../internal/ICanvasElement.hpp"
+#include "../internal/IDomElement.hpp"
 
 namespace cse498 {
 
@@ -37,11 +37,14 @@ namespace cse498 {
 class WebCanvas : public IDomElement {
 public:
     /// @brief 2D floating-point vector used for polygon vertex coordinates.
-    struct Vec2 { float x; float y; };
+    struct Vec2 {
+        float x;
+        float y;
+    };
 
     /// @brief Constructs a WebCanvas associated with the given canvas element id.
     /// @param id DOM id of the \<canvas\> element (default: "web-canvas").
-    explicit WebCanvas(const std::string & id = "web-canvas");
+    explicit WebCanvas(const std::string& id = "web-canvas");
 
     ~WebCanvas() override = default;
 
@@ -53,7 +56,7 @@ public:
 
     /// @brief set the color used to clear the screen before drawing
     /// @param color the color to set
-    void SetBackgroundColor(const std::string & color) { mBackgroundColor = color; }
+    void SetBackgroundColor(const std::string& color) { mBackgroundColor = color; }
 
     // ---- IDomElement ----
 
@@ -96,9 +99,7 @@ public:
     /// @param y2          End y coordinate.
     /// @param lineWidth   Stroke width in pixels.
     /// @param strokeColor CSS stroke color string.
-    void DrawLine(float x1, float y1, float x2, float y2,
-                  float lineWidth,
-                  const std::string& strokeColor);
+    void DrawLine(float x1, float y1, float x2, float y2, float lineWidth, const std::string& strokeColor);
 
     /// @brief Draws a circle.
     /// @param centerX     Center x coordinate.
@@ -107,9 +108,7 @@ public:
     /// @param strokeColor CSS stroke color string.
     /// @param lineWidth   Stroke width in pixels.
     /// @param fillColor   CSS fill color string; empty string means no fill.
-    void DrawCircle(float centerX, float centerY, float radius,
-                    const std::string& strokeColor,
-                    float lineWidth,
+    void DrawCircle(float centerX, float centerY, float radius, const std::string& strokeColor, float lineWidth,
                     const std::string& fillColor);
 
     /// @brief Draws a filled point (small circle).
@@ -117,18 +116,14 @@ public:
     /// @param y         Center y coordinate.
     /// @param radius    Point radius in pixels.
     /// @param fillColor CSS fill color string.
-    void DrawPoint(float x, float y,
-                   float radius,
-                   const std::string& fillColor);
+    void DrawPoint(float x, float y, float radius, const std::string& fillColor);
 
     /// @brief Draws a polygon defined by a list of vertices.
     /// @param points      Ordered list of vertex positions.
     /// @param strokeColor CSS stroke color string.
     /// @param lineWidth   Stroke width in pixels.
     /// @param fillColor   CSS fill color string; empty string means no fill.
-    void DrawPolygon(const std::vector<Vec2>& points,
-                     const std::string& strokeColor,
-                     float lineWidth,
+    void DrawPolygon(const std::vector<Vec2>& points, const std::string& strokeColor, float lineWidth,
                      const std::string& fillColor);
 
     /// @brief Draws a filled rectangle.
@@ -137,8 +132,7 @@ public:
     /// @param w         Width in pixels.
     /// @param h         Height in pixels.
     /// @param fillColor CSS fill color string.
-    void DrawRect(float x, float y, float w, float h,
-                  const std::string& fillColor);
+    void DrawRect(float x, float y, float w, float h, const std::string& fillColor);
 
     /// @brief Draws a text string onto the canvas.
     /// @param x        Left edge x coordinate of the text baseline.
@@ -147,10 +141,7 @@ public:
     /// @param color    CSS fill color string for the text.
     /// @param fontSize Font size in pixels.
     /// @param fontFamily Name of font to use
-    void DrawText(float x, float y,
-                  const std::string& text,
-                  const std::string& color,
-                  float fontSize,
+    void DrawText(float x, float y, const std::string& text, const std::string& color, float fontSize,
                   const std::string& fontFamily);
 
     /// @brief Draws an image (by source URL) onto the canvas.
@@ -159,9 +150,7 @@ public:
     /// @param y       Top edge y coordinate.
     /// @param w       Width in pixels; pass -1 to use the image's natural width.
     /// @param h       Height in pixels; pass -1 to use the image's natural height.
-    void DrawImage(const std::string& imgSrc,
-                   float x, float y,
-                   float w, float h);
+    void DrawImage(const std::string& imgSrc, float x, float y, float w, float h);
 
     /// @brief Draws a bitmap image to the canvas
     /// @param bitmapHandle handle pointing to the bitmap object
@@ -171,11 +160,11 @@ public:
     void DrawTexture(emscripten::EM_VAL bitmapHandle, int x, int y, double scale);
 
 private:
-    std::vector<std::unique_ptr<ICanvasElement>> mElements;  ///< Owned canvas elements.
+    std::vector<std::unique_ptr<ICanvasElement>> mElements; ///< Owned canvas elements.
     std::string mBackgroundColor{};
 
-    Alignment   mAlign   = Alignment::Start;  ///< Alignment within the parent layout.
-    bool        mMounted = false;             ///< Whether this canvas is currently mounted.
+    Alignment mAlign = Alignment::Start; ///< Alignment within the parent layout.
+    bool mMounted = false; ///< Whether this canvas is currently mounted.
 };
 
 } // namespace cse498

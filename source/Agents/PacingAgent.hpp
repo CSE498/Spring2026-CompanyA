@@ -12,43 +12,54 @@
 
 namespace cse498 {
 
-  class PacingAgent : public AgentBase {
-  protected:
+class PacingAgent : public AgentBase {
+protected:
     bool mVertical = true; ///< Is this agent moving down&up?  False = right&left.
-    bool mReverse = false;  ///< Is this agent on their way back? (up/left?)
+    bool mReverse = false; ///< Is this agent on their way back? (up/left?)
 
-  public:
-    PacingAgent(size_t id, const std::string & name, const WorldBase & world)
-      : AgentBase(id, name, world) { }
+public:
+    PacingAgent(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
     ~PacingAgent() override = default;
 
-    PacingAgent & SetHorizontal() { mVertical = false; return *this; }
-    PacingAgent & SetVertical() { mVertical = true; return *this; }
-    PacingAgent & ToggleDirection() { mReverse = !mReverse; return *this; }
+    PacingAgent& SetHorizontal() {
+        mVertical = false;
+        return *this;
+    }
+    PacingAgent& SetVertical() {
+        mVertical = true;
+        return *this;
+    }
+    PacingAgent& ToggleDirection() {
+        mReverse = !mReverse;
+        return *this;
+    }
 
     /// @brief This agent needs a specific set of actions to function.
     /// @return Success: are required actions available?
     bool Initialize() override {
-      return HasAction("up") && HasAction("down") && HasAction("left") && HasAction("right");
+        return HasAction("up") && HasAction("down") && HasAction("left") && HasAction("right");
     }
 
     /// Choose the action to take a step in the appropriate direction.
-    size_t SelectAction(const WorldGrid & /* grid*/) override
-    {
-      // If the last step failed, try going in the other direction.
-      if (mActionResult == 0) ToggleDirection();
+    size_t SelectAction(const WorldGrid& /* grid*/) override {
+        // If the last step failed, try going in the other direction.
+        if (mActionResult == 0)
+            ToggleDirection();
 
-      // Take a step in the direction we are trying to go in.
-      if (mVertical) {
-        if (mReverse) return mActionMap["up"];
-        else         return mActionMap["down"];
-      } else {
-        if (mReverse) return mActionMap["left"];
-        else         return mActionMap["right"];
-      }
-      return 0;  // Should never actually get here...
+        // Take a step in the direction we are trying to go in.
+        if (mVertical) {
+            if (mReverse)
+                return mActionMap["up"];
+            else
+                return mActionMap["down"];
+        } else {
+            if (mReverse)
+                return mActionMap["left"];
+            else
+                return mActionMap["right"];
+        }
+        return 0; // Should never actually get here...
     }
-
-  };
+};
 
 } // End of namespace cse498

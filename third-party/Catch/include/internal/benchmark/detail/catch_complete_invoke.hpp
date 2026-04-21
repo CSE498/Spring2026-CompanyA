@@ -20,46 +20,54 @@
 namespace Catch {
     namespace Benchmark {
         namespace Detail {
-            template <typename T>
-            struct CompleteType { using type = T; };
-            template <>
-            struct CompleteType<void> { struct type {}; };
+            template <typename T> struct CompleteType {
+                using type = T;
+            };
+            template <> struct CompleteType<void> {
+                struct type {};
+            };
 
             template <typename T>
             using CompleteType_t = typename CompleteType<T>::type;
 
-            template <typename Result>
-            struct CompleteInvoker {
+            template <typename Result> struct CompleteInvoker {
                 template <typename Fun, typename... Args>
-                static Result invoke(Fun&& fun, Args&&... args) {
-                    return std::forward<Fun>(fun)(std::forward<Args>(args)...);
+                static Result invoke( Fun&& fun, Args&&... args ) {
+                    return std::forward<Fun>( fun )(
+                        std::forward<Args>( args )... );
                 }
             };
-            template <>
-            struct CompleteInvoker<void> {
+            template <> struct CompleteInvoker<void> {
                 template <typename Fun, typename... Args>
-                static CompleteType_t<void> invoke(Fun&& fun, Args&&... args) {
-                    std::forward<Fun>(fun)(std::forward<Args>(args)...);
+                static CompleteType_t<void> invoke( Fun&& fun,
+                                                    Args&&... args ) {
+                    std::forward<Fun>( fun )( std::forward<Args>( args )... );
                     return {};
                 }
             };
 
             // invoke and not return void :(
             template <typename Fun, typename... Args>
-            CompleteType_t<FunctionReturnType<Fun, Args...>> complete_invoke(Fun&& fun, Args&&... args) {
-                return CompleteInvoker<FunctionReturnType<Fun, Args...>>::invoke(std::forward<Fun>(fun), std::forward<Args>(args)...);
+            CompleteType_t<FunctionReturnType<Fun, Args...>>
+            complete_invoke( Fun&& fun, Args&&... args ) {
+                return CompleteInvoker<FunctionReturnType<Fun, Args...>>::
+                    invoke( std::forward<Fun>( fun ),
+                            std::forward<Args>( args )... );
             }
 
-            const std::string benchmarkErrorMsg = "a benchmark failed to run successfully";
+            const std::string benchmarkErrorMsg =
+                "a benchmark failed to run successfully";
         } // namespace Detail
 
         template <typename Fun>
-        Detail::CompleteType_t<FunctionReturnType<Fun>> user_code(Fun&& fun) {
-            CATCH_TRY{
-                return Detail::complete_invoke(std::forward<Fun>(fun));
-            } CATCH_CATCH_ALL{
-                getResultCapture().benchmarkFailed(translateActiveException());
-                CATCH_RUNTIME_ERROR(Detail::benchmarkErrorMsg);
+        Detail::CompleteType_t<FunctionReturnType<Fun>> user_code( Fun&& fun ) {
+            CATCH_TRY {
+                return Detail::complete_invoke( std::forward<Fun>( fun ) );
+            }
+            CATCH_CATCH_ALL {
+                getResultCapture().benchmarkFailed(
+                    translateActiveException() );
+                CATCH_RUNTIME_ERROR( Detail::benchmarkErrorMsg );
             }
         }
     } // namespace Benchmark

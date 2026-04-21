@@ -7,24 +7,24 @@
 #pragma once
 
 #include <string>
-#include "../WorldBase.hpp"
 #include "Item.hpp"
 #include "ItemConsumable.hpp"
+#include "WorldBase.hpp"
 
 namespace cse498 {
-    class ItemConsumableHealing : public ItemConsumable {
-        private:
-            int m_healing = 1;  // Amount of healing that the item does
+class ItemConsumableHealing : public ItemConsumable {
+private:
+    int m_healing = 1; // Amount of healing that the item does
 
-        public:
-            ItemConsumableHealing(size_t id, const std::string & name, const std::string & image_path, int gold, 
-                const WorldBase & world) : ItemConsumable(id, name, image_path, gold, world) {
-                    SetImagePath("assets/items/consumables/healing.png");
-                }
+public:
+    ItemConsumableHealing(size_t id, const std::string& name, const std::string& image_path, int gold,
+                          const WorldBase& world) : ItemConsumable(id, name, image_path, gold, world) {
+        SetImagePath("assets/items/consumables/healing.png");
+    }
 
-            bool IsHealing() const override {return true;}
+    bool IsHealing() const override { return true; }
 
-            int GetHealing() {return m_healing;}
-            void SetHealing(int healing) {m_healing = healing;}
-    };
-}
+    int GetHealing() { return m_healing; }
+    void SetHealing(int healing) { m_healing = healing; }
+};
+} // namespace cse498
