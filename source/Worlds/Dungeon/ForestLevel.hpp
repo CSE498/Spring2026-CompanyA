@@ -25,14 +25,24 @@ namespace cse498 {
 	class ForestLevel : public LevelBase{
 		private:
 
-        /**
-         * @brief Prefix for room file paths.
-         *
-         * @details
-         * This string is prepended to each room number when constructing
-         * file paths for loading room layouts.
-         */
-        inline static const std::string PREFIX = "one_pool/room_";
+		 /**
+		 * @brief Static room ID and weight pairs.
+		 *
+		 * @details
+		 * Each pair consists of a room number and its associated weight.
+		 * The weight determines the probability of selecting that room
+		 * during generation.
+		 * Higher weights (10) make a room more likely to be selected. 
+		 * Lower weights (1) make it less likely.
+		 */
+		inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{{
+			{1, 10},
+			{2, 10},
+			{3, 10},
+			{4, 10},
+			{5, 10},
+			{6, 1},
+		}};
 
 		/**
 		 * @brief Room file paths for forest level.
@@ -62,8 +72,8 @@ namespace cse498 {
 				assert(result.has_value());
 			}
 
-            return rooms;
-        }
+			return rooms;
+		}
 
 		cse498::WeightedSet<int> m_room_pool;
 

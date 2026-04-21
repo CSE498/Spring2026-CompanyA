@@ -7,12 +7,8 @@
 #pragma once
 
 #include <string>
-<<<<<<< HEAD
 #include "../WorldBase.hpp"
-=======
->>>>>>> origin/main
 #include "Item.hpp"
-#include "WorldBase.hpp"
 
 namespace cse498 {
 class ItemConsumable : public Item {
@@ -31,7 +27,7 @@ public:
     void DecrementCharges(int decrement = 1) {
         m_charges -= decrement;
         if (m_charges <= 0) {
-            DestroyItem();
+            //DestroyItem();
         }
     }
     void SetCharges(int charges) { m_charges = charges; }

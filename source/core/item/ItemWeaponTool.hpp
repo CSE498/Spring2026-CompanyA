@@ -9,7 +9,7 @@
 #include <string>
 #include "Item.hpp"
 #include "ItemWeapon.hpp"
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemWeaponTool : public ItemWeapon {
