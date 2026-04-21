@@ -49,6 +49,13 @@ namespace cse498 {
         ~EnemyAgent() override = default;
         bool Initialize() override;
         [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
+
+        /**
+         * @brief Identifies this agent as hostile for AI targeting.
+         * @see AgentBase::IsEnemy() for the rationale behind this hook.
+         * @return Always @c true — every @ref EnemyAgent is an enemy by definition.
+         */
+        [[nodiscard]] bool IsEnemy() const override { return true; }
     };
 
 } // namespace cse498

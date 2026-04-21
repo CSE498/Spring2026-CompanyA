@@ -19,9 +19,13 @@
 #include "../ImageManager.hpp"
 #include "../Menu.hpp"
 #include "../Text.hpp"
-#include "../source/Worlds/Dungeon/DungeonWorld.hpp"
+// Group 17 build-fix: these two includes were relative paths that did not resolve
+// from this file's location on upstream @c group17_inv_and_dungeon. They now use
+// source-root-relative paths (the @c source/ directory is an include root in
+// root-level @c CMakeLists.txt) so this TU actually compiles.
+#include "Worlds/Dungeon/DungeonWorld.hpp"
 #include "OverWorld.hpp"
-#include "../../../source/Agents/Classic/PlayerAgent.hpp"
+#include "Agents/Classic/PlayerAgent.hpp"
 
 namespace cse498
 {

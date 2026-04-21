@@ -12,6 +12,7 @@
 
 #include "../../../core/WorldBase.hpp"
 #include "../../../Agents/PacingAgent.hpp"
+#include "../../../Agents/AI/LearningExplorerAgent.hpp"
 
 namespace cse498 {
 
@@ -165,6 +166,25 @@ namespace cse498 {
     }
 
     [[nodiscard]] const std::string & GetAgentSpriteName() const { return mAgentSpriteName; }
+
+    /**
+     * @brief Spawn a Group 17 @ref LearningExplorerAgent into the overworld.
+     *
+     * @details This convenience spawner mirrors @ref AddPacingAgent so @c Game.cpp
+     *          can drop the AI agent into the world with one line. The agent is
+     *          registered under the name @c "Explorer"; @c Game::RenderOverworld
+     *          dispatches on that name to pick the goblin sprite, leaving the
+     *          existing skeleton-sprite path for @ref PacingAgent untouched.
+     *
+     * @param x Grid-cell X coordinate of the spawn tile.
+     * @param y Grid-cell Y coordinate of the spawn tile.
+     * @return Reference to the newly registered agent, for chained configuration.
+     */
+    LearningExplorerAgent & AddLearningExplorerAgent(size_t x, size_t y) {
+      LearningExplorerAgent & agent = AddAgent<LearningExplorerAgent>("Explorer");
+      agent.SetLocation(WorldPosition(x, y));
+      return agent;
+    }
   };
 
 } // namespace cse498

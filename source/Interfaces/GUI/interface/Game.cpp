@@ -9,6 +9,12 @@
 #include <filesystem>
 #include <iostream>
 #include "../../../core/AgentBase.hpp"
+// Group 17 AI-agent integration: required so this TU can construct
+// SmartEnemyAgent (dungeon goblin) and LearningExplorerAgent (overworld explorer).
+// OverWorld.hpp already includes LearningExplorerAgent.hpp for its spawner, but we
+// keep it here too for clarity / symmetry with the dungeon spawn path.
+#include "../../../Agents/AI/SmartEnemyAgent.hpp"
+#include "../../../Agents/AI/LearningExplorerAgent.hpp"
 
 namespace cse498
 {
@@ -90,6 +96,10 @@ namespace cse498
 
         // Mobs
         if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png"))
+            return false;
+        /// Group 17: goblin sprite — used both as the dungeon's @ref SmartEnemyAgent
+        /// texture and as the overworld's @ref LearningExplorerAgent texture.
+        if (!LoadCheck("goblin", std::string(ASSETS_DIR) + "Mobs/goblin.png"))
             return false;
 
         // --- Level 1 floors (forest) ---
@@ -209,6 +219,10 @@ namespace cse498
     {
         mOverWorld = std::make_unique<OverWorld>();
         mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
+        /// @internal Group 17 AI hook: drops a @ref LearningExplorerAgent into the
+        /// overworld so the user sees an AI-driven NPC wandering alongside the
+        /// scripted @ref PacingAgent. Rendered as a goblin in RenderOverworld().
+        mOverWorld->AddLearningExplorerAgent(5, 5);
 
         // add a player to the world (based on discord discussion)
         auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
@@ -251,6 +265,29 @@ namespace cse498
         mDungeonPlayer = &player;
 
         std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
+
+        /// @internal Group 17 AI hook: drop a @ref SmartEnemyAgent into the dungeon.
+        ///
+        /// The current @c DungeonWorld API does not expose a "first room center"
+        /// helper, so we scan the grid for the first cell whose registered type
+        /// name starts with "floor" (all dungeon floor tiles use that convention)
+        /// and is distinct from the player's spawn at {1,1}. This keeps the goblin
+        /// on a walkable tile without assuming anything about the dungeon layout.
+        auto& goblin = mDungeonWorld->AddAgent<SmartEnemyAgent>("Goblin");
+        for (size_t y = 0; y < world_h; ++y)
+        {
+            for (size_t x = 0; x < world_w; ++x)
+            {
+                if (x == 1 && y == 1) continue;
+                WorldPosition pos(x, y);
+                const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
+                if (cell_name.rfind("floor", 0) == 0) {
+                    goblin.SetLocation(pos);
+                    y = world_h; // break outer loop once placed
+                    break;
+                }
+            }
+        }
 
         // Map every cell type name to its matching image name
         for (size_t y = 0; y < world_h; ++y)
@@ -630,8 +667,17 @@ namespace cse498
             int screen_x = (static_cast<int>(pos.CellX()) - mCamX) * tw;
             int screen_y = (static_cast<int>(pos.CellY()) - mCamY) * th;
 
-            // Pick sprite based on whether this is the player or an NPC
-            const std::string &sprite = (&agent == mOverworldPlayer) ? "player" : mOverWorld->GetAgentSpriteName();
+            /// Sprite dispatch table for overworld agents:
+            ///   - The local player renders as "player".
+            ///   - The Group 17 @ref LearningExplorerAgent (registered under the
+            ///     name "Explorer" by @ref OverWorld::AddLearningExplorerAgent)
+            ///     renders as "goblin" so it's visually distinct from the skeleton.
+            ///   - Everything else (e.g. PacingAgent) falls back to the world's
+            ///     pre-existing single-sprite field — upstream behavior preserved.
+            std::string sprite;
+            if (&agent == mOverworldPlayer)           sprite = "player";
+            else if (agent.GetName() == "Explorer")   sprite = "goblin";
+            else                                      sprite = mOverWorld->GetAgentSpriteName();
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
         }
 
@@ -655,7 +701,16 @@ namespace cse498
             int screen_x = (static_cast<int>(pos.CellX()) - mDungeonCamX) * tw;
             int screen_y = (static_cast<int>(pos.CellY()) - mDungeonCamY) * th;
 
-            const std::string &sprite = (&agent == mDungeonPlayer) ? "player" : "dun_monster";
+            /// Sprite dispatch table for dungeon agents:
+            ///   - The dungeon player renders as "player".
+            ///   - The Group 17 @ref SmartEnemyAgent spawned by SetupDungeon()
+            ///     (registered under the name "Goblin") renders as "goblin".
+            ///   - All other agents fall back to the shared "dun_monster" sprite —
+            ///     upstream default behavior preserved.
+            std::string sprite;
+            if (&agent == mDungeonPlayer)         sprite = "player";
+            else if (agent.GetName() == "Goblin") sprite = "goblin";
+            else                                  sprite = "dun_monster";
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
         }
 

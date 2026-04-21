@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <type_traits>
@@ -15,6 +16,7 @@
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
+#include "WorldPosition.hpp"
 #include "../Agents/Classic/PlayerAgent.hpp"
 
 namespace cse498 {
@@ -167,6 +169,23 @@ namespace cse498 {
         [[nodiscard]] WorldPosition GetPlayerPosition() const {
             return mPlayer->GetLocation().AsWorldPosition();
         }
+
+        /**
+         * @brief Optional per-world bridge exposing a keyboard-controlled player's grid cell.
+         *
+         * @details Some worlds drive the player through something other than a registered
+         *          @ref PlayerAgent (for example, direct keyboard input captured by the GUI
+         *          layer). AI agents such as @ref SmartEnemyAgent prefer targeting the
+         *          player regardless of how that player is represented, so they consult
+         *          this hook first before falling back to scanning @ref GetAgents().
+         *
+         * @return @c std::nullopt by default. Concrete worlds override this to expose the
+         *         live player position in grid coordinates.
+         *
+         * @note Returning @c std::nullopt is fine; callers degrade gracefully to agent
+         *       iteration when the world does not maintain a tracked player.
+         */
+        [[nodiscard]] virtual std::optional<WorldPosition> GetTrackedPlayerPosition() const { return std::nullopt; }
 
         /// Return an editable version of the current grid for this world (main_grid by default)
         virtual WorldGrid &GetGrid() { return main_grid; }
