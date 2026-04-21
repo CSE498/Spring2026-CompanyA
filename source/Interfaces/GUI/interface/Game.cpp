@@ -51,6 +51,9 @@ bool Game::Initialize() {
     mPauseText.SetSize(48);
     mPauseText.SetBold(true);
 
+    // Stats text
+    mStatsText.SetRenderer(renderer);
+
     // Set up image manager and load all tile assets
     mImageManager = std::make_unique<ImageManager>(renderer);
 
@@ -108,6 +111,18 @@ bool Game::Initialize() {
     if (!LoadCheck("player", std::string(ASSETS_DIR) + "Player/player.png"))
         return false;
 
+    // Analytics setup
+    mAnalyticsManager = std::make_shared<AnalyticsManager>();
+    mStatsTracker = std::make_unique<StatsTracker>();
+
+    // USED TO TEMPORARILY PUT IN VALUES
+    /*
+    mAnalyticsManager->LogDamageDealt(42.0);
+    mAnalyticsManager->LogDamageDealt(87.5);
+    mAnalyticsManager->LogEnemiesKilled(3);
+    mAnalyticsManager->LogEnemiesKilled(5);
+    */
+
     // World Setups
     SetupOverworld();
     SetupDungeon();
@@ -151,6 +166,8 @@ void Game::SetupOverworld() {
             mOverworldGrid->SetCell(x, y, cell_name);
         }
     }
+
+    mOverWorld->SetAnalyticsManager(mAnalyticsManager);
 }
 
 
@@ -171,6 +188,8 @@ void Game::SetupDungeon() {
             mDungeonGrid->SetCell(x, y, cell_name);
         }
     }
+
+    mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
 }
 
 void Game::SetupMainMenu() {
@@ -197,6 +216,8 @@ void Game::SetupPauseMenu() {
         TransitionTo(GameState::OVERWORLD);
         mPreviousState = GameState::OVERWORLD;
     });
+
+    mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
 
     mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
 
@@ -225,6 +246,9 @@ void Game::Run() {
             case GameState::PAUSED:
                 UpdatePaused();
                 break;
+            case GameState::STATS:
+                UpdateStats();
+                break;
             case GameState::SETTINGS:
                 UpdateSettings();
                 break;
@@ -245,6 +269,9 @@ void Game::Run() {
                 break;
             case GameState::PAUSED:
                 RenderPaused();
+                break;
+            case GameState::STATS:
+                RenderStats();
                 break;
             case GameState::SETTINGS:
                 RenderSettings();
@@ -313,7 +340,7 @@ void Game::HandleEvents() {
                         Pause();
                     } else if (mState == GameState::PAUSED) {
                         Resume();
-                    } else if (mState == GameState::SETTINGS) {
+                    } else if (mState == GameState::SETTINGS || mState == GameState::STATS) {
                         Resume();
                     }
                     break;
@@ -330,6 +357,12 @@ void Game::HandleEvents() {
 // -----------------------------------------------------------------------
 
 void Game::TransitionTo(GameState new_state) {
+    if ((mPreviousState == GameState::DUNGEON || mPreviousState == GameState::OVERWORLD) &&
+        new_state == GameState::MAIN_MENU) {
+        mAnalyticsManager->LogDamageDealt(mAnalyticsManager->GetCurrentRunStats().damageDealt);
+        mAnalyticsManager->LogEnemiesKilled(mAnalyticsManager->GetCurrentRunStats().enemiesKilled);
+        mAnalyticsManager->ResetCurrentRunStats();
+    }
     mPreviousState = mState;
     mState = new_state;
 }
@@ -497,6 +530,91 @@ void Game::RenderPaused() {
 
 void Game::RenderSettings() {
     // TODO: render settings screen
+}
+
+void Game::UpdateStats() {
+    if (mAnalyticsManager) {
+        mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+    }
+}
+
+void Game::RenderStats() {
+    SDL_Renderer* renderer = mGameView->GetRenderer();
+    int w = mGameView->GetWidth();
+    int h = mGameView->GetHeight();
+
+    // Dark background
+    SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+    SDL_Rect bg = {0, 0, w, h};
+    SDL_RenderFillRect(renderer, &bg);
+
+    // Vals for spacing
+    int y = 40;
+    const int LINE_H = 36;
+
+    // Title
+    mStatsText.SetContent("Stats");
+    mStatsText.SetSize(36);
+    mStatsText.SetBold(true);
+    mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
+    y += LINE_H * 2;
+
+    // Numeric stats
+    for (const StatSummary& stat : mDashboardSnapshot.numericStats) {
+        mStatsText.SetContent(stat.label + ":");
+        mStatsText.SetSize(22);
+        mStatsText.SetBold(true);
+        mStatsText.Draw(60, y);
+        y += LINE_H;
+
+        mStatsText.SetContent("  Current : " + std::to_string(static_cast<int>(stat.currentValue)));
+        mStatsText.SetBold(false);
+        mStatsText.Draw(60, y);
+        y += LINE_H;
+
+        std::string detail;
+        if (stat.minValue)  detail += "Min: "  + std::to_string(static_cast<int>(*stat.minValue))  + "  ";
+        if (stat.maxValue)  detail += "Max: "  + std::to_string(static_cast<int>(*stat.maxValue))  + "  ";
+        if (stat.meanValue) detail += "Mean: " + std::to_string(static_cast<int>(*stat.meanValue));
+        if (!detail.empty()) {
+            mStatsText.SetContent("  " + detail);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+        }
+
+        mStatsText.SetContent("  Runs logged: " + std::to_string(stat.sampleCount));
+        mStatsText.Draw(60, y);
+        y += LINE_H + 8;
+    }
+
+    // Action stats
+    for (const ActionSummary& action : mDashboardSnapshot.actionStats) {
+        mStatsText.SetContent(action.label + ":");
+        mStatsText.SetSize(22);
+        mStatsText.SetBold(true);
+        mStatsText.Draw(60, y);
+        y += LINE_H;
+
+        mStatsText.SetBold(false);
+        mStatsText.SetContent("  Total actions: " + std::to_string(action.actionCount));
+        mStatsText.Draw(60, y);
+        y += LINE_H;
+
+        if (action.mostActiveEntity) {
+            mStatsText.SetContent("  Most active entity ID: " + std::to_string(*action.mostActiveEntity));
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+        }
+        y += 8;
+    }
+
+    // Empty state
+    if (mDashboardSnapshot.numericStats.empty() && mDashboardSnapshot.actionStats.empty()) {
+        mStatsText.SetContent("No stats recorded yet.");
+        mStatsText.SetSize(22);
+        mStatsText.SetBold(false);
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
+    }
 }
 
 void Game::ProcessPlayerMove(SDL_Keycode key) {

@@ -55,6 +55,16 @@ public:
      */
     void ResetGoldDropClaim() { mGoldClaimed = false; }
 
+    /**
+     * Override of TakeDamage to log damage dealt to this enemy in the analytics manager.
+     */
+    void TakeDamage(double amount) override;
+
+    /**
+     * Override of OnDeath to log enemy deaths in the analytics manager.
+     */
+    void OnDeath() override;
+    
     bool Interact() override {
         TakeDamage(DamageCalculator::Calculate(world.GetPlayer()->GetStats(), mStats));
         return true;

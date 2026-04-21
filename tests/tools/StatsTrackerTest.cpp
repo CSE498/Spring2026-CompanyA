@@ -31,21 +31,13 @@ TEST_CASE("Build Snapshot", "[StatsTracker]") {
     REQUIRE(dashboard.numericStats.size() == 0);
     REQUIRE(dashboard.actionStats.size() == 0);
 
-    analytics.LogHealth(3.4);
+    analytics.LogDamageDealt(50);
     dashboard = tracker.BuildSnapshot(analytics);
     REQUIRE(dashboard.numericStats.size() == 1);
 
-    analytics.LogDamageDealt(50);
+    analytics.LogEnemiesKilled(2.2);
     dashboard = tracker.BuildSnapshot(analytics);
     REQUIRE(dashboard.numericStats.size() == 2);
-
-    analytics.LogHealth(5.2);
-    dashboard = tracker.BuildSnapshot(analytics);
-    REQUIRE(dashboard.numericStats.size() == 2);
-
-    analytics.LogEnemiesTracked(2.2);
-    dashboard = tracker.BuildSnapshot(analytics);
-    REQUIRE(dashboard.numericStats.size() == 3);
 
     analytics.LogAction(1, "TestMove", cse498::WorldPosition(1, 2), cse498::WorldPosition(2, 1));
     analytics.LogAction(1, "TestMove2", cse498::WorldPosition(2, 1), cse498::WorldPosition(3, 3));

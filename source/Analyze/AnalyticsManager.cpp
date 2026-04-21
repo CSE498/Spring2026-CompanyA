@@ -11,15 +11,20 @@
 
 namespace cse498 {
 
-/*
-Resets the health log
-*/
-void AnalyticsManager::ResetHealthLog() { mHealthLog.Clear(); }
+/**
+ * Logs damage dealt in the current run and updates the total damage dealt.
+ */
+void AnalyticsManager::LogRunDamage(double amount) { mCurrentRunStats.damageDealt += amount; }
+
+/**
+ * Logs the number of enemies killed in the current run and updates the total enemies killed.
+ */
+void AnalyticsManager::LogRunEnemiesKilled(int count) { mCurrentRunStats.enemiesKilled += count; }
 
 /*
-Resets the enemies tracked log
+Resets the enemies killed log
 */
-void AnalyticsManager::ResetEnemiesTrackedLog() { mEnemiesTrackedLog.Clear(); }
+void AnalyticsManager::ResetEnemiesKilledLog() { mEnemiesKilledLog.Clear(); }
 
 /*
 Resets the damage dealt log
@@ -35,32 +40,21 @@ void AnalyticsManager::ResetActionLog() { mActionLog.Clear(); }
  * Resets all logs
  */
 void AnalyticsManager::Reset() {
-    ResetHealthLog();
-    ResetEnemiesTrackedLog();
+    ResetEnemiesKilledLog();
     ResetDamageDealtLog();
     ResetActionLog();
 }
 
-/*
-Adds a new health value to the health log
-*/
-void AnalyticsManager::LogHealth(double health) {
-    // Ignore negative values
-    if (health < 0) {
-        return;
-    }
-    mHealthLog.Add(health);
-}
 
 /*
-Adds a new enemy count value to the enemies tracked log
+Adds a new enemy count value to the enemies killed log
 */
-void AnalyticsManager::LogEnemiesTracked(double count_enemies) {
+void AnalyticsManager::LogEnemiesKilled(double count_enemies) {
     // Ignore negative values
     if (count_enemies < 0) {
         return;
     }
-    mEnemiesTrackedLog.Add(count_enemies);
+    mEnemiesKilledLog.Add(count_enemies);
 }
 
 /*
@@ -75,14 +69,9 @@ void AnalyticsManager::LogDamageDealt(double damage) {
 }
 
 /*
-Returns a const reference to the health log
+Returns a const reference to the enemies killed log
 */
-const DataLog& AnalyticsManager::GetHealthLog() const noexcept { return mHealthLog; }
-
-/*
-Returns a const reference to the enemies tracked log
-*/
-const DataLog& AnalyticsManager::GetEnemiesTrackedLog() const noexcept { return mEnemiesTrackedLog; }
+const DataLog& AnalyticsManager::GetEnemiesKilledLog() const noexcept { return mEnemiesKilledLog; }
 
 /*
 Returns a const reference to the damage dealt log
