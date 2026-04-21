@@ -56,18 +56,18 @@ TEST_CASE("Test ResourceProducer Rate increase", "[core][InteractiveWorld][Resou
     const auto firstUpgrade = farm.Upgrade(type, inventoryWoodCount);
     REQUIRE(firstUpgrade.has_value());
     CHECK(farm.GetCurrentLevel() == 1);
-    producer.CalculateRate();
+    producer.Update();
     CHECK(ApproxEqual(producer.GetRate(), 1.25f));
 
     const auto secondUpgrade = farm.Upgrade(type, inventoryWoodCount);
     REQUIRE(secondUpgrade.has_value());
     CHECK(farm.GetCurrentLevel() == 2);
-    producer.CalculateRate();
+    producer.Update();
     CHECK(ApproxEqual(producer.GetRate(), 1.5f));
 
     const auto thirdUpgrade = farm.Upgrade(type, inventoryWoodCount);
     REQUIRE(thirdUpgrade.has_value());
     CHECK(farm.GetCurrentLevel() == 3);
-    producer.CalculateRate();
+    producer.Update();
     CHECK(ApproxEqual(producer.GetRate(), 1.75f));
 }

@@ -4,6 +4,7 @@
 #include <string>
 
 #include "../../../third-party/json/json.hpp"
+#include "../../Agents/Classic/ResourceManagementAgent.hpp"
 #include "InteractiveWorld.hpp"
 
 namespace cse498 {
@@ -32,6 +33,17 @@ public:
             b["level"] = buildingPtr->GetCurrentLevel();
 
             j["buildings"].push_back(b);
+        }
+
+        for (size_t i = 0; i < world.GetNumAgents(); ++i) {
+            const auto* manager = dynamic_cast<const ResourceManagementAgent*>(&world.GetAgentByIndex(i));
+            if (manager == nullptr) {
+                continue;
+            }
+
+            j["resource_manager"]["name"] = manager->GetName();
+            j["resource_manager"]["gold"] = manager->GetGold();
+            break;
         }
 
         std::ofstream file(filename);
@@ -72,6 +84,23 @@ public:
                         }
                         break;
                     }
+                }
+            }
+        }
+
+        if (j.contains("resource_manager") && j["resource_manager"].is_object()) {
+            const std::string managerName = j["resource_manager"].value("name", "");
+            const std::size_t gold = j["resource_manager"].value("gold", 0u);
+
+            for (size_t i = 0; i < world.GetNumAgents(); ++i) {
+                auto* manager = dynamic_cast<ResourceManagementAgent*>(&world.GetAgentByIndex(i));
+                if (manager == nullptr) {
+                    continue;
+                }
+
+                if (manager->GetName() == managerName) {
+                    manager->SetGold(gold);
+                    break;
                 }
             }
         }

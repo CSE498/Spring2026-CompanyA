@@ -6,9 +6,8 @@
 
 #pragma once
 
-#include "../../core/AgentBase.hpp"
-#include "../../core/WorldBase.hpp"
 #include "ItemType.hpp"
+#include "ResourceBank.hpp"
 
 #include <cassert>
 #include <expected>
@@ -20,8 +19,9 @@
 
 namespace cse498 {
 /// @class Building
-/// @brief Upgradable building. Starts at level 0.
-class Building : public AgentBase {
+/// @brief Upgradable resource building. Starts at level 0 and can also store
+///        hauled resources for its production lane.
+class Building : public ResourceBank {
 public:
     // The quantity and type of items needed for an upgrade
     struct BuildingUpgrade {
@@ -92,7 +92,7 @@ public:
      * @param world world this building belongs to
      * @param buildingName
      */
-    Building(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
+    Building(size_t id, const std::string& name, const WorldBase& world) : ResourceBank(id, name, world) {}
     /**
      * Get Max level for this building
      * @return max level as an int

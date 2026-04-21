@@ -60,6 +60,9 @@ public:
      * Update the resource production
      */
     void Update() {
+        // Refresh rate each tick so building upgrades take effect immediately.
+        CalculateRate();
+
         // Get current time
         auto now = std::chrono::steady_clock::now();
         // Get delta time since last update

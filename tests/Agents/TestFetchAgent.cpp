@@ -18,6 +18,13 @@ using namespace cse498;
 
 namespace {
 
+class DummyEndpoint : public AgentBase {
+public:
+    DummyEndpoint(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
+
+    [[nodiscard]] size_t SelectAction(const WorldGrid&) override { return 0; }
+};
+
 void StepAgent(InteractiveWorld& world, FetchAgent& agent) {
     const std::size_t action = agent.SelectAction(world.GetGrid());
     world.DoAction(agent, action);
@@ -28,10 +35,10 @@ void StepAgent(InteractiveWorld& world, FetchAgent& agent) {
 TEST_CASE("FetchAgent routes between generic origin and deposit points", "[FetchAgent][generic]") {
     InteractiveWorld world;
 
-    Building& origin = world.AddAgent<Building>("Origin");
-    Building& deposit = world.AddAgent<Building>("Deposit");
-    world.AddBuilding(origin, WorldPosition{4, 2});
-    world.AddBuilding(deposit, WorldPosition{8, 2});
+    DummyEndpoint& origin = world.AddAgent<DummyEndpoint>("Origin");
+    DummyEndpoint& deposit = world.AddAgent<DummyEndpoint>("Deposit");
+    origin.SetPosition(WorldPosition{4, 2});
+    deposit.SetPosition(WorldPosition{8, 2});
 
     FetchAgent& agent = world.AddAgent<FetchAgent>("Hauler");
     agent.SetOrigin(origin).SetDepositPoint(deposit);
@@ -123,4 +130,47 @@ TEST_CASE("FetchAgent waits at an empty ResourceSpawn until resources appear", "
     REQUIRE(agent.GetItemType() == ItemType::Wood);
     REQUIRE(agent.GetCarryQuantity() == 4);
     REQUIRE(spawn.GetQuantity() == 0);
+}
+
+TEST_CASE("FetchAgent uses a producer building as bank storage", "[FetchAgent][resources]") {
+    InteractiveWorld world;
+
+    auto townHallPtr = std::make_unique<TownHall>(world.GetNextAgentId(), "Town Hall", world, world.GetInventoryPtr());
+    TownHall& townHall = world.AddAgent(std::move(townHallPtr));
+    world.AddTownHall(townHall, WorldPosition{8, 4});
+
+    auto spawnPtr = std::make_unique<ResourceSpawn>(world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
+    ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
+    spawn.AddResource(6);
+    world.AddResourceSpawn(spawn, WorldPosition{4, 4});
+
+    Building& lumberYard = world.AddAgent<Building>("Lumber Yard");
+    world.AddBuilding(lumberYard, WorldPosition{6, 4});
+
+    FetchAgent& toBuilding = world.AddAgent<FetchAgent>("To Building");
+    toBuilding.SetOrigin(spawn).SetDepositPoint(lumberYard).SetPosition(WorldPosition{3, 4});
+
+    StepAgent(world, toBuilding);
+    REQUIRE(toBuilding.GetCarryQuantity() == 6);
+    REQUIRE(spawn.GetQuantity() == 0);
+
+    toBuilding.SetPosition(WorldPosition{5, 4});
+    StepAgent(world, toBuilding);
+    REQUIRE(toBuilding.GetCarryQuantity() == 0);
+    REQUIRE(lumberYard.GetStoredAmount(ItemType::Wood) == 6);
+
+    FetchAgent& toTownHall = world.AddAgent<FetchAgent>("To Town Hall");
+    toTownHall.SetOrigin(lumberYard)
+            .SetDepositPoint(townHall)
+            .SetItemType(ItemType::Wood)
+            .SetPosition(WorldPosition{7, 4});
+
+    StepAgent(world, toTownHall);
+    REQUIRE(toTownHall.GetCarryQuantity() == 6);
+    REQUIRE(lumberYard.GetStoredAmount(ItemType::Wood) == 0);
+
+    toTownHall.SetPosition(WorldPosition{7, 4});
+    StepAgent(world, toTownHall);
+    REQUIRE(toTownHall.GetCarryQuantity() == 0);
+    REQUIRE(world.GetInventory().GetAmount(ItemType::Wood) == 6);
 }

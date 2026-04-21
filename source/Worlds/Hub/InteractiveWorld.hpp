@@ -5,6 +5,7 @@
  **/
 
 #pragma once
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <memory>
@@ -45,6 +46,35 @@ protected:
 private:
     // ResourceProducers in the scene
     std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
+
+    bool TryInteractAdjacent(const WorldPosition& position, const AgentBase* initiator) {
+        const std::array<WorldPosition, 4> priorities = {
+                position.Right(),
+                position.Up(),
+                position.Down(),
+                position.Left(),
+        };
+
+        for (const WorldPosition& target: priorities) {
+            for (size_t i = 0; i < GetNumAgents(); ++i) {
+                AgentBase& candidate = GetAgentByIndex(i);
+                if (&candidate == initiator || !candidate.GetLocation().IsPosition()) {
+                    continue;
+                }
+
+                if (candidate.GetLocation().AsWorldPosition() != target) {
+                    continue;
+                }
+
+                if (candidate.Interact()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Update world logic
      */
@@ -164,6 +194,9 @@ public:
                 new_position = cur_position.Right();
                 break;
             case INTERACT:
+                if (agent.IsInterface() && agent.GetLocation().IsPosition()) {
+                    return TryInteractAdjacent(cur_position, &agent);
+                }
                 return true;
         }
 

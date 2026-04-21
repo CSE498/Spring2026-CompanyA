@@ -6,7 +6,7 @@
 
 // Include the modules that we will be using.
 #include "../../source/Agents/AI/FetchAgent.hpp"
-#include "../../source/Agents/Classic/FarmingAgent.hpp"
+#include "../../source/Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../source/Agents/PacingAgent.hpp"
 #include "../../source/Interfaces/TrashInterface.hpp"
 #include "../../source/Worlds/Hub/Building.hpp"
@@ -40,7 +40,7 @@ int main() {
     TownHall& townHall = world->AddAgent(std::move(townHallPtr));
     world->AddTownHall(townHall, WorldPosition{11, 5});
 
-    // Buildings
+    // Buildings now act as both upgrade points and intermediate storage.
     Building& lumberYard = world->AddAgent<Building>("Lumber Yard");
     lumberYard.SetSymbol('L');
     lumberYard.AddUpgrade(ItemType::Wood, 15);
@@ -56,19 +56,6 @@ int main() {
     mine.AddUpgrade(ItemType::Stone, 100);
     mine.AddUpgrade(ItemType::Metal, 50);
     mine.AddUpgrade(ItemType::Metal, 100);
-
-    // Resource banks sit between the corner spawns and the center town hall.
-    ResourceBank& woodBank = world->AddAgent<ResourceBank>("Wood Bank");
-    woodBank.SetSymbol('B');
-    world->AddResourceBank(woodBank, WorldPosition{16, 3});
-
-    ResourceBank& stoneBank = world->AddAgent<ResourceBank>("Stone Bank");
-    stoneBank.SetSymbol('B');
-    world->AddResourceBank(stoneBank, WorldPosition{6, 7});
-
-    ResourceBank& metalBank = world->AddAgent<ResourceBank>("Metal Bank");
-    metalBank.SetSymbol('B');
-    world->AddResourceBank(metalBank, WorldPosition{16, 7});
 
     // Resource spawns occupy the three corners farthest from the player start.
     auto woodSpawnPtr = std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Wood Spawn", *world, ItemType::Wood);
@@ -118,30 +105,28 @@ int main() {
     };
 
     // Two-stage hauling pipeline for each resource:
-    // ResourceSpawn -> ResourceBank -> TownHall.
-    FetchAgent& woodToBank = world->AddAgent<FetchAgent>("Wood To Bank");
-    configureFetcher(woodToBank, woodSpawn, woodBank, ItemType::Wood, '1', WorldPosition{20, 2});
+    // ResourceSpawn -> producer building -> TownHall.
+    FetchAgent& woodToLumberYard = world->AddAgent<FetchAgent>("Wood To Lumber Yard");
+    configureFetcher(woodToLumberYard, woodSpawn, lumberYard, ItemType::Wood, '1', WorldPosition{20, 2});
 
-    FetchAgent& woodToTownHall = world->AddAgent<FetchAgent>("Wood To Town Hall");
-    configureFetcher(woodToTownHall, woodBank, townHall, ItemType::Wood, '2', WorldPosition{15, 4});
+    FetchAgent& woodToTownHall = world->AddAgent<FetchAgent>("Lumber Yard To Town Hall");
+    configureFetcher(woodToTownHall, lumberYard, townHall, ItemType::Wood, '2', WorldPosition{15, 4});
 
-    FetchAgent& stoneToBank = world->AddAgent<FetchAgent>("Stone To Bank");
-    configureFetcher(stoneToBank, stoneSpawn, stoneBank, ItemType::Stone, '3', WorldPosition{2, 8});
+    FetchAgent& stoneToQuarry = world->AddAgent<FetchAgent>("Stone To Quarry");
+    configureFetcher(stoneToQuarry, stoneSpawn, quarry, ItemType::Stone, '3', WorldPosition{2, 8});
 
-    FetchAgent& stoneToTownHall = world->AddAgent<FetchAgent>("Stone To Town Hall");
-    configureFetcher(stoneToTownHall, stoneBank, townHall, ItemType::Stone, '4', WorldPosition{7, 6});
+    FetchAgent& stoneToTownHall = world->AddAgent<FetchAgent>("Quarry To Town Hall");
+    configureFetcher(stoneToTownHall, quarry, townHall, ItemType::Stone, '4', WorldPosition{7, 6});
 
-    FetchAgent& metalToBank = world->AddAgent<FetchAgent>("Metal To Bank");
-    configureFetcher(metalToBank, metalSpawn, metalBank, ItemType::Metal, '5', WorldPosition{20, 8});
+    FetchAgent& metalToMine = world->AddAgent<FetchAgent>("Metal To Mine");
+    configureFetcher(metalToMine, metalSpawn, mine, ItemType::Metal, '5', WorldPosition{20, 8});
 
-    FetchAgent& metalToTownHall = world->AddAgent<FetchAgent>("Metal To Town Hall");
-    configureFetcher(metalToTownHall, metalBank, townHall, ItemType::Metal, '6', WorldPosition{15, 6});
+    FetchAgent& metalToTownHall = world->AddAgent<FetchAgent>("Mine To Town Hall");
+    configureFetcher(metalToTownHall, mine, townHall, ItemType::Metal, '6', WorldPosition{15, 6});
 
-    FarmingAgent& woodAgent = world->AddAgent<FarmingAgent>("Wood Farmer");
-    woodAgent.SetAssignedBuilding(&lumberYard);
-    woodAgent.SetHomePosition(WorldPosition{14, 2});
-    woodAgent.SetSymbol('7');
-    woodAgent.SetLocation(WorldPosition{14, 4});
+    ResourceManagementAgent& resourceManager = world->AddAgent<ResourceManagementAgent>("Resource Manager");
+    resourceManager.SetInventory(world->GetInventoryPtr()).SetManagedBuildings(world->GetBuildings()).SetSymbol('7');
+    resourceManager.SetLocation(WorldPosition{2, 3});
 
 
     InteractiveWorldSaveManager saveManager;
