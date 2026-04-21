@@ -1,7 +1,3 @@
-/**
- * @file TagManager.hpp
- * @brief Reverse index from string tags to object IDs, plus set-based tag queries.
- */
 #pragma once
 
 #include <cstddef>
@@ -19,7 +15,7 @@
 namespace cse498 {
 
 /**
- * @brief Manages associations between object IDs and string tags.
+ * Manages associations between object IDs and string tags.
  *
  * Internally maintains a reverse index from tag -> set of object IDs,
  * and a "universe" set containing all objects that have ever been tagged.

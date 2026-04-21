@@ -1,9 +1,7 @@
 /**
- * @file FunctionSet.hpp
- * @brief Ordered registry of void callables sharing one signature; invoke all with CallAll.
- *
- * Functions are stored with unique IDs for removal. All stored callables accept the same
- * parameter pack and return void.
+ * FunctionSet: FunctionSet: A container that holds functions with the same parameter types
+ * and a void return type. Functions can be added, removed by ID, and invoked
+ * together with CallAll.
  */
 
 #pragma once

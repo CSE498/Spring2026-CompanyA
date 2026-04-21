@@ -1,6 +1,7 @@
 /**
- * @file Scheduler.hpp
- * @brief Weighted random choice among registered processes using positive priority weights.
+ * Scheduler: Schedules a set of processes based on a "priority" heuristic and
+ * returns the next process to run using a weighted random selection approach
+ * where higher priority processes are more likely to be selected.
  */
 
 #pragma once

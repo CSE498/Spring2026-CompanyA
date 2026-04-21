@@ -1,15 +1,17 @@
-/**
- * @file BehaviorTree.hpp
- * @brief Behavior tree building blocks: blackboard, execution context, node hierarchy, and factories.
- * @author Jacob Bettinger
- * @date 2026-02-04
- *
- * Provides a blackboard for shared node data, the Template Method pattern via Node::Tick(),
- * composites (Selector, Sequence), decorators (Invert, ContinuallyRepeat), and Strategy-style
- * Action leaves using std::function.
- *
- * @note Some documentation was drafted with AI assistance during code review.
- */
+/*
+@author Jacob Bettinger
+@date 2026-02-04
+
+Note
+- Used AI assistance for part of the documentation due to notes during review
+
+Implements:
+- Blackboard for shared node data
+- Template Method pattern via Node::Tick()
+- Composite pattern (Selector, Sequence)
+- Decorator pattern (Invert, ContinuallyRepeat)
+- Strategy pattern (Action via std::function)
+*/
 
 #pragma once
 

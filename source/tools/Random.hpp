@@ -1,9 +1,7 @@
 /**
- * @file Random.hpp
- * @brief Xoshiro256++-based random number generation (`Random` class).
- *
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * It is apart of Green and White Games (Company A) Group 15's module.
+ * @brief A class for random generation
  * @note Status: PROPOSAL
  * Credit notes: This files makes use of the Xoshiro algorithm as described at:
  *               https://en.wikipedia.org/wiki/Xorshift#xoshiro
@@ -60,7 +58,7 @@ namespace cse498 {
             uint64_t state;
         };
 
-        /** @brief Ensures state values are non-zero and well-mixed.
+        /* @brief Ensures state values are non-zero and well-mixed.
         *  @param The splitmix state being mixed
         *  @return A well-mixed, non-zero uint64_t value
         */
@@ -71,7 +69,7 @@ namespace cse498 {
             return result ^ (result >> RIGHT_SHIFT3);
         }
 
-        /** @brief Uses m_seed to generate the state positions
+        /* @brief Uses m_seed to generate the state positions
         *  @param The xoshiro state being initialize
         */
         void Xoshiro256ppInit(struct Xoshiro256ppState &state) {
@@ -82,7 +80,7 @@ namespace cse498 {
             }
         }
 
-        /** @brief Performs a left rotation on x by k bits
+        /* @brief Performs a left rotation on x by k bits
         *  @param x and k, x is the value being rotated and k is how much it is rotated by
         *  @return A rotated x value
         */
@@ -90,7 +88,7 @@ namespace cse498 {
             return (x << k) | (x >> (NUM_BITS - k));
         }
 
-        /** @brief Generates a random number
+        /* @brief Generates a random number
         *  @param the xoshiro state being used to generated the number
         *  @return a randomly generated uint64_t value
         */
@@ -119,7 +117,7 @@ namespace cse498 {
         ////////////////////////////////////////////////////////////
 
 
-        /** @brief Generates a double
+        /* @brief Generates a double
         *  @param the xoshiro state being used to generated the number
         *  @return a randomly generated double
         */
@@ -131,7 +129,7 @@ namespace cse498 {
         struct Xoshiro256ppState m_rng;
         bool m_used = false;
 
-        /** @brief Checks if the rng has been initialize or not */
+        /* @brief Checks if the rng has been initialize or not */
         void CheckRng() {
             if (!m_used) {
                 Xoshiro256ppInit(m_rng);
@@ -140,20 +138,20 @@ namespace cse498 {
         }
 
     public:
-        /** @brief The constructor for a Random object */
+        /* @brief The constructor for a Random object */
         Random() {
             m_seed = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count();
         }
 
-        /** @brief An overloaded contructor to take an optional seed
+        /* @brief An overloaded contructor to take an optional seed
         *  @param seed - a optional parameter to set the seed of the generator
         */
         Random(uint64_t seed) {
             m_seed = seed;
         }
 
-        /** @brief Public setter for the current seed.
+        /* @brief Public setter for the current seed.
         *  @param the desired seed
         */
         void SetSeed(uint64_t seed) {
@@ -161,12 +159,12 @@ namespace cse498 {
             m_used = false;
         }
 
-        /** @brief Public getter for the current seed
+        /* @brief Public getter for the current seed
         *  @return the current seed
         */
         uint64_t GetSeed() const { return m_seed; }
 
-        /** @brief Templated function to generate and return values for integral values
+        /* @brief Templated function to generate and return values for integral values
         * @param The range of values(inclusive) to generate a number between. min must be <= max.
         * @return A random value in range of the specified type
         */
@@ -189,7 +187,7 @@ namespace cse498 {
             return min + static_cast<T>(scaled);
         }
 
-        /** @brief Templated function to generate and return values for floating point values
+        /* @brief Templated function to generate and return values for floating point values
         *  @param The range of values(inclusive) to generate a number between. min must be <= max.
         *  @return A random value in range of the specified type
         */
@@ -209,7 +207,7 @@ namespace cse498 {
             return static_cast<T>(min + decimal_value * (max - min));
         }
 
-        /** @brief Generates based off of a given probability, and returns a bool
+        /* @brief Generates based off of a given probability, and returns a bool
         *  @param the desired probaility of a true value
         *  @return a weighted generated bool
         */

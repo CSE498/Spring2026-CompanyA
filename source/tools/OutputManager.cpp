@@ -1,8 +1,3 @@
-/**
- * @file OutputManager.cpp
- * @brief Implementations for OutputManager.
- */
-
 #include "OutputManager.hpp"
 
 #include <iostream>
@@ -12,14 +7,14 @@ namespace {
 constexpr const char* DEFAULT_RUNTIME_CATEGORY = "GENERAL";
 }
 
-/** @brief Creates a new OutputManager.
+/*@brief Creates a new OutputManager.
  */
 cse498::OutputManager::OutputManager() : m_timer("OutputManager") {
     // Default sink prints to the console so the logger works immediately.
     m_sinks.push_back({[](std::string_view line) { std::cout << line << '\n'; }, LogLevel::Debug});
 }
 
-/** @brief Sets the minimum log level for the manager.
+/*@brief Sets the minimum log level for the manager.
  * @param level The minimum level that will be emitted.
  */
 void cse498::OutputManager::SetMinLogLevel(LogLevel level) {
@@ -27,7 +22,7 @@ void cse498::OutputManager::SetMinLogLevel(LogLevel level) {
     m_min = level;
 }
 
-/** @brief Gets the current minimum log level.
+/* @brief Gets the current minimum log level.
  * @return The active minimum log level.
  */
 cse498::LogLevel cse498::OutputManager::GetMinLogLevel() const {
@@ -35,7 +30,7 @@ cse498::LogLevel cse498::OutputManager::GetMinLogLevel() const {
     return m_min;
 }
 
-/** @brief Checks if a level would be emitted by the manager.
+/* @brief Checks if a level would be emitted by the manager.
  * @param level The level to test.
  * @return True if the manager would allow the message through.
  */
@@ -48,7 +43,7 @@ bool cse498::OutputManager::ShouldLogUnlocked(LogLevel level) const {
     return static_cast<uint8_t>(level) >= static_cast<uint8_t>(m_min);
 }
 
-/** @brief Checks if a level would be emitted by the manager.
+/* @brief Checks if a level would be emitted by the manager.
  * @param level The level to test.
  * @return True if the manager would allow the message through.
  */
@@ -57,7 +52,7 @@ bool cse498::OutputManager::ShouldLog(LogLevel level) const {
     return ShouldLogUnlocked(level);
 }
 
-/** @brief Enables or disables timestamps in the formatted output.
+/* @brief Enables or disables timestamps in the formatted output.
  * @param enabled True to include elapsed milliseconds in each line.
  */
 void cse498::OutputManager::EnableTimestamps(bool enabled) {
@@ -65,7 +60,7 @@ void cse498::OutputManager::EnableTimestamps(bool enabled) {
     m_timestamps = enabled;
 }
 
-/** @brief Reports whether timestamps are currently enabled.
+/* @brief Reports whether timestamps are currently enabled.
  * @return True when timestamps are enabled.
  */
 bool cse498::OutputManager::TimestampsEnabled() const {
@@ -73,7 +68,7 @@ bool cse498::OutputManager::TimestampsEnabled() const {
     return m_timestamps;
 }
 
-/** @brief Resets the timer used for timestamped log output.
+/* @brief Resets the timer used for timestamped log output.
  * @details
  * After calling this, future timestamped log lines start again near 0 ms.
  */
@@ -82,7 +77,7 @@ void cse498::OutputManager::ResetTimestampClock() {
     m_timer.restart();
 }
 
-/** @brief Gets the elapsed time in milliseconds since the last call to ResetTimestampClock().
+/* @brief Gets the elapsed time in milliseconds since the last call to ResetTimestampClock().
  * @return The elapsed time in milliseconds since the last call to ResetTimestampClock().
  */
 long long cse498::OutputManager::ElapsedMilliseconds() const {
@@ -90,7 +85,7 @@ long long cse498::OutputManager::ElapsedMilliseconds() const {
     return static_cast<long long>(elapsedSeconds * 1000.0);
 }
 
-/** @brief Creates a formatted log line.
+/* @brief Creates a formatted log line.
  * @param level The level of the message.
  * @param category The category of the message.
  * @param message The message to log.
@@ -117,7 +112,7 @@ std::string cse498::OutputManager::FormatLine(LogLevel level, std::string_view c
     return output;
 }
 
-/** @brief Logs a message using the built-in category enum.
+/* @brief Logs a message using the built-in category enum.
  * @param level The log level for the message.
  * @param category The built-in category for the message.
  * @param message The text to log.
@@ -126,7 +121,7 @@ void cse498::OutputManager::Log(LogLevel level, LogCategory category, std::strin
     Log(level, CategoryName(category), message);
 }
 
-/** @brief Logs a message using a runtime-provided category name.
+/* @brief Logs a message using a runtime-provided category name.
  * @param level The log level for the message.
  * @param category The category name to show in the output.
  * @param message The text to log.
@@ -176,12 +171,12 @@ void cse498::OutputManager::Log(LogLevel level, std::string_view category, std::
     }
 }
 
-/** @brief Logs a message with convenient defaults.
+/* @brief Logs a message with convenient defaults.
  * @param message The text to log at Info level with the GENERAL category.
  */
 void cse498::OutputManager::Log(std::string_view message) { Log(LogLevel::Info, DEFAULT_RUNTIME_CATEGORY, message); }
 
-/** @brief Converts a log level to its display name.
+/* @brief Converts a log level to its display name.
  * @param level The level to convert.
  * @return Uppercase text for the level.
  */
@@ -204,7 +199,7 @@ std::string_view cse498::OutputManager::LevelName(LogLevel level) {
     return "INFO";
 }
 
-/** @brief Converts a built-in category to its display name.
+/* @brief Converts a built-in category to its display name.
  * @param category The category to convert.
  * @return Uppercase text for the category.
  */
@@ -239,7 +234,7 @@ std::string_view cse498::OutputManager::CategoryName(LogCategory category) {
     return DEFAULT_RUNTIME_CATEGORY;
 }
 
-/** @brief Adds a sink to the manager.
+/* @brief Adds a sink to the manager.
  * @param sink The sink to add.
  * @param minLevel The minimum log level for the sink.
  */
@@ -248,7 +243,7 @@ void cse498::OutputManager::AddSink(LogSink sink, LogLevel minLevel) {
     m_sinks.push_back({std::move(sink), minLevel});
 }
 
-/** @brief Removes all registered sinks.
+/* @brief Removes all registered sinks.
  * @details
  * After this, no console or custom sink output will occur until a sink is added.
  */
@@ -257,7 +252,7 @@ void cse498::OutputManager::ClearSinks() {
     m_sinks.clear();
 }
 
-/** @brief Opens the log file for writing.
+/* @brief Opens the log file for writing.
  * @details
  * This is only called when a log file is specified.
  */
@@ -279,7 +274,7 @@ void cse498::OutputManager::OpenCsvLocked() {
     }
 }
 
-/** @brief Closes the log file if it's open.
+/* @brief Closes the log file if it's open.
  * @details
  * This is called when disabling CSV logging or changing the log file path.
  */
@@ -289,7 +284,7 @@ void cse498::OutputManager::CloseCsvLocked() {
     }
 }
 
-/** @brief Enables or disables CSV logging.
+/* @brief Enables or disables CSV logging.
  * @param enabled True to enable CSV logging.
  */
 void cse498::OutputManager::EnableCsv(bool enabled) {
@@ -311,7 +306,7 @@ void cse498::OutputManager::EnableCsv(bool enabled) {
     }
 }
 
-/** @brief Reports whether CSV logging is currently enabled.
+/* @brief Reports whether CSV logging is currently enabled.
  * @return True when CSV logging is enabled.
  */
 bool cse498::OutputManager::CsvEnabled() const {
@@ -319,7 +314,7 @@ bool cse498::OutputManager::CsvEnabled() const {
     return m_csvEnabled;
 }
 
-/** @brief Sets the file path used for CSV logging.
+/* @brief Sets the file path used for CSV logging.
  * @param path The file path to write log lines to.
  * @param append True to append to the file, false to overwrite it.
  */

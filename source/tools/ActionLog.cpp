@@ -1,6 +1,6 @@
 /**
  * @file ActionLog.cpp
- * @brief Implementation of ActionLog, AgentActionLog, UserActionLog, and related helpers.
+ * @brief Implementation of ActionLog, AgentActionLog, and UserActionLog.
  */
 
 #include "ActionLog.hpp"
@@ -15,18 +15,10 @@
 
 namespace cse498 {
 
-/**
- * @name ActionLog
- * @{
- */
+// ActionLog
 
-/** Default constructor: empty log, time 0, sequence counter 0. */
 ActionLog::ActionLog() : mNextSequenceNumber(0), mCurrentTime(0.0) {}
 
-/**
- * @copydoc ActionLog::LogAction
- * @details Timestamps the entry with mCurrentTime and assigns the next sequence number.
- */
 void ActionLog::LogAction(int entityId, const std::string& actionType, WorldPosition position,
                           WorldPosition newPosition) {
     Action action;
@@ -39,22 +31,13 @@ void ActionLog::LogAction(int entityId, const std::string& actionType, WorldPosi
     mActions.push_back(action);
 }
 
-/**
- * @copydoc ActionLog::UpdateTime
- * @pre newTime must be non-negative (asserted in debug builds).
- */
 void ActionLog::UpdateTime(double newTime) {
     assert(newTime >= 0.0 && "Time must be non-negative");
     mCurrentTime = newTime;
 }
 
-/** @copydoc ActionLog::GetActions */
 const std::vector<Action>& ActionLog::GetActions() const { return mActions; }
 
-/**
- * @copydoc ActionLog::GetActionRange
- * @pre startTime <= endTime (asserted in debug builds).
- */
 std::vector<Action> ActionLog::GetActionRange(double startTime, double endTime) const {
     assert(startTime <= endTime && "startTime must be <= endTime");
 
@@ -64,7 +47,6 @@ std::vector<Action> ActionLog::GetActionRange(double startTime, double endTime) 
     return result;
 }
 
-/** @copydoc ActionLog::GetEntityActions */
 std::vector<Action> ActionLog::GetEntityActions(int entityId) const {
     std::vector<Action> result;
     std::copy_if(mActions.begin(), mActions.end(), std::back_inserter(result),
@@ -72,13 +54,8 @@ std::vector<Action> ActionLog::GetEntityActions(int entityId) const {
     return result;
 }
 
-/** @copydoc ActionLog::GetActionCount */
 int ActionLog::GetActionCount() const { return static_cast<int>(mActions.size()); }
 
-/**
- * @copydoc ActionLog::GetMostActiveEntity
- * @details Counts actions per entity and returns the ID with the highest count (first max if tied).
- */
 std::optional<int> ActionLog::GetMostActiveEntity() const {
     if (mActions.empty()) {
         return std::nullopt;
@@ -93,10 +70,6 @@ std::optional<int> ActionLog::GetMostActiveEntity() const {
     return maxEntry->first;
 }
 
-/**
- * @copydoc ActionLog::GetActionCountInRange
- * @pre startTime <= endTime (asserted in debug builds).
- */
 int ActionLog::GetActionCountInRange(double startTime, double endTime) const {
     assert(startTime <= endTime && "startTime must be <= endTime");
 
@@ -105,26 +78,13 @@ int ActionLog::GetActionCountInRange(double startTime, double endTime) const {
     }));
 }
 
-/**
- * @copydoc ActionLog::Clear
- * @details Resets the sequence counter; does not change mCurrentTime.
- */
 void ActionLog::Clear() {
     mActions.clear();
     mNextSequenceNumber = 0;
 }
 
-/** @} */
+// AgentActionLog
 
-/**
- * @name AgentActionLog
- * @{
- */
-
-/**
- * @copydoc AgentActionLog::GetStuckAgentRatio
- * @pre windowSize > 0 (asserted in debug builds).
- */
 double AgentActionLog::GetStuckAgentRatio(int windowSize) const {
     assert(windowSize > 0 && "windowSize must be positive");
 
@@ -143,14 +103,8 @@ double AgentActionLog::GetStuckAgentRatio(int windowSize) const {
     return static_cast<double>(stuckCount) / static_cast<double>(agentIds.size());
 }
 
-/** @} */
+// UserActionLog
 
-/**
- * @name UserActionLog
- * @{
- */
-
-/** @copydoc UserActionLog::GetLastAction */
 std::optional<Action> UserActionLog::GetLastAction() const {
     if (mActions.empty()) {
         return std::nullopt;
@@ -158,10 +112,6 @@ std::optional<Action> UserActionLog::GetLastAction() const {
     return mActions.back();
 }
 
-/**
- * @copydoc UserActionLog::GetMostFrequentActionType
- * @details Counts ActionType strings and returns the label with the highest count (first max if tied).
- */
 std::optional<std::string> UserActionLog::GetMostFrequentActionType() const {
     if (mActions.empty()) {
         return std::nullopt;
@@ -176,18 +126,8 @@ std::optional<std::string> UserActionLog::GetMostFrequentActionType() const {
     return maxEntry->first;
 }
 
-/** @} */
+// Experimental
 
-/**
- * @name Experimental helpers
- * @{
- */
-
-/**
- * @copydoc IsEntityStuck
- * @pre windowSize > 0 (asserted in debug builds).
- * @details Requires at least windowSize actions for the entity; checks the last windowSize entries for zero displacement.
- */
 bool IsEntityStuck(const ActionLog& log, int entityId, int windowSize) {
     assert(windowSize > 0 && "windowSize must be positive");
 
@@ -202,10 +142,6 @@ bool IsEntityStuck(const ActionLog& log, int entityId, int windowSize) {
     });
 }
 
-/**
- * @copydoc ExportToCsv
- * @details Writes a header row then one CSV line per action with positions split into X/Y columns.
- */
 bool ExportToCsv(const ActionLog& log, const std::string& filePath) {
     std::ofstream file(filePath);
     if (!file.is_open()) {
@@ -221,10 +157,6 @@ bool ExportToCsv(const ActionLog& log, const std::string& filePath) {
     return true;
 }
 
-/**
- * @copydoc Serialize
- * @details First line is the action count; each following line has sequence, entity, time, positions, then action type.
- */
 std::string Serialize(const ActionLog& log) {
     std::ostringstream oss;
     oss << log.GetActionCount() << "\n";
@@ -236,10 +168,6 @@ std::string Serialize(const ActionLog& log) {
     return oss.str();
 }
 
-/**
- * @copydoc Deserialize
- * @details Clears the log, reads the count, then repopulates via UpdateTime and LogAction for each entry.
- */
 void Deserialize(ActionLog& log, const std::string& data) {
     log.Clear();
 
@@ -260,20 +188,12 @@ void Deserialize(ActionLog& log, const std::string& data) {
     }
 }
 
-/**
- * @copydoc ActionLog::IsEntityStuck
- * @details Delegates to cse498::IsEntityStuck.
- */
 bool ActionLog::IsEntityStuck(int entityId, int windowSize) const {
     return cse498::IsEntityStuck(*this, entityId, windowSize);
 }
 
-/** @copydoc ActionLog::Serialize */
 std::string ActionLog::Serialize() const { return cse498::Serialize(*this); }
 
-/** @copydoc ActionLog::Deserialize */
 void ActionLog::Deserialize(const std::string& data) { cse498::Deserialize(*this, data); }
-
-/** @} */
 
 } // namespace cse498
