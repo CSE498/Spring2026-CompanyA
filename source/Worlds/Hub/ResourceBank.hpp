@@ -24,8 +24,7 @@ class ResourceBank : public AgentBase {
 public:
     using ItemCount = InteractiveWorldInventory::ItemCount;
 
-    ResourceBank(size_t id, const std::string& name, const WorldBase& world) :
-        AgentBase(id, name, world) {}
+    ResourceBank(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
 
     /**
      * Deposit resources into the bank.

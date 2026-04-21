@@ -19,11 +19,10 @@ TEST_CASE("Test ResourceProducer Constructor", "[core][InteractiveWorld][Resourc
     cse498::Building& farm = world.AddAgent<cse498::Building>("Farm");
     CHECK(farm.GetName() == "Farm");
 
-	auto spawnPtr = std::make_unique<ResourceSpawn>(
-	    world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
-	spawnPtr->SetSymbol('l');
-	ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
-	spawn.SetLocation(WorldPosition{5, 5});
+    auto spawnPtr = std::make_unique<ResourceSpawn>(world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
+    spawnPtr->SetSymbol('l');
+    ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
+    spawn.SetLocation(WorldPosition{5, 5});
 
     cse498::InteractiveWorldInventory inv;
     float baseRate = 1.0f;
@@ -40,11 +39,10 @@ TEST_CASE("Test ResourceProducer Rate increase", "[core][InteractiveWorld][Resou
     farm.AddUpgrade(ItemType::Wood, 5);
     farm.SetRateModifier(0.25f);
 
-	auto spawnPtr = std::make_unique<ResourceSpawn>(
-	    world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
-	spawnPtr->SetSymbol('l');
-	ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
-	spawn.SetLocation(WorldPosition{5, 5});
+    auto spawnPtr = std::make_unique<ResourceSpawn>(world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
+    spawnPtr->SetSymbol('l');
+    ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
+    spawn.SetLocation(WorldPosition{5, 5});
 
     cse498::InteractiveWorldInventory inv;
     inv.AddItem(ItemType::Wood, 15);

@@ -55,35 +55,33 @@ TEST_CASE("FetchAgent routes between generic origin and deposit points", "[Fetch
 TEST_CASE("FetchAgent supports resource hauling through endpoint callbacks", "[FetchAgent][resources]") {
     InteractiveWorld world;
 
-    auto townHallPtr = std::make_unique<TownHall>(
-        world.GetNextAgentId(), "Town Hall", world, world.GetInventoryPtr());
+    auto townHallPtr = std::make_unique<TownHall>(world.GetNextAgentId(), "Town Hall", world, world.GetInventoryPtr());
     TownHall& townHall = world.AddAgent(std::move(townHallPtr));
     world.AddTownHall(townHall, WorldPosition{8, 4});
 
-    auto spawnPtr = std::make_unique<ResourceSpawn>(
-        world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
+    auto spawnPtr = std::make_unique<ResourceSpawn>(world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
     ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
     spawn.AddResource(5);
     world.AddResourceSpawn(spawn, WorldPosition{4, 4});
 
     FetchAgent& agent = world.AddAgent<FetchAgent>("Wood Hauler");
     agent.SetOrigin(spawn)
-        .SetDepositPoint(townHall)
-        .SetItemType(spawn.GetItemType())
-        .SetOnOriginReached([&spawn](FetchAgent& fetcher) {
-            fetcher.SetItemType(spawn.GetItemType());
-            fetcher.SetCarryQuantity(spawn.Collect());
-        })
-        .SetOnDepositReached([&townHall](FetchAgent& fetcher) {
-            const int quantity = fetcher.GetCarryQuantity();
-            if (quantity <= 0) {
-                return;
-            }
+            .SetDepositPoint(townHall)
+            .SetItemType(spawn.GetItemType())
+            .SetOnOriginReached([&spawn](FetchAgent& fetcher) {
+                fetcher.SetItemType(spawn.GetItemType());
+                fetcher.SetCarryQuantity(spawn.Collect());
+            })
+            .SetOnDepositReached([&townHall](FetchAgent& fetcher) {
+                const int quantity = fetcher.GetCarryQuantity();
+                if (quantity <= 0) {
+                    return;
+                }
 
-            townHall.DepositResource(fetcher.GetItemType(), quantity);
-            fetcher.AddDelivered(quantity);
-            fetcher.SetCarryQuantity(0);
-        });
+                townHall.DepositResource(fetcher.GetItemType(), quantity);
+                fetcher.AddDelivered(quantity);
+                fetcher.SetCarryQuantity(0);
+            });
 
     agent.SetPosition(WorldPosition{3, 4});
     StepAgent(world, agent);
@@ -102,8 +100,7 @@ TEST_CASE("FetchAgent supports resource hauling through endpoint callbacks", "[F
 TEST_CASE("FetchAgent waits at an empty ResourceSpawn until resources appear", "[FetchAgent][resources]") {
     InteractiveWorld world;
 
-    auto spawnPtr = std::make_unique<ResourceSpawn>(
-        world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
+    auto spawnPtr = std::make_unique<ResourceSpawn>(world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
     ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
     world.AddResourceSpawn(spawn, WorldPosition{4, 2});
 
