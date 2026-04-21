@@ -14,6 +14,7 @@
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
 #include "ResourceProducer.hpp"
+#include "ResourceBank.hpp"
 #include "ResourceSpawn.hpp"
 #include "TownHall.hpp"
 
@@ -194,9 +195,9 @@ namespace cse498 {
          * @param position where to add in world
          */
         void AddBuilding(Building& building, WorldPosition position) {
-		building.SetLocation(Location(position));
+          building.SetLocation(Location(position));
 	        main_grid[position] = building_id;
-	}
+        }
 
         /**
          * Add resource spawn to world
@@ -204,18 +205,28 @@ namespace cse498 {
          * @param position where to add spawn
          */
         void AddResourceSpawn(ResourceSpawn& spawn, WorldPosition position) {
-	        spawn.SetLocation(Location(position));
-	        main_grid[position] = building_id;
+            spawn.SetLocation(Location(position));
+            main_grid[position] = building_id;
         }
 
-	/**
-	 * Add Town hall to the world
-	 * @param th town hall
-	 * @param position where to add spawn
-	 */
+        /**
+         * Add resource bank to world
+         * @param bank resource bank to add
+         * @param position where to add bank
+         */
+        void AddResourceBank(ResourceBank& bank, WorldPosition position) {
+            bank.SetLocation(Location(position));
+            main_grid[position] = building_id;
+        }
+
+        /**
+         * Add Town hall to the world
+         * @param th town hall
+         * @param position where to add spawn
+         */
         void AddTownHall(TownHall& th, WorldPosition position) {
-	        th.SetLocation(Location(position));
-	        main_grid[position] = building_id;
+            th.SetLocation(Location(position));
+            main_grid[position] = building_id;
         }
 
         void RemoveBuilding(Building& building) {

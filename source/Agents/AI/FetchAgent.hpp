@@ -16,6 +16,7 @@
 #include "../../core/WorldGrid.hpp"
 #include "../../core/WorldPosition.hpp"
 #include "../../Worlds/Hub/ItemType.hpp"
+#include "../../Worlds/Hub/ResourceBank.hpp"
 #include "../../Worlds/Hub/ResourceSpawn.hpp"
 #include "../../Worlds/Hub/TownHall.hpp"
 
@@ -30,9 +31,15 @@ namespace cse498 {
  *   - `deposit point` is where it travels when carrying cargo
  *   - optional callbacks define what happens at each endpoint
  *
- * By default, reaching the origin sets the carry quantity to 1 and reaching the
- * deposit point unloads everything. Convenience wrappers keep the original
- * ResourceSpawn -> TownHall flow available for the Group 14 demo.
+ * By default, reaching the origin will:
+ *   - collect from a ResourceSpawn
+ *   - withdraw from a ResourceBank
+ *   - otherwise fall back to a synthetic carry quantity of 1
+ *
+ * If a resource source is empty, the agent waits adjacent to it and retries on
+ * later turns. Reaching the deposit point unloads everything. Convenience
+ * wrappers keep the original ResourceSpawn -> TownHall flow available for the
+ * Group 14 demo.
  *
  * ResourceSpawn and building-like endpoints typically live on non-walkable
  * tiles, so the agent paths toward a tile adjacent to its current goal.
@@ -142,15 +149,14 @@ public:
                 if (m_onDepositReached) {
                     m_onDepositReached(*this);
                 } else {
-                    AddDelivered(m_carryQuantity);
-                    m_carryQuantity = 0;
+                    PerformDefaultDeposit();
                 }
                 LogActionNow("deposit");
             } else {
                 if (m_onOriginReached) {
                     m_onOriginReached(*this);
                 } else {
-                    m_carryQuantity = 1;
+                    PerformDefaultPickup();
                 }
                 LogActionNow("pickup");
             }
@@ -168,6 +174,53 @@ private:
     ItemType m_itemType = ItemType::Wood;
     int m_carryQuantity = 0;
     int m_totalDelivered = 0;
+
+    void PerformDefaultPickup() {
+        if (auto* spawn = dynamic_cast<ResourceSpawn*>(m_origin); spawn != nullptr) {
+            SetItemType(spawn->GetItemType());
+            SetCarryQuantity(spawn->Collect());
+            return;
+        }
+
+        if (auto* bank = dynamic_cast<ResourceBank*>(m_origin); bank != nullptr) {
+            const int available = static_cast<int>(bank->GetStoredAmount(m_itemType));
+            if (available <= 0) {
+                SetCarryQuantity(0);
+                return;
+            }
+
+            if (bank->WithdrawResource(m_itemType, available)) {
+                SetCarryQuantity(available);
+            }
+            return;
+        }
+
+        SetCarryQuantity(1);
+    }
+
+    void PerformDefaultDeposit() {
+        if (m_carryQuantity <= 0) {
+            return;
+        }
+
+        if (auto* townHall = dynamic_cast<TownHall*>(m_depositPoint); townHall != nullptr) {
+            townHall->DepositResource(m_itemType, m_carryQuantity);
+            AddDelivered(m_carryQuantity);
+            SetCarryQuantity(0);
+            return;
+        }
+
+        if (auto* bank = dynamic_cast<ResourceBank*>(m_depositPoint); bank != nullptr) {
+            if (bank->DepositResource(m_itemType, m_carryQuantity)) {
+                AddDelivered(m_carryQuantity);
+                SetCarryQuantity(0);
+            }
+            return;
+        }
+
+        AddDelivered(m_carryQuantity);
+        SetCarryQuantity(0);
+    }
 
     [[nodiscard]] static bool IsAdjacent(const WorldPosition& a, const WorldPosition& b) {
         const long long dx =
