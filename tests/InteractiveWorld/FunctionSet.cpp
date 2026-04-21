@@ -1,138 +1,129 @@
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/InteractiveWorld/FunctionSet.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include <vector>
 
 using namespace cse498;
 
-TEST_CASE("FunctionSet starts empty")
-{
-  FunctionSet<> fs;
+TEST_CASE("FunctionSet starts empty") {
+    FunctionSet<> fs;
 
-  CHECK(fs.Size() == 0);
-  CHECK(fs.Empty() == true);
+    CHECK(fs.Size() == 0);
+    CHECK(fs.Empty() == true);
 }
 
-TEST_CASE("AddFunction increases size")
-{
-  FunctionSet<> fs;
+TEST_CASE("AddFunction increases size") {
+    FunctionSet<> fs;
 
-  auto id0 = fs.AddFunction([] {});
-  auto id1 = fs.AddFunction([] {});
+    auto id0 = fs.AddFunction([] {});
+    auto id1 = fs.AddFunction([] {});
 
-  CHECK(id1 != id0);
-  CHECK(fs.Size() == 2);
-  CHECK(fs.Empty() == false);
+    CHECK(id1 != id0);
+    CHECK(fs.Size() == 2);
+    CHECK(fs.Empty() == false);
 }
 
-TEST_CASE("RemoveFunction removes the correct function")
-{
-  FunctionSet<> fs;
+TEST_CASE("RemoveFunction removes the correct function") {
+    FunctionSet<> fs;
 
-  auto id0 = fs.AddFunction([] {});
-  auto id1 = fs.AddFunction([] {});
+    auto id0 = fs.AddFunction([] {});
+    auto id1 = fs.AddFunction([] {});
 
-  CHECK(fs.RemoveFunction(id0) == true);
-  CHECK(fs.Size() == 1);
+    CHECK(fs.RemoveFunction(id0) == true);
+    CHECK(fs.Size() == 1);
 
-  CHECK(fs.RemoveFunction(id0) == false);
-  CHECK(fs.RemoveFunction(id1) == true);
-  CHECK(fs.Size() == 0);
-  CHECK(fs.Empty() == true);
+    CHECK(fs.RemoveFunction(id0) == false);
+    CHECK(fs.RemoveFunction(id1) == true);
+    CHECK(fs.Size() == 0);
+    CHECK(fs.Empty() == true);
 }
 
-TEST_CASE("Clear removes all functions")
-{
-  FunctionSet<> fs;
+TEST_CASE("Clear removes all functions") {
+    FunctionSet<> fs;
 
-  fs.AddFunction([] {});
-  fs.AddFunction([] {});
+    fs.AddFunction([] {});
+    fs.AddFunction([] {});
 
-  CHECK(fs.Size() == 2);
+    CHECK(fs.Size() == 2);
 
-  fs.Clear();
+    fs.Clear();
 
-  CHECK(fs.Size() == 0);
-  CHECK(fs.Empty() == true);
+    CHECK(fs.Size() == 0);
+    CHECK(fs.Empty() == true);
 }
 
-TEST_CASE("CallAll calls functions in insertion order")
-{
-  FunctionSet<int> fs;
-  std::vector<int> out;
+TEST_CASE("CallAll calls functions in insertion order") {
+    FunctionSet<int> fs;
+    std::vector<int> out;
 
-  fs.AddFunction([&](int x) { out.push_back(x); });
-  fs.AddFunction([&](int x) { out.push_back(x + 1); });
-  fs.AddFunction([&](int x) { out.push_back(x + 2); });
+    fs.AddFunction([&](int x) { out.push_back(x); });
+    fs.AddFunction([&](int x) { out.push_back(x + 1); });
+    fs.AddFunction([&](int x) { out.push_back(x + 2); });
 
-  fs.CallAll(10);
+    fs.CallAll(10);
 
-  REQUIRE(out.size() == 3);
-  CHECK(out[0] == 10);
-  CHECK(out[1] == 11);
-  CHECK(out[2] == 12);
+    REQUIRE(out.size() == 3);
+    CHECK(out[0] == 10);
+    CHECK(out[1] == 11);
+    CHECK(out[2] == 12);
 }
 
-TEST_CASE("Removed functions are not called")
-{
-  FunctionSet<> fs;
-  int called = 0;
+TEST_CASE("Removed functions are not called") {
+    FunctionSet<> fs;
+    int called = 0;
 
-  auto id0 = fs.AddFunction([&] { ++called; });
-  auto id1 = fs.AddFunction([&] { ++called; });
+    auto id0 = fs.AddFunction([&] { ++called; });
+    auto id1 = fs.AddFunction([&] { ++called; });
 
-  CHECK(fs.RemoveFunction(id1) == true);
+    CHECK(fs.RemoveFunction(id1) == true);
 
-  fs.CallAll();
+    fs.CallAll();
 
-  CHECK(called == 1);
+    CHECK(called == 1);
 
-  CHECK(id0 != id1);
+    CHECK(id0 != id1);
 }
 
-TEST_CASE("Function IDs keep increasing after Clear")
-{
-  FunctionSet<> fs;
+TEST_CASE("Function IDs keep increasing after Clear") {
+    FunctionSet<> fs;
 
-  auto id0 = fs.AddFunction([] {});
-  fs.Clear();
-  auto id1 = fs.AddFunction([] {});
+    auto id0 = fs.AddFunction([] {});
+    fs.Clear();
+    auto id1 = fs.AddFunction([] {});
 
-  CHECK(id1 > id0);
+    CHECK(id1 > id0);
 }
 
-TEST_CASE("IDs view returns stored IDs in order")
-{
-  FunctionSet<> fs;
+TEST_CASE("IDs view returns stored IDs in order") {
+    FunctionSet<> fs;
 
-  auto id0 = fs.AddFunction([] {});
-  auto id1 = fs.AddFunction([] {});
-  auto id2 = fs.AddFunction([] {});
+    auto id0 = fs.AddFunction([] {});
+    auto id1 = fs.AddFunction([] {});
+    auto id2 = fs.AddFunction([] {});
 
-  std::vector<FunctionSet<>::FunctionID> ids;
-  for (auto id : fs.IDs()) {
-    ids.push_back(id);
-  }
+    std::vector<FunctionSet<>::FunctionID> ids;
+    for (auto id: fs.IDs()) {
+        ids.push_back(id);
+    }
 
-  REQUIRE(ids.size() == 3);
-  CHECK(ids[0] == id0);
-  CHECK(ids[1] == id1);
-  CHECK(ids[2] == id2);
+    REQUIRE(ids.size() == 3);
+    CHECK(ids[0] == id0);
+    CHECK(ids[1] == id1);
+    CHECK(ids[2] == id2);
 }
 
-TEST_CASE("Entries view exposes ids in insertion order")
-{
-  FunctionSet<> fs;
+TEST_CASE("Entries view exposes ids in insertion order") {
+    FunctionSet<> fs;
 
-  auto id0 = fs.AddFunction([] {});
-  auto id1 = fs.AddFunction([] {});
+    auto id0 = fs.AddFunction([] {});
+    auto id1 = fs.AddFunction([] {});
 
-  std::vector<FunctionSet<>::FunctionID> ids;
-  for (const auto& entry : fs.Entries()) {
-    ids.push_back(entry.id);
-  }
+    std::vector<FunctionSet<>::FunctionID> ids;
+    for (const auto& entry: fs.Entries()) {
+        ids.push_back(entry.id);
+    }
 
-  REQUIRE(ids.size() == 2);
-  CHECK(ids[0] == id0);
-  CHECK(ids[1] == id1);
+    REQUIRE(ids.size() == 2);
+    CHECK(ids[0] == id0);
+    CHECK(ids[1] == id1);
 }

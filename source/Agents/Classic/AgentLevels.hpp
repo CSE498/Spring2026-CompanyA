@@ -8,13 +8,11 @@
 #pragma once
 #include "../../core/AgentBase.hpp"
 
-namespace cse498
-{
+namespace cse498 {
 // stat object structure to be owned by the enemy object
 
 
-class AgentLevels
-{
+class AgentLevels {
 public:
     // Example of how skeleton stats are defined and made
     /**
@@ -22,8 +20,7 @@ public:
      * @param level - level of the skeleton
      * @return stat object
      */
-    static constexpr AgentStats GetSkeletonStats(size_t level)
-    {
+    static constexpr AgentStats GetSkeletonStats(size_t level) {
         double hp = 100 + 20 * static_cast<double>(level);
         double atk = 5 + 2 * static_cast<double>(level);
         double def = 5 + static_cast<double>(level);
@@ -37,22 +34,13 @@ public:
      * @param level - level of the goblin
      * @return stat object
      */
-    static constexpr AgentStats GetGoblinStats(size_t level)
-    {
+    static constexpr AgentStats GetGoblinStats(size_t level) {
         double hp = 80 + 16 * static_cast<double>(level);
         double atk = 8 + 3 * static_cast<double>(level);
         double def = 4 + static_cast<double>(level);
         size_t range = 2 + level / 6;
         return {hp, atk, def, range, level};
     }
-
-
-
-
 };
 
-}
-
-
-
-
+} // namespace cse498

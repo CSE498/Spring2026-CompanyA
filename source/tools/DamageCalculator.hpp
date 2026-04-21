@@ -1,12 +1,10 @@
 #pragma once
 
-#include "../Agents/Classic/AgentStats.hpp"
 #include <algorithm>
+#include "../Agents/Classic/AgentStats.hpp"
 
-namespace cse498
-{
-class DamageCalculator
-{
+namespace cse498 {
+class DamageCalculator {
 public:
     /**
      * Function to find the amount of damage needing to be dealt from attacker to defender
@@ -15,8 +13,7 @@ public:
      * @param defender - uses defense
      * @return damage value calculated
      */
-    [[nodiscard]] static constexpr double Calculate(const AgentStats &attacker, const AgentStats &defender)
-    {
+    [[nodiscard]] static constexpr double Calculate(const AgentStats& attacker, const AgentStats& defender) {
         return std::max(1.0, attacker.mAtk - defender.mDef);
     }
 };

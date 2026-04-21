@@ -14,77 +14,67 @@
 
 #include "Text.hpp"
 
-namespace cse498
-{
+namespace cse498 {
 
-    struct MenuStyle
-    {
+struct MenuStyle {
 
-        static constexpr int kDefaultFontSize = 24;
-        static constexpr bool kDefaultBoldSelected = true;
+    static constexpr int kDefaultFontSize = 24;
+    static constexpr bool kDefaultBoldSelected = true;
 
-        int font_size = kDefaultFontSize;
-        bool bold_selected = kDefaultBoldSelected;
+    int font_size = kDefaultFontSize;
+    bool bold_selected = kDefaultBoldSelected;
 
 
-        Color selected_color = {255, 255, 0, 255}; // yellow
-        Color unselected_color = {255, 255, 255, 255}; // white
+    Color selected_color = {255, 255, 0, 255}; // yellow
+    Color unselected_color = {255, 255, 255, 255}; // white
+};
+
+class Menu {
+private:
+    struct MenuOption {
+        std::string label;
+        std::function<void()> callback;
     };
 
-    class Menu
-    {
-    private:
-        struct MenuOption
-        {
-            std::string label;
-            std::function<void()> callback;
-        };
+    std::vector<MenuOption> mOptions;
+    std::optional<size_t> mSelectedIndex; // holds -1 if nothing is chosen
 
-        std::vector<MenuOption> mOptions;
-        std::optional<size_t> mSelectedIndex; // holds -1 if nothing is chosen
+public:
+    Menu();
 
-    public:
-        Menu();
+    enum class InputCode { up = 1, down = 2, enter = 3 };
 
-        enum class InputCode
-        {
-            up = 1,
-            down = 2,
-            enter = 3
-        };
+    bool AddOption(const std::string& label, std::function<void()> callback);
 
-        bool AddOption(const std::string &label, std::function<void()> callback);
+    bool RemoveOption(const std::string& label);
 
-        bool RemoveOption(const std::string &label);
+    size_t GetOptionCount() const;
 
-        size_t GetOptionCount() const;
+    std::optional<size_t> GetSelectedIndex() const;
 
-        std::optional<size_t> GetSelectedIndex() const;
+    void SelectNext();
 
-        void SelectNext();
+    void SelectPrevious();
 
-        void SelectPrevious();
+    bool SelectOption(size_t index);
 
-        bool SelectOption(size_t index);
+    bool ActivateSelected() const;
 
-        bool ActivateSelected() const;
+    std::optional<std::string> GetOptionLabel(size_t index) const;
 
-        std::optional<std::string> GetOptionLabel(size_t index) const;
+    bool IsEmpty() const noexcept;
 
-        bool IsEmpty() const noexcept;
+    void Clear();
 
-        void Clear();
+    void HandleInput(InputCode input_code);
 
-        void HandleInput(InputCode input_code);
+    void DrawMenu(SDL_Renderer* renderer, int x, int y, int width, int height, const MenuStyle& style = MenuStyle{});
 
-        void DrawMenu(SDL_Renderer *renderer, int x, int y, int width, int height,
-                      const MenuStyle &style = MenuStyle{});
-
-        void HandleSDLInput(const SDL_KeyboardEvent &key_event);
+    void HandleSDLInput(const SDL_KeyboardEvent& key_event);
 
 
-        ~Menu() = default;
-    };
+    ~Menu() = default;
+};
 
 } // namespace cse498
 

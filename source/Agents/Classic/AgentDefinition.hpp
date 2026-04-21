@@ -11,13 +11,11 @@
 #include <string>
 #include "../../core/WorldPosition.hpp"
 
-namespace cse498
-{
+namespace cse498 {
 /**
  * Defines what an agent needs to be constructed
  */
-struct AgentDefinition
-{
+struct AgentDefinition {
     /// Name of agent
     std::string mName;
     /// Level of agent
@@ -25,9 +23,7 @@ struct AgentDefinition
     /// Position of agent
     WorldPosition mSpawn;
 
-    AgentDefinition(std::string name, const size_t level, const WorldPosition &spawn) : mName(std::move(name)),
-        mLevel(level), mSpawn(spawn)
-    {
-    }
+    AgentDefinition(std::string name, const size_t level, const WorldPosition& spawn) :
+        mName(std::move(name)), mLevel(level), mSpawn(spawn) {}
 };
-}
+} // namespace cse498

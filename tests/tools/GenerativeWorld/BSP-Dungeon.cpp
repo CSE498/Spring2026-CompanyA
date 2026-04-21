@@ -1,4 +1,3 @@
-
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../../source/Worlds/Dungeon/BSP-Dungeon.hpp"
@@ -33,24 +32,23 @@
 
 /// @brief Setting the BSP Tree to its default state based off the values within the class itself 
 /// @param BSP 
-void SetDefaultSetting(cse498::BSP& BSP) {
+void SetDefaultSetting(cse498::BSP &BSP) {
     BSP.SetWidth(100);
     BSP.SetHeight(100);
     BSP.SetIterations(20);
 }
 
-void BSPSettingOne(cse498::BSP& BSP) {
+void BSPSettingOne(cse498::BSP &BSP) {
     BSP.SetWidth(150);
     BSP.SetHeight(150);
     BSP.SetIterations(8);
 }
 
-void BSPSettingTwo(cse498::BSP& BSP) {
+void BSPSettingTwo(cse498::BSP &BSP) {
     BSP.SetWidth(50);
     BSP.SetHeight(50);
     BSP.SetIterations(2);
 }
-
 
 
 const uint64_t SEED_VALUE_ONE = 12345;
@@ -66,7 +64,7 @@ const uint64_t SEED_VALUE_TEN = 10297834198;
 const std::string FILE_PATH = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_";
 
 
-TEST_CASE("BSP-Dungeon Constructor", "[core]") { 
+TEST_CASE("BSP-Dungeon Constructor", "[core]") {
     SECTION("Constructor creates a tree of nodes given default parameters") {
         cse498::ForestLevel level;
         cse498::BSP BSP(level, SEED_VALUE_ONE);
@@ -95,8 +93,6 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 
         CHECK(BSP.GetBSPTree().size() != 0);
         CHECK(BSP.GetLeafNodes().size() != 0);
-
-
     }
 
 
@@ -116,7 +112,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 
         CHECK(BSP.GetWidth() == 180);
         CHECK(BSP.GetHeight() == 160);
-        CHECK(BSP.GetIterations() == 30);       
+        CHECK(BSP.GetIterations() == 30);
 
         BSP.SetHeight(180);
         BSP.SetWidth(210);
@@ -124,11 +120,8 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 
         CHECK(BSP.GetWidth() == 210);
         CHECK(BSP.GetHeight() == 180);
-        CHECK(BSP.GetIterations() == 50);   
-
-
+        CHECK(BSP.GetIterations() == 50);
     }
-
 }
 
 
@@ -169,7 +162,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
         BSP.SetRngSeed(SEED_VALUE_THREE);
         CHECK(BSP.GetRngSeed() == SEED_VALUE_THREE);
         BSP.RegenerateObjectState();
-        
+
         leaf = BSP.GetLeafNodes();
         tree = BSP.GetBSPTree();
 
@@ -259,6 +252,5 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
 
         CHECK(tree.size() == 21);
         CHECK(leaf.size() == 11);
-
     }
 }*/

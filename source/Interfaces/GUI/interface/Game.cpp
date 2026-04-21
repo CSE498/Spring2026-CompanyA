@@ -45,6 +45,9 @@ namespace cse498
         mPickupText.SetRenderer(renderer);
         mPickupText.SetSize(20);
 
+        // Stats text
+        mStatsText.SetRenderer(renderer);
+
         // Set up image manager and load all tile assets
         mImageManager = std::make_unique<ImageManager>(renderer);
 
@@ -196,6 +199,10 @@ namespace cse498
         if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/Player/inventory_bar.png"))
             return false;
 
+        // Analytics setup
+        mAnalyticsManager = std::make_shared<AnalyticsManager>();
+        mStatsTracker = std::make_unique<StatsTracker>();
+
         // World Setups
         SetupOverworld();
         SetupDungeon();
@@ -231,6 +238,8 @@ namespace cse498
                 mOverworldGrid->SetCell(x, y, cell_name);
             }
         }
+
+        mOverWorld->SetAnalyticsManager(mAnalyticsManager);
     }
 
 
@@ -243,7 +252,6 @@ namespace cse498
         size_t world_h = grid.GetHeight();
 
         mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
-
 
         // add a player to the world (based on discord discussion)
         auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
@@ -262,6 +270,8 @@ namespace cse498
                 mDungeonGrid->SetCell(x, y, cell_name);
             }
         }
+
+        mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
     }
 
     void Game::RebuildDungeonGrid() {
@@ -311,6 +321,8 @@ namespace cse498
                                  mPreviousState = GameState::OVERWORLD;
                              });
 
+        mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
+
         mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
 
         mPauseMenu.AddOption("Quit to Main Menu", [this]() { TransitionTo(GameState::MAIN_MENU); });
@@ -341,6 +353,9 @@ namespace cse498
             case GameState::PAUSED:
                 UpdatePaused();
                 break;
+            case GameState::STATS:
+                UpdateStats();
+                break;
             case GameState::SETTINGS:
                 UpdateSettings();
                 break;
@@ -362,6 +377,9 @@ namespace cse498
                 break;
             case GameState::PAUSED:
                 RenderPaused();
+                break;
+            case GameState::STATS:
+                RenderStats();
                 break;
             case GameState::SETTINGS:
                 RenderSettings();
@@ -489,7 +507,7 @@ namespace cse498
                     {
                         Resume();
                     }
-                    else if (mState == GameState::SETTINGS)
+                    else if (mState == GameState::SETTINGS || mState == GameState::STATS)
                     {
                         Resume();
                     }
@@ -508,6 +526,12 @@ namespace cse498
 
     void Game::TransitionTo(GameState new_state)
     {
+        if ((mPreviousState == GameState::DUNGEON || mPreviousState == GameState::OVERWORLD) &&
+            new_state == GameState::MAIN_MENU) {
+            mAnalyticsManager->LogDamageDealt(mAnalyticsManager->GetCurrentRunStats().damageDealt);
+            mAnalyticsManager->LogEnemiesKilled(mAnalyticsManager->GetCurrentRunStats().enemiesKilled);
+            mAnalyticsManager->ResetCurrentRunStats();
+        }
         mPreviousState = mState;
         mState = new_state;
     }
@@ -556,55 +580,14 @@ namespace cse498
         }
     }
 
-    void Game::UpdateWorld(ImageGrid &grid, int &camX, int &camY)
-    {
-        const Uint8 *keys = SDL_GetKeyboardState(nullptr);
-
-        // Only move once every TURN_DELAY 100ms
-        static Uint32 last_move_time = 0;
-        Uint32 now = SDL_GetTicks();
-        if (now - last_move_time < TURN_DELAY)
-            return;
-
-        int tw = static_cast<int>(grid.GetTileWidth());
-        int th = static_cast<int>(grid.GetTileHeight());
-
-        // How many Tiles fit on screen
-        int Tiles_x = mGameView->GetWidth() / tw;
-        int Tiles_y = mGameView->GetHeight() / th;
-
-        // Max camera position so the viewport never scrolls past the grid edge
-        int max_cam_x = std::max(0, static_cast<int>(grid.GetWidth()) - Tiles_x);
-        int max_cam_y = std::max(0, static_cast<int>(grid.GetHeight()) - Tiles_y);
-
-        bool moved = false;
-        if (keys[SDL_SCANCODE_W])
-        {
-            camY = std::max(0, camY - 1);
-            moved = true;
-        }
-        if (keys[SDL_SCANCODE_S])
-        {
-            camY = std::min(max_cam_y, camY + 1);
-            moved = true;
-        }
-        if (keys[SDL_SCANCODE_A])
-        {
-            camX = std::max(0, camX - 1);
-            moved = true;
-        }
-        if (keys[SDL_SCANCODE_D])
-        {
-            camX = std::min(max_cam_x, camX + 1);
-            moved = true;
-        }
-
-        if (moved)
-            last_move_time = now;
-    }
-
     void Game::UpdatePaused() {}
     void Game::UpdateSettings() {}
+
+    void Game::UpdateStats() {
+        if (mAnalyticsManager) {
+            mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+        }
+    }
 
     // -----------------------------------------------------------------------
     //  Render
@@ -612,7 +595,6 @@ namespace cse498
 
     void Game::RenderMainMenu()
     {
-
         int w = mGameView->GetWidth();
         int h = mGameView->GetHeight();
 
@@ -715,6 +697,85 @@ namespace cse498
         // TODO: render settings screen
     }
 
+    void Game::RenderStats() {
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        // Dark background
+        SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+        SDL_Rect bg = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &bg);
+
+        // Vals for spacing
+        int y = 40;
+        const int LINE_H = 36;
+
+        // Title
+        mStatsText.SetContent("Stats");
+        mStatsText.SetSize(36);
+        mStatsText.SetBold(true);
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
+        y += LINE_H * 2;
+
+        // Numeric stats
+        for (const StatSummary& stat : mDashboardSnapshot.numericStats) {
+            mStatsText.SetContent(stat.label + ":");
+            mStatsText.SetSize(22);
+            mStatsText.SetBold(true);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+
+            mStatsText.SetContent("  Current : " + std::to_string(static_cast<int>(stat.currentValue)));
+            mStatsText.SetBold(false);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+
+            std::string detail;
+            if (stat.minValue)  detail += "Min: "  + std::to_string(static_cast<int>(*stat.minValue))  + "  ";
+            if (stat.maxValue)  detail += "Max: "  + std::to_string(static_cast<int>(*stat.maxValue))  + "  ";
+            if (stat.meanValue) detail += "Mean: " + std::to_string(static_cast<int>(*stat.meanValue));
+            if (!detail.empty()) {
+                mStatsText.SetContent("  " + detail);
+                mStatsText.Draw(60, y);
+                y += LINE_H;
+            }
+
+            mStatsText.SetContent("  Runs logged: " + std::to_string(stat.sampleCount));
+            mStatsText.Draw(60, y);
+            y += LINE_H + 8;
+        }
+
+        // Action stats
+        for (const ActionSummary& action : mDashboardSnapshot.actionStats) {
+            mStatsText.SetContent(action.label + ":");
+            mStatsText.SetSize(22);
+            mStatsText.SetBold(true);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+
+            mStatsText.SetBold(false);
+            mStatsText.SetContent("  Total actions: " + std::to_string(action.actionCount));
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+
+            if (action.mostActiveEntity) {
+                mStatsText.SetContent("  Most active entity ID: " + std::to_string(*action.mostActiveEntity));
+                mStatsText.Draw(60, y);
+                y += LINE_H;
+            }
+            y += 8;
+        }
+
+        // Empty state
+        if (mDashboardSnapshot.numericStats.empty() && mDashboardSnapshot.actionStats.empty()) {
+            mStatsText.SetContent("No stats recorded yet.");
+            mStatsText.SetSize(22);
+            mStatsText.SetBold(false);
+            mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
+        }
+    }
+
     void Game::RenderHotbar(const Inventory &inventory) {
         int w = mGameView->GetWidth();
         int h = mGameView->GetHeight();
@@ -740,7 +801,6 @@ namespace cse498
 
                 // Draw item icon if loaded — uses the item's image path as key
                 mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
-                //std::cout << item->GetName() << std::endl;
             }
         }
 
@@ -753,7 +813,6 @@ namespace cse498
         SDL_Rect highlight = {sel_x, bar_y, slot_size, bar_h};
         SDL_RenderDrawRect(renderer, &highlight);
     }
-
 
     void Game::RenderBackpack(const Inventory& inventory) {
         SDL_Renderer* renderer = mGameView->GetRenderer();
@@ -829,7 +888,6 @@ namespace cse498
         int text_x = (w - mPickupText.GetWidth()) / 2;
         mPickupText.Draw(text_x, 20);
     }
-
 
     size_t Game::KeyToAction(SDL_Keycode key) {
         switch (key) {

@@ -13,13 +13,14 @@
 #include <memory>
 #include <string>
 
-
+#include "../../../Analyze/AnalyticsManager.hpp"
+#include "../../../Analyze/StatsTracker.hpp"
 #include "../GameView.hpp"
 #include "../ImageGrid.hpp"
 #include "../ImageManager.hpp"
 #include "../Menu.hpp"
 #include "../Text.hpp"
-#include "../source/Worlds/Dungeon/DungeonWorld.hpp"
+#include "DungeonWorld.hpp"
 #include "OverWorld.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
 
@@ -34,10 +35,11 @@ namespace cse498
     {
         MAIN_MENU, /// Main menu screen
         OVERWORLD, /// Flat interactive world with dungeon entrance
-        DUNGEON, /// Procedurally generated dungeon world
-        PAUSED, /// Paused state (reachable from OVERWORLD or DUNGEON)
-        SETTINGS, /// Settings screen (placeholder)
-        QUIT /// Exit state
+        DUNGEON,   /// Procedurally generated dungeon world
+        PAUSED,    /// Paused state (reachable from OVERWORLD or DUNGEON)
+        SETTINGS,  /// Settings screen (placeholder)
+        STATS,     /// Contains information captured in gameplay
+        QUIT       /// Exit state
     };
 
     /**
@@ -102,8 +104,7 @@ namespace cse498
         int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
         int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
 
-        // based on discord discussion it appears this is the direction this is heading,
-        // TODO eliminate not needed code based on other groups implementation and update camera logic to use just player pos
+        // Player agent pointers — worlds own the agents, Game holds raw pointers for access
         PlayerAgent* mOverworldPlayer = nullptr;
         PlayerAgent* mDungeonPlayer = nullptr;
 
@@ -117,6 +118,14 @@ namespace cse498
 
         int mDungeonPlayerX = kInitialPlayerX; /// Player X position in dungeon tile coordinates
         int mDungeonPlayerY = kInitialPlayerY; /// Player Y position in dungeon tile coordinates
+
+        // -------------------------
+        // Stats state
+        // -------------------------
+        std::shared_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
+        std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
+        DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
+        Text mStatsText; /// Text object used for stats screen
 
         // -------------------------
         // Runtime flags
@@ -142,6 +151,7 @@ namespace cse498
         void UpdateDungeon();
         void UpdatePaused();
         void UpdateSettings();
+        void UpdateStats();
 
         /**
          * @brief Render functions for each game state.
@@ -151,9 +161,16 @@ namespace cse498
         void RenderDungeon();
         void RenderPaused();
         void RenderSettings();
+        void RenderStats();
         void RenderHotbar(const Inventory& inventory);
         void RenderBackpack(const Inventory& inventory);
         void RenderPickupMessage();
+
+        /**
+         * @brief Convert SDL keycode to world action ID.
+         * @param key SDL keycode (SDLK_w, SDLK_a, SDLK_s, SDLK_d)
+         * @return Action ID matching WorldBase action conventions, 0 = remain still
+         */
         size_t KeyToAction(SDL_Keycode key);
 
         /**
@@ -201,6 +218,10 @@ namespace cse498
          * @brief Initialize dungeon systems and grid.
          */
         void SetupDungeon();
+
+        /**
+         * @brief Rebuild the dungeon ImageGrid after a level change.
+         */
         void RebuildDungeonGrid();
 
         /**
@@ -229,7 +250,7 @@ namespace cse498
         Game(const std::string &title = "Slay the Dungeon", int width = kDefaultWindowWidth,
              int height = kDefaultWindowHeight) :
             mGameView(std::make_shared<GameView>(title, width, height)), mTitleText(nullptr), mPauseText(nullptr),
-            mPickupText(nullptr)
+            mPickupText(nullptr), mStatsText(nullptr)
         {
         }
 

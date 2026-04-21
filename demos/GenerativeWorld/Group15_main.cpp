@@ -3,7 +3,7 @@
  * @brief A main file to demonstrate the basic functionality of the group 15,
  * generative world module.
  * @note Status: PROPOSAL
- * 
+ *
  * To run this demo:
  *    Step 1: follow the instructions in BUILD.md and CMAKE.md to build the executable
  *    Step 2: cd into /demo, and then run ./Group15_demo

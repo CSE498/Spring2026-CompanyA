@@ -7,19 +7,19 @@
 #pragma once
 
 #include <string>
-#include "../WorldBase.hpp"
 #include "Item.hpp"
 #include "ItemWeapon.hpp"
 #include "ItemWeaponTool.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
-    class ItemWeaponToolPickaxe : public ItemWeaponTool {
-        public:
-            ItemWeaponToolPickaxe(size_t id, const std::string & name, const std::string & image_path, int gold, 
-                const WorldBase & world) : ItemWeaponTool(id, name, image_path, gold, world) {
-                    SetImagePath("assets/items/weapons/tools/pickaxe.png");
-                }
+class ItemWeaponToolPickaxe : public ItemWeaponTool {
+public:
+    ItemWeaponToolPickaxe(size_t id, const std::string& name, const std::string& image_path, int gold,
+                          const WorldBase& world) : ItemWeaponTool(id, name, image_path, gold, world) {
+        SetImagePath("assets/items/weapons/tools/pickaxe.png");
+    }
 
-            bool IsPickaxe() const override {return true;}
-    };
-}
+    bool IsPickaxe() const override { return true; }
+};
+} // namespace cse498

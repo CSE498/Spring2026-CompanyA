@@ -9,103 +9,104 @@
 
 #pragma once
 #include <string>
-#include "../tools/DataLog.hpp"
 #include "../tools/ActionLog.hpp"
+#include "../tools/DataLog.hpp"
 
 namespace cse498 {
 
+// Struct to hold stats for a single run, can be expanded as needed
+struct RunStats {
+    double damageDealt = 0.0;
+    int enemiesKilled = 0;
+};
+
 class AnalyticsManager {
 private:
+    // Initial DataLogs for keeping track of data(Initial placeholders Logs for
+    // now, can be changed based on what we want to track)
+    DataLog mEnemiesKilledLog;
+    DataLog mDamageDealtLog;
 
-  // Initial DataLogs for keeping track of data(Initial placeholders Logs for
-  // now, can be changed based on what we want to track)
-  DataLog mHealthLog;
-  DataLog mEnemiesTrackedLog;
-  DataLog mDamageDealtLog;
 
-  
+    // ActionLog for tracking entity actions
+    ActionLog mActionLog;
 
-  // ActionLog for tracking entity actions
-  ActionLog mActionLog;
+    RunStats mCurrentRunStats; // Struct to hold stats for the current run
 
 public:
-  /*
-  Default constructor for the AnalyticsManager
-  */
-  AnalyticsManager() = default;
+    /*
+    Default constructor for the AnalyticsManager
+    */
+    AnalyticsManager() = default;
 
-  /*
-  Resets the health log
-  */
-  void ResetHealthLog();
+    /**
+     * Resets the current run stats to their default values.
+     */
+    void ResetCurrentRunStats() { mCurrentRunStats = {}; }
 
-  /*
-  Resets the enemies tracked log
-  */
-  void ResetEnemiesTrackedLog();
+    void LogRunDamage(double amount);
 
-  /*
-  Resets the damage dealt log
-  */
-  void ResetDamageDealtLog();
+    void LogRunEnemiesKilled(int count);
 
-  /**
-  * Resets the action log
-  */
-  void ResetActionLog();
+    /**
+     * Returns the current run stats as a struct.
+     */
+    RunStats GetCurrentRunStats() const { return mCurrentRunStats; };
 
-  /**
-   * Resets all logs
-   */
-  void Reset();
+    /*
+    Resets the enemies killed log
+    */
+    void ResetEnemiesKilledLog();
 
-  // Temporary DataLogs for the game(can be changed based on what we want to
-  // track)
-  /*
-  Adds a new health value to the health log
-  */
-  void LogHealth(double health);
+    /*
+    Resets the damage dealt log
+    */
+    void ResetDamageDealtLog();
 
-  /*
-  Adds a new enemy count value to the enemies tracked log
-  */
-  void LogEnemiesTracked(double count_enemies);
+    /**
+     * Resets the action log
+     */
+    void ResetActionLog();
 
-  /*
-  Adds a new damage dealt value to the damage dealt log
-  */
-  void LogDamageDealt(double damage);
+    /**
+     * Resets all logs
+     */
+    void Reset();
 
-  /*
-  Returns a const reference to the health log
-  */
-  [[nodiscard]] const DataLog &GetHealthLog() const noexcept;
+    /*
+    Adds a new enemy count value to the enemies killed log
+    */
+    void LogEnemiesKilled(double count_enemies);
 
-  /*
-  Returns a const reference to the enemies tracked log
-  */
-  [[nodiscard]] const DataLog &GetEnemiesTrackedLog() const noexcept;
+    /*
+    Adds a new damage dealt value to the damage dealt log
+    */
+    void LogDamageDealt(double damage);
 
-  /*
-  Returns a const reference to the damage dealt log
-  */
-  [[nodiscard]] const DataLog &GetDamageDealtLog() const noexcept;
+    /*
+    Returns a const reference to the enemies killed log
+    */
+    [[nodiscard]] const DataLog& GetEnemiesKilledLog() const noexcept;
 
-  /*
-  Logs an action performed by an entity into the action log
-  */
-  void LogAction(int entityId, const std::string& actionType,
-                 WorldPosition position, WorldPosition newPosition);
+    /*
+    Returns a const reference to the damage dealt log
+    */
+    [[nodiscard]] const DataLog& GetDamageDealtLog() const noexcept;
 
-  /*
-  Advances the action log's simulation clock
-  */
-  void UpdateActionTime(double newTime);
+    /*
+    Logs an action performed by an entity into the action log
+    */
+    void LogAction(int entityId, const std::string& actionType, WorldPosition position, WorldPosition newPosition);
 
-  /*
-  Returns a const reference to the action log
-  */
-  [[nodiscard]] const ActionLog& GetActionLog() const noexcept;
+    /*
+    Advances the action log's simulation clock
+    */
+    void UpdateActionTime(double newTime);
+
+    /*
+    Returns a const reference to the action log
+    */
+    [[nodiscard]] const ActionLog& GetActionLog() const noexcept;
 };
 
 } // namespace cse498

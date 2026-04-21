@@ -4,19 +4,16 @@
  */
 
 
-
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "tools/PathVector.hpp"
-#include "core/WorldPosition.hpp"
 #include <numbers>
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "core/WorldPosition.hpp"
+#include "tools/PathVector.hpp"
 using cse498::PathVector;
-using std::numbers::pi;
 using cse498::WorldPosition;
+using std::numbers::pi;
 
 
-
-TEST_CASE("PathVector Constructors", "[constructor]")
-{
+TEST_CASE("PathVector Constructors", "[constructor]") {
     {
         PathVector v(3.0, 4.0);
 
@@ -45,11 +42,9 @@ TEST_CASE("PathVector Constructors", "[constructor]")
         CHECK(v.X() == 0.0);
         CHECK(v.Y() == 0.0);
     }
-
 }
 
-TEST_CASE("Operations + -", "[operations]")
-{
+TEST_CASE("Operations + -", "[operations]") {
     // not complicated hard to mess up if it fails these
     PathVector v1(1.0, 2.0);
     PathVector v2(3.0, 4.0);
@@ -64,8 +59,7 @@ TEST_CASE("Operations + -", "[operations]")
     CHECK(v5.Y() == 0.0);
 }
 
-TEST_CASE("Operations mult, dot, magnitude", "[operations]")
-{
+TEST_CASE("Operations mult, dot, magnitude", "[operations]") {
     {
         PathVector v1(1.0, 2.0);
         PathVector v2(3.0, 4.0);
@@ -104,30 +98,26 @@ TEST_CASE("Operations mult, dot, magnitude", "[operations]")
         CHECK(result.X() == Approx(0.0));
         CHECK(result.Y() == Approx(0.0));
     }
-
 }
 
 
-TEST_CASE("Normalize", "[function]")
-{
+TEST_CASE("Normalize", "[function]") {
     PathVector v(3.0, 4.0);
     v.Normalize();
     CHECK(v.X() == 0.6);
     CHECK(v.Y() == 0.8);
 }
 
-TEST_CASE("Scale", "[function]")
-{
+TEST_CASE("Scale", "[function]") {
     PathVector v(3.0, 4.0);
     v.Scale(2.0);
     CHECK(v.X() == 6.0);
     CHECK(v.Y() == 8.0);
 }
 
-TEST_CASE("Rotate", "[function]")
-{
+TEST_CASE("Rotate", "[function]") {
     {
-        PathVector v(0,1);
+        PathVector v(0, 1);
         v.Rotate(std::numbers::pi / 2.0);
         CHECK(v.X() == Approx(-1));
         CHECK(v.Y() == Approx(0).margin(1e-9));
@@ -149,13 +139,9 @@ TEST_CASE("Rotate", "[function]")
         CHECK(v.X() == Approx(-1.9641));
         CHECK(v.Y() == Approx(4.59808));
     }
-
-
-
 }
 
-TEST_CASE("Angle", "[function]")
-{
+TEST_CASE("Angle", "[function]") {
     {
         PathVector v(1, 0);
         CHECK(v.GetAngle() == Approx(0.0));
@@ -178,8 +164,7 @@ TEST_CASE("Angle", "[function]")
     }
 }
 
-TEST_CASE("Projection", "[function]")
-{
+TEST_CASE("Projection", "[function]") {
     {
         PathVector v(3.0, -4.0);
         WorldPosition wp(33.0, 0.0);
@@ -201,7 +186,6 @@ TEST_CASE("Projection", "[function]")
         CHECK(proj.X() == Approx(0.790075693));
         CHECK(proj.Y() == Approx(-0.04104289318));
         // expected = (a·b / b·b) * b
-
     }
     {
         PathVector a(-1, -3.533);
@@ -211,12 +195,10 @@ TEST_CASE("Projection", "[function]")
         CHECK(proj.X() == Approx(0.365893));
         CHECK(proj.Y() == Approx(1.2927));
     }
-
 }
 
 
-TEST_CASE("Other Operations", "[operations]")
-{
+TEST_CASE("Other Operations", "[operations]") {
     {
         WorldPosition p(3.0, 4.0);
         PathVector v(1.5, -2.0);
@@ -243,7 +225,6 @@ TEST_CASE("Other Operations", "[operations]")
 
         REQUIRE(result.X() == Approx(3.0));
         REQUIRE(result.Y() == Approx(4.0));
-
     }
     {
         WorldPosition p(10.0, 10.0);

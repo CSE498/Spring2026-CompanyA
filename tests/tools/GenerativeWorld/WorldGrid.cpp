@@ -1,13 +1,12 @@
-//#define CATCH_CONFIG_MAIN
+// #define CATCH_CONFIG_MAIN
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../../source/core/WorldGrid.hpp"
 #include "../../../source/core/Location.hpp"
+#include "../../../source/core/WorldGrid.hpp"
 
 #include <sstream>
 #include <string>
 #include <vector>
-
 
 
 /*void AddBasicCellTypes(cse498::WorldGrid& grid) {
