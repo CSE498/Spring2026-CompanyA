@@ -39,6 +39,15 @@ TEST_CASE("EnemyAgent initializes with required actions", "[EnemyAgent]") {
     CHECK(agent.HasAction("right"));
 }
 
+TEST_CASE("EnemyAgent initializes as an enemy", "[EnemyAgent]") {
+    MazeWorld world;
+    auto& agent = world.AddAgent<EnemyAgent>("Enemy");
+    agent.SetLocation(WorldPosition{10, 7});
+
+    CHECK(agent.Initialize());
+    CHECK(agent.IsEnemy());
+}
+
 TEST_CASE("EnemyAgent Initialize fails without movement actions", "[EnemyAgent]") {
     NoMovementActionWorld world;
     EnemyAgent agent(0, "E", world);
