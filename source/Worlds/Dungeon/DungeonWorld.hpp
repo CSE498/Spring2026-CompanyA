@@ -654,10 +654,6 @@ namespace cse498 {
                 AdvanceLevel();
                 new_position = WorldPosition(1, 1); //default player location upon loading into new world
             }
-            else if (main_grid[new_position] == m_exit_door && dynamic_cast<PlayerAgent*>(&agent)) {
-                AdvanceLevel();
-                new_position = WorldPosition(1, 1);
-            }
 
             // Set the agent to its new postion.
             agent.SetLocation(new_position);
