@@ -201,6 +201,7 @@ namespace cse498
          * @brief Initialize dungeon systems and grid.
          */
         void SetupDungeon();
+        void RebuildDungeonGrid();
 
         /**
          * @brief Transition to a new game state.

@@ -264,6 +264,22 @@ namespace cse498
         }
     }
 
+    void Game::RebuildDungeonGrid() {
+        const WorldGrid& grid = mDungeonWorld->GetGrid();
+        size_t world_w = grid.GetWidth();
+        size_t world_h = grid.GetHeight();
+
+        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+
+        for (size_t y = 0; y < world_h; ++y) {
+            for (size_t x = 0; x < world_w; ++x) {
+                WorldPosition pos(x, y);
+                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
+                mDungeonGrid->SetCell(x, y, cell_name);
+            }
+        }
+    }
+
     void Game::SetupMainMenu()
     {
         mMainMenu.Clear();
@@ -855,7 +871,20 @@ namespace cse498
                 if (!slot.IsEmpty()) items_before += slot.GetQuantity();
             }
 
+            WorldPosition pos_before = mDungeonPlayer->GetLocation().AsWorldPosition();
+
             mDungeonWorld->DoAction(*mDungeonPlayer, action);
+
+            WorldPosition pos = mDungeonPlayer->GetLocation().AsWorldPosition();
+            mDungeonPlayerX = static_cast<int>(pos.CellX());
+            mDungeonPlayerY = static_cast<int>(pos.CellY());
+
+            // Detect level change — player was moved to (1,1) and grid was regenerated
+            if (pos.CellX() == 1 && pos.CellY() == 1 && pos_before.CellX() != 1 && pos_before.CellY() != 1) {
+                RebuildDungeonGrid();
+                mPickupMessage = "Entering next level...";
+                mPickupMessageTime = SDL_GetTicks();
+            }
 
             // Check if inventory changed
             size_t items_after = 0;
@@ -863,8 +892,6 @@ namespace cse498
                 if (!slot.IsEmpty()) items_after += slot.GetQuantity();
             }
             if (items_after > items_before) {
-                // Find the newest item — scan for an item that wasn't there before
-                // Simplest: just grab the hand or last non-empty slot
                 for (const auto& slot : slots) {
                     if (!slot.IsEmpty()) {
                         mPickupMessage = "Picked up: " + slot.GetItem()->GetName();
@@ -873,10 +900,7 @@ namespace cse498
                 mPickupMessageTime = SDL_GetTicks();
             }
 
-            WorldPosition pos = mDungeonPlayer->GetLocation().AsWorldPosition();
-            mDungeonPlayerX = static_cast<int>(pos.CellX());
-            mDungeonPlayerY = static_cast<int>(pos.CellY());
-
+            // Update camera
             int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
             int th = static_cast<int>(mDungeonGrid->GetTileHeight());
             int Tiles_x = mGameView->GetWidth() / tw;
