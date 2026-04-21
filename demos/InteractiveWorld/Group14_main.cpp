@@ -5,6 +5,7 @@
  **/
 
 // Include the modules that we will be using.
+#include "../../source/Agents/AI/FetchAgent.hpp"
 #include "../../source/Agents/PacingAgent.hpp"
 #include "../../source/Interfaces/TrashInterface.hpp"
 #include "../../source/Worlds/Hub/Building.hpp"
@@ -108,6 +109,11 @@ std::shared_ptr<ResourceProducer> metalProducer =
   lumberYard.SetSymbol('L');
   quarry.SetSymbol('Q');
   mine.SetSymbol('M');
+
+  // FetchAgent: walks from Wood Spawn to Town Hall, collecting and depositing.
+  FetchAgent& woodFetcher = world->AddAgent<FetchAgent>("Wood Fetcher");
+  woodFetcher.SetSpawn(woodSpawn).SetTownHall(townHall);
+  woodFetcher.SetSymbol('F').SetLocation(WorldPosition{2, 4});
 
   InteractiveWorldSaveManager saveManager;
   if (saveManager.Load(*world, "interactive_world_save.json")) {
