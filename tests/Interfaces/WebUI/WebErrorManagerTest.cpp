@@ -58,13 +58,14 @@ static void ResetAlertCapture() {
 }
 
 // ---------- Map CHECK macro onto Catch2 ----------
-
+// clang-format off
 #undef CHECK
-#define CHECK(cond, msg)                                                                                               \
-    do {                                                                                                               \
-        INFO(msg);                                                                                                     \
-        REQUIRE((cond));                                                                                               \
+#define CHECK(cond, msg)          \
+    do {                          \
+        INFO(msg);                \
+        REQUIRE((cond));          \
     } while (0)
+// clang-format on
 
 // ========================================================
 // Test 1: Info does not throw
