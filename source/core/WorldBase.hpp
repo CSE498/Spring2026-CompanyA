@@ -11,10 +11,12 @@
 #include <memory>
 #include <string>
 #include <type_traits>
-#include <unordered_set>
 #include <vector>
+#include <unordered_set>
+
 
 #include "../Agents/Classic/PlayerAgent.hpp"
+#include "../Analyze/AnalyticsManager.hpp"
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
@@ -31,6 +33,8 @@ private:
     /// Note this also fixed a potential bug -- It used to be defined by size of agent_size but that changes
     /// up and down which gives multiple duplicate ids to multiple agents..
     size_t mAgentIdIndex = 0;
+
+    std::shared_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
 
 protected:
     /// NOTE: derived worlds may choose to have more than one grid.
@@ -245,6 +249,26 @@ public:
         }
     }
 
+    /// @brief UpdateWorld() is run after every agent has a turn.
+    /// Override this function to manage background events for a world.
+    /// (E.g., weather, growth, regular physics, etc.)
+    virtual void UpdateWorld() {}
+
+    /// @brief Run all agents repeatedly until an end condition is met.
+    virtual void Run() {
+        mRunOver = false;
+        while (!mRunOver) {
+            RunAgents();
+            RemoveDeadAgents();
+            UpdateWorld();
+        }
+    }
+
+    void SetAnalyticsManager(std::shared_ptr<AnalyticsManager> analytics_manager) {
+        mAnalyticsManager = analytics_manager;
+    }
+
+    [[nodiscard]] std::shared_ptr<AnalyticsManager> GetAnalyticsManager() const { return mAnalyticsManager; }
     /**
      * virtual just in case it is needed somewhere. I'm not expecting this to be overridden
      * This is to be called from 'DoAction' when the main player presses "E"
@@ -294,22 +318,6 @@ public:
                 return true;
         }
         return false;
-    }
-
-
-    /// @brief UpdateWorld() is run after every agent has a turn.
-    /// Override this function to manage background events for a world.
-    /// (E.g., weather, growth, regular physics, etc.)
-    virtual void UpdateWorld() {}
-
-    /// @brief Run all agents repeatedly until an end condition is met.
-    virtual void Run() {
-        mRunOver = false;
-        while (!mRunOver) {
-            RunAgents();
-            RemoveDeadAgents();
-            UpdateWorld();
-        }
     }
 
 
