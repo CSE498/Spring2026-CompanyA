@@ -18,8 +18,8 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
-#include "../WebLayout/WebLayout.hpp"
 #include "../WebErrorManager/WebErrorManager.hpp"
+#include "../WebLayout/WebLayout.hpp"
 #endif
 
 namespace cse498 {
@@ -64,10 +64,8 @@ WebCanvas::WebCanvas(const std::string& id) {
         WebErrorManager::Options options;
         options.showAlert = true;
 
-        WebErrorManager::Error(
-            "WebCanvas error: required canvas element with id '" + mId + "' was not found.",
-            options
-        );
+        WebErrorManager::Error("WebCanvas error: required canvas element with id '" + mId + "' was not found.",
+                               options);
         return;
     }
 

@@ -171,17 +171,15 @@ bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
 /// @param a    New Alignment value for that child.
 void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
     if (!elem) {
-        GetConsole().call<void>(
-            "warn",
-            std::string("WebLayout::SetAlignment called with null elem"));
+        GetConsole().call<void>("warn", std::string("WebLayout::SetAlignment called with null elem"));
         return;
     }
 
     auto it = mParams.find(elem);
     if (it == mParams.end()) {
-        GetConsole().call<void>(
-            "warn",
-            std::string("WebLayout::SetAlignment failed: element not managed by this layout: ") + elem->Id());
+        GetConsole().call<void>("warn",
+                                std::string("WebLayout::SetAlignment failed: element not managed by this layout: ") +
+                                        elem->Id());
         return;
     }
 

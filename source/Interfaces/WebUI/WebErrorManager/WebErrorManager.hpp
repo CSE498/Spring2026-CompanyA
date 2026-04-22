@@ -61,23 +61,18 @@ public:
     /**
      * @brief Severity levels for runtime messages.
      */
-    enum class Severity {
-        Info,
-        Warning,
-        Error,
-        Fatal
-    };
+    enum class Severity { Info, Warning, Error, Fatal };
 
     /**
      * @brief Optional behavior flags for error reporting.
      */
     struct Options {
-        bool showAlert = false;      ///< Show browser alert (Emscripten only)
-        bool throwOnFatal = false;   ///< Throw exception on fatal error
-        bool exitOnFatal = false;    ///< Exit program on fatal error
+        bool showAlert = false; ///< Show browser alert (Emscripten only)
+        bool throwOnFatal = false; ///< Throw exception on fatal error
+        bool exitOnFatal = false; ///< Exit program on fatal error
 
-        Options(bool show = false, bool throwFatal = false, bool exitFatal = false)
-        : showAlert(show), throwOnFatal(throwFatal), exitOnFatal(exitFatal) {}
+        Options(bool show = false, bool throwFatal = false, bool exitFatal = false) :
+            showAlert(show), throwOnFatal(throwFatal), exitOnFatal(exitFatal) {}
     };
 
     ~WebErrorManager() = default;
@@ -91,10 +86,7 @@ public:
      * @param message The message content
      * @param options Optional behavior flags
      */
-    static void Report(Severity severity,
-                       const std::string& message,
-                       const Options& options = Options{})
-    {
+    static void Report(Severity severity, const std::string& message, const Options& options = Options{}) {
 #ifdef __EMSCRIPTEN__
         ReportEmscripten(severity, message, options);
 #else
@@ -103,30 +95,22 @@ public:
     }
 
     /// Convenience wrapper for Info-level messages
-    static void Info(const std::string& message,
-                     const Options& options = Options{})
-    {
+    static void Info(const std::string& message, const Options& options = Options{}) {
         Report(Severity::Info, message, options);
     }
 
     /// Convenience wrapper for Warning-level messages
-    static void Warning(const std::string& message,
-                        const Options& options = Options{})
-    {
+    static void Warning(const std::string& message, const Options& options = Options{}) {
         Report(Severity::Warning, message, options);
     }
 
     /// Convenience wrapper for Error-level messages
-    static void Error(const std::string& message,
-                      const Options& options = Options{})
-    {
+    static void Error(const std::string& message, const Options& options = Options{}) {
         Report(Severity::Error, message, options);
     }
 
     /// Convenience wrapper for Fatal-level messages
-    static void Fatal(const std::string& message,
-                      const Options& options = Options{})
-    {
+    static void Fatal(const std::string& message, const Options& options = Options{}) {
         Report(Severity::Fatal, message, options);
     }
 
@@ -134,13 +118,16 @@ private:
     /**
      * @brief Prefix string based on severity level.
      */
-    static std::string Prefix(Severity severity)
-    {
+    static std::string Prefix(Severity severity) {
         switch (severity) {
-            case Severity::Info:    return "[INFO] ";
-            case Severity::Warning: return "[WARNING] ";
-            case Severity::Error:   return "[ERROR] ";
-            case Severity::Fatal:   return "[FATAL] ";
+            case Severity::Info:
+                return "[INFO] ";
+            case Severity::Warning:
+                return "[WARNING] ";
+            case Severity::Error:
+                return "[ERROR] ";
+            case Severity::Fatal:
+                return "[FATAL] ";
         }
         return "[UNKNOWN] ";
     }
@@ -150,10 +137,7 @@ private:
     /**
      * @brief Native (non-web) error handling implementation.
      */
-    static void ReportNative(Severity severity,
-                             const std::string& message,
-                             const Options& options)
-    {
+    static void ReportNative(Severity severity, const std::string& message, const Options& options) {
         const std::string formatted = Prefix(severity) + message;
 
         switch (severity) {
@@ -178,10 +162,7 @@ private:
      *
      * Routes messages to the browser console and optionally displays alerts.
      */
-    static void ReportEmscripten(Severity severity,
-                                 const std::string& message,
-                                 const Options& options)
-    {
+    static void ReportEmscripten(Severity severity, const std::string& message, const Options& options) {
         const std::string formatted = Prefix(severity) + message;
 
         emscripten::val console = emscripten::val::global("console");
@@ -214,10 +195,7 @@ private:
     /**
      * @brief Handles fatal error behavior (shared between environments).
      */
-    static void HandleFatal(Severity severity,
-                            const std::string& formatted,
-                            const Options& options)
-    {
+    static void HandleFatal(Severity severity, const std::string& formatted, const Options& options) {
         if (severity != Severity::Fatal) {
             return;
         }

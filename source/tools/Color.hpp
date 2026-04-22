@@ -484,15 +484,15 @@ private:
      */
     struct NamedColorEntry {
         std::string_view name; /**< Case-insensitive color name. */
-        std::uint8_t r;        /**< Red channel. */
-        std::uint8_t g;        /**< Green channel. */
-        std::uint8_t b;        /**< Blue channel. */
-        std::uint8_t a;        /**< Alpha channel. */
+        std::uint8_t r; /**< Red channel. */
+        std::uint8_t g; /**< Green channel. */
+        std::uint8_t b; /**< Blue channel. */
+        std::uint8_t a; /**< Alpha channel. */
     };
 
-    std::uint8_t r_ = 0;   /**< Stored red channel. */
-    std::uint8_t g_ = 0;   /**< Stored green channel. */
-    std::uint8_t b_ = 0;   /**< Stored blue channel. */
+    std::uint8_t r_ = 0; /**< Stored red channel. */
+    std::uint8_t g_ = 0; /**< Stored green channel. */
+    std::uint8_t b_ = 0; /**< Stored blue channel. */
     std::uint8_t a_ = 255; /**< Stored alpha channel. */
 
     /**
