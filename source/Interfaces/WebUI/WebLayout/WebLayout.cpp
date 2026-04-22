@@ -177,9 +177,9 @@ void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
 
     auto it = mParams.find(elem);
     if (it == mParams.end()) {
-        GetConsole().call<void>("warn",
-                                std::string("WebLayout::SetAlignment failed: element not managed by this layout: ") +
-                                        elem->Id());
+        // clang-format off
+        GetConsole().call<void>("warn", std::string("WebLayout::SetAlignment failed: element not managed by this layout: ") + elem->Id());
+        // clang-format on
         return;
     }
 
