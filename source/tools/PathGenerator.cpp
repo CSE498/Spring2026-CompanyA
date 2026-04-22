@@ -535,7 +535,7 @@ std::vector<WorldPosition> PathGenerator::FindFurtherestPoint(const WorldPositio
     double dy = (std::abs(direction.Y()) < EP) ? 0 : static_cast<int>(direction.Y() / std::abs(direction.Y()));
     constexpr int STEP = 1; // Defined by the two lines above
 
-    if (static_cast<bool>(dx) && static_cast<bool(dy)) // likely case so separated and done first
+    if (static_cast<bool>(dx) && static_cast<bool>(dy)) // likely case so separated and done first
     {
         dirs[0] = {dx, 0};
         dirs[1] = {0, dy};
