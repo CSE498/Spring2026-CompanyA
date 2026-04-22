@@ -458,6 +458,26 @@ if(COMPANYA_EMPP_EXECUTABLE)
     )
 
     add_custom_command(
+        OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebErrorManagerTest.html"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
+        COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
+        ${COMPANYA_WEB_TEST_COMMON_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
+        "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebErrorManagerTest.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+        "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+        --js-library "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        -o "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebErrorManagerTest.html"
+        DEPENDS
+            "${COMPANYA_TEST_DIR}/Interfaces/WebUI/WebErrorManagerTest.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebErrorManager/WebErrorManager.hpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebLayout/WebLayout.cpp"
+            "${COMPANYA_SOURCE_DIR}/Interfaces/WebUI/WebCanvas/WebCanvas.js"
+        VERBATIM
+    )
+
+    add_custom_command(
         OUTPUT "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebImageTest.html"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${COMPANYA_WEB_TEST_OUTPUT_DIR}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
@@ -571,6 +591,7 @@ if(COMPANYA_EMPP_EXECUTABLE)
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebButtonTest.html"
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebCanvasTest.html"
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebLayoutTest.html"
+            "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebErrorManagerTest.html"
             "${COMPANYA_WEB_TEST_OUTPUT_DIR}/WebInterfaceTest.js"
     )
 else()

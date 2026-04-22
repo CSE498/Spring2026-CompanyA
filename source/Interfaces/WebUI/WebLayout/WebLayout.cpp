@@ -171,17 +171,15 @@ bool WebLayout::RemoveElement(IDomElement* elem) noexcept {
 /// @param a    New Alignment value for that child.
 void WebLayout::SetAlignment(IDomElement* elem, Alignment a) noexcept {
     if (!elem) {
-        GetConsole().call<void>(
-            "warn",
-            std::string("WebLayout::SetAlignment called with null elem"));
+        GetConsole().call<void>("warn", std::string("WebLayout::SetAlignment called with null elem"));
         return;
     }
 
     auto it = mParams.find(elem);
     if (it == mParams.end()) {
-        GetConsole().call<void>(
-            "warn",
-            std::string("WebLayout::SetAlignment failed: element not managed by this layout: ") + elem->Id());
+        // clang-format off
+        GetConsole().call<void>("warn", std::string("WebLayout::SetAlignment failed: element not managed by this layout: ") + elem->Id());
+        // clang-format on
         return;
     }
 
@@ -418,7 +416,6 @@ void WebLayout::ApplyChildren() noexcept {
 
 /// @brief Applies all pending layout and style changes to the DOM.
 /// Calls ApplyStyling(), ApplyLayout(), and ApplyChildren() in order.
-/// No-op when the layout is currently hidden (mIsVisible == false).
 void WebLayout::Apply() noexcept {
     val style = mElement["style"];
     ApplyStyling(style);

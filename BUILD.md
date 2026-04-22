@@ -104,6 +104,7 @@ Then open any of the following in your browser:
 | Canvas | `http://localhost:8000/WebCanvasTest.html` |
 | Layout | `http://localhost:8000/WebLayoutTest.html` |
 | WebInterface | `http://localhost:8000/WebInterfaceTest.html` |
+| WebErrorManager | `http://localhost:8000/WebErrorManager.html` |
 
 ---
 

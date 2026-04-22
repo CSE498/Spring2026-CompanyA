@@ -445,9 +445,8 @@ void WebInterface::SetupMainMenu() {
     StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), kMainMenuTitleFontSize);
     titlePtr->MountToLayout(*mMainMenu);
 
-    mElements.emplace_back(
-        std::make_unique<WebTextbox>("Explore the overworld, descend into the dungeon, and manage your inventory from one unified interface.")
-    );
+    mElements.emplace_back(std::make_unique<WebTextbox>(
+            "Explore the overworld, descend into the dungeon, and manage your inventory from one unified interface."));
     WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
     StyleMenuBody(descPtr);
     descPtr->MountToLayout(*mMainMenu);
@@ -487,7 +486,8 @@ void WebInterface::SetupPauseMenu() {
     StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), kPauseMenuTitleFontSize);
     titlePtr->MountToLayout(*mPauseMenu);
 
-    mElements.emplace_back(std::make_unique<WebTextbox>("Resume your run, switch worlds, open settings, or return to the title screen."));
+    mElements.emplace_back(std::make_unique<WebTextbox>(
+            "Resume your run, switch worlds, open settings, or return to the title screen."));
     WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
     StyleMenuBody(descPtr);
     descPtr->MountToLayout(*mPauseMenu);
@@ -529,9 +529,8 @@ void WebInterface::SetupSettingsMenu() {
     StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), 38.0f);
     titlePtr->MountToLayout(*mSettingsMenu);
 
-    mElements.emplace_back(
-        std::make_unique<WebTextbox>("This branch does not expose interactive settings yet, but the layout has been prepared for future controls.")
-    );
+    mElements.emplace_back(std::make_unique<WebTextbox>("This branch does not expose interactive settings yet, but the "
+                                                        "layout has been prepared for future controls."));
     WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
     StyleMenuBody(descPtr, kSettingsMenuDescriptionFontSize);
     descPtr->MountToLayout(*mSettingsMenu);
@@ -565,9 +564,8 @@ void WebInterface::SetupInventoryMenu() {
     StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), kInventoryMenuTitleFontSize);
     titlePtr->MountToLayout(*mInventoryMenu);
 
-    mElements.emplace_back(
-        std::make_unique<WebTextbox>("Click a backpack slot to swap it with the item currently held in your hotbar hand slot.")
-    );
+    mElements.emplace_back(std::make_unique<WebTextbox>(
+            "Click a backpack slot to swap it with the item currently held in your hotbar hand slot."));
     WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
     StyleMenuBody(descPtr, 15.0f);
     descPtr->MountToLayout(*mInventoryMenu);
@@ -784,11 +782,6 @@ void WebInterface::RenderHUD() {
 
 const char WebInterface::SelectAction(const WorldGrid& grid) {
     auto userAction = mInputManager.GetAction();
-    if (userAction == InputManager::ActiveAction::Pause) {
-        HandlePause();
-        return ACTION_NONE;
-    }
-
     if (mState != WebState::OVERWORLD && mState != WebState::DUNGEON) {
         return ACTION_NONE;
     }
@@ -807,7 +800,6 @@ const char WebInterface::SelectAction(const WorldGrid& grid) {
             return ACTION_RIGHT;
 
         case InputManager::ActiveAction::Interact:
-            ++mPoints;
             return ACTION_INTERACT;
 
         case InputManager::ActiveAction::Quit:

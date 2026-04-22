@@ -103,9 +103,6 @@ private:
     /// @brief Vector of DOM elements managed by the interface.
     std::vector<std::unique_ptr<IDomElement>> mElements{};
 
-    /// @brief Current points score.
-    int mPoints{0};
-
     /// @brief Set when a UI quit button was pressed to request a quit action.
     bool mQuitRequested = false;
 

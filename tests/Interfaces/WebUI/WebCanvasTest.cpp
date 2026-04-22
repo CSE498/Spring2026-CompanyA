@@ -95,9 +95,9 @@ void EnsureDomCanvas(const std::string& id, int cssWidth = 320, int cssHeight = 
 
     val canvas = document.call<val>("createElement", val("canvas"));
     canvas.set("id", val(id));
-    canvas.call<void>("setAttribute", val("style"),
-                      val("width:" + std::to_string(cssWidth) + "px;height:" + std::to_string(cssHeight) +
-                          "px;display:block;"));
+    canvas.call<void>(
+            "setAttribute", val("style"),
+            val("width:" + std::to_string(cssWidth) + "px;height:" + std::to_string(cssHeight) + "px;display:block;"));
     document["body"].call<void>("appendChild", canvas);
 }
 
@@ -112,8 +112,7 @@ void RemoveDomCanvas(const std::string& id) {
 }
 
 struct DomCanvasFixture {
-    explicit DomCanvasFixture(std::string canvasId, int cssWidth = 320, int cssHeight = 180)
-        : id(std::move(canvasId)) {
+    explicit DomCanvasFixture(std::string canvasId, int cssWidth = 320, int cssHeight = 180) : id(std::move(canvasId)) {
         EnsureDomCanvas(id, cssWidth, cssHeight);
     }
 
@@ -165,6 +164,14 @@ TEST_CASE("WebCanvas default constructor uses fallback id", "[web][canvas][id]")
 #endif
     WebCanvas canvas;
     CHECK(canvas.Id() == std::string("web-canvas"));
+}
+
+TEST_CASE("WebCanvas reports missing DOM canvas gracefully", "[web][canvas][dom][error]") {
+    RemoveDomCanvas("missing-canvas-test");
+
+    WebCanvas canvas("missing-canvas-test");
+
+    CHECK(canvas.Id() == std::string("missing-canvas-test"));
 }
 
 TEST_CASE("WebCanvas Id() reflects explicit constructor id", "[web][canvas][id]") {
@@ -315,8 +322,7 @@ TEST_CASE("WebCanvas RenderFrame draws visible elements, skips invisible, and pr
     CHECK(order == std::vector<int>{1, 2});
 }
 
-TEST_CASE("WebCanvas RenderFrame sorts by ZIndex and preserves insertion order for ties",
-          "[web][canvas][zindex]") {
+TEST_CASE("WebCanvas RenderFrame sorts by ZIndex and preserves insertion order for ties", "[web][canvas][zindex]") {
     CanvasHarness harness("zindex-sort");
 
     std::vector<int> order;
