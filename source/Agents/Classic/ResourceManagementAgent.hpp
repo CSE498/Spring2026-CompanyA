@@ -54,6 +54,11 @@ public:
 
     bool HireLane(std::size_t laneIndex, std::string* message = nullptr);
 
+    [[nodiscard]] std::size_t GetHireableLaneCount() const { return m_hireableLanes.size(); }
+    [[nodiscard]] const std::string& GetHireableLaneLabel(std::size_t laneIndex) const;
+    [[nodiscard]] bool IsLaneUnlocked(std::size_t laneIndex) const;
+    bool SetLaneUnlocked(std::size_t laneIndex, bool unlocked, std::string* message = nullptr);
+
 private:
     std::shared_ptr<InteractiveWorldInventory> m_inventory;
     struct ManagedBuildingEntry {

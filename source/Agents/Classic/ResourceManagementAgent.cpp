@@ -495,4 +495,54 @@ bool ResourceManagementAgent::IsManagedBuildingUnlocked(const std::size_t buildi
     return m_managedBuildings[buildingIndex].unlocked;
 }
 
+const std::string& ResourceManagementAgent::GetHireableLaneLabel(std::size_t laneIndex) const {
+    return m_hireableLanes.at(laneIndex).label;
+}
+
+bool ResourceManagementAgent::IsLaneUnlocked(std::size_t laneIndex) const {
+    if (laneIndex >= m_hireableLanes.size()) {
+        return false;
+    }
+
+    const auto& lane = m_hireableLanes[laneIndex];
+    return lane.firstHauler != nullptr &&
+           lane.secondHauler != nullptr &&
+           lane.firstHauler->IsActive() &&
+           lane.secondHauler->IsActive();
+}
+
+bool ResourceManagementAgent::SetLaneUnlocked(std::size_t laneIndex, bool unlocked, std::string* message) {
+    if (laneIndex >= m_hireableLanes.size()) {
+        if (message != nullptr) {
+            *message = "Unknown lane selection.";
+        }
+        return false;
+    }
+
+    auto& lane = m_hireableLanes[laneIndex];
+    if (lane.firstHauler == nullptr || lane.secondHauler == nullptr) {
+        if (message != nullptr) {
+            *message = "Selected lane is missing one or more haulers.";
+        }
+        return false;
+    }
+
+    lane.firstHauler->SetActive(unlocked);
+    lane.secondHauler->SetActive(unlocked);
+
+    for (auto& entry : m_managedBuildings) {
+        if (entry.building == lane.building) {
+            entry.unlocked = unlocked;
+            break;
+            }
+    }
+
+    if (message != nullptr) {
+        *message = unlocked ? "Lane unlocked." : "Lane locked.";
+    }
+
+    return true;
+}
+
+
 } // namespace cse498

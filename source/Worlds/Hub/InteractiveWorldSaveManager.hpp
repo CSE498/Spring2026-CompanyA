@@ -43,6 +43,15 @@ public:
 
             j["resource_manager"]["name"] = manager->GetName();
             j["resource_manager"]["gold"] = manager->GetGold();
+
+            j["resource_manager"]["lanes"] = json::array();
+            for (std::size_t laneIndex = 0; laneIndex < manager->GetHireableLaneCount(); ++laneIndex) {
+                json laneJson;
+                laneJson["label"] = manager->GetHireableLaneLabel(laneIndex);
+                laneJson["unlocked"] = manager->IsLaneUnlocked(laneIndex);
+                j["resource_manager"]["lanes"].push_back(laneJson);
+            }
+
             break;
         }
 
@@ -100,6 +109,22 @@ public:
 
                 if (manager->GetName() == managerName) {
                     manager->SetGold(gold);
+                    
+                    if (j["resource_manager"].contains("lanes") &&
+                        j["resource_manager"]["lanes"].is_array()) {
+                        for (const auto& savedLane : j["resource_manager"]["lanes"]) {
+                            const std::string label = savedLane.value("label", "");
+                            const bool unlocked = savedLane.value("unlocked", false);
+
+                            for (std::size_t laneIndex = 0; laneIndex < manager->GetHireableLaneCount(); ++laneIndex) {
+                                if (manager->GetHireableLaneLabel(laneIndex) == label) {
+                                    manager->SetLaneUnlocked(laneIndex, unlocked);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
                     break;
                 }
             }
