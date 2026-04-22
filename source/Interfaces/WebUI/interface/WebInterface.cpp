@@ -251,6 +251,10 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
     SetupSettingsMenu();
     SetupInventoryMenu();
 
+    SetupStatsMenu();
+    mAnalyticsManager = std::make_shared<AnalyticsManager>();
+    mStatsTracker = std::make_unique<StatsTracker>();
+
     UpdateLayoutVisibility();
 
     RenderFrame();
@@ -331,7 +335,7 @@ void WebInterface::RunFrame(double currentTimeMs) {
 
 bool WebInterface::IsPaused() const {
     return mState == WebState::PAUSED || mState == WebState::SETTINGS || mState == WebState::MAIN_MENU ||
-           mState == WebState::INVENTORY;
+           mState == WebState::INVENTORY || mState == WebState::STATS;
 }
 
 WorldBase& WebInterface::GetWorld() const {
@@ -421,6 +425,7 @@ void WebInterface::UpdateLayoutVisibility() {
     SetLayoutVisible(mPauseMenu, mState == WebState::PAUSED);
     SetLayoutVisible(mSettingsMenu, mState == WebState::SETTINGS);
     SetLayoutVisible(mInventoryMenu, mState == WebState::INVENTORY);
+    SetLayoutVisible(mStatsMenu, mState == WebState::STATS);
     mRoot->Apply();
 }
 
@@ -504,6 +509,12 @@ void WebInterface::SetupPauseMenu() {
     addButton("Go to Overworld", [this]() { TransitionTo(WebState::OVERWORLD); });
     addButton("Go to Dungeon", [this]() { TransitionTo(WebState::DUNGEON); });
     addButton("Settings", [this]() { TransitionTo(WebState::SETTINGS); });
+    addButton("Stats", [this]() {
+        if (mAnalyticsManager && mStatsTracker) {
+            mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+        }
+        TransitionTo(WebState::STATS);
+    });
     addButton("Quit to Main Menu", [this]() { TransitionTo(WebState::MAIN_MENU); });
 }
 
@@ -622,6 +633,40 @@ void WebInterface::SetupInventoryMenu() {
     mElements.emplace_back(std::move(backButton));
 }
 
+void WebInterface::SetupStatsMenu() {
+    mElements.emplace_back(std::make_unique<WebLayout>("stats-menu"));
+    mStatsMenu = static_cast<WebLayout*>(mElements.back().get());
+    mStatsMenu->SetLayoutType(LayoutType::Vertical);
+    mStatsMenu->SetJustification(Justification::Start);
+    mStatsMenu->SetAlignItems(Alignment::Center);
+    mStatsMenu->SetSpacing(kMenuPauseSpacing);
+    mStatsMenu->SetPadding(kMenuPadding);
+    StyleMenuLayout(mStatsMenu, 560);
+    mStatsMenu->ToggleVisibility();
+    mStatsMenu->MountToLayout(*mRoot);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>("DATA ANALYTICS"));
+    WebTextbox* eyebrowPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(eyebrowPtr, kAccent.ToHex(), kMenuEyebrowFontSize);
+    eyebrowPtr->MountToLayout(*mStatsMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>("Session Stats"));
+    WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), 38.0f);
+    titlePtr->MountToLayout(*mStatsMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>("No stats recorded yet."));
+    WebTextbox* bodyPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(bodyPtr, 15.0f);
+    bodyPtr->MountToLayout(*mStatsMenu);
+
+    auto backButton = std::make_unique<WebButton>("Back");
+    backButton->SetCallback([this]() { TransitionTo(mPreviousState); });
+    StyleMenuButton(backButton.get(), kButtonColorMedium.ToHex());
+    backButton->MountToLayout(*mStatsMenu, Alignment::Center);
+    mElements.emplace_back(std::move(backButton));
+}
+
 void WebInterface::PopulateInventoryMenu() {
     // Get player inventory
     auto player = (mGameState == WebState::OVERWORLD) ? mInteractiveWorld->GetPlayer() : mDungeon->GetPlayer();
@@ -683,7 +728,7 @@ void WebInterface::TransitionTo(WebState newState) {
 
     mPreviousState = mState;
     // Save gameplay state when entering a menu
-    if ((newState == WebState::PAUSED || newState == WebState::SETTINGS) &&
+    if ((newState == WebState::PAUSED || newState == WebState::SETTINGS || newState == WebState::STATS) &&
         (mState == WebState::OVERWORLD || mState == WebState::DUNGEON)) {
 
         mGameState = mState;
@@ -952,6 +997,7 @@ void WebInterface::RenderFrame() {
         case WebState::PAUSED:
         case WebState::SETTINGS:
         case WebState::INVENTORY:
+        case WebState::STATS:
         case WebState::QUIT:
             break;
     }
@@ -961,7 +1007,7 @@ void WebInterface::RenderFrame() {
 void WebInterface::HandlePause() {
     if (mState == WebState::OVERWORLD || mState == WebState::DUNGEON) {
         Pause();
-    } else if (mState == WebState::PAUSED || mState == WebState::SETTINGS || mState == WebState::INVENTORY) {
+    } else if (mState == WebState::PAUSED || mState == WebState::SETTINGS || mState == WebState::INVENTORY || mState == WebState::STATS) {
         Resume();
     }
     RenderFrame();
