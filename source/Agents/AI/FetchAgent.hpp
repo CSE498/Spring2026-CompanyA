@@ -107,6 +107,22 @@ public:
     [[nodiscard]] ItemType GetItemType() const { return m_itemType; }
     [[nodiscard]] int GetCarryQuantity() const { return m_carryQuantity; }
     [[nodiscard]] int GetTotalDelivered() const { return m_totalDelivered; }
+    [[nodiscard]] bool IsActive() const { return m_isActive; }
+
+    FetchAgent& SetActive(bool active) {
+        m_isActive = active;
+        return *this;
+    }
+
+    FetchAgent& Activate() {
+        m_isActive = true;
+        return *this;
+    }
+
+    FetchAgent& Deactivate() {
+        m_isActive = false;
+        return *this;
+    }
 
     FetchAgent& SetItemType(ItemType itemType) {
         m_itemType = itemType;
@@ -126,6 +142,9 @@ public:
     }
 
     [[nodiscard]] size_t SelectAction(const WorldGrid& grid) override {
+        if (!m_isActive) {
+            return 0;
+        }
         if (m_origin == nullptr || m_depositPoint == nullptr) {
             return 0;
         }
@@ -164,7 +183,12 @@ public:
         }
 
         return NextStepToward(grid, myPos, goalPos);
+
+        
     }
+
+    
+
 
 private:
     AgentBase* m_origin = nullptr;
@@ -174,6 +198,7 @@ private:
     ItemType m_itemType = ItemType::Wood;
     int m_carryQuantity = 0;
     int m_totalDelivered = 0;
+    bool m_isActive = true;
 
     void PerformDefaultPickup() {
         if (auto* spawn = dynamic_cast<ResourceSpawn*>(m_origin); spawn != nullptr) {

@@ -16,7 +16,7 @@
 #include "../../core/AgentBase.hpp"
 
 namespace cse498 {
-
+class FetchAgent;
 class ResourceManagementAgent : public AgentBase {
 public:
     using ItemCount = InteractiveWorldInventory::ItemCount;
@@ -30,10 +30,10 @@ public:
     ResourceManagementAgent& SetInventory(std::shared_ptr<InteractiveWorldInventory> inventory);
     [[nodiscard]] std::shared_ptr<InteractiveWorldInventory> GetInventoryPtr() const { return m_inventory; }
 
-    ResourceManagementAgent& SetManagedBuildings(const std::vector<Building*>& buildings);
-    ResourceManagementAgent& AddManagedBuilding(Building& building);
+    ResourceManagementAgent& SetManagedBuildings(const std::vector<Building*>& buildings, bool unlocked = true);
+    ResourceManagementAgent& AddManagedBuilding(Building& building, bool unlocked = true);
     void ClearManagedBuildings();
-    [[nodiscard]] const std::vector<Building*>& GetManagedBuildings() const { return m_managedBuildings; }
+    [[nodiscard]] bool IsManagedBuildingUnlocked(std::size_t buildingIndex) const;
 
     [[nodiscard]] GoldAmount GetGold() const { return m_gold; }
     void SetGold(GoldAmount amount) { m_gold = amount; }
@@ -46,9 +46,23 @@ public:
     bool UpgradeBuilding(Building& building, std::string* message = nullptr);
     bool SellResource(ItemType itemType, ItemCount amount, std::string* message = nullptr);
 
+    ResourceManagementAgent& AddHireableLane(const std::string& label,
+                                         FetchAgent& firstHauler,
+                                         FetchAgent& secondHauler,
+                                         Building& building,
+                                         GoldAmount cost);
+
+    bool HireLane(std::size_t laneIndex, std::string* message = nullptr);
+
 private:
     std::shared_ptr<InteractiveWorldInventory> m_inventory;
-    std::vector<Building*> m_managedBuildings;
+    struct ManagedBuildingEntry {
+        Building* building = nullptr;
+        bool unlocked = true;
+    };
+
+    std::vector<ManagedBuildingEntry> m_managedBuildings;
+
     GoldAmount m_gold = 0;
     GoldAmount m_woodSellPrice = 1;
     GoldAmount m_stoneSellPrice = 2;
@@ -60,6 +74,19 @@ private:
     void PrintBuildingList() const;
     void HandleUpgradeInteraction();
     void HandleSellInteraction();
+    void PrintHireableLaneList() const;
+    void HandleHireInteraction();
+
+    struct HireableLaneEntry {
+        std::string label;
+        FetchAgent* firstHauler = nullptr;
+        FetchAgent* secondHauler = nullptr;
+        GoldAmount cost = 0;
+        Building* building = nullptr;
+    };
+
+    std::vector<HireableLaneEntry> m_hireableLanes;
+
 };
 
 } // namespace cse498

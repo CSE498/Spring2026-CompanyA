@@ -125,8 +125,23 @@ int main() {
     configureFetcher(metalToTownHall, mine, townHall, ItemType::Metal, '6', WorldPosition{15, 6});
 
     ResourceManagementAgent& resourceManager = world->AddAgent<ResourceManagementAgent>("Resource Manager");
-    resourceManager.SetInventory(world->GetInventoryPtr()).SetManagedBuildings(world->GetBuildings()).SetSymbol('7');
+    resourceManager.SetInventory(world->GetInventoryPtr()).SetSymbol('7');
+    resourceManager.AddManagedBuilding(lumberYard, true);
+    resourceManager.AddManagedBuilding(quarry, false);
+    resourceManager.AddManagedBuilding(mine, false);
     resourceManager.SetLocation(WorldPosition{2, 3});
+
+    woodToLumberYard.SetActive(true);
+    woodToTownHall.SetActive(true);
+
+    stoneToQuarry.SetActive(false);
+    stoneToTownHall.SetActive(false);
+
+    metalToMine.SetActive(false);
+    metalToTownHall.SetActive(false);
+
+    resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarry, 10);
+    resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mine, 20);
 
 
     InteractiveWorldSaveManager saveManager;

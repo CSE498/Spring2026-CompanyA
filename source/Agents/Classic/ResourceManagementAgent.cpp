@@ -4,10 +4,12 @@
  */
 
 #include "ResourceManagementAgent.hpp"
+#include "../AI/FetchAgent.hpp"
 
 #include <iostream>
 #include <limits>
 #include <optional>
+
 
 namespace cse498 {
 
@@ -51,20 +53,21 @@ ResourceManagementAgent& ResourceManagementAgent::SetInventory(std::shared_ptr<I
     return *this;
 }
 
-ResourceManagementAgent& ResourceManagementAgent::SetManagedBuildings(const std::vector<Building*>& buildings) {
+ResourceManagementAgent& ResourceManagementAgent::SetManagedBuildings(
+    const std::vector<Building*>& buildings, bool unlocked) {
     m_managedBuildings.clear();
 
-    for (Building* building: buildings) {
+    for (Building* building : buildings) {
         if (building != nullptr) {
-            m_managedBuildings.push_back(building);
+            m_managedBuildings.push_back({building, unlocked});
         }
     }
 
     return *this;
 }
 
-ResourceManagementAgent& ResourceManagementAgent::AddManagedBuilding(Building& building) {
-    m_managedBuildings.push_back(&building);
+ResourceManagementAgent& ResourceManagementAgent::AddManagedBuilding(Building& building, bool unlocked) {
+    m_managedBuildings.push_back({&building, unlocked});
     return *this;
 }
 
@@ -102,7 +105,7 @@ Building* ResourceManagementAgent::TryGetManagedBuilding(const std::size_t build
         return nullptr;
     }
 
-    return m_managedBuildings[buildingIndex];
+    return m_managedBuildings[buildingIndex].building;
 }
 
 std::string ResourceManagementAgent::DescribeBuilding(const Building& building) {
@@ -132,16 +135,38 @@ void ResourceManagementAgent::PrintBuildingList() const {
     std::cout << "\nManaged buildings:\n";
 
     for (std::size_t i = 0; i < m_managedBuildings.size(); ++i) {
-        const Building* building = m_managedBuildings[i];
-        if (building == nullptr) {
+        const auto& entry = m_managedBuildings[i];
+        if (entry.building == nullptr) {
             continue;
         }
 
-        std::cout << " " << (i + 1) << ". " << DescribeBuilding(*building) << '\n';
+        std::cout << " " << (i + 1) << ". " << entry.building->GetName();
+
+        if (!entry.unlocked) {
+            std::cout << " | locked\n";
+            continue;
+        }
+
+        std::cout << " | unlocked | level " << entry.building->GetCurrentLevel()
+                  << "/" << entry.building->GetMaxLevel() << " | next: ";
+
+        const auto nextUpgrade = entry.building->GetNextUpgradeInfo();
+        if (!nextUpgrade.has_value()) {
+            std::cout << "max level\n";
+        } else {
+            std::cout << nextUpgrade->quantity << " "
+                      << ItemTypeToString(nextUpgrade->item) << '\n';
+        }
     }
 }
 
 bool ResourceManagementAgent::UpgradeBuilding(std::size_t buildingIndex, std::string* message) {
+    if (!IsManagedBuildingUnlocked(buildingIndex)) {
+        if (message != nullptr) {
+            *message = "That building is locked.";
+        }
+        return false;
+    }
     Building* building = TryGetManagedBuilding(buildingIndex);
     if (building == nullptr) {
         if (message != nullptr) {
@@ -322,7 +347,7 @@ bool ResourceManagementAgent::Interact() {
         PrintSummary();
         PrintBuildingList();
 
-        std::cout << "\nChoose action: [u] upgrade  [s] sell resources  [q] cancel\n> ";
+        std::cout << "\nChoose action: [u] upgrade  [s] sell resources [h] unlock resource lane [q] cancel\n> ";
 
         char choice = '\0';
         if (!(std::cin >> choice)) {
@@ -345,11 +370,129 @@ bool ResourceManagementAgent::Interact() {
             case 'Q':
                 std::cout << "Closing resource management menu.\n";
                 return true;
+            case 'h':
+            case 'H':
+                HandleHireInteraction();
+                break;
             default:
                 std::cout << "Invalid management option.\n";
                 break;
         }
     }
+}
+
+
+ResourceManagementAgent& ResourceManagementAgent::AddHireableLane(
+    const std::string& label,
+    FetchAgent& firstHauler,
+    FetchAgent& secondHauler,
+    Building& building,
+    GoldAmount cost) {
+    m_hireableLanes.push_back({label, &firstHauler, &secondHauler, cost, &building});
+    return *this;
+}
+
+bool ResourceManagementAgent::HireLane(std::size_t laneIndex, std::string* message) {
+    if (laneIndex >= m_hireableLanes.size()) {
+        if (message != nullptr) {
+            *message = "Unknown lane selection.";
+        }
+        return false;
+    }
+
+    auto& lane = m_hireableLanes[laneIndex];
+
+    if (lane.firstHauler == nullptr || lane.secondHauler == nullptr) {
+        if (message != nullptr) {
+            *message = "Selected lane is missing one or more haulers.";
+        }
+        return false;
+    }
+
+    if (lane.firstHauler->IsActive() && lane.secondHauler->IsActive()) {
+        if (message != nullptr) {
+            *message = lane.label + " is already unlocked.";
+        }
+        return false;
+    }
+
+    if (m_gold < lane.cost) {
+        if (message != nullptr) {
+            *message = "Not enough gold to unlock " + lane.label + ".";
+        }
+        return false;
+    }
+
+    m_gold -= lane.cost;
+    lane.firstHauler->Activate();
+    lane.secondHauler->Activate();
+
+    for (auto& entry : m_managedBuildings) {
+        if (entry.building == lane.building) {
+            entry.unlocked = true;
+            break;
+        }   
+    }
+
+    if (message != nullptr) {
+        *message = "Unlocked " + lane.label + " for " + std::to_string(lane.cost) + " gold.";
+    }
+
+    return true;
+}
+
+void ResourceManagementAgent::PrintHireableLaneList() const {
+    std::cout << "\nHireable lanes:\n";
+
+    for (std::size_t i = 0; i < m_hireableLanes.size(); ++i) {
+        const auto& lane = m_hireableLanes[i];
+
+        const bool active =
+            lane.firstHauler != nullptr &&
+            lane.secondHauler != nullptr &&
+            lane.firstHauler->IsActive() &&
+            lane.secondHauler->IsActive();
+
+        std::cout << " " << (i + 1) << ". " << lane.label
+                  << " | cost " << lane.cost << " gold"
+                  << " | status: " << (active ? "active" : "locked") << '\n';
+    }
+}
+
+void ResourceManagementAgent::HandleHireInteraction() {
+    PrintHireableLaneList();
+    std::cout << "\nSelect lane number to unlock or q to cancel.\n> ";
+
+    std::string selection;
+    if (!(std::cin >> selection)) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Lane unlock cancelled.\n";
+        return;
+    }
+
+    if (selection == "q" || selection == "Q") {
+        std::cout << "Lane unlock cancelled.\n";
+        return;
+    }
+
+    const auto laneNumber = ParseMenuIndex(selection);
+    if (!laneNumber.has_value()) {
+        std::cout << "Invalid lane selection.\n";
+        return;
+    }
+
+    std::string message;
+    HireLane(*laneNumber - 1, &message);
+    std::cout << message << '\n';
+}
+
+bool ResourceManagementAgent::IsManagedBuildingUnlocked(const std::size_t buildingIndex) const {
+    if (buildingIndex >= m_managedBuildings.size()) {
+        return false;
+    }
+
+    return m_managedBuildings[buildingIndex].unlocked;
 }
 
 } // namespace cse498
