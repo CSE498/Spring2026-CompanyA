@@ -54,7 +54,10 @@ Loads room templates from text files and picks which room to use
 *Characters that are consistent across levels:*
 | Char | What it is |
 |------|------------|
-| `f` | Secret door (use the same wall type that is on either side of the door as the wall) |
+| `f` | Top Secret door (use the same wall type that is on either side of the door as the wall) |
+| `T` | Bottom Secret door (use the same wall type that is on either side of the door as the wall) |
+| `U` | Left Secret door (use the same wall type that is on either side of the door as the wall) |
+| `v` | Right Secret door (use the same wall type that is on either side of the door as the wall) |
 | `s` | Monster spawn (skeleton) |
 | `g` | Monster spawn (goblin) |
 | `l` | Loot spawn (use floor alt 1 as the floor, layer a chest image on top)|

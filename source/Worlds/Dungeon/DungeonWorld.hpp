@@ -146,7 +146,10 @@ namespace cse498 {
         size_t m_loot_tile;
         size_t m_monster_tile_skeleton;
         size_t m_monster_tile_goblin;
-        size_t m_secret_door;
+        size_t m_secret_door_top;
+        size_t m_secret_door_bottom;
+        size_t m_secret_door_left;
+        size_t m_secret_door_right;
         size_t m_exit_door_l1;
         size_t m_exit_door_l2;
         size_t m_exit_door_l3;
@@ -227,7 +230,11 @@ namespace cse498 {
             m_loot_tile = main_grid.AddCellType("wall_loot", "loot tile wall.", 'l');
             m_monster_tile_skeleton = main_grid.AddCellType("wall_skeleton", "monster tile wall. skeleton", 's');
             m_monster_tile_goblin = main_grid.AddCellType("wall_goblin", "monster tile wall. goblin", 'g');
-            m_secret_door = main_grid.AddCellType("wall_secret", "secret tile wall.", 'f');
+
+            m_secret_door_top = main_grid.AddCellType("wall_secret_top", "secret tile wall. Top", 'f');
+            m_secret_door_bottom = main_grid.AddCellType("wall_secret_bottom", "secret tile wall. Bottom", 'T');
+            m_secret_door_left = main_grid.AddCellType("wall_secret_left", "secret tile wall. Left", 'U');
+            m_secret_door_right = main_grid.AddCellType("wall_secret_right", "secret tile wall. Right", 'v');
 
 
             m_exit_door_l1 = main_grid.AddCellType("exit_l1", "secret exit l1.", 'e');
