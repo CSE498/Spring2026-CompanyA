@@ -62,6 +62,8 @@ public:
      * Sets gold to a known value. Mainly useful for demos/tests.
      */
     void SetGold(std::size_t amount) { mGold = amount; }
+
+	bool IsPlayerAgent() const override {return true;}
 };
 
 } // namespace cse498

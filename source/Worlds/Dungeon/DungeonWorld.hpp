@@ -44,9 +44,12 @@ namespace cse498 {
     private:
         int m_level_num = 1; //Current int value level that the game is on
         std::unique_ptr<LevelBase> m_level = std::make_unique<ForestLevel>();
+
         //The currently pointed to level that the player agent is on
 		std::vector<size_t> m_spawned_enemy_ids;
 
+		//Track level change to prevent an extra enemy turn
+		bool mLevelJustAdvanced = false;
         /**
          * @brief Builds the room pool for the current level.
          * @return WeightedSet of room file paths and weights.
@@ -92,11 +95,12 @@ namespace cse498 {
         size_t m_floor_id_l3v3;
         size_t m_floor_id_l3v4;
         size_t m_floor_id_l3v5;
-        size_t m_floor_id_l4v1; ///< Level 4 floor CellType IDs
-        size_t m_floor_id_l4v2;
-        size_t m_floor_id_l4v3;
-        size_t m_floor_id_l4v4;
-        size_t m_floor_id_l4v5;
+		/// Level 4 floor CellType IDs-> not used currently
+		// size_t m_floor_id_l4v1; 
+        // size_t m_floor_id_l4v2;
+        // size_t m_floor_id_l4v3;
+        // size_t m_floor_id_l4v4;
+        // size_t m_floor_id_l4v5;
 
         size_t m_wall_id; ///< Easy access to wall CellType ID.
 
@@ -124,14 +128,15 @@ namespace cse498 {
         size_t m_internal_obstacle_l3v2;
         size_t m_door_tile_left_l3;
         size_t m_door_tile_right_l3;
-        size_t m_upper_external_l4; ///< Level 4 wall CellType IDs
-        size_t m_lower_external_l4;
-        size_t m_left_external_l4;
-        size_t m_right_external_l4;
-        size_t m_internal_obstacle_l4v1;
-        size_t m_internal_obstacle_l4v2;
-        size_t m_door_tile_left_l4;
-        size_t m_door_tile_right_l4;
+		/// Level 4 wall CellType IDs -> not used currently
+        //size_t m_upper_external_l4;
+        // size_t m_lower_external_l4;
+        // size_t m_left_external_l4;
+        // size_t m_right_external_l4;
+        // size_t m_internal_obstacle_l4v1;
+        // size_t m_internal_obstacle_l4v2;
+        // size_t m_door_tile_left_l4;
+        // size_t m_door_tile_right_l4;
 
         size_t m_trap_tile;
         size_t m_loot_tile;
@@ -169,11 +174,11 @@ namespace cse498 {
             m_floor_id_l3v3 = main_grid.AddCellType("floor_l3v3", "Floor that agents can walk on. l3 v3", 'o');
             m_floor_id_l3v4 = main_grid.AddCellType("floor_l3v4", "Floor that agents can walk on. l3 v4", 'p');
             m_floor_id_l3v5 = main_grid.AddCellType("floor_l3v5", "Floor that agents can walk on. l3 v5", 'q');
-            m_floor_id_l4v1 = main_grid.AddCellType("floor_l4v1", "Floor that agents can walk on. l4 v1", 'M');
-            m_floor_id_l4v2 = main_grid.AddCellType("floor_l4v2", "Floor that agents can walk on. l4 v2", 'N');
-            m_floor_id_l4v3 = main_grid.AddCellType("floor_l4v3", "Floor that agents can walk on. l4 v3", 'O');
-            m_floor_id_l4v4 = main_grid.AddCellType("floor_l4v4", "Floor that agents can walk on. l4 v4", 'P');
-            m_floor_id_l4v5 = main_grid.AddCellType("floor_l4v5", "Floor that agents can walk on. l4 v5", 'Q');
+            // m_floor_id_l4v1 = main_grid.AddCellType("floor_l4v1", "Floor that agents can walk on. l4 v1", 'M');
+            // m_floor_id_l4v2 = main_grid.AddCellType("floor_l4v2", "Floor that agents can walk on. l4 v2", 'N');
+            // m_floor_id_l4v3 = main_grid.AddCellType("floor_l4v3", "Floor that agents can walk on. l4 v3", 'O');
+            // m_floor_id_l4v4 = main_grid.AddCellType("floor_l4v4", "Floor that agents can walk on. l4 v4", 'P');
+            // m_floor_id_l4v5 = main_grid.AddCellType("floor_l4v5", "Floor that agents can walk on. l4 v5", 'Q');
 
             m_wall_id = main_grid.AddCellType("wall", "Impenetrable wall.", '#');
 
@@ -201,14 +206,14 @@ namespace cse498 {
             m_internal_obstacle_l3v2 = main_grid.AddCellType("wall_l3v6", "interal obstacle wall. l3 v2", ']');
             m_door_tile_left_l3 = main_grid.AddCellType("wall_l3v7", "left door tile wall. l3", '.');
             m_door_tile_right_l3 = main_grid.AddCellType("wall_l3v8", "right door tile wall. l3", ';');
-            m_upper_external_l4 = main_grid.AddCellType("wall_l4v1", "upper wall. l4", '(');
-            m_lower_external_l4 = main_grid.AddCellType("wall_l4v2", "lower wall. l4", ')');
-            m_left_external_l4 = main_grid.AddCellType("wall_l4v3", "left external wall. l4", '_');
-            m_right_external_l4 = main_grid.AddCellType("wall_l4v4", "right external  wall. l4", '+');
-            m_internal_obstacle_l4v1 = main_grid.AddCellType("wall_l4v5", "interal obstacle wall. l4 v1", '{');
-            m_internal_obstacle_l4v2 = main_grid.AddCellType("wall_l4v6", "interal obstacle wall. l4 v2", '}');
-            m_door_tile_left_l4 = main_grid.AddCellType("wall_l4v7", "left door tile wall. l4", '~');
-            m_door_tile_right_l4 = main_grid.AddCellType("wall_l4v8", "right door tile wall. l4", ':');
+            // m_upper_external_l4 = main_grid.AddCellType("wall_l4v1", "upper wall. l4", '(');
+            // m_lower_external_l4 = main_grid.AddCellType("wall_l4v2", "lower wall. l4", ')');
+            // m_left_external_l4 = main_grid.AddCellType("wall_l4v3", "left external wall. l4", '_');
+            // m_right_external_l4 = main_grid.AddCellType("wall_l4v4", "right external  wall. l4", '+');
+            // m_internal_obstacle_l4v1 = main_grid.AddCellType("wall_l4v5", "interal obstacle wall. l4 v1", '{');
+            // m_internal_obstacle_l4v2 = main_grid.AddCellType("wall_l4v6", "interal obstacle wall. l4 v2", '}');
+            // m_door_tile_left_l4 = main_grid.AddCellType("wall_l4v7", "left door tile wall. l4", '~');
+            // m_door_tile_right_l4 = main_grid.AddCellType("wall_l4v8", "right door tile wall. l4", ':');
 
             m_trap_tile = main_grid.AddCellType("wall_trap", "trap tile wall.", 't');
             m_loot_tile = main_grid.AddCellType("wall_loot", "loot tile wall.", 'l');
@@ -237,15 +242,12 @@ namespace cse498 {
             auto pickaxe = m_item_pool.Insert("Pickaxe", 1.0);
             auto shovel = m_item_pool.Insert("Shovel", 1.0);
 
-            //   WorldGeneration generation(room_pool);
-            //   generation.CreateDungeon();
-            //   std::vector<std::string> testing = generation.GetDungeon();
+			auto& player = AddAgent<PlayerAgent>("Player");
+			player.SetSymbol('Z').SetLocation(WorldPosition{1,1});
+			mPlayer = &player;
 
-            // Debugging calls in order to see the Grid Parition outline and coordinate/room information
-            //generation.GetBSP().TreeParser();
-            //generation.GetBSP().GenerateTileMap();
-
-            //   main_grid.Load(testing);
+			auto& ui = AddAgent<TrashInterface>("Interface");
+			ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
 
             GenerateLevel();
         }
@@ -260,11 +262,11 @@ namespace cse498 {
 			m_generation->CreateDungeon(m_level_num);
 			main_grid.Load(m_generation->GetDungeon());
 
-			//SpawnDungeonAgents();
+			SpawnDungeonAgents();
         }
 
 		void AdvanceLevel() {
-			//DespawnDungeonAgents();
+			DespawnDungeonAgents();
 
 			if (m_generation) {
 				m_generation->ClearLevel();
@@ -272,75 +274,108 @@ namespace cse498 {
 
             ++m_level_num;
             GenerateLevel();
+
+			mLevelJustAdvanced = true;
         }
 
-		//NOTE: agents are currently spawning 1 tile below setLocation. 
-		// Needs fix - for now to testing its set to y - 1 to correct mismatch
-		// void SpawnDungeonAgents() {
-		// 	if (!m_generation) return;
+		void SpawnDungeonAgents() {
+			if (!m_generation) return;
 
-		// 	m_spawned_enemy_ids.clear();
+			m_spawned_enemy_ids.clear();
 
-		// 	int goblin_num = 1;
-		// 	for (const auto &[x, y] : m_generation->GetGoblinSpawns()) {
-		// 		auto &agent = AddAgent<PacingAgent>("Goblin " + std::to_string(goblin_num++));
-		// 		agent.SetLocation(WorldPosition{x, y - 1});
-		// 		m_spawned_enemy_ids.push_back(agent.GetID());
-		// 	}
+			int goblin_num = 1;
+			for (const auto &[x, y] : m_generation->GetGoblinSpawns()) {
+				auto &agent = AddAgent<PacingAgent>("Goblin " + std::to_string(goblin_num++));
+				agent.SetLocation(WorldPosition{x, y});
+				m_spawned_enemy_ids.push_back(agent.GetID());
+			}
 
-		// 	int skeleton_num = 1;
-		// 	for (const auto &[x, y] : m_generation->GetSkeletonSpawns()) {
-		// 		auto &agent = AddAgent<PacingAgent>("Skeleton " + std::to_string(skeleton_num++));
-		// 		agent.SetLocation(WorldPosition{x, y - 1});
-		// 		m_spawned_enemy_ids.push_back(agent.GetID());
-		// 	}
-		// }
+			int skeleton_num = 1;
+			for (const auto &[x, y] : m_generation->GetSkeletonSpawns()) {
+				auto &agent = AddAgent<PacingAgent>("Skeleton " + std::to_string(skeleton_num++));
+				agent.SetLocation(WorldPosition{x, y});
+				m_spawned_enemy_ids.push_back(agent.GetID());
+			}
+		}
 
-		// void DespawnDungeonAgents() {
-		// 	for (size_t id : m_spawned_enemy_ids) {
-		// 		if (AgentBase *agent = TryGetAgent(id)) {
-		// 			if (agent->IsAlive()) {
-		// 				agent->TakeDamage(agent->GetCurrentHealth());
-		// 			}
-		// 		}
-		// 	}
+		void DespawnDungeonAgents() {
+			for (size_t id : m_spawned_enemy_ids) {
+				if (AgentBase *agent = TryGetAgent(id)) {
+					if (agent->IsAlive()) {
+						agent->TakeDamage(agent->GetCurrentHealth());
+					}
+				}
+			}
 
-		// 	RemoveDeadAgents();
-		// 	m_spawned_enemy_ids.clear();
-		// }
+			RemoveDeadAgents();
+			m_spawned_enemy_ids.clear();
+		}
 
-        // void UpdateWorld() override {
-        // 	if ((m_level_num == 5)) {
-        // 		mRunOver = true;
-        // 		return
-        // 	}
-
-        // 	if (player_is_on_exit) {
-        // 		AdvanceLevel();
-        // 	}
-        // }
+        void UpdateWorld() override {
+        	if ((m_level_num == 5)) {
+        		mRunOver = true;
+        		return;
+        	}
+		}
 
 
         /// @brief Grabs user input to determine whether or not to move to the next level.
         /// Debug tool used for updating level progression + progressing dungeon levels (dungeonone, dungeontwo, dungeonthree)
-        void UserInput() {
-            std::cout << "Success! Continue or quit? ('c'/'q')" << std::endl;
-            char input;
-            bool user_checker = true;
-            while (user_checker) {
-                std::cin >> input;
-                if (std::tolower(input) == 'c') {
-                    user_checker = false;
-                } else if (std::tolower(input) == 'q') {
-                    std::cout << "DungeonGame terminated" << std::endl;
-                    exit(-1);
-                } else {
-                    std::cout << "Invalid Command!" << std::endl;
-                    continue;
-                }
-            }
-            return;
-        }
+        // void UserInput() {
+        //     std::cout << "Success! Continue or quit? ('c'/'q')" << std::endl;
+        //     char input;
+        //     bool user_checker = true;
+        //     while (user_checker) {
+        //         std::cin >> input;
+        //         if (std::tolower(input) == 'c') {
+        //             user_checker = false;
+        //         } else if (std::tolower(input) == 'q') {
+        //             std::cout << "DungeonGame terminated" << std::endl;
+        //             exit(-1);
+        //         } else {
+        //             std::cout << "Invalid Command!" << std::endl;
+        //             continue;
+        //         }
+        //     }
+        //     return;
+        // }
+
+		void RunAgents() override {
+			TrashInterface* ui = nullptr;
+
+			for (const auto& agent_ptr : agent_set) {
+				if (agent_ptr->IsInterface()) {
+					ui = static_cast<TrashInterface*>(agent_ptr.get());
+					break;
+				}
+			}
+
+			assert(ui);
+			assert(mPlayer);
+
+			size_t action = ui->SelectAction(main_grid);
+			int result = DoAction(*mPlayer, action);
+			mPlayer->SetActionResult(result);
+
+			ui->SetLocation(mPlayer->GetLocation());
+
+			//Prevent enemies from taking a turn before new level is drawn
+			if (mLevelJustAdvanced) {
+				mLevelJustAdvanced = false;
+				return;
+			}
+
+			for (const auto& agent_ptr : agent_set) {
+				AgentBase* agent = agent_ptr.get();
+
+				if (agent->IsPlayerAgent()) continue;
+				if (agent->IsInterface()) continue;
+
+				size_t action_id = agent->SelectAction(main_grid);
+				int result = DoAction(*agent, action_id);
+				agent->SetActionResult(result);
+			}
+		}
 
         /// Allow the agents to move around the maze.
         int DoAction(AgentBase &agent, size_t action_id) override {
@@ -377,33 +412,39 @@ namespace cse498 {
             // Don't let the agent move off the world or into a wall.
             if (!main_grid.IsValid(new_position)) { return false; }
             if (main_grid[new_position] == m_wall_id
+				|| main_grid[new_position] == m_upper_external_l1
                 || main_grid[new_position] == m_lower_external_l1
                 || main_grid[new_position] == m_left_external_l1
                 || main_grid[new_position] == m_right_external_l1
                 || main_grid[new_position] == m_internal_obstacle_l1v1
                 || main_grid[new_position] == m_internal_obstacle_l1v2
 
+				|| main_grid[new_position] == m_upper_external_l2
                 || main_grid[new_position] == m_lower_external_l2
                 || main_grid[new_position] == m_left_external_l2
                 || main_grid[new_position] == m_right_external_l2
                 || main_grid[new_position] == m_internal_obstacle_l2v1
                 || main_grid[new_position] == m_internal_obstacle_l2v2
 
+				|| main_grid[new_position] == m_upper_external_l3
                 || main_grid[new_position] == m_lower_external_l3
                 || main_grid[new_position] == m_left_external_l3
                 || main_grid[new_position] == m_right_external_l3
                 || main_grid[new_position] == m_internal_obstacle_l3v1
                 || main_grid[new_position] == m_internal_obstacle_l3v2
 
-                || main_grid[new_position] == m_lower_external_l4
-                || main_grid[new_position] == m_left_external_l4
-                || main_grid[new_position] == m_right_external_l4
-                || main_grid[new_position] == m_internal_obstacle_l4v1
-                || main_grid[new_position] == m_internal_obstacle_l4v2) { return false; }
+				// Currently there is no level 4
+				// || main_grid[new_position] == m_upper_external_l4
+                // || main_grid[new_position] == m_lower_external_l4
+                // || main_grid[new_position] == m_left_external_l4
+                // || main_grid[new_position] == m_right_external_l4
+                // || main_grid[new_position] == m_internal_obstacle_l4v1
+                // || main_grid[new_position] == m_internal_obstacle_l4v2
+			) { return false; }
 
             if (main_grid[new_position] == m_loot_tile && agent.GetID() == 0) {
-                if (auto *player = dynamic_cast<PlayerAgent *>(&agent)) {
-                    Inventory &inventory = player->GetInventory();
+                if (agent.IsPlayerAgent()) {
+                    Inventory &inventory = agent.GetInventory();
                     std::string item_str = GetRandomItem();
                     Random rng;
                     size_t item_id = rng.GetValue(MIN_ID, MAX_ID).value();
@@ -649,7 +690,9 @@ namespace cse498 {
                         inventory.AddItem(std::move(shovel));
                     }
                 }
-            } else if (main_grid[new_position] == m_exit_door && dynamic_cast<TrashInterface *>(&agent)) {
+            } 
+			
+			if (main_grid[new_position] == m_exit_door && agent.IsPlayerAgent()) {
                 // UserInput();
                 AdvanceLevel();
                 new_position = WorldPosition(1, 1); //default player location upon loading into new world

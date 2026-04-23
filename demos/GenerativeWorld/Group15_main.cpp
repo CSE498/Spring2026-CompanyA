@@ -15,6 +15,7 @@
 #include "../../source/tools/DataFileManager.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 #include "../../source/Worlds/Dungeon/DungeonWorld.hpp"
+#include "../../source/Agents/Classic/PlayerAgent.hpp"
 
 #include <iostream>
 #include <string>
@@ -24,13 +25,6 @@ using namespace cse498;
 //Commented this out for the time being
 int main()
 {
-    //MazeWorld world;
 	DungeonWorld world;
-    //world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3,1});
-    //  world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6,1});
-    //  world.AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7,7});
-    //  world.AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8,8});
-    world.AddAgent<TrashInterface>("Interface").SetSymbol('@').SetLocation(WorldPosition{1,1});
-
     world.Run();
 }

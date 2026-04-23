@@ -18,6 +18,7 @@
 #include "Location.hpp"
 #include "WorldGrid.hpp"
 #include "WorldPosition.hpp"
+#include "../Agents/Classic/PlayerFeatures/Inventory.hpp"
 
 namespace cse498 {
 
@@ -243,6 +244,18 @@ public:
     /// @param msg_type Category of message, such as "item_alert", "damage", or "enemy"
     /// @note: For DEVELOPERS - you may want more info provided with notifications.
     virtual void Notify(const std::string& /*message*/, const std::string& /*msg_type*/ = "none") {}
+
+	virtual bool IsPlayerAgent() const {return false;}
+
+	[[nodiscard]] virtual Inventory& GetInventory() { return sEmptyInventory; }
+    [[nodiscard]] virtual const Inventory& GetInventory() const { return sEmptyInventory; }
+
+	private:
+
+	/// Used to enforce polymorphism - all non players share an empty inventory
+	/// This helps to avoid the use of dynamic casting within the world classes
+	/// NOTE: should check if isPlayerAgent() so that the override getters run instead
+	inline static Inventory sEmptyInventory{};
 };
 
 } // End of namespace cse498
