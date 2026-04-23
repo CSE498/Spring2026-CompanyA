@@ -510,7 +510,7 @@ WorldPath PathGenerator::FindPointAway(const WorldPosition& start, const WorldPo
     // If already at the proper distance then done
     const double startDist = EuclideanDistance(start, center);
     if (startDist + EP >= radius)
-        return WorldPath();
+        return {};
 
     PathVector dir = start - center;
     dir.Normalize(); // Just to scale it to reasonable size so no issues with ~ 0 occur.
@@ -535,14 +535,14 @@ std::vector<WorldPosition> PathGenerator::FindFurtherestPoint(const WorldPositio
     double dy = (std::abs(direction.Y()) < EP) ? 0 : static_cast<int>(direction.Y() / std::abs(direction.Y()));
     constexpr int STEP = 1; // Defined by the two lines above
 
-    if (dx && dy) // likely case so separated and done first
+    if (static_cast<bool>(dx) && static_cast<bool>(dy)) // likely case so separated and done first
     {
         dirs[0] = {dx, 0};
         dirs[1] = {0, dy};
         dirCount = 2;
     } else {
         dirCount = 3;
-        if (dx) {
+        if (static_cast<bool>(dx)) {
             dirs[0] = {dx, 0};
             dirs[1] = {0, STEP}; // this is hard coded 1 since dx,dy calculated to be hard coded 1
             dirs[2] = {0, -STEP};
