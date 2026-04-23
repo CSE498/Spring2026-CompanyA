@@ -147,7 +147,10 @@ namespace cse498 {
         size_t m_monster_tile_skeleton;
         size_t m_monster_tile_goblin;
         size_t m_secret_door;
-        size_t m_exit_door;
+        size_t m_exit_door_l1;
+        size_t m_exit_door_l2;
+        size_t m_exit_door_l3;
+        size_t m_exit_door_l4;
         //size_t m_variant_floor;
 
         cse498::WeightedSet<std::string> m_item_pool; // A pool of possible items to generate
@@ -225,8 +228,12 @@ namespace cse498 {
             m_monster_tile_skeleton = main_grid.AddCellType("wall_skeleton", "monster tile wall. skeleton", 's');
             m_monster_tile_goblin = main_grid.AddCellType("wall_goblin", "monster tile wall. goblin", 'g');
             m_secret_door = main_grid.AddCellType("wall_secret", "secret tile wall.", 'f');
-            m_exit_door = main_grid.AddCellType("exit", "secret tile wall.", 'e');
-            //m_variant_floor = main_grid.AddCellType("wall",  "variant tile wall.", 'v');
+
+
+            m_exit_door_l1 = main_grid.AddCellType("exit_l1", "secret exit l1.", 'e');
+            m_exit_door_l2 = main_grid.AddCellType("exit_l2", "secret exit l2.", 'u');
+            m_exit_door_l3 = main_grid.AddCellType("exit_l3", "secret exit l3.", 'r');
+            //m_exit_door_l4 = main_grid.AddCellType("exit_l4", "secret exit l4.", 'R');
 
             auto sword = m_item_pool.Insert("Sword", 1.0);
             auto sword1 = m_item_pool.Insert("Sword +1", 0.2);
@@ -270,6 +277,10 @@ namespace cse498 {
 			main_grid.Load(m_generation->GetDungeon());
 
 			SpawnDungeonAgents();
+        }
+
+        int GetLevel() {
+            return m_level_num;
         }
 
 		void AdvanceLevel() {
@@ -789,10 +800,13 @@ namespace cse498 {
                 }
             } 
 			
-			if (main_grid[new_position] == m_exit_door && agent.IsPlayerAgent()) {
-                // UserInput();
-                AdvanceLevel();
-                new_position = WorldPosition(1, 1); //default player location upon loading into new world
+            if (main_grid[new_position] == m_exit_door_l1 || main_grid[new_position] == m_exit_door_l2 || 
+                main_grid[new_position] == m_exit_door_l3 || main_grid[new_position] == m_exit_door_l4) {
+                if (agent.IsPlayerAgent()) {
+                    // UserInput();
+                    AdvanceLevel();
+                    new_position = WorldPosition(1, 1); //default player location upon loading into new world
+                }
             }
 
             // Set the agent to its new postion.

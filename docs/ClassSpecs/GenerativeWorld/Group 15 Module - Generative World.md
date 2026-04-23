@@ -54,7 +54,6 @@ Loads room templates from text files and picks which room to use
 *Characters that are consistent across levels:*
 | Char | What it is |
 |------|------------|
-| `e` | Exit door (use the same wall type that is on either side of the door as the wall) |
 | `f` | Secret door (use the same wall type that is on either side of the door as the wall) |
 | `s` | Monster spawn (skeleton) |
 | `g` | Monster spawn (goblin) |
@@ -77,6 +76,7 @@ Loads room templates from text files and picks which room to use
 | `6` | Internal obstacle (version 2)|
 | `7` | Door (left verison) |
 | `8` | Door (right verison) |
+| `e` | Exit door (use the regular floor tile and layer a black circle on top) |
 
 *Level 2 characters:*
 | Char | What it is |
@@ -94,6 +94,7 @@ Loads room templates from text files and picks which room to use
 | `^` | Internal obstacle (version 2)|
 | `&` | Door (left verison) |
 | `*` | Door (right verison) |
+| `u` | Exit door (use the regular floor tile and layer a black circle on top) |
 
 *Level 3 characters:*
 | Char | What it is |
@@ -111,6 +112,7 @@ Loads room templates from text files and picks which room to use
 | `]` | Internal obstacle (version 2)|
 | `.` | Door (left verison) |
 | `;` | Door (right verison) |
+| `r` | Exit door (use the regular floor tile and layer a black circle on top) |
 
 *Level 4 characters:*
 | Char | What it is |
@@ -128,6 +130,7 @@ Loads room templates from text files and picks which room to use
 | `}` | Internal obstacle (version 2)|
 | `~` | Door (left verison) |
 | `:` | Door (right verison) |
+| `R` | Exit door (use the regular floor tile and layer a black circle on top) |
 
 ### WorldGen
 **Location:**
