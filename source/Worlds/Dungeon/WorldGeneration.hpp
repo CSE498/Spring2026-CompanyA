@@ -220,7 +220,9 @@ namespace cse498 {
          */
         void ConnectBSPRooms(LinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
-            auto const wall_set = {'1', '2', '3', '4'};
+            auto const wall_set = {'?', '!', '$', '@',
+                                    '1','2','3','4', 
+                                    '0','-','=','9'};
 
             auto point_x = x2_value - x1_value;
             auto point_y = y2_value - y1_value;
