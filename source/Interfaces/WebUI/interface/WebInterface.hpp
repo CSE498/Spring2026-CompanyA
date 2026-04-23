@@ -7,6 +7,7 @@
 #pragma once
 
 #include "../../../core/WorldBase.hpp"
+#include "../../../Analyze/StatsTracker.hpp"
 #include "../InputManager.hpp"
 #include "../internal/IDomElement.hpp"
 
@@ -78,7 +79,7 @@ public:
     void OnInventorySlotClick(size_t slotIndex);
 
     /// @brief Current WebUI state (exposed for testing).
-    enum class WebState { MAIN_MENU, OVERWORLD, DUNGEON, PAUSED, SETTINGS, INVENTORY, QUIT };
+    enum class WebState { MAIN_MENU, OVERWORLD, DUNGEON, PAUSED, SETTINGS, INVENTORY, STATS, QUIT };
 
     /// @brief Get the current player from the active world.
     /// @return Pointer to the current player, or nullptr if no world is active.
@@ -149,6 +150,18 @@ private:
     /// @brief Inventory menu layout.
     WebLayout* mInventoryMenu = nullptr;
 
+    /// @brief Stats menu layout.
+    WebLayout* mStatsMenu = nullptr;
+
+    /// @brief Tracks analytics data for the stats dashboard.
+    std::shared_ptr<AnalyticsManager> mAnalyticsManager;
+
+    /// @brief Builds GUI-friendly summaries from analytics data.
+    std::unique_ptr<StatsTracker> mStatsTracker;
+
+    /// @brief Current dashboard snapshot for rendering.
+    DashboardSnapshot mDashboardSnapshot;
+
     /// @brief Canvas for rendering the game grid.
     WebCanvas* mCanvas = nullptr;
 
@@ -188,6 +201,8 @@ private:
 
     /// @brief Initialize inventory menu layout and item display.
     void SetupInventoryMenu();
+
+    void SetupStatsMenu();
 
     /// @brief Transition to a new WebUI state.
     /// @param newState Target state.
