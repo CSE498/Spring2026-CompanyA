@@ -20,6 +20,7 @@
 #include "LevelBase.hpp"
 #include "../../Interfaces/TrashInterface.hpp"
 #include "../../Agents/PacingAgent.hpp"
+#include "../../Agents/Classic/Enemy.hpp"
 
 #include "../../core/item/ItemWeaponSword.hpp"
 #include "../../core/item/ItemWeaponBow.hpp"
@@ -47,6 +48,9 @@ namespace cse498 {
 
         //The currently pointed to level that the player agent is on
 		std::vector<size_t> m_spawned_enemy_ids;
+
+        size_t m_player_id;
+        size_t m_enemy_id;
 
 		//Track level change to prevent an extra enemy turn
 		bool mLevelJustAdvanced = false;
@@ -155,6 +159,7 @@ namespace cse498 {
             agent.AddAction("left", MOVE_LEFT);
             agent.AddAction("right", MOVE_RIGHT);
             agent.AddAction(WorldActions::INTERACT_STRING, WorldActions::INTERACT);
+            agent.AddAction(WorldActions::REMAIN_STILL_STRING, WorldActions::REMAIN_STILL);
         }
 
     public:
@@ -245,6 +250,8 @@ namespace cse498 {
 			auto& player = AddAgent<PlayerAgent>("Player");
 			player.SetSymbol('Z').SetLocation(WorldPosition{1,1});
 			mPlayer = &player;
+            m_player_id = player.GetID();
+            m_enemy_id = GetNextAgentId();
 
 			auto& ui = AddAgent<TrashInterface>("Interface");
 			ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
@@ -377,13 +384,35 @@ namespace cse498 {
 			}
 		}
 
-        /// Allow the agents to move around the maze.
+        /*
+        * @breif This function kills an enemy agent, and rewards the player agent for it.
+        * @param enemy - the enemy agent being defeated
+        * @param player - the player agent being defeated
+        * @note - this function was adapted from the combat system in Group 2's demo code
+        */
+        void HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player) {
+            const std::size_t goldReward = enemy.ClaimGoldDrop();
+
+            std::cout << "Enemy defeated.\n";
+            if (goldReward > 0) {
+                player.AddGold(goldReward);
+                std::cout << player.GetName() << " gains " << goldReward << " gold.\n";
+            }
+        }
+
+        /*
+        * @breif Allow the agents to move around the maze.
+        * @param agent - the agent performing an action
+        * @param action_id - the id of the action being done
+        * @return An integer representing the success state 
+        */
         int DoAction(AgentBase &agent, size_t action_id) override {
             // Determine where the agent is trying to move.
             WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
 
             if (action_id == WorldActions::INTERACT) {
-                std::array<WorldPosition, 4> neighbors = {
+                // Legacy method of handling interactions. Kept here in case below code does not work with both agent groups.
+                /*std::array<WorldPosition, 4> neighbors = {
                     cur_position.Up(), cur_position.Down(), cur_position.Left(), cur_position.Right()
                 };
                 for (const auto &adj: neighbors) {
@@ -392,8 +421,74 @@ namespace cse498 {
                         return true;
                     }
                 }
-                return false;
-            }
+                return false;*/
+
+                /////////////////////////////////////////////////////
+                // The following code inside this if statement was adapted from the combat system in Group 2's demo code
+                bool interacted = false;
+                
+                for (size_t i = 0; i < GetNumAgents(); ++i) {
+                    AgentBase& other = GetAgentByIndex(i);
+                    if (&other == &agent) {
+                        continue;
+                    }
+                    if (!other.IsAlive()) {
+                        continue;
+                    }
+                    const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
+                    const double dx = std::abs(cur_position.X() - other_pos.X());
+                    const double dy = std::abs(cur_position.Y() - other_pos.Y());
+
+                    if (dx <= 1.0 && dy <= 1.0) {
+                        interacted = true;
+                        if (other.GetID() == m_player_id && HasAgent(m_enemy_id) && agent.GetID() == GetAgent(m_enemy_id).GetID()) {
+                            auto& player = dynamic_cast<PlayerAgent&>(other);
+                            auto& enemy = dynamic_cast<Enemy&>(agent);
+                            
+                            const double dealt = DamageCalculator::Calculate(GetAgent(m_enemy_id).GetStats(), GetPlayer()->GetStats());
+                            player.TakeDamage(dealt);
+                            std::cout << enemy.GetName() << " hits " << player.GetName() << " for " << static_cast<int>(dealt) << " damage.\n";
+                            if (!player.IsAlive()) {
+                                std::cout << player.GetName() << " has fallen.\n";
+                                mRunOver = true;
+                                return 1;
+                            }
+                            const double retaliate = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(m_enemy_id).GetStats());
+                            enemy.TakeDamage(retaliate);
+                            std::cout << player.GetName() << " strikes back for " << static_cast<int>(retaliate) << " damage.\n";
+                            if (!enemy.IsAlive()) {
+                                HandleEnemyDefeat(enemy, player);
+                                return 1;
+                            }
+                            //
+                            } else if (other.GetID() == m_enemy_id) {
+                                const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(m_enemy_id).GetStats());
+                                other.TakeDamage(dealt);
+                                std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
+                                if (!other.IsAlive()) {
+                                    auto& enemy = dynamic_cast<Enemy&>(other);
+                                    auto& player = dynamic_cast<PlayerAgent&>(agent);
+                                    HandleEnemyDefeat(enemy, player);
+                                    return 1;
+                                }
+                                const double retaliate = DamageCalculator::Calculate(GetAgent(m_enemy_id).GetStats(), GetPlayer()->GetStats());
+                                agent.TakeDamage(retaliate);
+                                std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
+                                if (!agent.IsAlive()) {
+                                    std::cout << agent.GetName() << " has fallen.\n";
+                                    mRunOver = true;
+                                    return 1;
+                                }
+                            }
+                        }
+                    }
+                    if (!interacted) {
+                        std::cout << "No one nearby to interact with.\n";
+                    }
+                    return interacted ? 1 : 0;
+                    /// The above code inside this if statement was adapted from the combat system in Group 2's demo code
+                    /////////////////////////////////////////////////////
+                }
 
             WorldPosition new_position;
             switch (action_id) {
@@ -406,6 +501,8 @@ namespace cse498 {
                 case MOVE_LEFT: new_position = cur_position.Left();
                     break;
                 case MOVE_RIGHT: new_position = cur_position.Right();
+                    break;
+                default:
                     break;
             }
 
