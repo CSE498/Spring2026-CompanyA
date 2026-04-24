@@ -42,12 +42,18 @@ protected:
       symbol_grid[pos.CellY()][pos.CellX()] = '+';
     }
 
-    // Substitute in agents.
-    for (const auto &agent_id : agent_ids) {
-      const AgentBase &agent = world.GetAgent(agent_id);
-      WorldPosition pos = agent.GetLocation().AsWorldPosition();
-      symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
-    }
+        // Substitute in agents.
+        for (const auto& agent_id: agent_ids) {
+            const AgentBase& agent = world.GetAgent(agent_id);
+			
+			// Interface used to draw its own symbol
+			// Now interface sends input to the player character instead
+			// So we skip drawing the interface agent so that it doesnt draw over the player agent
+			if (agent.IsInterface()) continue; 
+
+            WorldPosition pos = agent.GetLocation().AsWorldPosition();
+            symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
+        }
 
     // Print out the symbol_grid with a box around it.
     std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";

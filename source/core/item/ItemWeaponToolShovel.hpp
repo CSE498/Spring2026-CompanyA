@@ -7,10 +7,10 @@
 #pragma once
 
 #include <string>
-#include "../WorldBase.hpp"
 #include "Item.hpp"
 #include "ItemWeapon.hpp"
 #include "ItemWeaponTool.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemWeaponToolShovel : public ItemWeaponTool {

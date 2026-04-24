@@ -50,10 +50,18 @@ namespace cse498 {
 
         // keeps an internal state of 4 64 unsigned 64-bit ints
         // changes each time a number is generated
+        /**
+         * @struct Xoshiro256ppState
+         * @brief Internal state for the Xoshiro256++ generator.
+         */
         struct Xoshiro256ppState {
             std::array<uint64_t, STATE_NUMBER> state;
         };
 
+        /**
+         * @struct Splitmix64State
+         * @brief Internal state for the Splitmix64 generator used for seeding.
+         */
         struct Splitmix64State {
             uint64_t state;
         };

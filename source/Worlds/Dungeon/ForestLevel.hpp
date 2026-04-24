@@ -14,71 +14,72 @@
 
 namespace cse498 {
 
-/**
- * @class ForestLevel
- * @brief
- *
- * @details
- *
- */
-class ForestLevel : public LevelBase {
-private:
-    /**
-     * @brief Static room ID and weight pairs.
-     *
-     * @details
-     * Each pair consists of a room number and its associated weight.
-     * The weight determines the probability of selecting that room
-     * during generation.
-     * Higher weights (10) make a room more likely to be selected.
-     * Lower weights (1) make it less likely.
-     */
-    inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{{
-            {1, 10},
-            {2, 10},
-            {3, 10},
-            {4, 10},
-            {5, 10},
-            {6, 1},
-    }};
+	/**
+	 * @class ForestLevel
+	 * @brief Forest-themed dungeon level providing room pool and directory.
+	 *
+	 * @details Implements LevelBase to provide forest-specific room configurations.
+	 * Rooms are weighted to control spawn probability, with standard rooms
+	 * having higher weights than special rooms.
+	 */
+	class ForestLevel : public LevelBase{
+		private:
 
-    /**
-     * @brief Room file paths for forest level.
-     *
-     * @details
-     * This string is used to load forest rooms
-     */
+		 /**
+		 * @brief Static room ID and weight pairs.
+		 *
+		 * @details
+		 * Each pair consists of a room number and its associated weight.
+		 * The weight determines the probability of selecting that room
+		 * during generation.
+		 * Higher weights (10) make a room more likely to be selected. 
+		 * Lower weights (1) make it less likely.
+		 */
+		inline static constexpr std::array<std::pair<std::size_t, double>, 6> ROOM_DATA{{
+			{1, 10},
+			{2, 10},
+			{3, 10},
+			{4, 10},
+			{5, 10},
+			{6, 1},
+		}};
+
+		/**
+		 * @brief Room file paths for forest level.
+		 *
+		 * @details
+		 * This string is used to load forest rooms
+		 */
 #ifndef __EMSCRIPTEN__
-    inline static const std::string m_room_dir =
-            static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_one_pool/room_";
+        inline static const std::string m_room_dir =
+                static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_one_pool/room_";
 #else
-    inline static const std::string m_room_dir = "/rooms/Dungeon_one_pool/room_";
+        inline static const std::string m_room_dir = "/rooms/Dungeon_one_pool/room_";
 #endif
+        /**
+		 * @brief Constructs the weighted room pool.
+		 *
+		 * @details
+		 * Iterates through ROOM_DATA and inserts each room into a
+		 * WeightedSet using its corresponding file path and weight.
+		 *
+		 * @return A WeightedSet containing room file paths and weights.
+		 *
+		 * @note Each insertion is expected to succeed. Assertions are used
+		 * to enforce this during development.
+		 */
+		static cse498::WeightedSet<int> MakeRoomPool() {
+			cse498::WeightedSet<int> rooms;
+			
+			for (const auto& [num, weight] : ROOM_DATA) {
+				auto result = rooms.Insert(num, weight);
+				assert(result.has_value());
+			}
 
-    /**
-     * @brief Constructs the weighted room pool.
-     *
-     * @details
-     * Iterates through ROOM_DATA and inserts each room into a
-     * WeightedSet using its corresponding file path and weight.
-     *
-     * @return A WeightedSet containing room file paths and weights.
-     *
-     * @note Each insertion is expected to succeed. Assertions are used
-     * to enforce this during development.
-     */
-    static cse498::WeightedSet<int> MakeRoomPool() {
-        cse498::WeightedSet<int> rooms;
+			return rooms;
+		}
 
-        for (const auto& [num, weight]: ROOM_DATA) {
-            auto result = rooms.Insert(num, weight);
-            assert(result.has_value());
-        }
-
-        return rooms;
-    }
-
-    cse498::WeightedSet<int> m_room_pool;
+		cse498::WeightedSet<int> m_room_pool;
 
 public:
     /**

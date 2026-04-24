@@ -23,6 +23,14 @@ namespace cse498 {
     const int LEVEL_THREE = 3;
     const std::string EXIT_FILE_STRING = "exit.txt";
 
+
+    /**
+     * @class RoomHolder
+     * @brief Manages room templates and loading for dungeon generation.
+     *
+     * @details Handles loading room layouts from files, selecting rooms based on
+     * weighted probability, and providing room data for the BSP tree to use.
+     */
     class BSPTree;
 
     class RoomHolder {
@@ -37,14 +45,14 @@ namespace cse498 {
 
 
         cse498::Random m_rng; //Random
-		cse498::WeightedSet<int> m_room_pool;
+        cse498::WeightedSet<int> m_room_pool;
 
     public:
-		RoomHolder(const LevelBase& level) 
-			: m_room_dir(level.GetRoomDir()),
-			  m_rng(),
-			  m_room_pool(level.GetRoomPool())
-		{}
+        RoomHolder(const LevelBase &level)
+            : m_room_dir(level.GetRoomDir()),
+              m_rng(),
+              m_room_pool(level.GetRoomPool()) {
+        }
 
         /// @brief Grabs the currently selected room from the WeightedSets room_pool
         /// @return returns currently selected room from the m_room_pool
@@ -88,13 +96,13 @@ namespace cse498 {
 
         /// @brief Generates a room from the pool
         /// @return Generated room number
-        [[nodiscard]] std::string GenerateFilePath() { 
-			auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight()).value();
-			
-			auto sample_result = m_room_pool.Sample(room_select);
-			assert(sample_result.has_value());
+        [[nodiscard]] std::string GenerateFilePath() {
+            auto room_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight()).value();
 
-			std::string room = std::to_string(sample_result.value());
+            auto sample_result = m_room_pool.Sample(room_select);
+            assert(sample_result.has_value());
+
+            std::string room = std::to_string(sample_result.value());
             assert(room != "");
 
             return room;
@@ -193,7 +201,7 @@ namespace cse498 {
         std::vector<std::string> LoadRoom(bool state = false) {
             std::string selected_room = GenerateFilePath();
 
-			//std::cout << m_room_dir + selected_room + ".txt" << std::endl;
+            //std::cout << m_room_dir + selected_room + ".txt" << std::endl;
 
             std::ifstream file(m_room_dir + selected_room + ".txt"); // this will open one of the rooms
             if (!file.is_open()) {
@@ -204,12 +212,12 @@ namespace cse498 {
             std::vector<std::string> lines;
             std::string line;
 
-            if(state) { 
+            if (state) {
                 std::string exit_room = m_room_dir + EXIT_FILE_STRING;
                 file.close();
                 file.open(exit_room);
-            }            
-            
+            }
+
             assert(file.is_open());
 
             while (std::getline(file, line)) {

@@ -11,7 +11,6 @@
 
 #include "Entity.hpp"
 #include "Location.hpp"
-// #include "WorldBase.hpp"
 
 namespace cse498 {
     class ItemBase : public Entity {

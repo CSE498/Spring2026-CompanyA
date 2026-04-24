@@ -1,14 +1,14 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-<    $       $       $   >
-<    $       $   m   $   >
-<    $   t   $       $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<        $       $       >
-<   m    $   l   $       >
-<        $       $       >
-&&&&&&&&&&&&&&&&&&&&&&&&&&
+!!!!!!!!!!!!!!!!!!!!!!!!!!
+?AAAA^AAAAAAA^AAAAAAA%AAs$
+?AAAA%AAAAAAA%AAAgAAA%AAA$
+?AAAA%AAAtAAA%AAAAAAA%AAA$
+?AAAA^AAA%AAA%AAA^AAA%ACA$
+?AAAA%AAA%AAA%AAA%AAA%AAA$
+?AABA%AAA%AAA%AAA%AAA%AAA$
+?AAAA^AAA%AAA%AAA%AAA%AAA$
+?AAAA%AAA^AAA%AAA%AAA^AAA$
+?AAAA^AAA^AAA^AAA%AAA^AAA$
+?AAACAAAA^AAAAAAA%AAAAAAA$
+?AACgCAAA%AAAlAAA^AAAAAAA$
+?AAECDAAA%AAAAAAA%AAABAAA$
+@@@@@@@@@@@@@@@@@@@@@@@@@@

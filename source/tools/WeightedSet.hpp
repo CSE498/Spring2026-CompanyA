@@ -1,6 +1,6 @@
 /**
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
- * @brief 
+ * @brief A weighted set data structure for efficient weighted random sampling
  * @note Status: PROPOSAL
  * Credit notes: This files makes use parts of the Array implementation of a Binary Tree described at:
  * https://www.geeksforgeeks.org/dsa/binary-tree-array-implementation/

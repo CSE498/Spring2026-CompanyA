@@ -1,11 +1,11 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-<         $$$$$$$$       >
-<                        >
-d $$$$$$$$    m          >
-<                        >
-s                   $    >
-<   $$$$$$$$        $l   >
-<                   $    >
-<  m     $$$$       $    >
-<                        >
-&&&&&&&&&&&&&&&&&&&&&&&&&&
+!!!!!!!!!!!!!!!!!!!!!!!!!!
+?AAAAABBAA%%%%%%%%AAAAAAA$
+?AAAAAACAAAAAAAAAAAAAAAAA$
+?A%%%%%%%%AAAAgAAAAAAAAAA$
+?AAAAAAAAAgAAAAAAAAAAAAAA$
+UAAAAAAAAAAAAAAAAAAA^AAAA$
+?AAA%%%%%%%%AAAAAAAA^lAAA$
+?AAAAAAAAAAAAAAAABAA^AAAA$
+?AAgAAAAA%%%%AAAAABA^AAAA$
+?AAgAAAAAAAAAAAAsAABAgAAA$
+@@@@@@@@@@@@@@@@@@@@@@@@@@

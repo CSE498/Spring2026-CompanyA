@@ -7,8 +7,8 @@
 #pragma once
 
 #include <string>
-#include "../WorldBase.hpp"
 #include "Item.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemWeapon : public Item {
