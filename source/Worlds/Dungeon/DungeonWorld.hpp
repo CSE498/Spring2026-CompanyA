@@ -459,53 +459,33 @@ namespace cse498 {
 
                     if (dx <= 1.0 && dy <= 1.0) {
                         interacted = true;
-                        if (other.GetID() == m_player_id && HasAgent(m_enemy_id) && agent.GetID() == GetAgent(m_enemy_id).GetID()) {
-                            auto& player = dynamic_cast<PlayerAgent&>(other);
-                            auto& enemy = dynamic_cast<Enemy&>(agent);
-                            
-                            const double dealt = DamageCalculator::Calculate(GetAgent(m_enemy_id).GetStats(), GetPlayer()->GetStats());
-                            player.TakeDamage(dealt);
-                            std::cout << enemy.GetName() << " hits " << player.GetName() << " for " << static_cast<int>(dealt) << " damage.\n";
-                            if (!player.IsAlive()) {
-                                std::cout << player.GetName() << " has fallen.\n";
-                                mRunOver = true;
-                                return 1;
-                            }
-                            const double retaliate = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(m_enemy_id).GetStats());
-                            enemy.TakeDamage(retaliate);
-                            std::cout << player.GetName() << " strikes back for " << static_cast<int>(retaliate) << " damage.\n";
-                            if (!enemy.IsAlive()) {
+                        if (other.GetID() == m_enemy_id) {
+                            const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(m_enemy_id).GetStats());
+                            other.TakeDamage(dealt);
+                            std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
+                            if (!other.IsAlive()) {
+                                auto& enemy = dynamic_cast<Enemy&>(other);
+                                auto& player = dynamic_cast<PlayerAgent&>(agent);
                                 HandleEnemyDefeat(enemy, player);
                                 return 1;
                             }
-                            //
-                            } else if (other.GetID() == m_enemy_id) {
-                                const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(m_enemy_id).GetStats());
-                                other.TakeDamage(dealt);
-                                std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
-                                if (!other.IsAlive()) {
-                                    auto& enemy = dynamic_cast<Enemy&>(other);
-                                    auto& player = dynamic_cast<PlayerAgent&>(agent);
-                                    HandleEnemyDefeat(enemy, player);
-                                    return 1;
-                                }
-                                const double retaliate = DamageCalculator::Calculate(GetAgent(m_enemy_id).GetStats(), GetPlayer()->GetStats());
-                                agent.TakeDamage(retaliate);
-                                std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
-                                if (!agent.IsAlive()) {
-                                    std::cout << agent.GetName() << " has fallen.\n";
-                                    mRunOver = true;
-                                    return 1;
-                                }
+                            const double retaliate = DamageCalculator::Calculate(GetAgent(m_enemy_id).GetStats(), GetPlayer()->GetStats());
+                            agent.TakeDamage(retaliate);
+                            std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
+                            if (!agent.IsAlive()) {
+                                std::cout << agent.GetName() << " has fallen.\n";
+                                mRunOver = true;
+                                return 1;
                             }
                         }
                     }
-                    if (!interacted) {
-                        std::cout << "No one nearby to interact with.\n";
-                    }
-                    return interacted ? 1 : 0;
-                    /// The above code inside this if statement was adapted from the combat system in Group 2's demo code
-                    /////////////////////////////////////////////////////
+                }
+                if (!interacted) {
+                    std::cout << "No one nearby to interact with.\n";
+                }
+                return interacted ? 1 : 0;
+                /// The above code inside this if statement was adapted from the combat system in Group 2's demo code
+                /////////////////////////////////////////////////////
                 }
 
             WorldPosition new_position;
