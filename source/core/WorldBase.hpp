@@ -320,6 +320,27 @@ public:
         return false;
     }
 
+    /**
+     * @brief Collects all actions from every agent's ActionLog and forwards them
+     *        into the AnalyticsManager's consolidated ActionLog.
+     * @note  Call this manually (e.g., from the GUI) whenever you want the
+     *        AnalyticsManager to reflect the latest agent activity.
+     */
+    void SyncAgentLogsToAnalytics() {
+        if (!mAnalyticsManager) return;
+
+        for (const auto& agent_ptr : agent_set) {
+            if (!agent_ptr) continue;
+            for (const Action& action : agent_ptr->GetActionLog().GetActions()) {
+                mAnalyticsManager->LogAction(
+                    action.EntityId,
+                    action.ActionType,
+                    action.Position,
+                    action.NewPosition
+                );
+            }
+        }
+    }
 
     //////////////////////////////////////////////////////////////////////////
     //
