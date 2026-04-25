@@ -23,16 +23,10 @@ struct RunStats {
 
 class AnalyticsManager {
 private:
-    // Initial DataLogs for keeping track of data(Initial placeholders Logs for
-    // now, can be changed based on what we want to track)
     DataLog mEnemiesKilledLog;
     DataLog mDamageDealtLog;
 
-
-    /**
-     * Stores the players actions over time
-     */
-    ActionLog mActionLog;
+    ActionLog mActionLog; // Stores the players actions over time
 
     RunStats mCurrentRunStats; // Struct to hold stats for the current run
 
@@ -47,8 +41,16 @@ public:
      */
     void ResetCurrentRunStats() { mCurrentRunStats = {}; }
 
+    /**
+     * Logs the damage per run
+     * @param amount damage
+     */
     void LogRunDamage(double amount);
 
+    /**
+     * Logs the number of enemies killed per run
+     * @param count enemies
+     */
     void LogRunEnemiesKilled(int count);
 
     /**
@@ -75,10 +77,11 @@ public:
      * Resets all logs stored in the AnalyticsManager
      */
     void Reset();
-
-    /*
-    Adds a new enemy count value to the enemies killed log
-    */
+    
+    /**
+     * Adds a new enemy count value to the enemies killed log
+     * @param count_enemies The number of enemies killed
+     */
     void LogEnemiesKilled(double count_enemies);
 
     /**

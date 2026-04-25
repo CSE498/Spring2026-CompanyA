@@ -33,7 +33,14 @@ struct Action {
  */
 class ActionLog {
 public:
+    /**
+     * @brief Constructor for the ActionLog
+     */
     ActionLog();
+
+    /**
+     * @brief Destructor for the ActionLog
+     */
     virtual ~ActionLog() = default;
 
     /**
@@ -53,27 +60,39 @@ public:
      */
     void UpdateTime(double newTime);
 
-    /// Returns all recorded actions in order.
+    /**
+     * @return Returns all recorded actions in order.
+     */
     const std::vector<Action>& GetActions() const;
 
-    /// Returns actions whose timestamps fall within [startTime, endTime].
+    /**
+     * @return Returns actions whose timestamps fall within [startTime, endTime].
+     */
     std::vector<Action> GetActionRange(double startTime, double endTime) const;
 
-    /// Returns all actions performed by the given entity.
+    /**
+     * @return Returns all actions performed by the given entity.
+     */
     std::vector<Action> GetEntityActions(int entityId) const;
 
-    /// Returns the total number of recorded actions.
+    /**
+     * @return Returns the total number of recorded actions.
+     */
     int GetActionCount() const;
-
-    /// Returns the ID of the entity with the most logged actions, or nullopt if
-    /// empty.
+    /**
+     * @return Returns the ID of the entity with the most logged actions, or nullopt if empty.
+     */
     std::optional<int> GetMostActiveEntity() const;
 
-    /// Returns the number of actions whose timestamps fall within [startTime,
-    /// endTime].
+    /**
+     * Finds the number of actions whose timestamps fall within [startTime,endTime].
+     * @return Returns the number of actions whose timestamps fall within [startTime,endTime].
+     */
     int GetActionCountInRange(double startTime, double endTime) const;
 
-    /// Clears all actions and resets sequence counter (CurrentTime is preserved).
+    /**
+     * Clears all actions and resets sequence counter (CurrentTime is preserved).
+     */
     void Clear();
 
     /// add comments for params later gotta fix nahum issues first
