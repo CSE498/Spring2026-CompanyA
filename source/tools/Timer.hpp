@@ -81,7 +81,20 @@ public:
      * @return Returns the vector containing the lap times for the Timer.
      */
     std::vector<double> getLaps();
+
+    /**
+     * Mock an advance of time by the given interval (in seconds).
+     * This method should only be used for testing purposes, and has no use outside
+     * of making sure elapsed() works properly.
+     * @param seconds The amount of time to advance by.
+     */
     void advanceTime(double seconds);
+
+    /**
+     * @param withLaps Should the string include lap information or not
+     * @return Returns a string containing the state of the timer in xx:xx.xxx format
+     * (minutes, seconds, milliseconds)
+     */
     std::string toString(bool withLaps) const;
 
 private:
