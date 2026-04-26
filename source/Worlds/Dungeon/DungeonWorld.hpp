@@ -31,6 +31,27 @@
 #include "../../core/item/ItemWeaponToolPickaxe.hpp"
 #include "../../core/item/ItemWeaponToolShovel.hpp"
 namespace cse498 {
+
+    struct DungeonActions // just so they aren't globals
+    {
+        // Note 0 should ALWAYS Be stay based on AgentBase GetActionID implementation
+        static constexpr std::size_t REMAIN_STILL = 0; // "stay"
+        static constexpr std::size_t MOVE_UP = 1; // "w"
+        static constexpr std::size_t MOVE_DOWN = 2; // "s"
+        static constexpr std::size_t MOVE_LEFT = 3; // "a"
+        static constexpr std::size_t MOVE_RIGHT = 4; // "d"
+        static constexpr std::size_t INTERACT = 5; // "e"
+        static constexpr std::size_t QUIT = 6; // "q"
+
+        static constexpr std::string REMAIN_STILL_STRING = "stay";
+        static constexpr std::string MOVE_UP_STRING = "w";
+        static constexpr std::string MOVE_DOWN_STRING = "s";
+        static constexpr std::string MOVE_LEFT_STRING = "a";
+        static constexpr std::string MOVE_RIGHT_STRING = "d";
+        static constexpr std::string INTERACT_STRING = "e";
+        static constexpr std::string QUIT_STRING = "q";
+    };
+    
     class DungeonWorld : public WorldBase {
         static constexpr double BASE_RANGE = 1.0;
         static constexpr double BASE_DAMAGE = 1.0;
@@ -40,14 +61,14 @@ namespace cse498 {
         static constexpr size_t MAX_ID = 1000000000;
 
     private:
-        int m_level_num = 1; //Current int value level that the game is on
-        std::unique_ptr<LevelBase> m_level = std::make_unique<ForestLevel>();
+        int mLevelNum = 1; //Current int value level that the game is on
+        std::unique_ptr<LevelBase> mLevel = std::make_unique<ForestLevel>();
 
         //The currently pointed to level that the player agent is on
-		std::vector<size_t> m_spawned_enemy_ids;
+		std::vector<size_t> mSpawnedEnemyIds;
 
-        size_t m_player_id;
-        size_t m_enemy_id;
+        size_t mPlayerId;
+        size_t mEnemyId;
 
 		//Track level change to prevent an extra enemy turn
 		bool mLevelJustAdvanced = false;
@@ -56,213 +77,209 @@ namespace cse498 {
          * @return WeightedSet of room file paths and weights.
          */
         void LoadLevelData() {
-            std::cout << "Currently on level: " << m_level_num << std::endl;
-            switch (m_level_num) {
+            std::cout << "Currently on level: " << mLevelNum << std::endl;
+            switch (mLevelNum) {
                 case 1:
-                    m_level = std::make_unique<ForestLevel>();
+                    mLevel = std::make_unique<ForestLevel>();
                     break;
 
                 case 2:
-                    m_level = std::make_unique<CaveLevel>();
+                    mLevel = std::make_unique<CaveLevel>();
                     break;
 
                 case 3:
-                    m_level = std::make_unique<CastleLevel>();
+                    mLevel = std::make_unique<CastleLevel>();
                     break;
 
                 default:
-                    m_level = std::make_unique<ForestLevel>();
+                    mLevel = std::make_unique<ForestLevel>();
                     break;
             }
         }
 
     protected:
-        enum ActionType { REMAIN_STILL = 0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
+        std::unique_ptr<WorldGeneration> mGeneration;
 
-        std::unique_ptr<WorldGeneration> m_generation;
-
-        size_t m_floor_id_l1v1; ///< Level 1 floor CellType IDs
-        size_t m_floor_id_l1v2;
-        size_t m_floor_id_l1v3;
-        size_t m_floor_id_l1v4;
-        size_t m_floor_id_l1v5;
-        size_t m_floor_id_l2v1; ///< Level 2 floor CellType IDs
-        size_t m_floor_id_l2v2;
-        size_t m_floor_id_l2v3;
-        size_t m_floor_id_l2v4;
-        size_t m_floor_id_l2v5;
-        size_t m_floor_id_l3v1; ///< Level 3 floor CellType IDs
-        size_t m_floor_id_l3v2;
-        size_t m_floor_id_l3v3;
-        size_t m_floor_id_l3v4;
-        size_t m_floor_id_l3v5;
+        size_t mFloorIdL1V1; ///< Level 1 floor CellType IDs
+        size_t mFloorIdL1V2;
+        size_t mFloorIdL1V3;
+        size_t mFloorIdL1V4;
+        size_t mFloorIdL1V5;
+        size_t mFloorIdL2V1; ///< Level 2 floor CellType IDs
+        size_t mFloorIdL2V2;
+        size_t mFloorIdL2V3;
+        size_t mFloorIdL2V4;
+        size_t mFloorIdL2V5;
+        size_t mFloorIdL3V1; ///< Level 3 floor CellType IDs
+        size_t mFloorIdL3V2;
+        size_t mFloorIdL3V3;
+        size_t mFloorIdL3V4;
+        size_t mFloorIdL3V5;
 		/// Level 4 floor CellType IDs-> not used currently
-		// size_t m_floor_id_l4v1; 
-        // size_t m_floor_id_l4v2;
-        // size_t m_floor_id_l4v3;
-        // size_t m_floor_id_l4v4;
-        // size_t m_floor_id_l4v5;
+		// size_t mFloorIdL4V1; 
+        // size_t mFloorIdL4V2;
+        // size_t mFloorIdL4V3;
+        // size_t mFloorIdL4V4;
+        // size_t mFloorIdL4V5;
 
-        size_t m_wall_id; ///< Easy access to wall CellType ID.
+        size_t mWallId; ///< Easy access to wall CellType ID.
 
-        size_t m_upper_external_l1; ///< Level 1 wall CellType IDs
-        size_t m_lower_external_l1;
-        size_t m_left_external_l1;
-        size_t m_right_external_l1;
-        size_t m_internal_obstacle_l1v1;
-        size_t m_internal_obstacle_l1v2;
-        size_t m_door_tile_left_l1;
-        size_t m_door_tile_right_l1;
-        size_t m_upper_external_l2; ///< Level 2 wall CellType IDs
-        size_t m_lower_external_l2;
-        size_t m_left_external_l2;
-        size_t m_right_external_l2;
-        size_t m_internal_obstacle_l2v1;
-        size_t m_internal_obstacle_l2v2;
-        size_t m_door_tile_left_l2;
-        size_t m_door_tile_right_l2;
-        size_t m_upper_external_l3; ///< Level 3 wall CellType IDs
-        size_t m_lower_external_l3;
-        size_t m_left_external_l3;
-        size_t m_right_external_l3;
-        size_t m_internal_obstacle_l3v1;
-        size_t m_internal_obstacle_l3v2;
-        size_t m_door_tile_left_l3;
-        size_t m_door_tile_right_l3;
+        size_t mUpperExternalL1; ///< Level 1 wall CellType IDs
+        size_t mLowerExternalL1;
+        size_t mLeftExternalL1;
+        size_t mRightExternalL1;
+        size_t mInternalObstacleL1V1;
+        size_t mInternalObstacleL1V2;
+        size_t mDoorTileLeftL1;
+        size_t mDoorTileRightL1;
+        size_t mUpperExternalL2; ///< Level 2 wall CellType IDs
+        size_t mLowerExternalL2;
+        size_t mLeftExternalL2;
+        size_t mRightExternalL2;
+        size_t mInternalObstacleL2V1;
+        size_t mInternalObstacleL2V2;
+        size_t mDoorTileLeftL2;
+        size_t mDoorTileRightL2;
+        size_t mUpperExternalL3; ///< Level 3 wall CellType IDs
+        size_t mLowerExternalL3;
+        size_t mLeftExternalL3;
+        size_t mRightExternalL3;
+        size_t mInternalObstacleL3V1;
+        size_t mInternalObstacleL3V2;
+        size_t mDoorTileLeftL3;
+        size_t mDoorTileRightL3;
 		/// Level 4 wall CellType IDs -> not used currently
-        //size_t m_upper_external_l4;
-        // size_t m_lower_external_l4;
-        // size_t m_left_external_l4;
-        // size_t m_right_external_l4;
-        // size_t m_internal_obstacle_l4v1;
-        // size_t m_internal_obstacle_l4v2;
-        // size_t m_door_tile_left_l4;
-        // size_t m_door_tile_right_l4;
+        //size_t mUpperExternalL4;
+        // size_t mLowerExternalL4;
+        // size_t mLeftExternalL4;
+        // size_t mRightExternalL4;
+        // size_t mInternalObstacleL4V1;
+        // size_t mInternalObstacleL4V2;
+        // size_t mDoorTileLeftL4;
+        // size_t mDoorTileRightL4;
 
-        size_t m_trap_tile;
-        size_t m_loot_tile;
-        size_t m_monster_tile_skeleton;
-        size_t m_monster_tile_goblin;
-        size_t m_secret_door_top;
-        size_t m_secret_door_bottom;
-        size_t m_secret_door_left;
-        size_t m_secret_door_right;
-        size_t m_exit_door_l1;
-        size_t m_exit_door_l2;
-        size_t m_exit_door_l3;
-        size_t m_exit_door_l4;
-        //size_t m_variant_floor;
+        size_t mTrapTile;
+        size_t mLootTile;
+        size_t mMosterTileSkeleton;
+        size_t mMonsterTileGoblin;
+        size_t mSecretDoorTop;
+        size_t mSecretDoorBottom;
+        size_t mSecretDoorLeft;
+        size_t mSecretDoorRight;
+        size_t mExitDoorL1;
+        size_t mExitDoorL2;
+        size_t mExitDoorL3;
+        size_t mExitDoorL4;
 
-        cse498::WeightedSet<std::string> m_item_pool; // A pool of possible items to generate
+        cse498::WeightedSet<std::string> mItemPool; // A pool of possible items to generate
 
         /// Provide the agent with movement actions.
         void ConfigAgent(AgentBase &agent) override {
-            agent.AddAction("up", MOVE_UP);
-            agent.AddAction("down", MOVE_DOWN);
-            agent.AddAction("left", MOVE_LEFT);
-            agent.AddAction("right", MOVE_RIGHT);
-            agent.AddAction(WorldActions::INTERACT_STRING, WorldActions::INTERACT);
-            agent.AddAction(WorldActions::REMAIN_STILL_STRING, WorldActions::REMAIN_STILL);
+            agent.AddAction("up", DungeonActions::MOVE_UP);
+            agent.AddAction("down", DungeonActions::MOVE_DOWN);
+            agent.AddAction("left", DungeonActions::MOVE_LEFT);
+            agent.AddAction("right", DungeonActions::MOVE_RIGHT);
+            agent.AddAction(DungeonActions::INTERACT_STRING, DungeonActions::INTERACT);
+            agent.AddAction(DungeonActions::REMAIN_STILL_STRING, DungeonActions::REMAIN_STILL);
         }
 
     public:
         DungeonWorld() {
-            m_floor_id_l1v1 = main_grid.AddCellType("floor_l1v1", "Floor that agents can walk on. l1 v1", 'a');
-            m_floor_id_l1v2 = main_grid.AddCellType("floor_l1v2", "Floor that agents can walk on. l1 v2", 'b');
-            m_floor_id_l1v3 = main_grid.AddCellType("floor_l1v3", "Floor that agents can walk on. l1 v3", 'c');
-            m_floor_id_l1v4 = main_grid.AddCellType("floor_l1v4", "Floor that agents can walk on. l1 v4", 'd');
-            m_floor_id_l1v5 = main_grid.AddCellType("floor_l1v5", "Floor that agents can walk on. l1 v5", '<');
-            m_floor_id_l2v1 = main_grid.AddCellType("floor_l2v1", "Floor that agents can walk on. l2 v1", 'A');
-            m_floor_id_l2v2 = main_grid.AddCellType("floor_l2v2", "Floor that agents can walk on. l2 v2", 'B');
-            m_floor_id_l2v3 = main_grid.AddCellType("floor_l2v3", "Floor that agents can walk on. l2 v3", 'C');
-            m_floor_id_l2v4 = main_grid.AddCellType("floor_l2v4", "Floor that agents can walk on. l2 v4", 'D');
-            m_floor_id_l2v5 = main_grid.AddCellType("floor_l2v5", "Floor that agents can walk on. l2 v5", 'E');
-            m_floor_id_l3v1 = main_grid.AddCellType("floor_l3v1", "Floor that agents can walk on. l3 v1", 'm');
-            m_floor_id_l3v2 = main_grid.AddCellType("floor_l3v2", "Floor that agents can walk on. l3 v2", 'n');
-            m_floor_id_l3v3 = main_grid.AddCellType("floor_l3v3", "Floor that agents can walk on. l3 v3", 'o');
-            m_floor_id_l3v4 = main_grid.AddCellType("floor_l3v4", "Floor that agents can walk on. l3 v4", 'p');
-            m_floor_id_l3v5 = main_grid.AddCellType("floor_l3v5", "Floor that agents can walk on. l3 v5", 'q');
-            // m_floor_id_l4v1 = main_grid.AddCellType("floor_l4v1", "Floor that agents can walk on. l4 v1", 'M');
-            // m_floor_id_l4v2 = main_grid.AddCellType("floor_l4v2", "Floor that agents can walk on. l4 v2", 'N');
-            // m_floor_id_l4v3 = main_grid.AddCellType("floor_l4v3", "Floor that agents can walk on. l4 v3", 'O');
-            // m_floor_id_l4v4 = main_grid.AddCellType("floor_l4v4", "Floor that agents can walk on. l4 v4", 'P');
-            // m_floor_id_l4v5 = main_grid.AddCellType("floor_l4v5", "Floor that agents can walk on. l4 v5", 'Q');
+            mFloorIdL1V1 = main_grid.AddCellType("floor_l1v1", "Floor that agents can walk on. l1 v1", 'a');
+            mFloorIdL1V2 = main_grid.AddCellType("floor_l1v2", "Floor that agents can walk on. l1 v2", 'b');
+            mFloorIdL1V3 = main_grid.AddCellType("floor_l1v3", "Floor that agents can walk on. l1 v3", 'c');
+            mFloorIdL1V4 = main_grid.AddCellType("floor_l1v4", "Floor that agents can walk on. l1 v4", 'd');
+            mFloorIdL1V5 = main_grid.AddCellType("floor_l1v5", "Floor that agents can walk on. l1 v5", '<');
+            mFloorIdL2V1 = main_grid.AddCellType("floor_l2v1", "Floor that agents can walk on. l2 v1", 'A');
+            mFloorIdL2V2 = main_grid.AddCellType("floor_l2v2", "Floor that agents can walk on. l2 v2", 'B');
+            mFloorIdL2V3 = main_grid.AddCellType("floor_l2v3", "Floor that agents can walk on. l2 v3", 'C');
+            mFloorIdL2V4 = main_grid.AddCellType("floor_l2v4", "Floor that agents can walk on. l2 v4", 'D');
+            mFloorIdL2V5 = main_grid.AddCellType("floor_l2v5", "Floor that agents can walk on. l2 v5", 'E');
+            mFloorIdL3V1 = main_grid.AddCellType("floor_l3v1", "Floor that agents can walk on. l3 v1", 'm');
+            mFloorIdL3V2 = main_grid.AddCellType("floor_l3v2", "Floor that agents can walk on. l3 v2", 'n');
+            mFloorIdL3V3 = main_grid.AddCellType("floor_l3v3", "Floor that agents can walk on. l3 v3", 'o');
+            mFloorIdL3V4 = main_grid.AddCellType("floor_l3v4", "Floor that agents can walk on. l3 v4", 'p');
+            mFloorIdL3V5 = main_grid.AddCellType("floor_l3v5", "Floor that agents can walk on. l3 v5", 'q');
+            // mFloorIdL4V1 = main_grid.AddCellType("floor_l4v1", "Floor that agents can walk on. l4 v1", 'M');
+            // mFloorIdL4V2 = main_grid.AddCellType("floor_l4v2", "Floor that agents can walk on. l4 v2", 'N');
+            // mFloorIdL4V3 = main_grid.AddCellType("floor_l4v3", "Floor that agents can walk on. l4 v3", 'O');
+            // mFloorIdL4V4 = main_grid.AddCellType("floor_l4v4", "Floor that agents can walk on. l4 v4", 'P');
+            // mFloorIdL4V5 = main_grid.AddCellType("floor_l4v5", "Floor that agents can walk on. l4 v5", 'Q');
 
-            m_wall_id = main_grid.AddCellType("wall", "Impenetrable wall.", '#');
+            mWallId = main_grid.AddCellType("wall", "Impenetrable wall.", '#');
 
-            m_upper_external_l1 = main_grid.AddCellType("wall_l1v1", "upper wall. l1", '1');
-            m_lower_external_l1 = main_grid.AddCellType("wall_l1v2", "lower wall. l1", '2');
-            m_left_external_l1 = main_grid.AddCellType("wall_l1v13", "left external wall. l1", '3');
-            m_right_external_l1 = main_grid.AddCellType("wall_l1v4", "right external  wall. l1", '4');
-            m_internal_obstacle_l1v1 = main_grid.AddCellType("wall_l1v5", "interal obstacle wall. l1 v1", '5');
-            m_internal_obstacle_l1v2 = main_grid.AddCellType("wall_l1v6", "interal obstacle wall. l1 v2", '6');
-            m_door_tile_left_l1 = main_grid.AddCellType("wall_l1v7", "left door tile wall. l1", '7');
-            m_door_tile_right_l1 = main_grid.AddCellType("wall_l1v8", "right door tile wall. l1", '8');
-            m_upper_external_l2 = main_grid.AddCellType("wall_l2v1", "upper wall. l2", '!');
-            m_lower_external_l2 = main_grid.AddCellType("wall_l2v2", "lower wall. l2", '@');
-            m_left_external_l2 = main_grid.AddCellType("wall_l2v3", "left external wall. l2", '?');
-            m_right_external_l2 = main_grid.AddCellType("wall_l2v4", "right external  wall. l2", '$');
-            m_internal_obstacle_l2v1 = main_grid.AddCellType("wall_l2v5", "interal obstacle wall. l2 v1", '%');
-            m_internal_obstacle_l2v2 = main_grid.AddCellType("wall_l2v6", "interal obstacle wall. l2 v2", '^');
-            m_door_tile_left_l2 = main_grid.AddCellType("wall_l2v7", "left door tile wall. l2", '&');
-            m_door_tile_right_l2 = main_grid.AddCellType("wall_l2v8", "right door tile wall. l2", '*');
-            m_upper_external_l3 = main_grid.AddCellType("wall_l3v1", "upper wall. l3", '9');
-            m_lower_external_l3 = main_grid.AddCellType("wall_l3v2", "lower wall. l3", '0');
-            m_left_external_l3 = main_grid.AddCellType("wall_l3v3", "left external wall. l3", '-');
-            m_right_external_l3 = main_grid.AddCellType("wall_l3v4", "right external  wall. l3", '=');
-            m_internal_obstacle_l3v1 = main_grid.AddCellType("wall_l3v5", "interal obstacle wall. l3 v1", '[');
-            m_internal_obstacle_l3v2 = main_grid.AddCellType("wall_l3v6", "interal obstacle wall. l3 v2", ']');
-            m_door_tile_left_l3 = main_grid.AddCellType("wall_l3v7", "left door tile wall. l3", '.');
-            m_door_tile_right_l3 = main_grid.AddCellType("wall_l3v8", "right door tile wall. l3", ';');
-            // m_upper_external_l4 = main_grid.AddCellType("wall_l4v1", "upper wall. l4", '(');
-            // m_lower_external_l4 = main_grid.AddCellType("wall_l4v2", "lower wall. l4", ')');
-            // m_left_external_l4 = main_grid.AddCellType("wall_l4v3", "left external wall. l4", '_');
-            // m_right_external_l4 = main_grid.AddCellType("wall_l4v4", "right external  wall. l4", '+');
-            // m_internal_obstacle_l4v1 = main_grid.AddCellType("wall_l4v5", "interal obstacle wall. l4 v1", '{');
-            // m_internal_obstacle_l4v2 = main_grid.AddCellType("wall_l4v6", "interal obstacle wall. l4 v2", '}');
-            // m_door_tile_left_l4 = main_grid.AddCellType("wall_l4v7", "left door tile wall. l4", '~');
-            // m_door_tile_right_l4 = main_grid.AddCellType("wall_l4v8", "right door tile wall. l4", ':');
+            mUpperExternalL1 = main_grid.AddCellType("wall_l1v1", "upper wall. l1", '1');
+            mLowerExternalL1 = main_grid.AddCellType("wall_l1v2", "lower wall. l1", '2');
+            mLeftExternalL1 = main_grid.AddCellType("wall_l1v13", "left external wall. l1", '3');
+            mRightExternalL1 = main_grid.AddCellType("wall_l1v4", "right external  wall. l1", '4');
+            mInternalObstacleL1V1 = main_grid.AddCellType("wall_l1v5", "interal obstacle wall. l1 v1", '5');
+            mInternalObstacleL1V2 = main_grid.AddCellType("wall_l1v6", "interal obstacle wall. l1 v2", '6');
+            mDoorTileLeftL1 = main_grid.AddCellType("wall_l1v7", "left door tile wall. l1", '7');
+            mDoorTileRightL1 = main_grid.AddCellType("wall_l1v8", "right door tile wall. l1", '8');
+            mUpperExternalL2 = main_grid.AddCellType("wall_l2v1", "upper wall. l2", '!');
+            mLowerExternalL2 = main_grid.AddCellType("wall_l2v2", "lower wall. l2", '@');
+            mLeftExternalL2 = main_grid.AddCellType("wall_l2v3", "left external wall. l2", '?');
+            mRightExternalL2 = main_grid.AddCellType("wall_l2v4", "right external  wall. l2", '$');
+            mInternalObstacleL2V1 = main_grid.AddCellType("wall_l2v5", "interal obstacle wall. l2 v1", '%');
+            mInternalObstacleL2V2 = main_grid.AddCellType("wall_l2v6", "interal obstacle wall. l2 v2", '^');
+            mDoorTileLeftL2 = main_grid.AddCellType("wall_l2v7", "left door tile wall. l2", '&');
+            mDoorTileRightL2 = main_grid.AddCellType("wall_l2v8", "right door tile wall. l2", '*');
+            mUpperExternalL3 = main_grid.AddCellType("wall_l3v1", "upper wall. l3", '9');
+            mLowerExternalL3 = main_grid.AddCellType("wall_l3v2", "lower wall. l3", '0');
+            mLeftExternalL3 = main_grid.AddCellType("wall_l3v3", "left external wall. l3", '-');
+            mRightExternalL3 = main_grid.AddCellType("wall_l3v4", "right external  wall. l3", '=');
+            mInternalObstacleL3V1 = main_grid.AddCellType("wall_l3v5", "interal obstacle wall. l3 v1", '[');
+            mInternalObstacleL3V2 = main_grid.AddCellType("wall_l3v6", "interal obstacle wall. l3 v2", ']');
+            mDoorTileLeftL3 = main_grid.AddCellType("wall_l3v7", "left door tile wall. l3", '.');
+            mDoorTileRightL3 = main_grid.AddCellType("wall_l3v8", "right door tile wall. l3", ';');
+            // mUpperExternalL4 = main_grid.AddCellType("wall_l4v1", "upper wall. l4", '(');
+            // mLowerExternalL4 = main_grid.AddCellType("wall_l4v2", "lower wall. l4", ')');
+            // mLeftExternalL4 = main_grid.AddCellType("wall_l4v3", "left external wall. l4", '_');
+            // mRightExternalL4 = main_grid.AddCellType("wall_l4v4", "right external  wall. l4", '+');
+            // mInternalObstacleL4V1 = main_grid.AddCellType("wall_l4v5", "interal obstacle wall. l4 v1", '{');
+            // mInternalObstacleL4V2 = main_grid.AddCellType("wall_l4v6", "interal obstacle wall. l4 v2", '}');
+            // mDoorTileLeftL4 = main_grid.AddCellType("wall_l4v7", "left door tile wall. l4", '~');
+            // mDoorTileRightL4 = main_grid.AddCellType("wall_l4v8", "right door tile wall. l4", ':');
 
-            m_trap_tile = main_grid.AddCellType("wall_trap", "trap tile wall.", 't');
-            m_loot_tile = main_grid.AddCellType("wall_loot", "loot tile wall.", 'l');
-            m_monster_tile_skeleton = main_grid.AddCellType("wall_skeleton", "monster tile wall. skeleton", 's');
-            m_monster_tile_goblin = main_grid.AddCellType("wall_goblin", "monster tile wall. goblin", 'g');
+            mTrapTile = main_grid.AddCellType("wall_trap", "trap tile wall.", 't');
+            mLootTile = main_grid.AddCellType("wall_loot", "loot tile wall.", 'l');
+            mMosterTileSkeleton = main_grid.AddCellType("wall_skeleton", "monster tile wall. skeleton", 's');
+            mMonsterTileGoblin = main_grid.AddCellType("wall_goblin", "monster tile wall. goblin", 'g');
 
-            m_secret_door_top = main_grid.AddCellType("wall_secret_top", "secret tile wall. Top", 'f');
-            m_secret_door_bottom = main_grid.AddCellType("wall_secret_bottom", "secret tile wall. Bottom", 'T');
-            m_secret_door_left = main_grid.AddCellType("wall_secret_left", "secret tile wall. Left", 'U');
-            m_secret_door_right = main_grid.AddCellType("wall_secret_right", "secret tile wall. Right", 'v');
+            mSecretDoorTop = main_grid.AddCellType("wall_secret_top", "secret tile wall. Top", 'f');
+            mSecretDoorBottom = main_grid.AddCellType("wall_secret_bottom", "secret tile wall. Bottom", 'T');
+            mSecretDoorLeft = main_grid.AddCellType("wall_secret_left", "secret tile wall. Left", 'U');
+            mSecretDoorRight = main_grid.AddCellType("wall_secret_right", "secret tile wall. Right", 'v');
 
 
-            m_exit_door_l1 = main_grid.AddCellType("exit_l1", "secret exit l1.", 'e');
-            m_exit_door_l2 = main_grid.AddCellType("exit_l2", "secret exit l2.", 'u');
-            m_exit_door_l3 = main_grid.AddCellType("exit_l3", "secret exit l3.", 'r');
-            //m_exit_door_l4 = main_grid.AddCellType("exit_l4", "secret exit l4.", 'R');
+            mExitDoorL1 = main_grid.AddCellType("exit_l1", "secret exit l1.", 'e');
+            mExitDoorL2 = main_grid.AddCellType("exit_l2", "secret exit l2.", 'u');
+            mExitDoorL3 = main_grid.AddCellType("exit_l3", "secret exit l3.", 'r');
+            mExitDoorL4 = main_grid.AddCellType("exit_l4", "secret exit l4.", 'R');
 
-            auto sword = m_item_pool.Insert("Sword", 1.0);
-            auto sword1 = m_item_pool.Insert("Sword +1", 0.2);
-            auto sword2 = m_item_pool.Insert("Sword +2", 0.1);
-            auto sword3 = m_item_pool.Insert("Sword +3", 0.0);
-            auto sword4 = m_item_pool.Insert("Sword +4", 0.0);
-            auto sword5 = m_item_pool.Insert("Sword +5", 0.0);
-            auto bow = m_item_pool.Insert("Bow", 1.0);
-            auto bow1 = m_item_pool.Insert("Bow +1", 0.2);
-            auto bow2 = m_item_pool.Insert("Bow +2", 0.1);
-            auto bow3 = m_item_pool.Insert("Bow +3", 0.0);
-            auto bow4 = m_item_pool.Insert("Bow +4", 0.0);
-            auto bow5 = m_item_pool.Insert("Bow +5", 0.0);
-            auto healing_potion = m_item_pool.Insert("Healing Potion", 1.0);
-            auto defense_potion = m_item_pool.Insert("Defense Potion", 0.5);
-            auto speed_potion = m_item_pool.Insert("Speed Potion", 0.5);
-            auto axe = m_item_pool.Insert("Axe", 1.0);
-            auto pickaxe = m_item_pool.Insert("Pickaxe", 1.0);
-            auto shovel = m_item_pool.Insert("Shovel", 1.0);
+            auto sword = mItemPool.Insert("Sword", 1.0);
+            auto sword1 = mItemPool.Insert("Sword +1", 0.2);
+            auto sword2 = mItemPool.Insert("Sword +2", 0.1);
+            auto sword3 = mItemPool.Insert("Sword +3", 0.0);
+            auto sword4 = mItemPool.Insert("Sword +4", 0.0);
+            auto sword5 = mItemPool.Insert("Sword +5", 0.0);
+            auto bow = mItemPool.Insert("Bow", 1.0);
+            auto bow1 = mItemPool.Insert("Bow +1", 0.2);
+            auto bow2 = mItemPool.Insert("Bow +2", 0.1);
+            auto bow3 = mItemPool.Insert("Bow +3", 0.0);
+            auto bow4 = mItemPool.Insert("Bow +4", 0.0);
+            auto bow5 = mItemPool.Insert("Bow +5", 0.0);
+            auto healing_potion = mItemPool.Insert("Healing Potion", 1.0);
+            auto defense_potion = mItemPool.Insert("Defense Potion", 0.5);
+            auto speed_potion = mItemPool.Insert("Speed Potion", 0.5);
+            auto axe = mItemPool.Insert("Axe", 1.0);
+            auto pickaxe = mItemPool.Insert("Pickaxe", 1.0);
+            auto shovel = mItemPool.Insert("Shovel", 1.0);
 
 			auto& player = AddAgent<PlayerAgent>("Player");
 			player.SetSymbol('Z').SetLocation(WorldPosition{1,1});
 			mPlayer = &player;
-            m_player_id = player.GetID();
-            m_enemy_id = GetNextAgentId();
+            mPlayerId = player.GetID();
 
             // auto& ui = AddAgent<TrashInterface>("Interface");
             // ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
@@ -272,56 +289,56 @@ namespace cse498 {
 
         ~DungeonWorld() = default;
 
-        /// @brief Generates the DungeonWorld based on the currently selected level from m_level
+        /// @brief Generates the DungeonWorld based on the currently selected level from mLevel
         void GenerateLevel() {
             LoadLevelData();
 
-			m_generation = std::make_unique<WorldGeneration>(*m_level);
-			m_generation->CreateDungeon(m_level_num);
-			main_grid.Load(m_generation->GetDungeon());
+			mGeneration = std::make_unique<WorldGeneration>(*mLevel);
+			mGeneration->CreateDungeon(mLevelNum);
+			main_grid.Load(mGeneration->GetDungeon());
 
 			SpawnDungeonAgents();
         }
 
         int GetLevel() {
-            return m_level_num;
+            return mLevelNum;
         }
 
 		void AdvanceLevel() {
 			DespawnDungeonAgents();
 
-			if (m_generation) {
-				m_generation->ClearLevel();
+			if (mGeneration) {
+				mGeneration->ClearLevel();
 			}
 
-            ++m_level_num;
+            ++mLevelNum;
             GenerateLevel();
 
 			mLevelJustAdvanced = true;
         }
 
 		void SpawnDungeonAgents() {
-			if (!m_generation) return;
+			if (!mGeneration) return;
 
-			m_spawned_enemy_ids.clear();
+			mSpawnedEnemyIds.clear();
 
 			int goblin_num = 1;
-			for (const auto &[x, y] : m_generation->GetGoblinSpawns()) {
+			for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
 				auto &agent = AddAgent<PacingAgent>("Goblin " + std::to_string(goblin_num++));
 				agent.SetLocation(WorldPosition{x, y});
-				m_spawned_enemy_ids.push_back(agent.GetID());
+				mSpawnedEnemyIds.push_back(agent.GetID());
 			}
 
 			int skeleton_num = 1;
-			for (const auto &[x, y] : m_generation->GetSkeletonSpawns()) {
+			for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
 				auto &agent = AddAgent<PacingAgent>("Skeleton " + std::to_string(skeleton_num++));
 				agent.SetLocation(WorldPosition{x, y});
-				m_spawned_enemy_ids.push_back(agent.GetID());
+				mSpawnedEnemyIds.push_back(agent.GetID());
 			}
 		}
 
 		void DespawnDungeonAgents() {
-			for (size_t id : m_spawned_enemy_ids) {
+			for (size_t id : mSpawnedEnemyIds) {
 				if (AgentBase *agent = TryGetAgent(id)) {
 					if (agent->IsAlive()) {
 						agent->TakeDamage(agent->GetCurrentHealth());
@@ -330,11 +347,11 @@ namespace cse498 {
 			}
 
 			RemoveDeadAgents();
-			m_spawned_enemy_ids.clear();
+			mSpawnedEnemyIds.clear();
 		}
 
         void UpdateWorld() override {
-        	if ((m_level_num == 5)) {
+        	if ((mLevelNum == 5)) {
         		mRunOver = true;
         		return;
         	}
@@ -425,14 +442,14 @@ namespace cse498 {
             // Determine where the agent is trying to move.
             WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
 
-            if (action_id == WorldActions::INTERACT) {
+            if (action_id == DungeonActions::INTERACT) {
                 // Legacy method of handling interactions. Kept here in case below code does not work with both agent groups.
                 /*std::array<WorldPosition, 4> neighbors = {
                     cur_position.Up(), cur_position.Down(), cur_position.Left(), cur_position.Right()
                 };
                 for (const auto &adj: neighbors) {
                     if (main_grid.IsValid(adj) && main_grid[adj] == m_secret_door) {
-                        main_grid[adj] = m_floor_id_l1v1;
+                        main_grid[adj] = mFloorIdL1V1;
                         return true;
                     }
                 }
@@ -443,6 +460,7 @@ namespace cse498 {
                 bool interacted = false;
                 
                 for (size_t i = 0; i < GetNumAgents(); ++i) {
+                    mEnemyId = mSpawnedEnemyIds[i];
                     AgentBase& other = GetAgentByIndex(i);
                     if (&other == &agent) {
                         continue;
@@ -456,8 +474,8 @@ namespace cse498 {
 
                     if (dx <= 1.0 && dy <= 1.0) {
                         interacted = true;
-                        if (other.GetID() == m_enemy_id) {
-                            const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(m_enemy_id).GetStats());
+                        if (other.GetID() == mEnemyId) {
+                            const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
                             other.TakeDamage(dealt);
                             std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
                             if (!other.IsAlive()) {
@@ -466,7 +484,7 @@ namespace cse498 {
                                 HandleEnemyDefeat(enemy, player);
                                 return 1;
                             }
-                            const double retaliate = DamageCalculator::Calculate(GetAgent(m_enemy_id).GetStats(), GetPlayer()->GetStats());
+                            const double retaliate = DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
                             agent.TakeDamage(retaliate);
                             std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
                             if (!agent.IsAlive()) {
@@ -487,15 +505,15 @@ namespace cse498 {
 
             WorldPosition new_position;
             switch (action_id) {
-                case REMAIN_STILL: new_position = cur_position;
+                case DungeonActions::REMAIN_STILL: new_position = cur_position;
                     break;
-                case MOVE_UP: new_position = cur_position.Up();
+                case DungeonActions::MOVE_UP: new_position = cur_position.Up();
                     break;
-                case MOVE_DOWN: new_position = cur_position.Down();
+                case DungeonActions::MOVE_DOWN: new_position = cur_position.Down();
                     break;
-                case MOVE_LEFT: new_position = cur_position.Left();
+                case DungeonActions::MOVE_LEFT: new_position = cur_position.Left();
                     break;
-                case MOVE_RIGHT: new_position = cur_position.Right();
+                case DungeonActions::MOVE_RIGHT: new_position = cur_position.Right();
                     break;
                 default:
                     break;
@@ -503,38 +521,38 @@ namespace cse498 {
 
             // Don't let the agent move off the world or into a wall.
             if (!main_grid.IsValid(new_position)) { return false; }
-            if (main_grid[new_position] == m_wall_id
-				|| main_grid[new_position] == m_upper_external_l1
-                || main_grid[new_position] == m_lower_external_l1
-                || main_grid[new_position] == m_left_external_l1
-                || main_grid[new_position] == m_right_external_l1
-                || main_grid[new_position] == m_internal_obstacle_l1v1
-                || main_grid[new_position] == m_internal_obstacle_l1v2
+            if (main_grid[new_position] == mWallId
+				|| main_grid[new_position] == mUpperExternalL1
+                || main_grid[new_position] == mLowerExternalL1
+                || main_grid[new_position] == mLeftExternalL1
+                || main_grid[new_position] == mRightExternalL1
+                || main_grid[new_position] == mInternalObstacleL1V1
+                || main_grid[new_position] == mInternalObstacleL1V2
 
-				|| main_grid[new_position] == m_upper_external_l2
-                || main_grid[new_position] == m_lower_external_l2
-                || main_grid[new_position] == m_left_external_l2
-                || main_grid[new_position] == m_right_external_l2
-                || main_grid[new_position] == m_internal_obstacle_l2v1
-                || main_grid[new_position] == m_internal_obstacle_l2v2
+				|| main_grid[new_position] == mUpperExternalL2
+                || main_grid[new_position] == mLowerExternalL2
+                || main_grid[new_position] == mLeftExternalL2
+                || main_grid[new_position] == mRightExternalL2
+                || main_grid[new_position] == mInternalObstacleL2V1
+                || main_grid[new_position] == mInternalObstacleL2V2
 
-				|| main_grid[new_position] == m_upper_external_l3
-                || main_grid[new_position] == m_lower_external_l3
-                || main_grid[new_position] == m_left_external_l3
-                || main_grid[new_position] == m_right_external_l3
-                || main_grid[new_position] == m_internal_obstacle_l3v1
-                || main_grid[new_position] == m_internal_obstacle_l3v2
+				|| main_grid[new_position] == mUpperExternalL3
+                || main_grid[new_position] == mLowerExternalL3
+                || main_grid[new_position] == mLeftExternalL3
+                || main_grid[new_position] == mRightExternalL3
+                || main_grid[new_position] == mInternalObstacleL3V1
+                || main_grid[new_position] == mInternalObstacleL3V2
 
 				// Currently there is no level 4
-				// || main_grid[new_position] == m_upper_external_l4
-                // || main_grid[new_position] == m_lower_external_l4
-                // || main_grid[new_position] == m_left_external_l4
-                // || main_grid[new_position] == m_right_external_l4
-                // || main_grid[new_position] == m_internal_obstacle_l4v1
-                // || main_grid[new_position] == m_internal_obstacle_l4v2
+				// || main_grid[new_position] == mUpperExternalL4
+                // || main_grid[new_position] == mLowerExternalL4
+                // || main_grid[new_position] == mLeftExternalL4
+                // || main_grid[new_position] == mRightExternalL4
+                // || main_grid[new_position] == mInternalObstacleL4V1
+                // || main_grid[new_position] == mInternalObstacleL4V2
 			) { return false; }
 
-            if (main_grid[new_position] == m_loot_tile && agent.GetID() == 0) {
+            if (main_grid[new_position] == mLootTile && agent.GetID() == 0) {
                 if (agent.IsPlayerAgent()) {
                     Inventory &inventory = agent.GetInventory();
                     std::string item_str = GetRandomItem();
@@ -681,8 +699,13 @@ namespace cse498 {
 
                         inventory.AddItem(std::move(pickaxe));
                     } else if (item_str == "Shovel") {
-                        std::unique_ptr<ItemWeaponToolPickaxe> shovel = std::make_unique<ItemWeaponToolPickaxe>(
-                                item_id, item_str, "/assets/items/item_shovel.png", BASE_GOLD, *this);
+                        std::unique_ptr<ItemWeaponToolShovel> shovel = std::make_unique<ItemWeaponToolShovel>(
+                            item_id,
+                            item_str,
+                            "/assets/item/item_shovel.png",
+                            BASE_GOLD,
+                            *this
+                        );
                         shovel->SetRange(BASE_RANGE);
                         shovel->SetDamage(BASE_DAMAGE);
                         shovel->SetHitBonus(BASE_BONUS);
@@ -694,8 +717,8 @@ namespace cse498 {
                 }
             } 
 			
-            if (main_grid[new_position] == m_exit_door_l1 || main_grid[new_position] == m_exit_door_l2 || 
-                main_grid[new_position] == m_exit_door_l3 || main_grid[new_position] == m_exit_door_l4) {
+            if (main_grid[new_position] == mExitDoorL1 || main_grid[new_position] == mExitDoorL2 || 
+                main_grid[new_position] == mExitDoorL3 || main_grid[new_position] == mExitDoorL4) {
                 if (agent.IsPlayerAgent()) {
                     // UserInput();
                     AdvanceLevel();
@@ -716,8 +739,8 @@ namespace cse498 {
         */
         std::string GetRandomItem() {
             cse498::Random rng;
-            double item = rng.GetValue(1.0, m_item_pool.GetTotalWeight()).value();
-            return m_item_pool.Sample(item).value();
+            double item = rng.GetValue(1.0, mItemPool.GetTotalWeight()).value();
+            return mItemPool.Sample(item).value();
         }
     };
 } // End of namespace cse498
