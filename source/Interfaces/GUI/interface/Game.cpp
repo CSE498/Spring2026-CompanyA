@@ -9,6 +9,12 @@
 #include <filesystem>
 #include <iostream>
 #include "../../../core/AgentBase.hpp"
+// Group 17 AI-agent integration: required so this TU can construct
+// SmartEnemyAgent (dungeon goblin) and LearningExplorerAgent (overworld explorer).
+// OverWorld.hpp already includes LearningExplorerAgent.hpp for its spawner, but we
+// keep it here too for clarity / symmetry with the dungeon spawn path.
+#include "../../../Agents/AI/SmartEnemyAgent.hpp"
+#include "../../../Agents/AI/LearningExplorerAgent.hpp"
 
 namespace cse498
 {
@@ -45,9 +51,6 @@ namespace cse498
         mPickupText.SetRenderer(renderer);
         mPickupText.SetSize(20);
 
-        // Stats text
-        mStatsText.SetRenderer(renderer);
-
         // Set up image manager and load all tile assets
         mImageManager = std::make_unique<ImageManager>(renderer);
 
@@ -64,146 +67,144 @@ namespace cse498
         };
 
         // Grass variants
-        if (!LoadCheck("grass", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_1.png"))
+        if (!LoadCheck("grass", std::string(ASSETS_DIR) + "Tiles/grass.png"))
             return false;
-        if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_2.png"))
+        if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "Tiles/grass_flowers.png"))
             return false;
-        if (!LoadCheck("grass_bones", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_3.png"))
+        if (!LoadCheck("grass_bones", std::string(ASSETS_DIR) + "Tiles/grass_bones.png"))
             return false;
-        if (!LoadCheck("grass_mud", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_4.png"))
+        if (!LoadCheck("grass_mud", std::string(ASSETS_DIR) + "Tiles/grass_mud.png"))
             return false;
-        if (!LoadCheck("grass_rock", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_5.png"))
+        if (!LoadCheck("grass_rock", std::string(ASSETS_DIR) + "Tiles/grass_rock.png"))
             return false;
 
         // Structure
-        if (!LoadCheck("entrance", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_left_forest.png"))
+        if (!LoadCheck("entrance", std::string(ASSETS_DIR) + "Tiles/grass_left_entrance.png"))
             return false;
 
         // Border walls
-        if (!LoadCheck("wall_left", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_left_forest.png"))
+        if (!LoadCheck("wall_left", std::string(ASSETS_DIR) + "Tiles/grass_wall_left.png"))
             return false;
-        if (!LoadCheck("wall_right", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_right_forest.png"))
+        if (!LoadCheck("wall_right", std::string(ASSETS_DIR) + "Tiles/grass_wall_right.png"))
             return false;
-        if (!LoadCheck("wall_top", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png"))
+        if (!LoadCheck("wall_top", std::string(ASSETS_DIR) + "Tiles/grass_wall_up.png"))
             return false;
-        if (!LoadCheck("wall_bottom", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_bottom_forest.png"))
+        if (!LoadCheck("wall_bottom", std::string(ASSETS_DIR) + "Tiles/grass_wall_bottom.png"))
             return false;
-        if (!LoadCheck("wall_corner", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png"))
+        if (!LoadCheck("wall_corner", std::string(ASSETS_DIR) + "Tiles/grass_wall_up.png"))
             return false;
 
         // Mobs
-        if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_skeleton.png"))
+        if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png"))
+            return false;
+        /// Group 17: goblin sprite — used both as the dungeon's @ref SmartEnemyAgent
+        /// texture and as the overworld's @ref LearningExplorerAgent texture.
+        if (!LoadCheck("goblin", std::string(ASSETS_DIR) + "Mobs/goblin.png"))
             return false;
 
         // --- Level 1 floors (forest) ---
-        if (!LoadCheck("floor_l1v1", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_1.png")) return false;
-        if (!LoadCheck("floor_l1v2", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_2.png")) return false;
-        if (!LoadCheck("floor_l1v3", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_3.png")) return false;
-        if (!LoadCheck("floor_l1v4", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_4.png")) return false;
-        if (!LoadCheck("floor_l1v5", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_5.png")) return false;
+        if (!LoadCheck("floor_l1v1", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_1.png")) return false;
+        if (!LoadCheck("floor_l1v2", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_2.png")) return false;
+        if (!LoadCheck("floor_l1v3", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_3.png")) return false;
+        if (!LoadCheck("floor_l1v4", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_4.png")) return false;
+        if (!LoadCheck("floor_l1v5", std::string(ASSETS_DIR) + "DungeonWorlds/forest/floor_tiles/tile_grass_5.png")) return false;
         // --- Level 2 floors (cave) ---
-        if (!LoadCheck("floor_l2v1", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_1.png")) return false;
-        if (!LoadCheck("floor_l2v2", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_2.png")) return false;
-        if (!LoadCheck("floor_l2v3", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_3.png")) return false;
-        if (!LoadCheck("floor_l2v4", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_4.png")) return false;
-        if (!LoadCheck("floor_l2v5", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_5.png")) return false;
+        if (!LoadCheck("floor_l2v1", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_1.png")) return false;
+        if (!LoadCheck("floor_l2v2", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_2.png")) return false;
+        if (!LoadCheck("floor_l2v3", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_3.png")) return false;
+        if (!LoadCheck("floor_l2v4", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_4.png")) return false;
+        if (!LoadCheck("floor_l2v5", std::string(ASSETS_DIR) + "DungeonWorlds/cave/floor_tiles/tile_cave_5.png")) return false;
         // --- Level 3 floors (dungeon) ---
-        if (!LoadCheck("floor_l3v1", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_1.png")) return false;
-        if (!LoadCheck("floor_l3v2", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_2.png")) return false;
-        if (!LoadCheck("floor_l3v3", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("floor_l3v4", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_4.png")) return false;
-        if (!LoadCheck("floor_l3v5", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_5.png")) return false;
+        if (!LoadCheck("floor_l3v1", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_1.png")) return false;
+        if (!LoadCheck("floor_l3v2", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_2.png")) return false;
+        if (!LoadCheck("floor_l3v3", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
+        if (!LoadCheck("floor_l3v4", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_4.png")) return false;
+        if (!LoadCheck("floor_l3v5", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_5.png")) return false;
         // --- Level 4 floors (castle) ---
-        if (!LoadCheck("floor_l4v1", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_1.png")) return false;
-        if (!LoadCheck("floor_l4v2", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_2.png")) return false;
-        if (!LoadCheck("floor_l4v3", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_3.png")) return false;
-        if (!LoadCheck("floor_l4v4", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_4.png")) return false;
-        if (!LoadCheck("floor_l4v5", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_5.png")) return false;
+        if (!LoadCheck("floor_l4v1", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_1.png")) return false;
+        if (!LoadCheck("floor_l4v2", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_2.png")) return false;
+        if (!LoadCheck("floor_l4v3", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_3.png")) return false;
+        if (!LoadCheck("floor_l4v4", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_4.png")) return false;
+        if (!LoadCheck("floor_l4v5", std::string(ASSETS_DIR) + "DungeonWorlds/castle/floor_tiles/tile_wood_5.png")) return false;
 
         // --- Generic wall (#) ---
-        if (!LoadCheck("wall", std::string(ASSETS_DIR) + "/" + + "gui/black_tile.png")) return false;
+        if (!LoadCheck("wall", std::string(ASSETS_DIR) + "Tiles/black_tile.png")) return false;
 
         // --- Level 1 walls (forest) ---
-        if (!LoadCheck("wall_l1v1", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v2", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_bottom_forest.png")) return false;
-        if (!LoadCheck("wall_l1v13", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_left_forest.png")) return false;
-        if (!LoadCheck("wall_l1v4", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_right_forest.png")) return false;
-        if (!LoadCheck("wall_l1v5", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v6", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v7", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_left_forest.png")) return false;
-        if (!LoadCheck("wall_l1v8", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_right_forest.png")) return false;
+        if (!LoadCheck("wall_l1v1", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v2", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_bottom_forest.png")) return false;
+        if (!LoadCheck("wall_l1v13", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_left_forest.png")) return false;
+        if (!LoadCheck("wall_l1v4", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_right_forest.png")) return false;
+        if (!LoadCheck("wall_l1v5", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v6", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v7", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/door_left_forest.png")) return false;
+        if (!LoadCheck("wall_l1v8", std::string(ASSETS_DIR) + "DungeonWorlds/forest/walls/external/door_right_forest.png")) return false;
         // --- Level 2 walls (cave) ---
-        if (!LoadCheck("wall_l2v1", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v2", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_bottom_cave.png")) return false;
-        if (!LoadCheck("wall_l2v3", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_left_cave.png")) return false;
-        if (!LoadCheck("wall_l2v4", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_right_cave.png")) return false;
-        if (!LoadCheck("wall_l2v5", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v6", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v7", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/door_left_cave.png")) return false;
-        if (!LoadCheck("wall_l2v8", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/door_right_cave.png")) return false;
+        if (!LoadCheck("wall_l2v1", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v2", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_bottom_cave.png")) return false;
+        if (!LoadCheck("wall_l2v3", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_left_cave.png")) return false;
+        if (!LoadCheck("wall_l2v4", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_right_cave.png")) return false;
+        if (!LoadCheck("wall_l2v5", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v6", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v7", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/door_left_cave.png")) return false;
+        if (!LoadCheck("wall_l2v8", std::string(ASSETS_DIR) + "DungeonWorlds/cave/walls/external/door_right_cave.png")) return false;
         // --- Level 3 walls (dungeon) ---
-        if (!LoadCheck("wall_l3v1", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v2", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_bottom_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v3", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_left_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v4", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_right_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v5", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v6", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v7", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_left_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v8", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v1", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v2", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_bottom_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v3", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v4", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v5", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v6", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v7", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v8", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_right_dungeon.png")) return false;
         // --- Level 4 walls (castle) ---
-        if (!LoadCheck("wall_l4v1", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v2", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_bottom_castle.png")) return false;
-        if (!LoadCheck("wall_l4v3", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_left_castle.png")) return false;
-        if (!LoadCheck("wall_l4v4", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_right_castle.png")) return false;
-        if (!LoadCheck("wall_l4v5", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v6", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v7", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/door_left_castle.png")) return false;
-        if (!LoadCheck("wall_l4v8", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/door_right_castle.png")) return false;
+        if (!LoadCheck("wall_l4v1", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v2", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_bottom_castle.png")) return false;
+        if (!LoadCheck("wall_l4v3", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_left_castle.png")) return false;
+        if (!LoadCheck("wall_l4v4", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_right_castle.png")) return false;
+        if (!LoadCheck("wall_l4v5", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v6", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v7", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/door_left_castle.png")) return false;
+        if (!LoadCheck("wall_l4v8", std::string(ASSETS_DIR) + "DungeonWorlds/castle/walls/external/door_right_castle.png")) return false;
 
         // --- Shared special tiles ---
-        if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" + + "items/item_potion_defense.png")) return false;
-        if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_skeleton.png")) return false;
-        if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_goblin.png")) return false;
-        if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_right_dungeon.png")) return false;
-        if (!LoadCheck("exit", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
+        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_defense.png")) return false;
+        if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "Mobs/skeleton.png")) return false;
+        if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "Mobs/goblin.png")) return false;
+        if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("exit", std::string(ASSETS_DIR) + "DungeonWorlds/dungeon/walls/external/door_left_dungeon.png")) return false;
 
         // Item sprites — keyed by item name to match what Inventory stores
-        if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +1", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +2", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +3", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +4", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +5", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +1", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +2", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +3", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +4", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +5", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_sword_1.png")) return false;
 
-        if (!LoadCheck("Bow", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +1", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +2", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +3", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +4", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +5", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +1", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +2", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +3", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +4", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +5", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_bow_1.png")) return false;
 
-        if (!LoadCheck("Healing Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_healing.png")) return false;
-        if (!LoadCheck("Defense Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_defense.png")) return false;
-        if (!LoadCheck("Speed Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_speed.png")) return false;
+        if (!LoadCheck("Healing Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_healing.png")) return false;
+        if (!LoadCheck("Defense Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_defense.png")) return false;
+        if (!LoadCheck("Speed Potion", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_potion_speed.png")) return false;
 
-        if (!LoadCheck("Axe", std::string(ASSETS_DIR) + "/" + + "items/item_axe.png")) return false;
-        if (!LoadCheck("Pickaxe", std::string(ASSETS_DIR) + "/" + + "items/item_pickaxe.png")) return false;
-        if (!LoadCheck("Shovel", std::string(ASSETS_DIR) + "/" + + "items/item_shovel.png")) return false;
+        if (!LoadCheck("Axe", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_axe.png")) return false;
+        if (!LoadCheck("Pickaxe", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_pickaxe.png")) return false;
+        if (!LoadCheck("Shovel", std::string(ASSETS_DIR) + "DungeonWorlds/items/item_shovel.png")) return false;
 
         // Player
-        if (!LoadCheck("player", std::string(ASSETS_DIR) + "/" + + "agents/playerCharacter/agent_player.png"))
+        if (!LoadCheck("player", std::string(ASSETS_DIR) + "Player/player.png"))
             return false;
 
         // UI
-        if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/" + + "/gui/inventory_bar.png"))
+        if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/Player/inventory_bar.png"))
             return false;
-
-        std::cout << "Asset loads complete." << std::endl;
-
-        // Analytics setup
-        mAnalyticsManager = std::make_shared<AnalyticsManager>();
-        mStatsTracker = std::make_unique<StatsTracker>();
 
         // World Setups
         SetupOverworld();
@@ -218,6 +219,10 @@ namespace cse498
     {
         mOverWorld = std::make_unique<OverWorld>();
         mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
+        /// @internal Group 17 AI hook: drops a @ref LearningExplorerAgent into the
+        /// overworld so the user sees an AI-driven NPC wandering alongside the
+        /// scripted @ref PacingAgent. Rendered as a goblin in RenderOverworld().
+        mOverWorld->AddLearningExplorerAgent(5, 5);
 
         // add a player to the world (based on discord discussion)
         auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
@@ -240,8 +245,6 @@ namespace cse498
                 mOverworldGrid->SetCell(x, y, cell_name);
             }
         }
-
-        mOverWorld->SetAnalyticsManager(mAnalyticsManager);
     }
 
 
@@ -255,12 +258,36 @@ namespace cse498
 
         mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
 
+
         // add a player to the world (based on discord discussion)
         auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
         player.SetLocation(WorldPosition{1, 1});
         mDungeonPlayer = &player;
 
         std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
+
+        /// @internal Group 17 AI hook: drop a @ref SmartEnemyAgent into the dungeon.
+        ///
+        /// The current @c DungeonWorld API does not expose a "first room center"
+        /// helper, so we scan the grid for the first cell whose registered type
+        /// name starts with "floor" (all dungeon floor tiles use that convention)
+        /// and is distinct from the player's spawn at {1,1}. This keeps the goblin
+        /// on a walkable tile without assuming anything about the dungeon layout.
+        auto& goblin = mDungeonWorld->AddAgent<SmartEnemyAgent>("Goblin");
+        for (size_t y = 0; y < world_h; ++y)
+        {
+            for (size_t x = 0; x < world_w; ++x)
+            {
+                if (x == 1 && y == 1) continue;
+                WorldPosition pos(x, y);
+                const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
+                if (cell_name.rfind("floor", 0) == 0) {
+                    goblin.SetLocation(pos);
+                    y = world_h; // break outer loop once placed
+                    break;
+                }
+            }
+        }
 
         // Map every cell type name to its matching image name
         for (size_t y = 0; y < world_h; ++y)
@@ -269,24 +296,6 @@ namespace cse498
             {
                 WorldPosition pos(x, y);
                 const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
-                mDungeonGrid->SetCell(x, y, cell_name);
-            }
-        }
-
-        mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
-    }
-
-    void Game::RebuildDungeonGrid() {
-        const WorldGrid& grid = mDungeonWorld->GetGrid();
-        size_t world_w = grid.GetWidth();
-        size_t world_h = grid.GetHeight();
-
-        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
-
-        for (size_t y = 0; y < world_h; ++y) {
-            for (size_t x = 0; x < world_w; ++x) {
-                WorldPosition pos(x, y);
-                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
                 mDungeonGrid->SetCell(x, y, cell_name);
             }
         }
@@ -323,8 +332,6 @@ namespace cse498
                                  mPreviousState = GameState::OVERWORLD;
                              });
 
-        mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
-
         mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
 
         mPauseMenu.AddOption("Quit to Main Menu", [this]() { TransitionTo(GameState::MAIN_MENU); });
@@ -355,9 +362,6 @@ namespace cse498
             case GameState::PAUSED:
                 UpdatePaused();
                 break;
-            case GameState::STATS:
-                UpdateStats();
-                break;
             case GameState::SETTINGS:
                 UpdateSettings();
                 break;
@@ -379,9 +383,6 @@ namespace cse498
                 break;
             case GameState::PAUSED:
                 RenderPaused();
-                break;
-            case GameState::STATS:
-                RenderStats();
                 break;
             case GameState::SETTINGS:
                 RenderSettings();
@@ -509,7 +510,7 @@ namespace cse498
                     {
                         Resume();
                     }
-                    else if (mState == GameState::SETTINGS || mState == GameState::STATS)
+                    else if (mState == GameState::SETTINGS)
                     {
                         Resume();
                     }
@@ -528,12 +529,6 @@ namespace cse498
 
     void Game::TransitionTo(GameState new_state)
     {
-        if ((mPreviousState == GameState::DUNGEON || mPreviousState == GameState::OVERWORLD) &&
-            new_state == GameState::MAIN_MENU) {
-            mAnalyticsManager->LogDamageDealt(mAnalyticsManager->GetCurrentRunStats().damageDealt);
-            mAnalyticsManager->LogEnemiesKilled(mAnalyticsManager->GetCurrentRunStats().enemiesKilled);
-            mAnalyticsManager->ResetCurrentRunStats();
-        }
         mPreviousState = mState;
         mState = new_state;
     }
@@ -582,14 +577,55 @@ namespace cse498
         }
     }
 
+    void Game::UpdateWorld(ImageGrid &grid, int &camX, int &camY)
+    {
+        const Uint8 *keys = SDL_GetKeyboardState(nullptr);
+
+        // Only move once every TURN_DELAY 100ms
+        static Uint32 last_move_time = 0;
+        Uint32 now = SDL_GetTicks();
+        if (now - last_move_time < TURN_DELAY)
+            return;
+
+        int tw = static_cast<int>(grid.GetTileWidth());
+        int th = static_cast<int>(grid.GetTileHeight());
+
+        // How many Tiles fit on screen
+        int Tiles_x = mGameView->GetWidth() / tw;
+        int Tiles_y = mGameView->GetHeight() / th;
+
+        // Max camera position so the viewport never scrolls past the grid edge
+        int max_cam_x = std::max(0, static_cast<int>(grid.GetWidth()) - Tiles_x);
+        int max_cam_y = std::max(0, static_cast<int>(grid.GetHeight()) - Tiles_y);
+
+        bool moved = false;
+        if (keys[SDL_SCANCODE_W])
+        {
+            camY = std::max(0, camY - 1);
+            moved = true;
+        }
+        if (keys[SDL_SCANCODE_S])
+        {
+            camY = std::min(max_cam_y, camY + 1);
+            moved = true;
+        }
+        if (keys[SDL_SCANCODE_A])
+        {
+            camX = std::max(0, camX - 1);
+            moved = true;
+        }
+        if (keys[SDL_SCANCODE_D])
+        {
+            camX = std::min(max_cam_x, camX + 1);
+            moved = true;
+        }
+
+        if (moved)
+            last_move_time = now;
+    }
+
     void Game::UpdatePaused() {}
     void Game::UpdateSettings() {}
-
-    void Game::UpdateStats() {
-        if (mAnalyticsManager) {
-            mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
-        }
-    }
 
     // -----------------------------------------------------------------------
     //  Render
@@ -597,6 +633,7 @@ namespace cse498
 
     void Game::RenderMainMenu()
     {
+
         int w = mGameView->GetWidth();
         int h = mGameView->GetHeight();
 
@@ -630,8 +667,17 @@ namespace cse498
             int screen_x = (static_cast<int>(pos.CellX()) - mCamX) * tw;
             int screen_y = (static_cast<int>(pos.CellY()) - mCamY) * th;
 
-            // Pick sprite based on whether this is the player or an NPC
-            const std::string &sprite = (&agent == mOverworldPlayer) ? "player" : mOverWorld->GetAgentSpriteName();
+            /// Sprite dispatch table for overworld agents:
+            ///   - The local player renders as "player".
+            ///   - The Group 17 @ref LearningExplorerAgent (registered under the
+            ///     name "Explorer" by @ref OverWorld::AddLearningExplorerAgent)
+            ///     renders as "goblin" so it's visually distinct from the skeleton.
+            ///   - Everything else (e.g. PacingAgent) falls back to the world's
+            ///     pre-existing single-sprite field — upstream behavior preserved.
+            std::string sprite;
+            if (&agent == mOverworldPlayer)           sprite = "player";
+            else if (agent.GetName() == "Explorer")   sprite = "goblin";
+            else                                      sprite = mOverWorld->GetAgentSpriteName();
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
         }
 
@@ -655,7 +701,16 @@ namespace cse498
             int screen_x = (static_cast<int>(pos.CellX()) - mDungeonCamX) * tw;
             int screen_y = (static_cast<int>(pos.CellY()) - mDungeonCamY) * th;
 
-            const std::string &sprite = (&agent == mDungeonPlayer) ? "player" : "dun_monster";
+            /// Sprite dispatch table for dungeon agents:
+            ///   - The dungeon player renders as "player".
+            ///   - The Group 17 @ref SmartEnemyAgent spawned by SetupDungeon()
+            ///     (registered under the name "Goblin") renders as "goblin".
+            ///   - All other agents fall back to the shared "dun_monster" sprite —
+            ///     upstream default behavior preserved.
+            std::string sprite;
+            if (&agent == mDungeonPlayer)         sprite = "player";
+            else if (agent.GetName() == "Goblin") sprite = "goblin";
+            else                                  sprite = "dun_monster";
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
         }
 
@@ -699,85 +754,6 @@ namespace cse498
         // TODO: render settings screen
     }
 
-    void Game::RenderStats() {
-        SDL_Renderer* renderer = mGameView->GetRenderer();
-        int w = mGameView->GetWidth();
-        int h = mGameView->GetHeight();
-
-        // Dark background
-        SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
-        SDL_Rect bg = {0, 0, w, h};
-        SDL_RenderFillRect(renderer, &bg);
-
-        // Vals for spacing
-        int y = 40;
-        const int LINE_H = 36;
-
-        // Title
-        mStatsText.SetContent("Stats");
-        mStatsText.SetSize(36);
-        mStatsText.SetBold(true);
-        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
-        y += LINE_H * 2;
-
-        // Numeric stats
-        for (const StatSummary& stat : mDashboardSnapshot.numericStats) {
-            mStatsText.SetContent(stat.label + ":");
-            mStatsText.SetSize(22);
-            mStatsText.SetBold(true);
-            mStatsText.Draw(60, y);
-            y += LINE_H;
-
-            mStatsText.SetContent("  Current : " + std::to_string(static_cast<int>(stat.currentValue)));
-            mStatsText.SetBold(false);
-            mStatsText.Draw(60, y);
-            y += LINE_H;
-
-            std::string detail;
-            if (stat.minValue)  detail += "Min: "  + std::to_string(static_cast<int>(*stat.minValue))  + "  ";
-            if (stat.maxValue)  detail += "Max: "  + std::to_string(static_cast<int>(*stat.maxValue))  + "  ";
-            if (stat.meanValue) detail += "Mean: " + std::to_string(static_cast<int>(*stat.meanValue));
-            if (!detail.empty()) {
-                mStatsText.SetContent("  " + detail);
-                mStatsText.Draw(60, y);
-                y += LINE_H;
-            }
-
-            mStatsText.SetContent("  Runs logged: " + std::to_string(stat.sampleCount));
-            mStatsText.Draw(60, y);
-            y += LINE_H + 8;
-        }
-
-        // Action stats
-        for (const ActionSummary& action : mDashboardSnapshot.actionStats) {
-            mStatsText.SetContent(action.label + ":");
-            mStatsText.SetSize(22);
-            mStatsText.SetBold(true);
-            mStatsText.Draw(60, y);
-            y += LINE_H;
-
-            mStatsText.SetBold(false);
-            mStatsText.SetContent("  Total actions: " + std::to_string(action.actionCount));
-            mStatsText.Draw(60, y);
-            y += LINE_H;
-
-            if (action.mostActiveEntity) {
-                mStatsText.SetContent("  Most active entity ID: " + std::to_string(*action.mostActiveEntity));
-                mStatsText.Draw(60, y);
-                y += LINE_H;
-            }
-            y += 8;
-        }
-
-        // Empty state
-        if (mDashboardSnapshot.numericStats.empty() && mDashboardSnapshot.actionStats.empty()) {
-            mStatsText.SetContent("No stats recorded yet.");
-            mStatsText.SetSize(22);
-            mStatsText.SetBold(false);
-            mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
-        }
-    }
-
     void Game::RenderHotbar(const Inventory &inventory) {
         int w = mGameView->GetWidth();
         int h = mGameView->GetHeight();
@@ -803,6 +779,7 @@ namespace cse498
 
                 // Draw item icon if loaded — uses the item's image path as key
                 mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                //std::cout << item->GetName() << std::endl;
             }
         }
 
@@ -815,6 +792,7 @@ namespace cse498
         SDL_Rect highlight = {sel_x, bar_y, slot_size, bar_h};
         SDL_RenderDrawRect(renderer, &highlight);
     }
+
 
     void Game::RenderBackpack(const Inventory& inventory) {
         SDL_Renderer* renderer = mGameView->GetRenderer();
@@ -891,6 +869,7 @@ namespace cse498
         mPickupText.Draw(text_x, 20);
     }
 
+
     size_t Game::KeyToAction(SDL_Keycode key) {
         switch (key) {
         case SDLK_w: return 1; // MOVE_UP
@@ -931,20 +910,7 @@ namespace cse498
                 if (!slot.IsEmpty()) items_before += slot.GetQuantity();
             }
 
-            WorldPosition pos_before = mDungeonPlayer->GetLocation().AsWorldPosition();
-
             mDungeonWorld->DoAction(*mDungeonPlayer, action);
-
-            WorldPosition pos = mDungeonPlayer->GetLocation().AsWorldPosition();
-            mDungeonPlayerX = static_cast<int>(pos.CellX());
-            mDungeonPlayerY = static_cast<int>(pos.CellY());
-
-            // Detect level change — player was moved to (1,1) and grid was regenerated
-            if (pos.CellX() == 1 && pos.CellY() == 1 && pos_before.CellX() != 1 && pos_before.CellY() != 1) {
-                RebuildDungeonGrid();
-                mPickupMessage = "Entering next level...";
-                mPickupMessageTime = SDL_GetTicks();
-            }
 
             // Check if inventory changed
             size_t items_after = 0;
@@ -952,6 +918,8 @@ namespace cse498
                 if (!slot.IsEmpty()) items_after += slot.GetQuantity();
             }
             if (items_after > items_before) {
+                // Find the newest item — scan for an item that wasn't there before
+                // Simplest: just grab the hand or last non-empty slot
                 for (const auto& slot : slots) {
                     if (!slot.IsEmpty()) {
                         mPickupMessage = "Picked up: " + slot.GetItem()->GetName();
@@ -960,7 +928,10 @@ namespace cse498
                 mPickupMessageTime = SDL_GetTicks();
             }
 
-            // Update camera
+            WorldPosition pos = mDungeonPlayer->GetLocation().AsWorldPosition();
+            mDungeonPlayerX = static_cast<int>(pos.CellX());
+            mDungeonPlayerY = static_cast<int>(pos.CellY());
+
             int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
             int th = static_cast<int>(mDungeonGrid->GetTileHeight());
             int Tiles_x = mGameView->GetWidth() / tw;
