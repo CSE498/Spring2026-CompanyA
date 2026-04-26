@@ -242,6 +242,10 @@ private:
     /// @return The file path for the symbol, or empty string if not found.
     [[nodiscard]] std::string GetImagePath(char symbol);
 
+    /// @brief Gets the dungeon level name for symbol path lookups based on the current game state.
+    /// @return the dungeon name as a string (e.g., "forest").
+    [[nodiscard]] std::string GetDungeonName() const;
+
     /// @brief Gets or loads a bitmap for the given file path.
     /// @param path The file path to load.
     /// @return The loaded or cached bitmap value.

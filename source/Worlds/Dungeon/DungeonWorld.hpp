@@ -14,25 +14,22 @@
 #include "../../Interfaces/TrashInterface.hpp"
 #include "../../core/WorldBase.hpp"
 #include "../../tools/WeightedSet.hpp"
-#include "ForestLevel.hpp"
-#include "CaveLevel.hpp"
 #include "CastleLevel.hpp"
+#include "CaveLevel.hpp"
+#include "ForestLevel.hpp"
 #include "LevelBase.hpp"
-#include "../../Interfaces/TrashInterface.hpp"
-#include "../../Agents/PacingAgent.hpp"
-#include "../../Agents/Classic/Enemy.hpp"
+#include "WorldGeneration.hpp"
 
-#include "../../Agents/Classic/PlayerFeatures/Inventory.hpp"
+#include "../../Agents/Classic/Enemy.hpp"
+#include "../../Worlds/DemoG2/WorldActions.hpp"
 #include "../../core/item/ItemConsumableDefense.hpp"
 #include "../../core/item/ItemConsumableHealing.hpp"
 #include "../../core/item/ItemConsumableSpeed.hpp"
 #include "../../core/item/ItemWeaponBow.hpp"
 #include "../../core/item/ItemWeaponSword.hpp"
 #include "../../core/item/ItemWeaponToolAxe.hpp"
-#include "../../Worlds/DemoG2/WorldActions.hpp"
 #include "../../core/item/ItemWeaponToolPickaxe.hpp"
 #include "../../core/item/ItemWeaponToolShovel.hpp"
-
 namespace cse498 {
     class DungeonWorld : public WorldBase {
         static constexpr double BASE_RANGE = 1.0;
@@ -267,8 +264,8 @@ namespace cse498 {
             m_player_id = player.GetID();
             m_enemy_id = GetNextAgentId();
 
-			auto& ui = AddAgent<TrashInterface>("Interface");
-			ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
+            // auto& ui = AddAgent<TrashInterface>("Interface");
+            // ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
 
             GenerateLevel();
         }
@@ -366,31 +363,31 @@ namespace cse498 {
         // }
 
 		void RunAgents() override {
-			TrashInterface* ui = nullptr;
+            // TrashInterface* ui = nullptr;
 
-			for (const auto& agent_ptr : agent_set) {
-				if (agent_ptr->IsInterface()) {
-					ui = static_cast<TrashInterface*>(agent_ptr.get());
-					break;
-				}
-			}
+            // for (const auto& agent_ptr : agent_set) {
+            // 	if (agent_ptr->IsInterface()) {
+            // 		ui = static_cast<TrashInterface*>(agent_ptr.get());
+            // 		break;
+            // 	}
+            // }
 
-			assert(ui);
-			assert(mPlayer);
+            // assert(ui);
+            assert(mPlayer);
 
-			size_t action = ui->SelectAction(main_grid);
-			int result = DoAction(*mPlayer, action);
-			mPlayer->SetActionResult(result);
+            // size_t action = ui->SelectAction(main_grid);
+            // int result = DoAction(*mPlayer, action);
+            // mPlayer->SetActionResult(result);
 
-			ui->SetLocation(mPlayer->GetLocation());
+            // ui->SetLocation(mPlayer->GetLocation());
 
-			//Prevent enemies from taking a turn before new level is drawn
-			if (mLevelJustAdvanced) {
-				mLevelJustAdvanced = false;
+            // Prevent enemies from taking a turn before new level is drawn
+            if (mLevelJustAdvanced) {
+                mLevelJustAdvanced = false;
 				return;
-			}
+            }
 
-			for (const auto& agent_ptr : agent_set) {
+            for (const auto& agent_ptr : agent_set) {
 				AgentBase* agent = agent_ptr.get();
 
 				if (agent->IsPlayerAgent()) continue;
@@ -546,12 +543,7 @@ namespace cse498 {
 
                     if (item_str == "Sword") {
                         std::unique_ptr<ItemWeaponSword> sword = std::make_unique<ItemWeaponSword>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_sword_1.png",
-                            BASE_GOLD + 1,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 1, *this);
                         sword->SetRange(BASE_RANGE);
                         sword->SetDamage(BASE_DAMAGE + 0.5);
                         sword->SetHitBonus(BASE_BONUS);
@@ -559,12 +551,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword));
                     } else if (item_str == "Sword +1") {
                         std::unique_ptr<ItemWeaponSword> sword1 = std::make_unique<ItemWeaponSword>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_sword_1.png",
-                            BASE_GOLD + 2,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 2, *this);
                         sword1->SetRange(BASE_RANGE);
                         sword1->SetDamage(BASE_DAMAGE + 1.0);
                         sword1->SetHitBonus(BASE_BONUS + 1);
@@ -572,12 +559,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword1));
                     } else if (item_str == "Sword +2") {
                         std::unique_ptr<ItemWeaponSword> sword2 = std::make_unique<ItemWeaponSword>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_sword_1.png",
-                            BASE_GOLD + 3,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 3, *this);
                         sword2->SetRange(BASE_RANGE);
                         sword2->SetDamage(BASE_DAMAGE + 1.5);
                         sword2->SetHitBonus(BASE_BONUS + 2);
@@ -585,12 +567,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword2));
                     } else if (item_str == "Sword +3") {
                         std::unique_ptr<ItemWeaponSword> sword3 = std::make_unique<ItemWeaponSword>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_sword_1.png",
-                            BASE_GOLD + 4,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 4, *this);
                         sword3->SetRange(BASE_RANGE);
                         sword3->SetDamage(BASE_DAMAGE + 2.0);
                         sword3->SetHitBonus(BASE_BONUS + 3);
@@ -598,12 +575,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword3));
                     } else if (item_str == "Sword +4") {
                         std::unique_ptr<ItemWeaponSword> sword4 = std::make_unique<ItemWeaponSword>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_sword_1.png",
-                            BASE_GOLD + 5,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 5, *this);
                         sword4->SetRange(BASE_RANGE);
                         sword4->SetDamage(BASE_DAMAGE + 2.5);
                         sword4->SetHitBonus(BASE_BONUS + 4);
@@ -611,12 +583,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword4));
                     } else if (item_str == "Sword +5") {
                         std::unique_ptr<ItemWeaponSword> sword5 = std::make_unique<ItemWeaponSword>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_sword_1.png",
-                            BASE_GOLD + 6,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 6, *this);
                         sword5->SetRange(BASE_RANGE);
                         sword5->SetDamage(BASE_DAMAGE + 3.0);
                         sword5->SetHitBonus(BASE_BONUS + 5);
@@ -626,12 +593,7 @@ namespace cse498 {
 
                     if (item_str == "Bow") {
                         std::unique_ptr<ItemWeaponBow> bow = std::make_unique<ItemWeaponBow>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_bow_1.png",
-                            BASE_GOLD + 1,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 1, *this);
                         bow->SetRange(BASE_RANGE + 3);
                         bow->SetDamage(BASE_DAMAGE + 0.5);
                         bow->SetHitBonus(BASE_BONUS);
@@ -639,12 +601,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow));
                     } else if (item_str == "Bow +1") {
                         std::unique_ptr<ItemWeaponBow> bow1 = std::make_unique<ItemWeaponBow>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_bow_1.png",
-                            BASE_GOLD + 2,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 2, *this);
                         bow1->SetRange(BASE_RANGE + 3);
                         bow1->SetDamage(BASE_DAMAGE + 1.0);
                         bow1->SetHitBonus(BASE_BONUS + 1);
@@ -652,12 +609,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow1));
                     } else if (item_str == "Bow +2") {
                         std::unique_ptr<ItemWeaponBow> bow2 = std::make_unique<ItemWeaponBow>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_bow_1.png",
-                            BASE_GOLD + 3,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 3, *this);
                         bow2->SetRange(BASE_RANGE + 3);
                         bow2->SetDamage(BASE_DAMAGE + 1.5);
                         bow2->SetHitBonus(BASE_BONUS + 2);
@@ -665,12 +617,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow2));
                     } else if (item_str == "Bow +3") {
                         std::unique_ptr<ItemWeaponBow> bow3 = std::make_unique<ItemWeaponBow>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_bow_1.png",
-                            BASE_GOLD + 4,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 4, *this);
                         bow3->SetRange(BASE_RANGE + 3);
                         bow3->SetDamage(BASE_DAMAGE + 2.0);
                         bow3->SetHitBonus(BASE_BONUS + 3);
@@ -678,12 +625,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow3));
                     } else if (item_str == "Bow +4") {
                         std::unique_ptr<ItemWeaponBow> bow4 = std::make_unique<ItemWeaponBow>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_bow_1.png",
-                            BASE_GOLD + 5,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 5, *this);
                         bow4->SetRange(BASE_RANGE + 3);
                         bow4->SetDamage(BASE_DAMAGE + 2.5);
                         bow4->SetHitBonus(BASE_BONUS + 4);
@@ -691,12 +633,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow4));
                     } else if (item_str == "Bow +5") {
                         std::unique_ptr<ItemWeaponBow> bow5 = std::make_unique<ItemWeaponBow>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_bow_1.png",
-                            BASE_GOLD + 6,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 6, *this);
                         bow5->SetRange(BASE_RANGE + 4);
                         bow5->SetDamage(BASE_DAMAGE + 3.0);
                         bow5->SetHitBonus(BASE_BONUS + 5);
@@ -704,48 +641,28 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow5));
                     } else if (item_str == "Healing Potion") {
                         std::unique_ptr<ItemConsumableHealing> healing = std::make_unique<ItemConsumableHealing>(
-                            item_id,
-                            item_str,
-                            "/assets/item/potion_healing.png",
-                            BASE_GOLD,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_potion_healing.png", BASE_GOLD, *this);
                         healing->SetCharges(1);
                         healing->SetDuration(0);
 
                         inventory.AddItem(std::move(healing));
                     } else if (item_str == "Defense Potion") {
                         std::unique_ptr<ItemConsumableDefense> defense = std::make_unique<ItemConsumableDefense>(
-                            item_id,
-                            item_str,
-                            "/assets/item/potion_defense.png",
-                            BASE_GOLD,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_potion_defense.png", BASE_GOLD, *this);
                         defense->SetCharges(1);
                         defense->SetDuration(3);
 
                         inventory.AddItem(std::move(defense));
                     } else if (item_str == "Speed Potion") {
                         std::unique_ptr<ItemConsumableSpeed> speed = std::make_unique<ItemConsumableSpeed>(
-                            item_id,
-                            item_str,
-                            "/assets/item/potion_speed.png",
-                            BASE_GOLD,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_potion_speed.png", BASE_GOLD, *this);
                         speed->SetCharges(1);
                         speed->SetDuration(3);
 
                         inventory.AddItem(std::move(speed));
                     } else if (item_str == "Axe") {
                         std::unique_ptr<ItemWeaponToolAxe> axe = std::make_unique<ItemWeaponToolAxe>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_axe.png",
-                            BASE_GOLD,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_axe.png", BASE_GOLD, *this);
                         axe->SetRange(BASE_RANGE);
                         axe->SetDamage(BASE_DAMAGE);
                         axe->SetHitBonus(BASE_BONUS);
@@ -755,12 +672,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(axe));
                     } else if (item_str == "Pickaxe") {
                         std::unique_ptr<ItemWeaponToolPickaxe> pickaxe = std::make_unique<ItemWeaponToolPickaxe>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_pickaxe.png",
-                            BASE_GOLD,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_pickaxe.png", BASE_GOLD, *this);
                         pickaxe->SetRange(BASE_RANGE);
                         pickaxe->SetDamage(BASE_DAMAGE);
                         pickaxe->SetHitBonus(BASE_BONUS);
@@ -770,12 +682,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(pickaxe));
                     } else if (item_str == "Shovel") {
                         std::unique_ptr<ItemWeaponToolPickaxe> shovel = std::make_unique<ItemWeaponToolPickaxe>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_shovel.png",
-                            BASE_GOLD,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_shovel.png", BASE_GOLD, *this);
                         shovel->SetRange(BASE_RANGE);
                         shovel->SetDamage(BASE_DAMAGE);
                         shovel->SetHitBonus(BASE_BONUS);

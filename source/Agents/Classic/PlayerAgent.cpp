@@ -40,7 +40,10 @@ size_t PlayerAgent::SelectPlayerAction(const char input) {
             return GetActionID("right");
         case 'e':
         case 'E':
-            return GetActionID("interact");
+            if (!HasAction("e")) {
+                return GetActionID("interact");
+            }
+            return GetActionID("e");
         case 'q':
         case 'Q':
             return GetActionID("quit");

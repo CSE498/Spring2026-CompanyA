@@ -49,6 +49,22 @@ constexpr const char* kOverworldWoodSpawnTilePath = "assets/world/forest/floor_t
 constexpr const char* kOverworldStoneSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_5.png";
 constexpr const char* kOverworldMetalSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_3.png";
 
+constexpr const char kDungeonTrap = 't';
+constexpr const char kDungeonLoot = 'l';
+constexpr const char kDungeonGoblin = 'g';
+constexpr const char kDungeonSkeleton = 's';
+
+constexpr const char kDungeonSecretDoorTop = 'f';
+constexpr const char kDungeonSecretDoorBottom = 'T';
+constexpr const char kDungeonSecretDoorLeft = 'U';
+constexpr const char kDungeonSecretDoorRight = 'v';
+
+constexpr const char kDungeonExit1 = 'e';
+constexpr const char kDungeonExit2 = 'u';
+constexpr const char kDungeonExit3 = 'r';
+// constexpr const char kDungeonExit4 = 'R';
+
+
 // -----------------------------------------------------------------------------
 // Timing constants
 // -----------------------------------------------------------------------------
@@ -326,6 +342,72 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
     mSymbolPathOverworld['q'] = kOverworldStoneSpawnTilePath;
     mSymbolPathOverworld['m'] = kOverworldMetalSpawnTilePath;
 
+    // Set up the symbol-to-path map for the dungeon world
+
+    const std::string basePath = "/assets/world/";
+    const std::string forest = "forest/";
+    const std::string cave = "cave/";
+    const std::string castle = "castle/";
+    const std::string floor = "floor_tiles/";
+    const std::string wall = "walls/external/";
+
+    // Floors
+    mSymbolPathDungeon['a'] = basePath + forest + floor + "tile_grass_1.png";
+    mSymbolPathDungeon['b'] = basePath + forest + floor + "tile_grass_2.png";
+    mSymbolPathDungeon['c'] = basePath + forest + floor + "tile_grass_3.png";
+    mSymbolPathDungeon['d'] = basePath + forest + floor + "tile_grass_4.png";
+    mSymbolPathDungeon['<'] = basePath + forest + floor + "tile_grass_5.png";
+
+    mSymbolPathDungeon['A'] = basePath + cave + floor + "tile_cave_1.png";
+    mSymbolPathDungeon['B'] = basePath + cave + floor + "tile_cave_2.png";
+    mSymbolPathDungeon['C'] = basePath + cave + floor + "tile_cave_3.png";
+    mSymbolPathDungeon['D'] = basePath + cave + floor + "tile_cave_4.png";
+    mSymbolPathDungeon['E'] = basePath + cave + floor + "tile_cave_5.png";
+
+    mSymbolPathDungeon['m'] = basePath + castle + floor + "tile_wood_1.png";
+    mSymbolPathDungeon['n'] = basePath + castle + floor + "tile_wood_2.png";
+    mSymbolPathDungeon['o'] = basePath + castle + floor + "tile_wood_3.png";
+    mSymbolPathDungeon['p'] = basePath + castle + floor + "tile_wood_4.png";
+    mSymbolPathDungeon['q'] = basePath + castle + floor + "tile_wood_5.png";
+
+    // walls and doors forest +
+    mSymbolPathDungeon['1'] = basePath + forest + wall + "border_top_forest.png";
+    mSymbolPathDungeon['2'] = basePath + forest + wall + "border_bottom_forest.png";
+    mSymbolPathDungeon['3'] = basePath + forest + wall + "border_left_forest.png";
+    mSymbolPathDungeon['4'] = basePath + forest + wall + "border_right_forest.png";
+    mSymbolPathDungeon['5'] = basePath + forest + wall +
+                              "border_top_forest.png"; // reuse top for inner walls until custom images are made
+    mSymbolPathDungeon['6'] = basePath + forest + wall +
+                              "border_bottom_forest.png"; // reuse bottom for inner walls until custom images are made
+    mSymbolPathDungeon['7'] = basePath + forest + wall + "door_left_forest.png";
+    mSymbolPathDungeon['8'] = basePath + forest + wall + "door_right_forest.png";
+
+    mSymbolPathDungeon['!'] = basePath + cave + wall + "border_top_cave.png";
+    mSymbolPathDungeon['@'] = basePath + cave + wall + "border_bottom_cave.png";
+    mSymbolPathDungeon['?'] = basePath + cave + wall + "border_left_cave.png";
+    mSymbolPathDungeon['$'] = basePath + cave + wall + "border_right_cave.png";
+    mSymbolPathDungeon['%'] = basePath + cave + wall + "internal/border_inside_cave_1.png";
+    mSymbolPathDungeon['^'] = basePath + cave + wall + "internal/border_inside_cave_2.png";
+    mSymbolPathDungeon['&'] = basePath + cave + wall + "door_left_cave.png";
+    mSymbolPathDungeon['*'] = basePath + cave + wall + "door_right_cave.png";
+
+    mSymbolPathDungeon['9'] = basePath + castle + wall + "border_top_castle.png";
+    mSymbolPathDungeon['0'] = basePath + castle + wall + "border_bottom_castle.png";
+    mSymbolPathDungeon['-'] = basePath + castle + wall + "border_left_castle.png";
+    mSymbolPathDungeon['='] = basePath + castle + wall + "border_right_castle.png";
+    mSymbolPathDungeon['['] = basePath + castle + wall + "internal/border_inside_castle_1.png";
+    mSymbolPathDungeon[']'] = basePath + castle + wall + "internal/border_inside_castle_2.png";
+    mSymbolPathDungeon['.'] = basePath + castle + wall + "door_left_castle.png";
+    mSymbolPathDungeon[';'] = basePath + castle + wall + "door_right_castle.png";
+
+    mSymbolPathDungeon[kDungeonTrap] = "/assets/items/item_shovel.png"; // placeholder
+    mSymbolPathDungeon[kDungeonLoot] = "/assets/items/item_chest.png";
+
+    mSymbolPathDungeon['e'] = basePath + forest + floor + "tile_grass_1.png";
+    mSymbolPathDungeon['u'] = basePath + cave + floor + "tile_cave_1.png";
+    mSymbolPathDungeon['r'] = basePath + castle + floor + "tile_wood_1.png";
+    // mSymbolPathDungeon['R'] =
+
     // Create root layout hooking into "root" div
     mElements.emplace_back(std::make_unique<WebLayout>("root"));
     mRoot = static_cast<WebLayout*>(mElements.back().get());
@@ -481,6 +563,21 @@ std::unordered_map<char, std::string>& WebInterface::GetSymbolPathMap() {
     }
 }
 
+std::string WebInterface::GetDungeonName() const {
+    switch (mDungeon->GetLevel()) {
+        case 1:
+            return "forest";
+        case 2:
+            return "cave";
+        case 3:
+            return "castle";
+        case 4:
+            return "dungeon";
+        default:
+            return "forest"; // default to forest if level is out of expected range
+    }
+}
+
 std::string WebInterface::GetImagePath(char symbol) {
     if (mGameState == WebState::OVERWORLD) {
         // Check for special symbols
@@ -496,15 +593,37 @@ std::string WebInterface::GetImagePath(char symbol) {
             return mSymbolPathOverworld.at(symbol);
         }
     } else {
-        // Check for special symbols
-        if (symbol == '@') {
-            return kPlayerImagePath;
-        }
-        if (symbol == '*') {
-            return kMonsterImagePath;
+        std::string name = GetDungeonName();
+        std::string path = "/assets/world/" + name + "/";
+
+        std::string tile = name;
+        if (name == "castle") {
+            tile = "wood";
+        } else if (name == "forest") {
+            tile = "grass";
+        } else if (name == "dungeon") {
+            tile = "stoneBrick";
         }
 
-        return mDungeon->GetImageFile(symbol);
+        switch (symbol) {
+            case kDungeonGoblin:
+            case kDungeonSkeleton:
+                return path + "floor_tiles/tile_" + tile + "_1.png";
+            case kDungeonSecretDoorTop:
+                return path + "walls/external/border_top_" + name + ".png";
+            case kDungeonSecretDoorBottom:
+                return path + "walls/external/border_bottom_" + name + ".png";
+            case kDungeonSecretDoorLeft:
+                return path + "walls/external/border_left_" + name + ".png";
+            case kDungeonSecretDoorRight:
+                return path + "walls/external/border_right_" + name + ".png";
+            default:
+                break;
+        }
+
+        if (mSymbolPathDungeon.contains(symbol)) {
+            return mSymbolPathDungeon.at(symbol);
+        }
     }
 
     return "";
@@ -970,7 +1089,7 @@ void WebInterface::DrawGrid(const WorldGrid& grid,
     canvasWidth = canvasWidth / dpr;
     canvasHeight = canvasHeight / dpr;
 
-    const int drawSize = canvasWidth / kVisibleGridWidth;
+    const int drawSize = std::lround(canvasWidth / static_cast<double>(kVisibleGridWidth));
     const double scale = drawSize / static_cast<double>(kTextureSourceImageSizePx);
 
     int visibleGridHeight = canvasHeight / drawSize;
@@ -1022,12 +1141,42 @@ void WebInterface::DrawGrid(const WorldGrid& grid,
             auto bitmap = GetOrLoadBitmap(imagePath);
             int left = CellXToScreenLeft(x);
             int top = CellYToScreenTop(y);
+
+            if (cell == kDungeonLoot || cell == kDungeonTrap) {
+                std::string floorImagePath{};
+                switch (mDungeon->GetLevel()) {
+                    case 1:
+                        floorImagePath = "/assets/world/forest/floor_tiles/tile_grass_1.png";
+                        break;
+                    case 2:
+                        floorImagePath = "/assets/world/cave/floor_tiles/tile_cave_1.png";
+                        break;
+                    case 3:
+                        floorImagePath = "/assets/world/castle/floor_tiles/tile_wood_1.png";
+                        break;
+                    case 4:
+                        floorImagePath = "/assets/world/dungeon/floor_tiles/tile_stoneBrick_1.png";
+                        break;
+                    default:
+                        floorImagePath = "/assets/world/forest/floor_tiles/tile_grass_1.png";
+                        break;
+                }
+                mCanvas->DrawTexture(GetOrLoadBitmap(floorImagePath).as_handle(), left, top, scale);
+            }
+
             mCanvas->DrawTexture(bitmap.as_handle(), left, top, scale);
+
+            if (cell == kDungeonExit1 || cell == kDungeonExit2 || cell == kDungeonExit3) {
+                mCanvas->DrawCircle(left, top - (drawSize / 2), drawSize / 2, "black", 1, "black");
+            }
         }
     }
 
     for (const auto& agentId: agentIds) {
         const AgentBase& agent = GetCurrentWorld()->GetAgent(agentId);
+        if (!agent.IsAlive()) {
+            continue;
+        }
         WorldPosition pos = agent.GetPosition();
         const int agentCellX = gsl::narrow_cast<int>(pos.CellX());
         const int agentCellY = gsl::narrow_cast<int>(pos.CellY());
@@ -1037,19 +1186,19 @@ void WebInterface::DrawGrid(const WorldGrid& grid,
         }
 
         char agentSymbol = agent.GetSymbol();
-        std::string imagePath = GetImagePath(agentSymbol);
+        std::string imagePath = agent.IsPlayerAgent() ? kPlayerImagePath : kMonsterImagePath;
 
-        if (symbolPathMap.contains(agentSymbol)) {
-            if (symbolPathMap.at(agentSymbol) != imagePath) {
-                symbolPathMap[agentSymbol] = imagePath;
-            }
-        } else {
-            symbolPathMap.emplace(agentSymbol, imagePath);
-        }
+        // if (symbolPathMap.contains(agentSymbol)) {
+        //     if (symbolPathMap.at(agentSymbol) != imagePath) {
+        //         symbolPathMap[agentSymbol] = imagePath;
+        //     }
+        // } else {
+        //     symbolPathMap.emplace(agentSymbol, imagePath);
+        // }
 
-        if (imagePath.empty() || !imagePath.contains(kPngFileExtension)) {
-            continue;
-        }
+        // if (imagePath.empty() || !imagePath.contains(kPngFileExtension)) {
+        //     continue;
+        // }
 
         auto agentTexture = GetOrLoadBitmap(imagePath);
         int agentLeft = CellXToScreenLeft(agentCellX);
@@ -1064,8 +1213,7 @@ void WebInterface::DrawGrid(const WorldGrid& grid,
         const int playerCellY = gsl::narrow_cast<int>(pos.CellY());
 
         if (playerCellX >= minX && playerCellX <= maxX && playerCellY >= minY && playerCellY <= maxY) {
-            std::string playerImagePath = GetImagePath('@');
-            auto playerTexture = GetOrLoadBitmap(playerImagePath);
+            auto playerTexture = GetOrLoadBitmap(kPlayerImagePath);
             int playerLeft = CellXToScreenLeft(playerCellX);
             int playerTop = CellYToScreenTop(playerCellY);
             mCanvas->DrawTexture(playerTexture.as_handle(), playerLeft, playerTop, scale);

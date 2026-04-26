@@ -50,8 +50,12 @@ namespace cse498 {
          * @details
          * This string is used to load castle rooms
          */
+#ifndef __EMSCRIPTEN__
         inline static const std::string m_room_dir =
                 static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_three_pool/room_";
+#else
+        inline static const std::string m_room_dir = "/rooms/Dungeon_three_pool/room_";
+#endif
 
         /**
          * @brief Constructs the weighted room pool.
