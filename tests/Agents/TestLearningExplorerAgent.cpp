@@ -38,6 +38,13 @@ TEST_CASE("LearningExplorerAgent initializes with required actions", "[LearningE
     CHECK(agent.HasAction("right"));
 }
 
+TEST_CASE("Non-enemy agents return false for IsEnemy", "[AgentBase]") {
+    MazeWorld world;
+    auto& agent = world.AddAgent<LearningExplorerAgent>("Explorer");
+
+    CHECK_FALSE(agent.IsEnemy());
+}
+
 TEST_CASE("LearningExplorerAgent Initialize fails without movement actions", "[LearningExplorerAgent]") {
     NoMovementActionWorld world;
     LearningExplorerAgent agent(0, "E", world);

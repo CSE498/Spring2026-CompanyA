@@ -165,11 +165,27 @@ public:
 
     // Accessors
 
-    [[nodiscard]] char GetSymbol() const { return mSymbol; }
-    AgentBase& SetSymbol(char in) {
-        mSymbol = in;
-        return *this;
-    }
+        [[nodiscard]] char GetSymbol() const { return mSymbol; }
+
+        AgentBase &SetSymbol(char in) {
+            mSymbol = in;
+            return *this;
+        }
+
+        /**
+         * @brief Cross-team hook used by Group 17 AI agents to identify hostiles without
+         *        relying on runtime type info (RTTI) or dynamic_cast chains.
+         *
+         * @details AI logic such as SmartEnemyAgent::GetTargetPlayerPosition() iterates
+         *          @ref WorldBase::GetAgents() and picks a @b non-enemy as its target.
+         *          Tagging agents here keeps the AI world-agnostic: any world (OverWorld,
+         *          DungeonWorld, AIWorld, etc.) can host a SmartEnemyAgent as long as its
+         *          enemies report @c true and its players/NPCs inherit the default @c false.
+         *
+         * @retval true  This agent should be considered hostile (enemy).
+         * @retval false Default; friendly/neutral agent (players, merchants, explorers).
+         */
+        [[nodiscard]] virtual bool IsEnemy() const { return false; }
 
     // -- World Interactions --
 

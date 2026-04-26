@@ -45,8 +45,16 @@ private:
 public:
     SmartEnemyAgent(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
 
-    bool Initialize() override;
-    [[nodiscard]] size_t SelectAction(const WorldGrid& grid) override;
-};
+        bool Initialize() override;
+        [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
+
+        /**
+         * @brief Identifies this agent as hostile so peer AI agents and the world
+         *        treat it as an enemy (and so it will not pick itself as a target).
+         * @see AgentBase::IsEnemy()
+         * @return Always @c true.
+         */
+        [[nodiscard]] bool IsEnemy() const override { return true; }
+    };
 
 } // namespace cse498

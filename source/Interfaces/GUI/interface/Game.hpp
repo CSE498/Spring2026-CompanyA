@@ -21,8 +21,13 @@
 #include "../ImageManager.hpp"
 #include "../Menu.hpp"
 #include "../Text.hpp"
-#include "DungeonWorld.hpp"
+// Group 17 build-fix: these two includes were relative paths that did not resolve
+// from this file's location on upstream @c group17_inv_and_dungeon. They now use
+// source-root-relative paths (the @c source/ directory is an include root in
+// root-level @c CMakeLists.txt) so this TU actually compiles.
+#include "Worlds/Dungeon/DungeonWorld.hpp"
 #include "OverWorld.hpp"
+#include "Agents/Classic/PlayerAgent.hpp"
 
 namespace cse498 {
 
@@ -72,11 +77,20 @@ private:
     Menu mMainMenu; /// Main menu options
     Text mTitleText; /// Title text displayed on main menu
 
-    // -------------------------
-    // Pause menu UI
-    // -------------------------
-    Menu mPauseMenu; /// Pause menu options
-    Text mPauseText; /// Pause screen title text
+        // -------------------------
+        // Pause menu UI
+        // -------------------------
+        Menu mPauseMenu; /// Pause menu options
+        Text mPauseText; /// Pause screen title text
+
+        // -------------------------
+        // Backpack/Inventory
+        // -------------------------
+        int mBackpackCursorRow = 0;    /// Current backpack cursor row
+        int mBackpackCursorCol = 0;    /// Current backpack cursor column
+        std::string mPickupMessage;    /// Message on pickup
+        Text mPickupText;              /// Pickup notification text
+        Uint32 mPickupMessageTime = 0; /// When the message was set
 
     // -------------------------
     // Overworld state
@@ -89,8 +103,13 @@ private:
     int mCamX = 0; /// Camera X position in tile coordinates
     int mCamY = 0; /// Camera Y position in tile coordinates
 
-    int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
-    int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
+        int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
+        int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
+
+        // based on discord discussion it appears this is the direction this is heading,
+        // TODO eliminate not needed code based on other groups implementation and update camera logic to use just player pos
+        PlayerAgent* mOverworldPlayer = nullptr;
+        PlayerAgent* mDungeonPlayer = nullptr;
 
     // -------------------------
     // Dungeon state
@@ -111,11 +130,12 @@ private:
     DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
     Text mStatsText; /// Text object use for stats screen
 
-    // -------------------------
-    // Runtime flags
-    // -------------------------
-    bool mRunning = false; /// Controls main game loop execution
-    bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
+        // -------------------------
+        // Runtime flags
+        // -------------------------
+        bool mRunning = false; /// Controls main game loop execution
+        bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
+        bool mShowBackpack = false; /// Toggle backpack overlay
 
     // -------------------------
     // Core loop methods
@@ -135,16 +155,18 @@ private:
     void UpdatePaused();
     void UpdateSettings();
 
-    /**
-     * @brief Render functions for each game state.
-     */
-    void RenderMainMenu();
-    void RenderOverworld();
-    void RenderDungeon();
-    void RenderPaused();
-    void RenderSettings();
-    void UpdateStats();
-    void RenderStats();
+        /**
+         * @brief Render functions for each game state.
+         */
+        void RenderMainMenu();
+        void RenderOverworld();
+        void RenderDungeon();
+        void RenderPaused();
+        void RenderSettings();
+        void RenderHotbar(const Inventory& inventory);
+        void RenderBackpack(const Inventory& inventory);
+        void RenderPickupMessage();
+        size_t KeyToAction(SDL_Keycode key);
 
     /**
      * @brief Process player movement input.
@@ -152,13 +174,13 @@ private:
      */
     void ProcessPlayerMove(SDL_Keycode key);
 
-    /**
-     * @brief Update camera position for a given grid.
-     * @param grid Reference to the grid
-     * @param camX Camera X position (modified)
-     * @param camY Camera Y position (modified)
-     */
-    void UpdateWorld(ImageGrid& grid, int& camX, int& camY);
+        /**
+         * @brief Update camera position for a given grid.
+         * @param grid Reference to the grid
+         * @param camX Camera X position (modified)
+         * @param camY Camera Y position (modified)
+         */
+        [[deprecated]] void UpdateWorld(ImageGrid &grid, int &camX, int &camY);
 
     /**
      * @brief Render a world grid within the current viewport.
@@ -208,16 +230,19 @@ private:
      */
     void Resume();
 
-public:
-    /**
-     * @brief Construct a new Game instance.
-     * @param title Window title
-     * @param width Window width in pixels
-     * @param height Window height in pixels
-     */
-    Game(const std::string& title = "Slay the Dungeon", int width = kDefaultWindowWidth,
-         int height = kDefaultWindowHeight) :
-        mGameView(std::make_shared<GameView>(title, width, height)), mTitleText(nullptr), mPauseText(nullptr) {}
+    public:
+        /**
+         * @brief Construct a new Game instance.
+         * @param title Window title
+         * @param width Window width in pixels
+         * @param height Window height in pixels
+         */
+        Game(const std::string &title = "Slay the Dungeon", int width = kDefaultWindowWidth,
+             int height = kDefaultWindowHeight) :
+            mGameView(std::make_shared<GameView>(title, width, height)), mTitleText(nullptr), mPauseText(nullptr),
+            mPickupText(nullptr)
+        {
+        }
 
     /**
      * @brief Default destructor.

@@ -43,13 +43,20 @@ public:
     /// Bad score to prevent certain agent behavior
     static constexpr int BadScore = -1000000;
 
-    EnemyAgent(size_t id, const std::string& name, const WorldBase& world);
-    /**
-     * Default Deconstructor
-     */
-    ~EnemyAgent() override = default;
-    bool Initialize() override;
-    [[nodiscard]] size_t SelectAction(const WorldGrid& grid) override;
-};
+        EnemyAgent(size_t id, const std::string &name, const WorldBase &world);
+        /**
+         * Default Deconstructor
+         */
+        ~EnemyAgent() override = default;
+        bool Initialize() override;
+        [[nodiscard]] size_t SelectAction(const WorldGrid &grid) override;
+
+        /**
+         * @brief Identifies this agent as hostile for AI targeting.
+         * @see AgentBase::IsEnemy() for the rationale behind this hook.
+         * @return Always @c true — every @ref EnemyAgent is an enemy by definition.
+         */
+        [[nodiscard]] bool IsEnemy() const override { return true; }
+    };
 
 } // namespace cse498
