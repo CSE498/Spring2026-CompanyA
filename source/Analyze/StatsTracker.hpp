@@ -18,6 +18,8 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <iomanip>
+
 
 namespace cse498 {
 
@@ -91,6 +93,12 @@ public:
      */
     std::optional<ActionSummary> BuildActionSummary(const std::string& key, const std::string& label,
                                                     const ActionLog& log) const;
+
+    /*@brief Prepares and outputs dashboard data through the analytics manager.
+     * @param Analytics manager that owns the underlying logs.
+     * Used as a temporary way to output the summaries to the console until the GUI is implemented.
+     */
+    void DisplayData(const AnalyticsManager& analytics) const; 
 };
 
 } // namespace cse498

@@ -63,3 +63,44 @@ TEST_CASE("Build Action Summary", "[StatsTracker]") {
     REQUIRE(summary.actionCount == 3);
     REQUIRE(summary.mostActiveEntity == 1);
 }
+
+// TEST_CASE("Output Data", "[StatsTracker]") {
+//     cse498::StatsTracker tracker;
+//     cse498::AnalyticsManager analytics;
+//     cse498::DashboardSnapshot dashboard = tracker.BuildSnapshot(analytics);
+
+//     analytics.LogHealth(3.4);
+//     analytics.LogHealth(5.2);
+//     analytics.LogHealth(53.2);
+
+//     analytics.LogDamageDealt(50);
+//     analytics.LogDamageDealt(10);
+//     analytics.LogDamageDealt(20);
+
+//     analytics.LogEnemiesTracked(4);
+//     analytics.LogEnemiesTracked(3);
+//     analytics.LogEnemiesTracked(2);
+
+//     analytics.LogAction(1, "TestMove", cse498::WorldPosition(1, 2), cse498::WorldPosition(2, 1));
+//     analytics.LogAction(1, "TestMove2", cse498::WorldPosition(2, 1), cse498::WorldPosition(3, 3));
+//     analytics.LogAction(1, "TestMove3", cse498::WorldPosition(3, 3), cse498::WorldPosition(4, 3));
+
+//     dashboard = tracker.BuildSnapshot(analytics);
+
+//     tracker.DisplayData(analytics);
+// }
+
+
+// TEST_CASE("Output No Data", "[StatsTracker]") {
+//     cse498::StatsTracker tracker;
+//     cse498::AnalyticsManager analytics;
+//     cse498::DashboardSnapshot dashboard = tracker.BuildSnapshot(analytics);
+
+//     analytics.LogHealth(-3.4);
+//     analytics.LogHealth(-5.2);
+//     analytics.LogHealth(-3.2);
+
+//     dashboard = tracker.BuildSnapshot(analytics);
+
+//     tracker.DisplayData(analytics);
+// }
