@@ -28,6 +28,8 @@ class WorldBase;
 
 class AgentFactory {
 private:
+    /// for double comparison
+    static constexpr double EP = 1e-9;
     static constexpr int SKELETON_MAX_STEP_AWAY_COUNT = 5;
     ////////////////////////////////////////////////////////////////////////////////////
     //                  HELPER FUNCTIONS TO BUILD TREES

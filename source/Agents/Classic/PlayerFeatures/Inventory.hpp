@@ -15,6 +15,7 @@
 #pragma once
 
 #include <array>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -87,9 +88,35 @@ public:
      */
     void SwapSlots(size_t slotIndex1, size_t slotIndex2);
     void ClearInventory();
-    void HotBarIndexMove(int index) { mCurrentHotbarSlot = index; };
-    void HotBarIndexInc() { mCurrentHotbarSlot = (mCurrentHotbarSlot + 1) % HOTBAR_SIZE; }
-    void HotBarIndexDec() { mCurrentHotbarSlot = (mCurrentHotbarSlot - 1 + HOTBAR_SIZE) % HOTBAR_SIZE; }
+
+    /**
+     * Optional callback after any inventory mutation (add/remove/swap/clear/hotbar).
+     * Used e.g. by PlayerAgent to refresh combat stats from the hand slot.
+     */
+    void SetChangeNotifier(std::function<void()> cb) { mOnChanged = std::move(cb); }
+
+    /**
+     * Set active hotbar slot directly.
+     * @param index New hotbar index.
+     */
+    void HotBarIndexMove(int index) {
+        mCurrentHotbarSlot = static_cast<size_t>(index);
+        NotifyChanged();
+    }
+    /**
+     * Move active hotbar slot one step to the right (with wraparound).
+     */
+    void HotBarIndexInc() {
+        mCurrentHotbarSlot = (mCurrentHotbarSlot + 1) % HOTBAR_SIZE;
+        NotifyChanged();
+    }
+    /**
+     * Move active hotbar slot one step to the left (with wraparound).
+     */
+    void HotBarIndexDec() {
+        mCurrentHotbarSlot = (mCurrentHotbarSlot - 1 + HOTBAR_SIZE) % HOTBAR_SIZE;
+        NotifyChanged();
+    }
     size_t GetTotal(const std::string& name) const;
 
     /**
@@ -231,6 +258,15 @@ private:
 
     /// this is the selected hotbar slot
     size_t mCurrentHotbarSlot = 0;
+
+    /// Optional callback invoked after inventory/hotbar mutations.
+    std::function<void()> mOnChanged;
+    /// Dispatches mOnChanged() when a listener is registered.
+    void NotifyChanged() {
+        if (mOnChanged) {
+            mOnChanged();
+        }
+    }
 };
 
 std::ostream& operator<<(std::ostream& os, const Inventory::InventorySlot& slot);

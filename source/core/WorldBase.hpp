@@ -12,7 +12,7 @@
 #include <optional>
 #include <string>
 #include <type_traits>
-#include <vector>
+#include <unordered_map>
 #include <unordered_set>
 
 
@@ -55,6 +55,39 @@ protected:
     virtual void ConfigAgent(AgentBase& /* agent */) {}
 
 public:
+    /**
+     * Build all world positions in a Manhattan-distance (diamond) range around a center position.
+     * Priorities are assigned in deterministic interaction order:
+     * right, up, down, left for each distance ring, then the ring's diagonals/edge points.
+     */
+    [[nodiscard]] static std::unordered_map<WorldPosition, int> BuildDiamondNeighborsByRange(
+        const WorldPosition& center, int range
+    ) {
+        std::unordered_map<WorldPosition, int> neighbors;
+        if (range <= 0)
+            return neighbors;
+
+        int priority = 1;
+        for (int distance = 1; distance <= range; ++distance) {
+            neighbors.emplace(center.GetOffset(distance, 0), priority++);
+            neighbors.emplace(center.GetOffset(0, -distance), priority++);
+            neighbors.emplace(center.GetOffset(0, distance), priority++);
+            neighbors.emplace(center.GetOffset(-distance, 0), priority++);
+
+            for (int dy = 0; dy <= distance; ++dy) {
+                const int dx = distance - dy;
+                if (dx == 0 || dy == 0)
+                    continue; // skip cardinals already inserted above
+
+                neighbors.emplace(center.GetOffset(dx, -dy), priority++);
+                neighbors.emplace(center.GetOffset(dx, dy), priority++);
+                neighbors.emplace(center.GetOffset(-dx, dy), priority++);
+                neighbors.emplace(center.GetOffset(-dx, -dy), priority++);
+            }
+        }
+        return neighbors;
+    }
+
     WorldBase() {
         // KAREN: Temporarily commented out to avoid interfering with other groups' demos
         // This has moved to DemoSimpleWorldG2.cpp's constructor
@@ -305,11 +338,10 @@ public:
     virtual int Interact() {
         assert(mPlayer);
         auto playerLocation = Round(mPlayer->GetPosition());
-        // maps positions to priorities
-        std::unordered_map<WorldPosition, int> neighbors = {{playerLocation.GetOffset(0, 1), 3},
-                                                            {playerLocation.GetOffset(0, -1), 2},
-                                                            {playerLocation.GetOffset(1, 0), 1},
-                                                            {playerLocation.GetOffset(-1, 0), 4}};
+        const int interactionRange = 1;
+        const int enemyInteractionRange = std::max(interactionRange, static_cast<int>(mPlayer->GetAtkRange()));
+        const auto interactionNeighbors = BuildDiamondNeighborsByRange(playerLocation, interactionRange);
+        const auto enemyNeighbors = BuildDiamondNeighborsByRange(playerLocation, enemyInteractionRange);
 
         // ik "pair" is strange but useful here.
         // we need to run through ALL AGENTS because we don't know which one has successful interactions
@@ -320,6 +352,7 @@ public:
         // go through the agents and find based on priority
         for (const auto& agent_ptr: agent_set) {
             assert(agent_ptr);
+            const auto& neighbors = agent_ptr->IsEnemy() ? enemyNeighbors : interactionNeighbors;
             if (neighbors.contains(agent_ptr->GetPosition())) {
                 int val = neighbors.at(agent_ptr->GetPosition());
                 if (val == 1) {

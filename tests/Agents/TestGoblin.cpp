@@ -126,6 +126,7 @@ TEST_CASE("Goblin factory applies differentiated stats and spawn data", "[Goblin
     REQUIRE(goblin->GetAtk() == Approx(23.0));
     REQUIRE(goblin->GetDef() == Approx(9.0));
     REQUIRE(goblin->GetAtkRange() == 2);
+    REQUIRE(goblin->GetBuiltInWeaponName() == "Dagger");
     REQUIRE(goblin->GetLevel() == 5);
     REQUIRE(goblin->IsAlive());
 

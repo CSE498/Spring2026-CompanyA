@@ -124,15 +124,15 @@ public:
     void AdvanceLogTime(double time) { mActionLog.UpdateTime(time); }
 
 
-        [[nodiscard]] bool IsAlive() const { return mAlive; }
-        [[nodiscard]] const AgentStats &GetStats() const { return mStats; }
-        void SetStats(const AgentStats &stats) { mStats = stats; }
-        [[nodiscard]] double GetCurrentHealth() const { return mStats.mHp; }
-        [[nodiscard]] double GetMaxHealth() const { return mStats.mMaxHp; }
-        [[nodiscard]] double GetAtk() const { return mStats.mAtk; }
-        [[nodiscard]] double GetDef() const { return mStats.mDef; }
-        [[nodiscard]] size_t GetAtkRange() const { return mStats.mRange; }
-        [[nodiscard]] size_t GetLevel() const { return mStats.mLevel; }
+    [[nodiscard]] bool IsAlive() const { return mAlive; }
+    [[nodiscard]] const AgentStats& GetStats() const { return mStats; }
+    virtual void SetStats(const AgentStats& stats) { mStats = stats; }
+    [[nodiscard]] double GetCurrentHealth() const { return mStats.mHp; }
+    [[nodiscard]] double GetMaxHealth() const { return mStats.mMaxHp; }
+    [[nodiscard]] double GetAtk() const { return mStats.mAtk; }
+    [[nodiscard]] double GetDef() const { return mStats.mDef; }
+    [[nodiscard]] double GetAtkRange() const { return mStats.mRange; }
+    [[nodiscard]] size_t GetLevel() const { return mStats.mLevel; }
 
         /**
          * sets hp and forces within proper range [0, mMaxHp]
@@ -195,6 +195,7 @@ public:
 
     // -- Entity Overrides --
     bool IsAgent() const override { return true; }
+    [[nodiscard]] virtual bool IsEnemy() const { return false; }
 
     // -- Action management --
 

@@ -64,6 +64,28 @@ public:
     void SetGold(std::size_t amount) { mGold = amount; }
 
 	bool IsPlayerAgent() const override {return true;}
+
+    /**
+     * Stores base combat stats and recomputes effective combat values from the
+     * currently selected hand item.
+     * @param stats Incoming baseline stats from world/factory setup.
+     */
+    void SetStats(const AgentStats& stats) override;
+
+    /**
+     * Wires inventory-change notifications so hand-weapon effects stay in sync.
+     * @return true when initialization succeeds.
+     */
+    bool Initialize() override;
+
+    /**
+     * Recomputes effective attack and range from base stats plus the weapon in the selected hotbar hand slot.
+     */
+    void RefreshCombatFromHand();
+
+private:
+    /// Unmodified stats from the world (before hand weapon bonuses).
+    AgentStats mBaseCombatStats{};
 };
 
 } // namespace cse498
