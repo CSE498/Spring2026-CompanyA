@@ -9,8 +9,11 @@
 
 namespace Catch {
 
-    SectionInfo::SectionInfo( SourceLineInfo const& _lineInfo,
-                              std::string const& _name ):
-        name( _name ), lineInfo( _lineInfo ) {}
+    SectionInfo::SectionInfo
+        (   SourceLineInfo const& _lineInfo,
+            std::string const& _name )
+    :   name( _name ),
+        lineInfo( _lineInfo )
+    {}
 
 } // end namespace Catch

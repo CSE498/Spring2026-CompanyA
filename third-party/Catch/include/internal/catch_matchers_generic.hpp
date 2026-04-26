@@ -14,45 +14,45 @@
 #include <string>
 
 namespace Catch {
-    namespace Matchers {
-        namespace Generic {
+namespace Matchers {
+namespace Generic {
 
-            namespace Detail {
-                std::string finalizeDescription( const std::string& desc );
-            }
+namespace Detail {
+    std::string finalizeDescription(const std::string& desc);
+}
 
-            template <typename T>
-            class PredicateMatcher : public MatcherBase<T> {
-                std::function<bool( T const& )> m_predicate;
-                std::string m_description;
+template <typename T>
+class PredicateMatcher : public MatcherBase<T> {
+    std::function<bool(T const&)> m_predicate;
+    std::string m_description;
+public:
 
-            public:
-                PredicateMatcher( std::function<bool( T const& )> const& elem,
-                                  std::string const& descr ):
-                    m_predicate( std::move( elem ) ),
-                    m_description( Detail::finalizeDescription( descr ) ) {}
+    PredicateMatcher(std::function<bool(T const&)> const& elem, std::string const& descr)
+        :m_predicate(std::move(elem)),
+        m_description(Detail::finalizeDescription(descr))
+    {}
 
-                bool match( T const& item ) const override {
-                    return m_predicate( item );
-                }
+    bool match( T const& item ) const override {
+        return m_predicate(item);
+    }
 
-                std::string describe() const override { return m_description; }
-            };
+    std::string describe() const override {
+        return m_description;
+    }
+};
 
-        } // namespace Generic
+} // namespace Generic
 
-        // The following functions create the actual matcher objects.
-        // The user has to explicitly specify type to the function, because
-        // inferring std::function<bool(T const&)> is hard (but possible) and
-        // requires a lot of TMP.
-        template <typename T>
-        Generic::PredicateMatcher<T>
-        Predicate( std::function<bool( T const& )> const& predicate,
-                   std::string const& description = "" ) {
-            return Generic::PredicateMatcher<T>( predicate, description );
-        }
+    // The following functions create the actual matcher objects.
+    // The user has to explicitly specify type to the function, because
+    // inferring std::function<bool(T const&)> is hard (but possible) and
+    // requires a lot of TMP.
+    template<typename T>
+    Generic::PredicateMatcher<T> Predicate(std::function<bool(T const&)> const& predicate, std::string const& description = "") {
+        return Generic::PredicateMatcher<T>(predicate, description);
+    }
 
-    } // namespace Matchers
+} // namespace Matchers
 } // namespace Catch
 
 #endif // TWOBLUECUBES_CATCH_MATCHERS_GENERIC_HPP_INCLUDED

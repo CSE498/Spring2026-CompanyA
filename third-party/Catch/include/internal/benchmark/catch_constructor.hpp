@@ -16,62 +16,62 @@
 namespace Catch {
     namespace Benchmark {
         namespace Detail {
-            template <typename T, bool Destruct> struct ObjectStorage {
-                ObjectStorage(): data() {}
+            template <typename T, bool Destruct>
+            struct ObjectStorage
+            {
+                ObjectStorage() : data() {}
 
-                ObjectStorage( const ObjectStorage& other ) {
-                    new ( &data ) T( other.stored_object() );
+                ObjectStorage(const ObjectStorage& other)
+                {
+                    new(&data) T(other.stored_object());
                 }
 
-                ObjectStorage( ObjectStorage&& other ) {
-                    new ( &data ) T( std::move( other.stored_object() ) );
+                ObjectStorage(ObjectStorage&& other)
+                {
+                    new(&data) T(std::move(other.stored_object()));
                 }
 
                 ~ObjectStorage() { destruct_on_exit<T>(); }
 
-                template <typename... Args> void construct( Args&&... args ) {
-                    new ( &data ) T( std::forward<Args>( args )... );
+                template <typename... Args>
+                void construct(Args&&... args)
+                {
+                    new (&data) T(std::forward<Args>(args)...);
                 }
 
                 template <bool AllowManualDestruction = !Destruct>
-                typename std::enable_if<AllowManualDestruction>::type
-                destruct() {
+                typename std::enable_if<AllowManualDestruction>::type destruct()
+                {
                     stored_object().~T();
                 }
 
             private:
-                // If this is a constructor benchmark, destruct the underlying
-                // object
+                // If this is a constructor benchmark, destruct the underlying object
                 template <typename U>
-                void destruct_on_exit(
-                    typename std::enable_if<Destruct, U>::type* = 0 ) {
-                    destruct<true>();
-                }
+                void destruct_on_exit(typename std::enable_if<Destruct, U>::type* = 0) { destruct<true>(); }
                 // Otherwise, don't
                 template <typename U>
-                void destruct_on_exit(
-                    typename std::enable_if<!Destruct, U>::type* = 0 ) {}
+                void destruct_on_exit(typename std::enable_if<!Destruct, U>::type* = 0) { }
 
                 T& stored_object() {
-                    return *static_cast<T*>( static_cast<void*>( &data ) );
+                    return *static_cast<T*>(static_cast<void*>(&data));
                 }
 
                 T const& stored_object() const {
-                    return *static_cast<T*>( static_cast<void*>( &data ) );
+                    return *static_cast<T*>(static_cast<void*>(&data));
                 }
 
-                struct {
-                    alignas( T ) unsigned char data[sizeof( T )];
-                } data;
+
+                struct { alignas(T) unsigned char data[sizeof(T)]; }  data;
             };
-        } // namespace Detail
+        }
 
         template <typename T>
         using storage_for = Detail::ObjectStorage<T, true>;
 
         template <typename T>
         using destructable_object = Detail::ObjectStorage<T, false>;
-    } // namespace Benchmark
-} // namespace Catch
+    }
+}
 
 #endif // TWOBLUECUBES_CATCH_CONSTRUCTOR_HPP_INCLUDED

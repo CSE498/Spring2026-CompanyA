@@ -8,8 +8,8 @@
 #define TWOBLUECUBES_CATCH_POLYFILLS_HPP_INCLUDED
 
 namespace Catch {
-    bool isnan( float f );
-    bool isnan( double d );
-} // namespace Catch
+    bool isnan(float f);
+    bool isnan(double d);
+}
 
 #endif // TWOBLUECUBES_CATCH_POLYFILLS_HPP_INCLUDED

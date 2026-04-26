@@ -7,7 +7,6 @@
  */
 
 #include "catch_tag_alias_registry.h"
-
 #include "catch_console_colour.h"
 #include "catch_enforce.h"
 #include "catch_interfaces_registry_hub.h"
@@ -21,42 +20,33 @@ namespace Catch {
 
     TagAlias const* TagAliasRegistry::find( std::string const& alias ) const {
         auto it = m_registry.find( alias );
-        if ( it != m_registry.end() )
-            return &( it->second );
+        if( it != m_registry.end() )
+            return &(it->second);
         else
             return nullptr;
     }
 
-    std::string TagAliasRegistry::expandAliases(
-        std::string const& unexpandedTestSpec ) const {
+    std::string TagAliasRegistry::expandAliases( std::string const& unexpandedTestSpec ) const {
         std::string expandedTestSpec = unexpandedTestSpec;
-        for ( auto const& registryKvp : m_registry ) {
+        for( auto const& registryKvp : m_registry ) {
             std::size_t pos = expandedTestSpec.find( registryKvp.first );
-            if ( pos != std::string::npos ) {
-                expandedTestSpec =
-                    expandedTestSpec.substr( 0, pos ) + registryKvp.second.tag +
-                    expandedTestSpec.substr( pos + registryKvp.first.size() );
+            if( pos != std::string::npos ) {
+                expandedTestSpec =  expandedTestSpec.substr( 0, pos ) +
+                                    registryKvp.second.tag +
+                                    expandedTestSpec.substr( pos + registryKvp.first.size() );
             }
         }
         return expandedTestSpec;
     }
 
-    void TagAliasRegistry::add( std::string const& alias,
-                                std::string const& tag,
-                                SourceLineInfo const& lineInfo ) {
-        CATCH_ENFORCE( startsWith( alias, "[@" ) && endsWith( alias, ']' ),
-                       "error: tag alias, '"
-                           << alias << "' is not of the form [@alias name].\n"
-                           << lineInfo );
+    void TagAliasRegistry::add( std::string const& alias, std::string const& tag, SourceLineInfo const& lineInfo ) {
+        CATCH_ENFORCE( startsWith(alias, "[@") && endsWith(alias, ']'),
+                      "error: tag alias, '" << alias << "' is not of the form [@alias name].\n" << lineInfo );
 
-        CATCH_ENFORCE(
-            m_registry
-                .insert( std::make_pair( alias, TagAlias( tag, lineInfo ) ) )
-                .second,
-            "error: tag alias, '"
-                << alias << "' already registered.\n"
-                << "\tFirst seen at: " << find( alias )->lineInfo << "\n"
-                << "\tRedefined at: " << lineInfo );
+        CATCH_ENFORCE( m_registry.insert(std::make_pair(alias, TagAlias(tag, lineInfo))).second,
+                      "error: tag alias, '" << alias << "' already registered.\n"
+                      << "\tFirst seen at: " << find(alias)->lineInfo << "\n"
+                      << "\tRedefined at: " << lineInfo );
     }
 
     ITagAliasRegistry::~ITagAliasRegistry() {}
