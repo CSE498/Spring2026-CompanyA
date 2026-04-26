@@ -18,6 +18,8 @@
 #include "ResourceProducer.hpp"
 #include "ResourceSpawn.hpp"
 #include "TownHall.hpp"
+#include "../../Agents/PacingAgent.hpp"
+#include "../../Agents/AI/LearningExplorerAgent.hpp"
 
 namespace cse498 {
 /**
@@ -33,6 +35,14 @@ protected:
     size_t floor_id; ///< Easy access to floor CellType ID.
     size_t wall_id; ///< Easy access to wall CellType ID.
     size_t building_id;
+
+    // GUI requirements
+    size_t ow_wall_left_id;
+    size_t ow_wall_right_id;
+    size_t ow_wall_top_id;
+    size_t ow_wall_bottom_id;
+
+    std::string mAgentSpriteName; ///< Sprite name for rendering agents
 
     /// Provide the agent with movement actions.
     void ConfigAgent(AgentBase& agent) override {
@@ -121,15 +131,53 @@ public:
      * Constructor
      */
     InteractiveWorld() {
-        floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
-        wall_id = main_grid.AddCellType("wall", "Impenetrable wall.", '#');
-        building_id = main_grid.AddCellType("building", "An impassable building.", 'B');
+        // Overworld grass variants
+        floor_id = main_grid.AddCellType("ow_grass", "Plain grass.", '.');
+        main_grid.AddCellType("ow_grass_flowers", "Flowery grass.", 'f');
+        main_grid.AddCellType("ow_grass_bones", "Bone-strewn grass.", 'b');
+        main_grid.AddCellType("ow_grass_mud", "Muddy grass.", 'm');
+        main_grid.AddCellType("ow_grass_rock", "Rocky grass.", 'r');
+
+        // Structure
+        main_grid.AddCellType("ow_entrance", "Entrance to the dungeon.", 'E');
+
+        // Border walls
+        ow_wall_left_id = main_grid.AddCellType("ow_wall_left", "Left wall.", 'L');
+        ow_wall_right_id = main_grid.AddCellType("ow_wall_right", "Right wall.", 'R');
+        ow_wall_top_id = main_grid.AddCellType("ow_wall_top", "Top wall.", 'U');
+        ow_wall_bottom_id = main_grid.AddCellType("ow_wall_bottom", "Bottom wall.", 'B');
+        wall_id = main_grid.AddCellType("ow_wall_corner", "Corner wall.", 'C');
+
+        // Building tile
+        building_id = main_grid.AddCellType("ow_building", "An impassable building.", 'X');
 
         main_grid.Load(std::vector<std::string>{
-                "#######################", "#                     #", "#                     #",
-                "#                     #", "#                     #", "#                     #",
-                "#                     #", "#                     #", "#                     #",
-                "#                     #", "#######################"});
+            "CUUUUUUUUUUUUUUUUUUUUUUUC",
+            "LrrrrrrrrrrrrrrrrrrrrrrrR",
+            "LrrrrrrrrrrrrrrrrrrrrrrrR",
+            "Lrr...................rrR",
+            "Lrr.fffffffffffffff..rrrR",
+            "Lrr.f...............frrrR",
+            "Lrr.f...r.......r...frrrR",
+            "Lrr.f...............frrrR",
+            "Lrr.fffffffffffffff..rrrR",
+            "Lrr...................rrR",
+            "Lrr...................rrR",
+            "Lrr...................rrR",
+            "Lrr.......bbb.........rrR",
+            "Lrr......bbfbb........rrR",
+            "Lrr.......bbb.........rrR",
+            "Lrr...................rrR",
+            "LmmmmmmmmmmmmmmmmmmmmmmrR",
+            "LmmmmmmmmmmmmmmmmmmmmmmrR",
+            "Lmm...................mmR",
+            "Lmm...................mmR",
+            "Lmm....f.......f......mmR",
+            "Lmm...................mmR",
+            "LmmmmmmmmmmmmmmmmmmmmmmrR",
+            "LmmmmmmmmmmmmmmmmmmmmmmrR",
+            "CBBBBBBBBBBBBBBBBBBBBBBBC"
+        });
     }
 
     /**
@@ -201,9 +249,17 @@ public:
         }
 
         // Don't let the agent move off the world or into a non-walkable tile.
-        if (!main_grid.IsWalkable(new_position)) {
+        if (!main_grid.IsValid(new_position)) {
             return false;
         }
+        size_t cell = main_grid[new_position];
+        if (cell == wall_id || cell == building_id
+            || cell == ow_wall_left_id
+            || cell == ow_wall_right_id
+            || cell == ow_wall_top_id
+            || cell == ow_wall_bottom_id) {
+            return false;
+            }
 
         // Open NPC UI for interface-controlled agents only.
         if (agent.IsInterface()) {
@@ -267,5 +323,40 @@ public:
             main_grid[building.GetLocation().AsWorldPosition()] = floor_id; // restore tile
         }
     }
+
+    
+    /**
+     * @brief Spawn a Group 17 @ref LearningExplorerAgent into the overworld.
+     *
+     * @details This convenience spawner mirrors @ref AddPacingAgent so @c Game.cpp
+     *          can drop the AI agent into the world with one line. The agent is
+     *          registered under the name @c "Explorer"; @c Game::RenderOverworld
+     *          dispatches on that name to pick the goblin sprite, leaving the
+     *          existing skeleton-sprite path for @ref PacingAgent untouched.
+     *
+     * @param x Grid-cell X coordinate of the spawn tile.
+     * @param y Grid-cell Y coordinate of the spawn tile.
+     * @return Reference to the newly registered agent, for chained configuration.
+     */
+    LearningExplorerAgent & AddLearningExplorerAgent(size_t x, size_t y) {
+        LearningExplorerAgent & agent = AddAgent<LearningExplorerAgent>("Explorer");
+        agent.SetLocation(WorldPosition(x, y));
+        return agent;
+    }
+
+    /// Add a pacing agent to the overworld at the given position
+    void AddPacingAgent(const std::string & sprite_name, size_t x, size_t y, bool horizontal = true) {
+        mAgentSpriteName = sprite_name;
+        PacingAgent & agent = AddAgent<PacingAgent>("Skeleton");
+        if (horizontal) {
+        agent.SetHorizontal();
+        }
+        else {
+        agent.SetVertical();
+        }
+        agent.SetLocation(WorldPosition(x, y));
+    }
+
+    [[nodiscard]] const std::string & GetAgentSpriteName() const { return mAgentSpriteName; }
 };
 }; // namespace cse498

@@ -17,31 +17,30 @@
 #include "../../core/AgentBase.hpp"
 
 namespace cse498 {
-/**
- * @class EnemyAgent
- * @brief An AI-controlled agent that selects actions based on heuristic evaluation.
- * The EnemyAgent evaluates possible actions using a scoring function that considers predicted movement outcomes and
- * distance to the player. It uses a Manhattan distance, heuristics, and simulates potential moves to determine the most
- * favorable action.
- *
- * Actions that result in undesirable states are assigned a low score (see BadScore).
- *
- * @inherits AgentBase
- */
-class EnemyAgent : public AgentBase {
-private:
-    // Predict where this move would place the enemy.
-    [[nodiscard]] WorldPosition PredictMove(WorldPosition pos, size_t action_id) const;
+    /**
+     * @class EnemyAgent
+     * @brief An AI-controlled agent that selects actions based on heuristic evaluation.
+     * The EnemyAgent evaluates possible actions using a scoring function that considers predicted movement outcomes and distance to the player.
+     * It uses a Manhattan distance, heuristics, and simulates potential moves to determine the most favorable action.
+     *
+     * Actions that result in undesirable states are assigned a low score (see BadScore).
+     *
+     * @inherits AgentBase
+     */
+    class EnemyAgent : public AgentBase {
+    private:
+        // Predict where this move would place the enemy.
+        [[nodiscard]] WorldPosition PredictMove(WorldPosition pos, size_t action_id) const;
 
-    // Distance heuristic to the player.
-    [[nodiscard]] int ManhattanDistance(WorldPosition a, WorldPosition b) const;
+        // Distance heuristic to the player.
+        [[nodiscard]] int ManhattanDistance(WorldPosition a, WorldPosition b) const;
 
-    // Score a candidate action.
-    [[nodiscard]] double ScoreAction(const WorldGrid& grid, size_t action_id) const;
+        // Score a candidate action.
+        [[nodiscard]] double ScoreAction(const WorldGrid &grid, size_t action_id) const;
 
-public:
-    /// Bad score to prevent certain agent behavior
-    static constexpr int BadScore = -1000000;
+    public:
+        /// Bad score to prevent certain agent behavior
+        static constexpr int BadScore = -1000000;
 
         EnemyAgent(size_t id, const std::string &name, const WorldBase &world);
         /**
