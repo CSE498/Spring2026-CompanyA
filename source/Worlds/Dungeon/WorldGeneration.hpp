@@ -160,11 +160,10 @@ namespace cse498 {
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode &node) {
             int room_height = node.vector_room.size();
-
-
             assert(room_height != 0); //Ensures room is properly assigned and not empty
 
             int room_width = node.vector_room[0].length();
+            assert(room_width != 0); //Ensures room is properly assigned and not empty
 
             int base_y = node.y; //Copy of y coord
             int base_x = node.x; //Copy of x coord
@@ -199,6 +198,8 @@ namespace cse498 {
         /// @param room we're inputting the BSP_Tree Node's room value
         /// @return pair of coordinates
         [[nodiscard]] Point CalcRoomCenter(const std::vector<std::string> &room) const {
+            assert(!room.empty());
+
             auto width = room[0].length();
             auto height = room.size();
 
