@@ -33,6 +33,20 @@ TEST_CASE("Test Building Setters and Getters", "[core][InteractiveWorld][Buildin
     CHECK(blacksmith.GetName() == "Blacksmith2");
 }
 
+TEST_CASE("Building stores banked resources for its lane", "[core][InteractiveWorld][Building]") {
+    cse498::Building lumberYard(3, "Lumber Yard", world);
+
+    CHECK(lumberYard.GetInventory().Empty());
+    CHECK(lumberYard.DepositResource(cse498::ItemType::Wood, 12));
+    CHECK(lumberYard.DepositResource(cse498::ItemType::Stone, 3));
+    CHECK(lumberYard.GetStoredAmount(cse498::ItemType::Wood) == 12);
+    CHECK(lumberYard.HasEnough(cse498::ItemType::Wood, 10));
+
+    CHECK(lumberYard.WithdrawResource(cse498::ItemType::Wood, 5));
+    CHECK(lumberYard.GetStoredAmount(cse498::ItemType::Wood) == 7);
+    CHECK_FALSE(lumberYard.WithdrawResource(cse498::ItemType::Metal, 1));
+}
+
 TEST_CASE("Test Building GetAllUpgrades", "[core][InteractiveWorld][Building]") {
     cse498::Building farm(1, "Farm", world);
 
