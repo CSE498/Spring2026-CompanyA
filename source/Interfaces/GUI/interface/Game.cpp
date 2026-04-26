@@ -63,140 +63,126 @@ namespace cse498
             return true;
         };
 
-        // Grass variants
-        if (!LoadCheck("grass", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_1.png"))
-            return false;
-        if (!LoadCheck("grass_flowers", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_2.png"))
-            return false;
-        if (!LoadCheck("grass_bones", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_3.png"))
-            return false;
-        if (!LoadCheck("grass_mud", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_4.png"))
-            return false;
-        if (!LoadCheck("grass_rock", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_5.png"))
-            return false;
-
-        // Structure
-        if (!LoadCheck("entrance", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_left_forest.png"))
-            return false;
-
-        // Border walls
-        if (!LoadCheck("wall_left", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_left_forest.png"))
-            return false;
-        if (!LoadCheck("wall_right", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_right_forest.png"))
-            return false;
-        if (!LoadCheck("wall_top", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png"))
-            return false;
-        if (!LoadCheck("wall_bottom", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_bottom_forest.png"))
-            return false;
-        if (!LoadCheck("wall_corner", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png"))
-            return false;
+        // Overworld tiles
+        if (!LoadCheck("ow_grass", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_1.png")) return false;
+        if (!LoadCheck("ow_grass_flowers", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_5.png")) return false;
+        if (!LoadCheck("ow_grass_bones", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_4.png")) return false;
+        if (!LoadCheck("ow_grass_mud", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_3.png")) return false;
+        if (!LoadCheck("ow_grass_rock", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_2.png")) return false;
+        if (!LoadCheck("ow_entrance", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/door_left_forest.png")) return false;
+        if (!LoadCheck("ow_wall_left", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_left_forest.png")) return false;
+        if (!LoadCheck("ow_wall_right", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_right_forest.png")) return false;
+        if (!LoadCheck("ow_wall_top", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("ow_wall_bottom", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_bottom_forest.png")) return false;
+        if (!LoadCheck("ow_wall_corner", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("ow_building", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/door_left_forest.png")) return false;
 
         // Mobs
-        if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_skeleton.png"))
+        if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png"))
             return false;
 
         // --- Level 1 floors (forest) ---
-        if (!LoadCheck("floor_l1v1", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_1.png")) return false;
-        if (!LoadCheck("floor_l1v2", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_2.png")) return false;
-        if (!LoadCheck("floor_l1v3", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_3.png")) return false;
-        if (!LoadCheck("floor_l1v4", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_4.png")) return false;
-        if (!LoadCheck("floor_l1v5", std::string(ASSETS_DIR) + "/" + + "world/forest/floor_tiles/tile_grass_5.png")) return false;
+        if (!LoadCheck("floor_l1v1", std::string(ASSETS_DIR) + "/" +  "world/forest/floor_tiles/tile_grass_1.png")) return false;
+        if (!LoadCheck("floor_l1v2", std::string(ASSETS_DIR) + "/" +  "world/forest/floor_tiles/tile_grass_2.png")) return false;
+        if (!LoadCheck("floor_l1v3", std::string(ASSETS_DIR) + "/" +  "world/forest/floor_tiles/tile_grass_3.png")) return false;
+        if (!LoadCheck("floor_l1v4", std::string(ASSETS_DIR) + "/" +  "world/forest/floor_tiles/tile_grass_4.png")) return false;
+        if (!LoadCheck("floor_l1v5", std::string(ASSETS_DIR) + "/" +  "world/forest/floor_tiles/tile_grass_5.png")) return false;
         // --- Level 2 floors (cave) ---
-        if (!LoadCheck("floor_l2v1", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_1.png")) return false;
-        if (!LoadCheck("floor_l2v2", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_2.png")) return false;
-        if (!LoadCheck("floor_l2v3", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_3.png")) return false;
-        if (!LoadCheck("floor_l2v4", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_4.png")) return false;
-        if (!LoadCheck("floor_l2v5", std::string(ASSETS_DIR) + "/" + + "world/cave/floor_tiles/tile_cave_5.png")) return false;
+        if (!LoadCheck("floor_l2v1", std::string(ASSETS_DIR) + "/" +  "world/cave/floor_tiles/tile_cave_1.png")) return false;
+        if (!LoadCheck("floor_l2v2", std::string(ASSETS_DIR) + "/" +  "world/cave/floor_tiles/tile_cave_2.png")) return false;
+        if (!LoadCheck("floor_l2v3", std::string(ASSETS_DIR) + "/" +  "world/cave/floor_tiles/tile_cave_3.png")) return false;
+        if (!LoadCheck("floor_l2v4", std::string(ASSETS_DIR) + "/" +  "world/cave/floor_tiles/tile_cave_4.png")) return false;
+        if (!LoadCheck("floor_l2v5", std::string(ASSETS_DIR) + "/" +  "world/cave/floor_tiles/tile_cave_5.png")) return false;
         // --- Level 3 floors (dungeon) ---
-        if (!LoadCheck("floor_l3v1", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_1.png")) return false;
-        if (!LoadCheck("floor_l3v2", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_2.png")) return false;
-        if (!LoadCheck("floor_l3v3", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("floor_l3v4", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_4.png")) return false;
-        if (!LoadCheck("floor_l3v5", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_5.png")) return false;
+        if (!LoadCheck("floor_l3v1", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_1.png")) return false;
+        if (!LoadCheck("floor_l3v2", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_2.png")) return false;
+        if (!LoadCheck("floor_l3v3", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
+        if (!LoadCheck("floor_l3v4", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_4.png")) return false;
+        if (!LoadCheck("floor_l3v5", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_5.png")) return false;
         // --- Level 4 floors (castle) ---
-        if (!LoadCheck("floor_l4v1", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_1.png")) return false;
-        if (!LoadCheck("floor_l4v2", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_2.png")) return false;
-        if (!LoadCheck("floor_l4v3", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_3.png")) return false;
-        if (!LoadCheck("floor_l4v4", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_4.png")) return false;
-        if (!LoadCheck("floor_l4v5", std::string(ASSETS_DIR) + "/" + + "world/castle/floor_tiles/tile_wood_5.png")) return false;
+        if (!LoadCheck("floor_l4v1", std::string(ASSETS_DIR) + "/" +  "world/castle/floor_tiles/tile_wood_1.png")) return false;
+        if (!LoadCheck("floor_l4v2", std::string(ASSETS_DIR) + "/" +  "world/castle/floor_tiles/tile_wood_2.png")) return false;
+        if (!LoadCheck("floor_l4v3", std::string(ASSETS_DIR) + "/" +  "world/castle/floor_tiles/tile_wood_3.png")) return false;
+        if (!LoadCheck("floor_l4v4", std::string(ASSETS_DIR) + "/" +  "world/castle/floor_tiles/tile_wood_4.png")) return false;
+        if (!LoadCheck("floor_l4v5", std::string(ASSETS_DIR) + "/" +  "world/castle/floor_tiles/tile_wood_5.png")) return false;
 
         // --- Generic wall (#) ---
-        if (!LoadCheck("wall", std::string(ASSETS_DIR) + "/" + + "gui/black_tile.png")) return false;
+        if (!LoadCheck("wall", std::string(ASSETS_DIR) + "/" +  "gui/black_tile.png")) return false;
 
         // --- Level 1 walls (forest) ---
-        if (!LoadCheck("wall_l1v1", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v2", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_bottom_forest.png")) return false;
-        if (!LoadCheck("wall_l1v13", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_left_forest.png")) return false;
-        if (!LoadCheck("wall_l1v4", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_right_forest.png")) return false;
-        if (!LoadCheck("wall_l1v5", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v6", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("wall_l1v7", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_left_forest.png")) return false;
-        if (!LoadCheck("wall_l1v8", std::string(ASSETS_DIR) + "/" + + "world/forest/walls/external/door_right_forest.png")) return false;
+        if (!LoadCheck("wall_l1v1", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v2", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/border_bottom_forest.png")) return false;
+        if (!LoadCheck("wall_l1v13", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/border_left_forest.png")) return false;
+        if (!LoadCheck("wall_l1v4", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/border_right_forest.png")) return false;
+        if (!LoadCheck("wall_l1v5", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v6", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/border_top_forest.png")) return false;
+        if (!LoadCheck("wall_l1v7", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/door_left_forest.png")) return false;
+        if (!LoadCheck("wall_l1v8", std::string(ASSETS_DIR) + "/" +  "world/forest/walls/external/door_right_forest.png")) return false;
         // --- Level 2 walls (cave) ---
-        if (!LoadCheck("wall_l2v1", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v2", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_bottom_cave.png")) return false;
-        if (!LoadCheck("wall_l2v3", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_left_cave.png")) return false;
-        if (!LoadCheck("wall_l2v4", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_right_cave.png")) return false;
-        if (!LoadCheck("wall_l2v5", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v6", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/border_top_cave.png")) return false;
-        if (!LoadCheck("wall_l2v7", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/door_left_cave.png")) return false;
-        if (!LoadCheck("wall_l2v8", std::string(ASSETS_DIR) + "/" + + "world/cave/walls/external/door_right_cave.png")) return false;
+        if (!LoadCheck("wall_l2v1", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v2", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/border_bottom_cave.png")) return false;
+        if (!LoadCheck("wall_l2v3", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/border_left_cave.png")) return false;
+        if (!LoadCheck("wall_l2v4", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/border_right_cave.png")) return false;
+        if (!LoadCheck("wall_l2v5", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v6", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/border_top_cave.png")) return false;
+        if (!LoadCheck("wall_l2v7", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/door_left_cave.png")) return false;
+        if (!LoadCheck("wall_l2v8", std::string(ASSETS_DIR) + "/" +  "world/cave/walls/external/door_right_cave.png")) return false;
         // --- Level 3 walls (dungeon) ---
-        if (!LoadCheck("wall_l3v1", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v2", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_bottom_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v3", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_left_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v4", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_right_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v5", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v6", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/border_top_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v7", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_left_dungeon.png")) return false;
-        if (!LoadCheck("wall_l3v8", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v1", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v2", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/border_bottom_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v3", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/border_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v4", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/border_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v5", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v6", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/border_top_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v7", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_l3v8", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_right_dungeon.png")) return false;
         // --- Level 4 walls (castle) ---
-        if (!LoadCheck("wall_l4v1", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v2", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_bottom_castle.png")) return false;
-        if (!LoadCheck("wall_l4v3", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_left_castle.png")) return false;
-        if (!LoadCheck("wall_l4v4", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_right_castle.png")) return false;
-        if (!LoadCheck("wall_l4v5", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v6", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/border_top_castle.png")) return false;
-        if (!LoadCheck("wall_l4v7", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/door_left_castle.png")) return false;
-        if (!LoadCheck("wall_l4v8", std::string(ASSETS_DIR) + "/" + + "world/castle/walls/external/door_right_castle.png")) return false;
+        if (!LoadCheck("wall_l4v1", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v2", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/border_bottom_castle.png")) return false;
+        if (!LoadCheck("wall_l4v3", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/border_left_castle.png")) return false;
+        if (!LoadCheck("wall_l4v4", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/border_right_castle.png")) return false;
+        if (!LoadCheck("wall_l4v5", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v6", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/border_top_castle.png")) return false;
+        if (!LoadCheck("wall_l4v7", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/door_left_castle.png")) return false;
+        if (!LoadCheck("wall_l4v8", std::string(ASSETS_DIR) + "/" +  "world/castle/walls/external/door_right_castle.png")) return false;
 
         // --- Shared special tiles ---
-        if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "/" + + "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" + + "items/item_potion_defense.png")) return false;
-        if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_skeleton.png")) return false;
-        if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" + + "agents/monsters/agent_monster_goblin.png")) return false;
-        if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_right_dungeon.png")) return false;
-        if (!LoadCheck("exit", std::string(ASSETS_DIR) + "/" + + "world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
+        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "items/item_potion_defense.png")) return false;
+        if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png")) return false;
+        if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_goblin.png")) return false;
+        if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("exit", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_left_dungeon.png")) return false;
 
         // Item sprites — keyed by item name to match what Inventory stores
-        if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +1", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +2", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +3", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +4", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
-        if (!LoadCheck("Sword +5", std::string(ASSETS_DIR) + "/" + + "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "/" +  "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +1", std::string(ASSETS_DIR) + "/" +  "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +2", std::string(ASSETS_DIR) + "/" +  "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +3", std::string(ASSETS_DIR) + "/" +  "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +4", std::string(ASSETS_DIR) + "/" +  "items/item_sword_1.png")) return false;
+        if (!LoadCheck("Sword +5", std::string(ASSETS_DIR) + "/" +  "items/item_sword_1.png")) return false;
 
-        if (!LoadCheck("Bow", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +1", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +2", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +3", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +4", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
-        if (!LoadCheck("Bow +5", std::string(ASSETS_DIR) + "/" + + "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow", std::string(ASSETS_DIR) + "/" +  "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +1", std::string(ASSETS_DIR) + "/" +  "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +2", std::string(ASSETS_DIR) + "/" +  "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +3", std::string(ASSETS_DIR) + "/" +  "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +4", std::string(ASSETS_DIR) + "/" +  "items/item_bow_1.png")) return false;
+        if (!LoadCheck("Bow +5", std::string(ASSETS_DIR) + "/" +  "items/item_bow_1.png")) return false;
 
-        if (!LoadCheck("Healing Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_healing.png")) return false;
-        if (!LoadCheck("Defense Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_defense.png")) return false;
-        if (!LoadCheck("Speed Potion", std::string(ASSETS_DIR) + "/" + + "items/item_potion_speed.png")) return false;
+        if (!LoadCheck("Healing Potion", std::string(ASSETS_DIR) + "/" +  "items/item_potion_healing.png")) return false;
+        if (!LoadCheck("Defense Potion", std::string(ASSETS_DIR) + "/" +  "items/item_potion_defense.png")) return false;
+        if (!LoadCheck("Speed Potion", std::string(ASSETS_DIR) + "/" +  "items/item_potion_speed.png")) return false;
 
-        if (!LoadCheck("Axe", std::string(ASSETS_DIR) + "/" + + "items/item_axe.png")) return false;
-        if (!LoadCheck("Pickaxe", std::string(ASSETS_DIR) + "/" + + "items/item_pickaxe.png")) return false;
-        if (!LoadCheck("Shovel", std::string(ASSETS_DIR) + "/" + + "items/item_shovel.png")) return false;
+        if (!LoadCheck("Axe", std::string(ASSETS_DIR) + "/" +  "items/item_axe.png")) return false;
+        if (!LoadCheck("Pickaxe", std::string(ASSETS_DIR) + "/" +  "items/item_pickaxe.png")) return false;
+        if (!LoadCheck("Shovel", std::string(ASSETS_DIR) + "/" +  "items/item_shovel.png")) return false;
 
         // Player
-        if (!LoadCheck("player", std::string(ASSETS_DIR) + "/" + + "agents/playerCharacter/agent_player.png"))
+        if (!LoadCheck("player", std::string(ASSETS_DIR) + "/" +  "agents/playerCharacter/agent_player.png"))
             return false;
 
         // UI
-        if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/" + + "/gui/inventory_bar.png"))
+        if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/" +  "/gui/inventory_bar.png"))
             return false;
 
         std::cout << "Asset loads complete." << std::endl;
@@ -216,27 +202,75 @@ namespace cse498
 
     void Game::SetupOverworld()
     {
-        mOverWorld = std::make_unique<OverWorld>();
-        mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
+        mOverWorld = std::make_shared<InteractiveWorld>();
 
-        // add a player to the world (based on discord discussion)
+        // Starting resources
+        mOverWorld->GetInventory().AddItem(ItemType::Wood, 10);
+        mOverWorld->GetInventory().AddItem(ItemType::Stone, 5);
+
+        // Buildings
+        mLumberYard = std::make_shared<Building>(1, "Lumber Yard", *mOverWorld);
+        mLumberYard->SetSymbol('L');
+        mLumberYard->AddUpgrade(ItemType::Wood, 15);
+        mLumberYard->AddUpgrade(ItemType::Wood, 50);
+        mLumberYard->AddUpgrade(ItemType::Stone, 50);
+
+        mQuarry = std::make_shared<Building>(2, "Quarry", *mOverWorld);
+        mQuarry->SetSymbol('Q');
+        mQuarry->AddUpgrade(ItemType::Wood, 50);
+        mQuarry->AddUpgrade(ItemType::Stone, 50);
+        mQuarry->AddUpgrade(ItemType::Metal, 35);
+
+        mMine = std::make_shared<Building>(3, "Ore Mine", *mOverWorld);
+        mMine->SetSymbol('M');
+        mMine->AddUpgrade(ItemType::Stone, 100);
+        mMine->AddUpgrade(ItemType::Metal, 50);
+        mMine->AddUpgrade(ItemType::Metal, 100);
+
+        // Place buildings in world
+        mOverWorld->AddBuilding(*mLumberYard, WorldPosition{2, 1});
+        mOverWorld->AddBuilding(*mQuarry, WorldPosition{5, 3});
+        mOverWorld->AddBuilding(*mMine, WorldPosition{8, 5});
+
+        // Resource spawns
+        auto woodSpawn = std::make_unique<ResourceSpawn>(100, "Wood Spawn", *mOverWorld, ItemType::Wood);
+        woodSpawn->SetLocation(WorldPosition{3, 1});
+        auto& woodSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(woodSpawn));
+
+        auto stoneSpawn = std::make_unique<ResourceSpawn>(101, "Stone Spawn", *mOverWorld, ItemType::Stone);
+        stoneSpawn->SetLocation(WorldPosition{6, 3});
+        auto& stoneSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(stoneSpawn));
+
+        auto metalSpawn = std::make_unique<ResourceSpawn>(102, "Metal Spawn", *mOverWorld, ItemType::Metal);
+        metalSpawn->SetLocation(WorldPosition{9, 5});
+        auto& metalSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(metalSpawn));
+
+        // Resource producers
+        auto woodProducer = std::make_shared<ResourceProducer>(*mLumberYard, woodSpawnRef, ItemType::Wood, 2.0f);
+        auto stoneProducer = std::make_shared<ResourceProducer>(*mQuarry, stoneSpawnRef, ItemType::Stone, 1.0f);
+        auto metalProducer = std::make_shared<ResourceProducer>(*mMine, metalSpawnRef, ItemType::Metal, 0.5f);
+        mOverWorld->AddProducer(woodProducer);
+        mOverWorld->AddProducer(stoneProducer);
+        mOverWorld->AddProducer(metalProducer);
+
+        // Player
         auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
         player.SetLocation(WorldPosition{1, 1});
         mOverworldPlayer = &player;
 
-        const WorldGrid &grid = mOverWorld->GetGrid();
+        // Build the image grid
+        const WorldGrid& grid = mOverWorld->GetGrid();
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
         mOverworldGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
 
-        // Map every WorldGrid cell type name to its matching image name
         for (size_t y = 0; y < world_h; ++y)
         {
             for (size_t x = 0; x < world_w; ++x)
             {
                 WorldPosition pos(x, y);
-                const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
+                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
                 mOverworldGrid->SetCell(x, y, cell_name);
             }
         }
@@ -555,10 +589,9 @@ namespace cse498
 
     void Game::UpdateOverworld()
     {
-        // skip the player in the world agent list, they should choose their own move when needed to.
         if (mTurnTaken) {
             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
-                AgentBase& agent = mOverWorld->GetAgent(i);
+                AgentBase& agent = mOverWorld->GetAgentByIndex(i);
                 if (&agent == mOverworldPlayer) continue;
 
                 size_t action = agent.SelectAction(mOverWorld->GetGrid());
@@ -615,27 +648,36 @@ namespace cse498
     // Z-layer ordering. Put here for future reference of probable Game draw logic
     void Game::RenderOverworld()
     {
-        // Layer 0 — Tiles (bottom)
         RenderWorld(*mOverworldGrid, mCamX, mCamY);
 
-        // Layer 1 — all agents including player
         int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
         int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
         for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i)
         {
-            const AgentBase &agent = mOverWorld->GetAgent(i);
-            const WorldPosition &pos = agent.GetLocation().AsWorldPosition();
+            AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+            if (!agent.GetLocation().IsPosition()) continue;
+
+            const WorldPosition& pos = agent.GetLocation().AsWorldPosition();
 
             int screen_x = (static_cast<int>(pos.CellX()) - mCamX) * tw;
             int screen_y = (static_cast<int>(pos.CellY()) - mCamY) * th;
 
-            // Pick sprite based on whether this is the player or an NPC
-            const std::string &sprite = (&agent == mOverworldPlayer) ? "player" : mOverWorld->GetAgentSpriteName();
+            std::string sprite = "ow_grass";
+            if (&agent == mOverworldPlayer) {
+                sprite = "player";
+            } else if (dynamic_cast<Building*>(&agent)) {
+                sprite = "ow_building";
+            } else if (dynamic_cast<ResourceSpawn*>(&agent)) {
+                continue; // spawns are invisible
+            } else {
+                sprite = "skeleton";
+            }
+
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
         }
 
-        // Layer 2 — UI/HUD
+        // Todo world inventory
         RenderHotbar(mOverworldPlayer->GetInventory());
         if (mShowBackpack) RenderBackpack(mOverworldPlayer->GetInventory());
     }

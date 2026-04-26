@@ -21,8 +21,12 @@
 #include "../Menu.hpp"
 #include "../Text.hpp"
 #include "../source/Worlds/Dungeon/DungeonWorld.hpp"
-#include "OverWorld.hpp"
+//#include "OverWorld.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
+#include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
+#include "../../../source/Worlds/Hub/Building.hpp"
+#include "../../../source/Worlds/Hub/ResourceProducer.hpp"
+#include "../../../source/Worlds/Hub/ResourceSpawn.hpp"
 
 namespace cse498
 {
@@ -95,8 +99,15 @@ namespace cse498
         // -------------------------
         std::unique_ptr<ImageManager> mImageManager; /// Handles image loading and rendering
         std::unique_ptr<ImageGrid> mOverworldGrid; /// Renderable grid for overworld tiles
-        std::unique_ptr<OverWorld> mOverWorld; /// Overworld game logic
+        std::shared_ptr<InteractiveWorld> mOverWorld; /// Overworld game logic
         std::unique_ptr<DungeonWorld> mDungeonWorld; /// Dungeon world game logic
+
+        // -------------------------
+        // Overworld buildings
+        // -------------------------
+        std::shared_ptr<Building> mLumberYard;
+        std::shared_ptr<Building> mQuarry;
+        std::shared_ptr<Building> mMine;
 
         int mCamX = 0; /// Camera X position in tile coordinates
         int mCamY = 0; /// Camera Y position in tile coordinates
