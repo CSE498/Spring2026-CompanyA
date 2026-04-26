@@ -9,22 +9,22 @@
  *    Step 2: cd into /demo, and then run ./Group15_demo
  **/
 
-// Include the modules that we will be using.
+/** @brief Include the modules used by this demo executable. */
 #include "../../source/Agents/PacingAgent.hpp"
 #include "../../source/Interfaces/TrashInterface.hpp"
-#include "../../source/Worlds/Dungeon/DungeonOne.hpp"
+#include "../../source/tools/DataFileManager.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
+#include "../../source/Worlds/Dungeon/DungeonWorld.hpp"
+#include "../../source/Agents/Classic/PlayerAgent.hpp"
+
+#include <iostream>
+#include <string>
 
 using namespace cse498;
 
-int main() {
-    // MazeWorld world;
-    DungeonOne world;
-    world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
-    world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
-    world.AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7, 7});
-    world.AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8, 8});
-    world.AddAgent<TrashInterface>("Interface").SetSymbol('@').SetLocation(WorldPosition{1, 1});
-
+//Commented this out for the time being
+int main()
+{
+	DungeonWorld world;
     world.Run();
 }

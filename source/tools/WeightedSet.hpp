@@ -1,6 +1,6 @@
 /**
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
- * @brief 
+ * @brief A weighted set data structure for efficient weighted random sampling
  * @note Status: PROPOSAL
  * Credit notes: This files makes use parts of the Array implementation of a Binary Tree described at:
  * https://www.geeksforgeeks.org/dsa/binary-tree-array-implementation/
@@ -65,11 +65,11 @@ namespace cse498 {
         static constexpr double WEIGHTED_SET_TOL = 1e-12;
 
         //Storage should be relatively small assuming T will be a string or int (probable for ids)
-        std::unordered_map<T, std::size_t> m_item_idx{};
-        std::vector<T> m_items{};
-        std::vector<double> m_weights{};
-        std::vector<double> m_sum_tree{};
-        std::size_t m_set_size = 0;
+        std::unordered_map<T, std::size_t> mItemIdx{};
+        std::vector<T> mItems{};
+        std::vector<double> mWeights{};
+        std::vector<double> mSumTree{};
+        std::size_t mSetSize = 0;
 
         /**
          * Propagates a weight change up the implicit tree.
@@ -79,10 +79,10 @@ namespace cse498 {
          */
         void PropagateWeightChange(std::size_t idx, double w_change) {
             while (idx > 0) {
-                m_sum_tree[idx] += w_change;
+                mSumTree[idx] += w_change;
                 idx = (idx - 1) / 2; //Travel up parents
             }
-            m_sum_tree[0] += w_change; //Fix the root
+            mSumTree[0] += w_change; //Fix the root
         }
 
         /**
@@ -120,19 +120,19 @@ namespace cse498 {
             if (weight < 0.0) {
                 return std::unexpected("cse498::WeightedSet::Insert(): weight must be non-negative");
             }
-            if (m_item_idx.contains(id)) {
+            if (mItemIdx.contains(id)) {
                 return std::unexpected("cse498::WeightedSet::Insert(): duplicate item");
             }
 
             //Treat numbers below tolerance as 0
             NormalizeTinyWeight(weight);
 
-            std::size_t idx = m_set_size;
-            m_item_idx[id] = idx;
-            m_items.push_back(id);
-            m_weights.push_back(weight);
-            m_sum_tree.push_back(0.0);
-            ++m_set_size;
+            std::size_t idx = mSetSize;
+            mItemIdx[id] = idx;
+            mItems.push_back(id);
+            mWeights.push_back(weight);
+            mSumTree.push_back(0.0);
+            ++mSetSize;
 
             PropagateWeightChange(idx, weight);
 
@@ -158,9 +158,9 @@ namespace cse498 {
                 return std::unexpected("cse498::WeightedSet::Update(): weight must be non-negative");
             }
 
-            auto iter = m_item_idx.find(id);
+            auto iter = mItemIdx.find(id);
 
-            if (iter == m_item_idx.end()) {
+            if (iter == mItemIdx.end()) {
                 return std::unexpected("cse498::WeightedSet::Update(): item to update does not exist");
             }
 
@@ -168,9 +168,9 @@ namespace cse498 {
             NormalizeTinyWeight(weight);
 
             std::size_t idx = iter->second;
-            assert(idx < m_weights.size()); //If item exists in map there should already be an associated weight
-            double change = weight - m_weights[idx];
-            m_weights[idx] = weight;
+            assert(idx < mWeights.size()); //If item exists in map there should already be an associated weight
+            double change = weight - mWeights[idx];
+            mWeights[idx] = weight;
             PropagateWeightChange(idx, change);
 
             return {};
@@ -192,16 +192,16 @@ namespace cse498 {
          * @note sample_val is inside  the valid range [0, total_weight].
          */
         [[nodiscard]] std::expected<T, std::string> Sample(double sample_val) const {
-            if (m_sum_tree.empty() || m_sum_tree[0] <= WEIGHTED_SET_TOL) {
+            if (mSumTree.empty() || mSumTree[0] <= WEIGHTED_SET_TOL) {
                 return std::unexpected("cse498::WeightedSet::Sample(): Cannot sample from an empty WeightedSet");
             }
-            if (sample_val < 0 || sample_val > m_sum_tree[0] + WEIGHTED_SET_TOL) {
+            if (sample_val < 0 || sample_val > mSumTree[0] + WEIGHTED_SET_TOL) {
                 return std::unexpected("cse498::WeightedSet::Sample(): Sample number invalid");
             }
 
             //lower and upper endpoints of the full range of values. Ex; [0.0, 5.1]
             double outer_lo = 0.0; //lower value in outer interval
-            double outer_up = m_sum_tree[0]; //upper value in outer interval
+            double outer_up = mSumTree[0]; //upper value in outer interval
             std::size_t idx = 0;
 
             while (true) {
@@ -210,15 +210,15 @@ namespace cse498 {
                 std::size_t left_idx = 2 * idx + 1;
                 std::size_t right_idx = 2 * idx + 2;
 
-                double left_sum = (left_idx < m_set_size) ? m_sum_tree[left_idx] : 0.0;
+                double left_sum = (left_idx < mSetSize) ? mSumTree[left_idx] : 0.0;
 
                 //interval of "node" at current index
                 double inner_lo = outer_lo + left_sum; //Lower value in node's interval
-                double inner_up = inner_lo + m_weights[idx]; //Upper value in node's interval
+                double inner_up = inner_lo + mWeights[idx]; //Upper value in node's interval
 
                 //Case 1: number in the left subtree interval
                 if (sample_val <= inner_lo + WEIGHTED_SET_TOL
-                    && left_idx < m_set_size
+                    && left_idx < mSetSize
                     && left_sum > WEIGHTED_SET_TOL) {
                     outer_up = inner_lo;
                     idx = left_idx;
@@ -228,20 +228,20 @@ namespace cse498 {
                 //Case 2: sample_val in current inner inverval (a, b]
                 if (sample_val > inner_lo - WEIGHTED_SET_TOL
                     && sample_val <= inner_up + WEIGHTED_SET_TOL
-                    && m_weights[idx] > WEIGHTED_SET_TOL) {
+                    && mWeights[idx] > WEIGHTED_SET_TOL) {
                     break; //Found corresponding item
                 }
 
                 //Case 3: number in the right subtree interval
-                if (right_idx >= m_set_size) {
+                if (right_idx >= mSetSize) {
                     //for safety - this shouldnt run (Case 1 should have)
-                    assert(right_idx < m_set_size);
+                    assert(right_idx < mSetSize);
                     break; //return this node since there is no left or right
                 }
                 outer_lo = inner_up;
                 idx = right_idx;
             }
-            return m_items[idx];
+            return mItems[idx];
         }
 
         /**
@@ -250,13 +250,13 @@ namespace cse498 {
          * @return Sum if found, otherwise std::unexpected.
          */
         [[nodiscard]] std::expected<double, std::string> GetItemSum(const T &item) const {
-            auto iter = m_item_idx.find(item);
-            if (iter == m_item_idx.end()) {
+            auto iter = mItemIdx.find(item);
+            if (iter == mItemIdx.end()) {
                 return std::unexpected("cse498::WeightedSet::GetItemSum(): item not found");
             }
-            assert(iter->second < m_sum_tree.size());
+            assert(iter->second < mSumTree.size());
 
-            return m_sum_tree[iter->second];
+            return mSumTree[iter->second];
         }
 
         /**
@@ -265,14 +265,14 @@ namespace cse498 {
          * @return Weight if found, otherwise std::unexpected.
          */
         [[nodiscard]] std::expected<double, std::string> GetWeight(const T &item) const {
-            auto iter = m_item_idx.find(item);
-            if (iter == m_item_idx.end()) {
+            auto iter = mItemIdx.find(item);
+            if (iter == mItemIdx.end()) {
                 return std::unexpected("cse498::WeightedSet::GetWeight(): item not found");
             }
 
-            assert(iter->second < m_weights.size());
+            assert(iter->second < mWeights.size());
 
-            return m_weights[iter->second];
+            return mWeights[iter->second];
         }
 
         /**
@@ -280,13 +280,13 @@ namespace cse498 {
          * @return Total weight (0.0 if empty).
          */
         [[nodiscard]] double GetTotalWeight() const {
-            return m_sum_tree.empty() ? 0.0 : m_sum_tree.at(0);
+            return mSumTree.empty() ? 0.0 : mSumTree.at(0);
         }
 
         /**
          * Gets the number of items.
          * @return Current size.
          */
-        [[nodiscard]] std::size_t GetSize() const { return m_set_size; }
+        [[nodiscard]] std::size_t GetSize() const { return mSetSize; }
     };
 } // End of namespace cse498

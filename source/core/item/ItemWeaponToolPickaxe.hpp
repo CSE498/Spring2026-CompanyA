@@ -10,7 +10,7 @@
 #include "Item.hpp"
 #include "ItemWeapon.hpp"
 #include "ItemWeaponTool.hpp"
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemWeaponToolPickaxe : public ItemWeaponTool {

@@ -39,7 +39,7 @@ namespace cse498 {
         static constexpr int F_LOWER_41 = 41;
         static constexpr float FLOAT_CONVERSION_FACTOR = 1.0f / 8388608.0f;
 
-        uint64_t m_seed; // The seed used for random generation
+        uint64_t mSeed; // The seed used for random generation
 
 
         ////////////////////////////////////////////////////////////
@@ -50,33 +50,35 @@ namespace cse498 {
 
         // keeps an internal state of 4 64 unsigned 64-bit ints
         // changes each time a number is generated
+        /**
+         * @struct Xoshiro256ppState
+         * @brief Internal state for the Xoshiro256++ generator.
+         */
         struct Xoshiro256ppState {
             std::array<uint64_t, STATE_NUMBER> state;
         };
 
-        struct Splitmix64State {
-            uint64_t state;
-        };
+        uint64_t mSplitmix64State; // Internal state for the Splitmix64 generator used for seeding.
 
         /* @brief Ensures state values are non-zero and well-mixed.
         *  @param The splitmix state being mixed
         *  @return A well-mixed, non-zero uint64_t value
         */
-        uint64_t Splitmix64(struct Splitmix64State &state) {
-            uint64_t result = (state.state += GOLDEN_RATIO);
+        uint64_t Splitmix64(uint64_t &state) {
+            uint64_t result = (state += GOLDEN_RATIO);
             result = (result ^ (result >> RIGHT_SHIFT1)) * FIRST_MIXING;
             result = (result ^ (result >> RIGHT_SHIFT2)) * SECOND_MIXING;
             return result ^ (result >> RIGHT_SHIFT3);
         }
 
-        /* @brief Uses m_seed to generate the state positions
+        /* @brief Uses mSeed to generate the state positions
         *  @param The xoshiro state being initialize
         */
         void Xoshiro256ppInit(struct Xoshiro256ppState &state) {
-            struct Splitmix64State sm = {m_seed};
+            mSplitmix64State = mSeed;
 
             for (auto &value: state.state) {
-                value = Splitmix64(sm);
+                value = Splitmix64(mSplitmix64State);
             }
         }
 
@@ -140,7 +142,7 @@ namespace cse498 {
     public:
         /* @brief The constructor for a Random object */
         Random() {
-            m_seed = std::chrono::duration_cast<std::chrono::microseconds>(
+            mSeed = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count();
         }
 
@@ -148,21 +150,21 @@ namespace cse498 {
         *  @param seed - a optional parameter to set the seed of the generator
         */
         Random(uint64_t seed) {
-            m_seed = seed;
+            mSeed = seed;
         }
 
         /* @brief Public setter for the current seed.
         *  @param the desired seed
         */
         void SetSeed(uint64_t seed) {
-            m_seed = seed;
+            mSeed = seed;
             m_used = false;
         }
 
         /* @brief Public getter for the current seed
         *  @return the current seed
         */
-        uint64_t GetSeed() const { return m_seed; }
+        uint64_t GetSeed() const { return mSeed; }
 
         /* @brief Templated function to generate and return values for integral values
         * @param The range of values(inclusive) to generate a number between. min must be <= max.
