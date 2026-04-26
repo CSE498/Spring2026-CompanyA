@@ -18,6 +18,8 @@
 #include "ResourceProducer.hpp"
 #include "ResourceSpawn.hpp"
 #include "TownHall.hpp"
+#include "../../Agents/PacingAgent.hpp"
+#include "../../Agents/AI/LearningExplorerAgent.hpp"
 
 namespace cse498 {
 /**
@@ -39,6 +41,8 @@ protected:
     size_t ow_wall_right_id;
     size_t ow_wall_top_id;
     size_t ow_wall_bottom_id;
+
+    std::string mAgentSpriteName; ///< Sprite name for rendering agents
 
     /// Provide the agent with movement actions.
     void ConfigAgent(AgentBase& agent) override {
@@ -319,5 +323,40 @@ public:
             main_grid[building.GetLocation().AsWorldPosition()] = floor_id; // restore tile
         }
     }
+
+    
+    /**
+     * @brief Spawn a Group 17 @ref LearningExplorerAgent into the overworld.
+     *
+     * @details This convenience spawner mirrors @ref AddPacingAgent so @c Game.cpp
+     *          can drop the AI agent into the world with one line. The agent is
+     *          registered under the name @c "Explorer"; @c Game::RenderOverworld
+     *          dispatches on that name to pick the goblin sprite, leaving the
+     *          existing skeleton-sprite path for @ref PacingAgent untouched.
+     *
+     * @param x Grid-cell X coordinate of the spawn tile.
+     * @param y Grid-cell Y coordinate of the spawn tile.
+     * @return Reference to the newly registered agent, for chained configuration.
+     */
+    LearningExplorerAgent & AddLearningExplorerAgent(size_t x, size_t y) {
+        LearningExplorerAgent & agent = AddAgent<LearningExplorerAgent>("Explorer");
+        agent.SetLocation(WorldPosition(x, y));
+        return agent;
+    }
+
+    /// Add a pacing agent to the overworld at the given position
+    void AddPacingAgent(const std::string & sprite_name, size_t x, size_t y, bool horizontal = true) {
+        mAgentSpriteName = sprite_name;
+        PacingAgent & agent = AddAgent<PacingAgent>("Skeleton");
+        if (horizontal) {
+        agent.SetHorizontal();
+        }
+        else {
+        agent.SetVertical();
+        }
+        agent.SetLocation(WorldPosition(x, y));
+    }
+
+    [[nodiscard]] const std::string & GetAgentSpriteName() const { return mAgentSpriteName; }
 };
 }; // namespace cse498
