@@ -1,14 +1,14 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-<    $       $       $   >
-<    $   m   $   m   $   >
-<    $   t   $   t   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<    $   $   $   $   $   >
-<        $       $       >
-<   m    $   m   $  l    >
-<        $       $       >
-&&&&&&&&&&&&&&&&&&&&&&&&&&
+99999999999999999999999999
+-mmmm[mmmmmmm[mmmpmmm[mmm=
+-mmmm[mmmgnmm[mmmsmmm[mmm=
+-mmmm[mmmmmmm[mmmmmmm[mmm=
+-mmmm[mmm]mmm[mmm]mmm[mmm=
+-mmmm[mmm]mmm[mmm]mmm[mmm=
+-mmmm[mmm]mmm[mmm]mmm[mom=
+-mmnm[mmm]mmm[mmm]mmm[mmm=
+-mmmm[mmm]mmm[mmm]mmm[mmm=
+-momm[mmm]mmm[mmm]mmm[mmm=
+-mmmmmmmm]mmmmmmm]mmmmmmm=
+-mmmgsmmm]mmmlmmm]mmssmmm=
+-mmmmmmqm]mmmmmmm]mmnmmmm=
+00000000000000000000000000

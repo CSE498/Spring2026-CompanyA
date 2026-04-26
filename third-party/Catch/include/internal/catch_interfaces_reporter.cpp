@@ -6,46 +6,43 @@
  */
 
 #include "catch_interfaces_reporter.h"
-
 #include "../reporters/catch_reporter_listening.h"
 
 namespace Catch {
 
-    ReporterConfig::ReporterConfig( IConfigPtr const& _fullConfig ):
-        m_stream( &_fullConfig->stream() ), m_fullConfig( _fullConfig ) {}
+    ReporterConfig::ReporterConfig( IConfigPtr const& _fullConfig )
+    :   m_stream( &_fullConfig->stream() ), m_fullConfig( _fullConfig ) {}
 
-    ReporterConfig::ReporterConfig( IConfigPtr const& _fullConfig,
-                                    std::ostream& _stream ):
-        m_stream( &_stream ), m_fullConfig( _fullConfig ) {}
+    ReporterConfig::ReporterConfig( IConfigPtr const& _fullConfig, std::ostream& _stream )
+    :   m_stream( &_stream ), m_fullConfig( _fullConfig ) {}
 
     std::ostream& ReporterConfig::stream() const { return *m_stream; }
     IConfigPtr ReporterConfig::fullConfig() const { return m_fullConfig; }
 
-    TestRunInfo::TestRunInfo( std::string const& _name ): name( _name ) {}
 
-    GroupInfo::GroupInfo( std::string const& _name,
-                          std::size_t _groupIndex,
-                          std::size_t _groupsCount ):
-        name( _name ),
+    TestRunInfo::TestRunInfo( std::string const& _name ) : name( _name ) {}
+
+    GroupInfo::GroupInfo(  std::string const& _name,
+                           std::size_t _groupIndex,
+                           std::size_t _groupsCount )
+    :   name( _name ),
         groupIndex( _groupIndex ),
-        groupsCounts( _groupsCount ) {}
+        groupsCounts( _groupsCount )
+    {}
 
-    AssertionStats::AssertionStats(
-        AssertionResult const& _assertionResult,
-        std::vector<MessageInfo> const& _infoMessages,
-        Totals const& _totals ):
-        assertionResult( _assertionResult ),
+     AssertionStats::AssertionStats( AssertionResult const& _assertionResult,
+                                     std::vector<MessageInfo> const& _infoMessages,
+                                     Totals const& _totals )
+    :   assertionResult( _assertionResult ),
         infoMessages( _infoMessages ),
-        totals( _totals ) {
-        assertionResult.m_resultData.lazyExpression.m_transientExpression =
-            _assertionResult.m_resultData.lazyExpression.m_transientExpression;
+        totals( _totals )
+    {
+        assertionResult.m_resultData.lazyExpression.m_transientExpression = _assertionResult.m_resultData.lazyExpression.m_transientExpression;
 
-        if ( assertionResult.hasMessage() ) {
+        if( assertionResult.hasMessage() ) {
             // Copy message into messages list.
             // !TBD This should have been done earlier, somewhere
-            MessageBuilder builder( assertionResult.getTestMacroName(),
-                                    assertionResult.getSourceInfo(),
-                                    assertionResult.getResultType() );
+            MessageBuilder builder( assertionResult.getTestMacroName(), assertionResult.getSourceInfo(), assertionResult.getResultType() );
             builder << assertionResult.getMessage();
             builder.m_info.message = builder.m_stream.str();
 
@@ -53,46 +50,58 @@ namespace Catch {
         }
     }
 
-    AssertionStats::~AssertionStats() = default;
+     AssertionStats::~AssertionStats() = default;
 
-    SectionStats::SectionStats( SectionInfo const& _sectionInfo,
-                                Counts const& _assertions,
-                                double _durationInSeconds,
-                                bool _missingAssertions ):
-        sectionInfo( _sectionInfo ),
+    SectionStats::SectionStats(  SectionInfo const& _sectionInfo,
+                                 Counts const& _assertions,
+                                 double _durationInSeconds,
+                                 bool _missingAssertions )
+    :   sectionInfo( _sectionInfo ),
         assertions( _assertions ),
         durationInSeconds( _durationInSeconds ),
-        missingAssertions( _missingAssertions ) {}
+        missingAssertions( _missingAssertions )
+    {}
 
     SectionStats::~SectionStats() = default;
 
-    TestCaseStats::TestCaseStats( TestCaseInfo const& _testInfo,
-                                  Totals const& _totals,
-                                  std::string const& _stdOut,
-                                  std::string const& _stdErr,
-                                  bool _aborting ):
-        testInfo( _testInfo ),
+
+    TestCaseStats::TestCaseStats(  TestCaseInfo const& _testInfo,
+                                   Totals const& _totals,
+                                   std::string const& _stdOut,
+                                   std::string const& _stdErr,
+                                   bool _aborting )
+    : testInfo( _testInfo ),
         totals( _totals ),
         stdOut( _stdOut ),
         stdErr( _stdErr ),
-        aborting( _aborting ) {}
+        aborting( _aborting )
+    {}
 
     TestCaseStats::~TestCaseStats() = default;
 
+
     TestGroupStats::TestGroupStats( GroupInfo const& _groupInfo,
                                     Totals const& _totals,
-                                    bool _aborting ):
-        groupInfo( _groupInfo ), totals( _totals ), aborting( _aborting ) {}
+                                    bool _aborting )
+    :   groupInfo( _groupInfo ),
+        totals( _totals ),
+        aborting( _aborting )
+    {}
 
-    TestGroupStats::TestGroupStats( GroupInfo const& _groupInfo ):
-        groupInfo( _groupInfo ), aborting( false ) {}
+    TestGroupStats::TestGroupStats( GroupInfo const& _groupInfo )
+    :   groupInfo( _groupInfo ),
+        aborting( false )
+    {}
 
     TestGroupStats::~TestGroupStats() = default;
 
-    TestRunStats::TestRunStats( TestRunInfo const& _runInfo,
-                                Totals const& _totals,
-                                bool _aborting ):
-        runInfo( _runInfo ), totals( _totals ), aborting( _aborting ) {}
+    TestRunStats::TestRunStats(   TestRunInfo const& _runInfo,
+                    Totals const& _totals,
+                    bool _aborting )
+    :   runInfo( _runInfo ),
+        totals( _totals ),
+        aborting( _aborting )
+    {}
 
     TestRunStats::~TestRunStats() = default;
 
