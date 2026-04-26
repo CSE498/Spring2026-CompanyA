@@ -43,7 +43,7 @@ namespace cse498 {
         static constexpr size_t MAX_ID = 1000000000;
 
     private:
-        int m_level_num = 1; //Current int value level that the game is on
+        int m_level_num = 2; //Current int value level that the game is on
         std::unique_ptr<LevelBase> m_level = std::make_unique<ForestLevel>();
 
         //The currently pointed to level that the player agent is on

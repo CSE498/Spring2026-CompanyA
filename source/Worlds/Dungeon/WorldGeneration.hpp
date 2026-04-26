@@ -101,7 +101,7 @@ namespace cse498 {
             PostOrderRoomConnect(tree[0]);
             //Tried to implement BFS Room connection for more varied layouts, but duplicating DFS is better
 
-            TunnelConnectDungeon();
+            TunnelConnectDungeon(level_value);
         }
 
         /**
@@ -206,10 +206,31 @@ namespace cse498 {
         }
 
         /// @brief Parses through the list of Room Nodes (BSPNodes) that have a relation with each other and connects those
-        void TunnelConnectDungeon() {
+        void TunnelConnectDungeon(const int& current_level) {
             for (auto &i: m_connected_rooms) {
-                ConnectBSPRooms(i);
+                ConnectBSPRooms(i, current_level);
             }
+        }
+
+
+        /// @brief Determines what ascii symbol is used for connecting the BSP Rooms together
+        void TunnelTileSelector(char& character, const char& current_level) { 
+
+                switch(current_level) {
+                    case 1:
+                        character = 'a';
+                        break;
+                    case 2:
+                        character = 'A';
+                        break;
+                    case 3:
+                        character = 'm';
+                        break;
+                    default:
+                        character = 'a';
+                        break;
+                }
+
         }
 
         /**
@@ -218,7 +239,7 @@ namespace cse498 {
          * @details Calculates the distance (x-y) between two rooms) and connects a corridor tunnel between them 
          * 
          */
-        void ConnectBSPRooms(LinkedRooms RoomCoordinates) {
+        void ConnectBSPRooms(LinkedRooms RoomCoordinates, const int& current_level) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
             auto const wall_set = {'?', '!', '$', '@',
                                     '1','2','3','4', 
@@ -249,7 +270,7 @@ namespace cse498 {
                 auto it = std::ranges::find(wall_set, y_char);
 
                 if (y_char == '#' || it != wall_set.end()) {
-                    y_char = 'a';
+                    TunnelTileSelector(y_char, current_level);
                 }
             }
 
@@ -261,7 +282,10 @@ namespace cse498 {
                 auto &x_char = m_grid[y2_value][x_point];
                 auto it = std::ranges::find(wall_set, x_char);
 
-                if (x_char == '#' || it != wall_set.end()) x_char = 'a';
+                if (x_char == '#' || it != wall_set.end()) {
+                    TunnelTileSelector(x_char, current_level);
+                    
+                }
             }
         }
 

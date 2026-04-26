@@ -1,5 +1,5 @@
 99999999999999999999999999
--mmmm[mmmmmmm[mmmpmmm[mmm=
+-mmmmmmmmmmmmmmmmpmmmmmmm=
 -mmmm[mmmgnmm[mmmsmmm[mmm=
 -mmmm[mmmmmmm[mmmmmmm[mmm=
 -mmmm[mmm]mmm[mmm]mmm[mmm=
@@ -10,5 +10,5 @@
 -momm[mmm]mmm[mmm]mmm[mmm=
 -mmmmmmmm]mmmmmmm]mmmmmmm=
 -mmmgsmmm]mmmtmmm]mmssmmm=
--mmmmmmqm]mmmmmmm]mmnmmmm=
+-mmmmmmqmmmmmmmmmmmmnmmmm=
 00000000000000000000000000
