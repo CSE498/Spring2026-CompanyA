@@ -287,6 +287,9 @@ extern "C" {
 EMSCRIPTEN_KEEPALIVE
 void WebInterface_handleInventorySlotClick(intptr_t webInterfacePtr, size_t slotIndex) {
     auto* pThis = reinterpret_cast<cse498::WebInterface*>(webInterfacePtr);
+    if (!pThis) {
+        return;
+    }
     pThis->OnInventorySlotClick(slotIndex);
 }
 }
