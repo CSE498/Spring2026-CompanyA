@@ -71,8 +71,10 @@ size_t PlayerAgent::SelectPlayerAction(const char input) {
         case 'q':
         case 'Q':
             return GetActionID("q");
-        default:
-            return GetActionID("stay");
+        default: {
+            const size_t stayAction = GetActionID("stay");
+            return stayAction;
+        }
     }
 }
 
