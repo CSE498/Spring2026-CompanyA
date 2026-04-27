@@ -27,82 +27,91 @@ namespace {
 
 using namespace cse498;
 
+std::unique_ptr<InteractiveWorld> SetupOverworld() {
+    auto overworld = std::make_unique<InteractiveWorld>();
+
+    overworld->GetInventory().AddItem(ItemType::Wood, 10);
+    overworld->GetInventory().AddItem(ItemType::Stone, 5);
+
+    overworld->AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
+    overworld->AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
+    overworld->AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7, 7});
+    overworld->AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8, 8});
+
+    // Buildings
+    Building& lumberYard = overworld->AddAgent<Building>("Lumber Yard");
+    lumberYard.SetSymbol('L');
+    lumberYard.AddUpgrade(ItemType::Wood, 15);
+    lumberYard.SetLocation(WorldPosition{2, 1});
+
+    Building& quarry = overworld->AddAgent<Building>("Quarry");
+    quarry.SetSymbol('Q');
+    quarry.AddUpgrade(ItemType::Wood, 50);
+    quarry.AddUpgrade(ItemType::Stone, 50);
+    quarry.AddUpgrade(ItemType::Metal, 35);
+
+    Building& mine = overworld->AddAgent<Building>("Mine");
+    mine.SetSymbol('M');
+    mine.AddUpgrade(ItemType::Stone, 100);
+    mine.AddUpgrade(ItemType::Metal, 50);
+    mine.AddUpgrade(ItemType::Metal, 100);
+
+    // Resource spawns
+    auto woodSpawnPtr =
+            std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Wood Spawn", *overworld, ItemType::Wood);
+    woodSpawnPtr->SetSymbol('l');
+    ResourceSpawn& woodSpawn = overworld->AddAgent(std::move(woodSpawnPtr));
+    woodSpawn.SetLocation(WorldPosition{5, 8});
+
+    auto stoneSpawnPtr = std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Stone Spawn", *overworld,
+                                                         ItemType::Stone);
+    stoneSpawnPtr->SetSymbol('q');
+    ResourceSpawn& stoneSpawn = overworld->AddAgent(std::move(stoneSpawnPtr));
+    stoneSpawn.SetLocation(WorldPosition{9, 9});
+
+    auto metalSpawnPtr = std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Metal Spawn", *overworld,
+                                                         ItemType::Metal);
+    metalSpawnPtr->SetSymbol('m');
+    ResourceSpawn& metalSpawn = overworld->AddAgent(std::move(metalSpawnPtr));
+    metalSpawn.SetLocation(WorldPosition{13, 5});
+
+    // Resource Producers
+    std::shared_ptr<ResourceProducer> woodProducer =
+            std::make_shared<ResourceProducer>(lumberYard, overworld->GetInventory(), ItemType::Wood, 2);
+
+    std::shared_ptr<ResourceProducer> stoneProducer =
+            std::make_shared<ResourceProducer>(quarry, overworld->GetInventory(), ItemType::Stone, 1);
+
+    std::shared_ptr<ResourceProducer> metalProducer =
+            std::make_shared<ResourceProducer>(mine, overworld->GetInventory(), ItemType::Metal, 0.5);
+
+    overworld->AddProducer(woodProducer);
+    overworld->AddProducer(stoneProducer);
+    overworld->AddProducer(metalProducer);
+
+    overworld->AddBuilding(lumberYard, WorldPosition{5, 5});
+    overworld->AddBuilding(quarry, WorldPosition{11, 7});
+    overworld->AddBuilding(mine, WorldPosition{16, 9});
+
+    lumberYard.SetSymbol('L');
+    quarry.SetSymbol('Q');
+    mine.SetSymbol('M');
+
+    return overworld;
+}
+
+std::unique_ptr<DungeonWorld> SetupDungeonWorld() {
+    return std::make_unique<DungeonWorld>();
+}
+
 } // anonymous namespace
 
 class App {
 public:
     inline static std::unique_ptr<cse498::WebInterface> webInterface = nullptr;
     App() {
-        auto overworld = std::make_unique<InteractiveWorld>();
-        auto dungeon = std::make_unique<DungeonWorld>();
-
-        overworld->GetInventory().AddItem(ItemType::Wood, 10);
-        overworld->GetInventory().AddItem(ItemType::Stone, 5);
-
-        overworld->AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
-        overworld->AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
-        overworld->AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7, 7});
-        overworld->AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8, 8});
-
-        // Buildings
-        Building& lumberYard = overworld->AddAgent<Building>("Lumber Yard");
-        lumberYard.SetSymbol('L');
-        lumberYard.AddUpgrade(ItemType::Wood, 15);
-        lumberYard.SetLocation(WorldPosition{2, 1});
-
-        Building& quarry = overworld->AddAgent<Building>("Quarry");
-        quarry.SetSymbol('Q');
-        quarry.AddUpgrade(ItemType::Wood, 50);
-        quarry.AddUpgrade(ItemType::Stone, 50);
-        quarry.AddUpgrade(ItemType::Metal, 35);
-
-        Building& mine = overworld->AddAgent<Building>("Mine");
-        mine.SetSymbol('M');
-        mine.AddUpgrade(ItemType::Stone, 100);
-        mine.AddUpgrade(ItemType::Metal, 50);
-        mine.AddUpgrade(ItemType::Metal, 100);
-
-        // Resource spawns
-        auto woodSpawnPtr =
-                std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Wood Spawn", *overworld, ItemType::Wood);
-        woodSpawnPtr->SetSymbol('l');
-        ResourceSpawn& woodSpawn = overworld->AddAgent(std::move(woodSpawnPtr));
-        woodSpawn.SetLocation(WorldPosition{5, 8});
-
-        auto stoneSpawnPtr = std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Stone Spawn", *overworld,
-                                                             ItemType::Stone);
-        stoneSpawnPtr->SetSymbol('q');
-        ResourceSpawn& stoneSpawn = overworld->AddAgent(std::move(stoneSpawnPtr));
-        stoneSpawn.SetLocation(WorldPosition{9, 9});
-
-        auto metalSpawnPtr = std::make_unique<ResourceSpawn>(overworld->GetNextAgentId(), "Metal Spawn", *overworld,
-                                                             ItemType::Metal);
-        metalSpawnPtr->SetSymbol('m');
-        ResourceSpawn& metalSpawn = overworld->AddAgent(std::move(metalSpawnPtr));
-        metalSpawn.SetLocation(WorldPosition{13, 5});
-
-
-        // Resource Producers
-        std::shared_ptr<ResourceProducer> woodProducer =
-                std::make_shared<ResourceProducer>(lumberYard, overworld->GetInventory(), ItemType::Wood, 2);
-
-        std::shared_ptr<ResourceProducer> stoneProducer =
-                std::make_shared<ResourceProducer>(quarry, overworld->GetInventory(), ItemType::Stone, 1);
-
-        std::shared_ptr<ResourceProducer> metalProducer =
-                std::make_shared<ResourceProducer>(mine, overworld->GetInventory(), ItemType::Metal, 0.5);
-
-        overworld->AddProducer(woodProducer);
-        overworld->AddProducer(stoneProducer);
-        overworld->AddProducer(metalProducer);
-
-        overworld->AddBuilding(lumberYard, WorldPosition{5, 5});
-        overworld->AddBuilding(quarry, WorldPosition{11, 7});
-        overworld->AddBuilding(mine, WorldPosition{16, 9});
-
-        lumberYard.SetSymbol('L');
-        quarry.SetSymbol('Q');
-        mine.SetSymbol('M');
+        auto overworld = SetupOverworld();
+        auto dungeon = SetupDungeonWorld();
 
         webInterface = std::make_unique<WebInterface>(std::move(overworld), std::move(dungeon));
     }

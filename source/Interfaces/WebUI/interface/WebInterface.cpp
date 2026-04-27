@@ -798,7 +798,7 @@ void WebInterface::PopulateInventoryMenu() {
 void WebInterface::OpenInventory() {
     if (mState == WebState::INVENTORY) {
         TransitionTo(mPreviousState);
-    } else if (mState == WebState::DUNGEON) {
+    } else if (mState == WebState::OVERWORLD || mState == WebState::DUNGEON) {
         mPreviousState = mState;
         TransitionTo(WebState::INVENTORY);
         PopulateInventoryMenu();
