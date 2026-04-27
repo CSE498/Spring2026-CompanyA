@@ -16,6 +16,7 @@
 // keep it here too for clarity / symmetry with the dungeon spawn path.
 #include "../../../Agents/AI/SmartEnemyAgent.hpp"
 #include "../../../Agents/AI/LearningExplorerAgent.hpp"
+#include "../../../Agents/Classic/TradeSystem/TradeTypes.hpp"
 
 namespace cse498
 {
@@ -275,6 +276,34 @@ namespace cse498
         player.SetLocation(WorldPosition{1, 1});
         mOverworldPlayer = &player;
 
+        // Farming merchant NPC
+        auto& farmer = mOverWorld->AddAgent<FarmingAgent>("Farmer");
+        farmer.SetLocation(WorldPosition{4, 5});
+        farmer.SetHomePosition(WorldPosition{4, 5});
+        farmer.SetAssignedBuilding(&lumberYardRef);
+        farmer.SetWorkInterval(20);
+        farmer.SetRestockAmount(3);
+        farmer.SetRestockItemName("wheat");
+
+        // Set up the farmer's shop offers
+        farmer.AddInitialOffer(TradeOffer{
+            .mItemName = "wheat",
+            .mBuyPrice = 2,
+            .mSellPrice = 1,
+            .mItemValue = 2,
+            .mStockMode = TradeStockMode::Limited,
+            .mStock = 5
+        });
+        farmer.AddInitialOffer(TradeOffer{
+            .mItemName = "apple",
+            .mBuyPrice = 3,
+            .mSellPrice = 1,
+            .mItemValue = 3,
+            .mStockMode = TradeStockMode::Unlimited,
+            .mStock = 0
+        });
+        farmer.SetGold(50);
+
         // Build the image grid
         const WorldGrid& grid = mOverWorld->GetGrid();
         size_t world_w = grid.GetWidth();
@@ -434,6 +463,9 @@ namespace cse498
             case GameState::SETTINGS:
                 UpdateSettings();
                 break;
+            case GameState::TRADING:
+                UpdateTrading();
+                break;
             default:
                 break;
             }
@@ -458,6 +490,9 @@ namespace cse498
                 break;
             case GameState::SETTINGS:
                 RenderSettings();
+                break;
+            case GameState::TRADING:
+                RenderTrading();
                 break;
             default:
                 break;
@@ -488,24 +523,45 @@ namespace cse498
                 {
 
                     // Navigation in menus
-                case SDLK_UP:
-                    if (mState == GameState::MAIN_MENU)
-                        mMainMenu.SelectPrevious();
-                    if (mState == GameState::PAUSED)
-                        mPauseMenu.SelectPrevious();
-                    break;
-                case SDLK_DOWN:
-                    if (mState == GameState::MAIN_MENU)
-                        mMainMenu.SelectNext();
-                    if (mState == GameState::PAUSED)
-                        mPauseMenu.SelectNext();
-                    break;
-                case SDLK_RETURN:
-                    if (mState == GameState::MAIN_MENU)
-                        mMainMenu.ActivateSelected();
-                    if (mState == GameState::PAUSED)
-                        mPauseMenu.ActivateSelected();
-                    break;
+                    case SDLK_UP:
+                        if (mState == GameState::MAIN_MENU)
+                            mMainMenu.SelectPrevious();
+                        if (mState == GameState::PAUSED)
+                            mPauseMenu.SelectPrevious();
+                        if (mState == GameState::TRADING && mActiveMerchant) {
+                            int count = static_cast<int>(mActiveMerchant->GetOffers().size());
+                            if (count > 0) mTradeMenuSelection = (mTradeMenuSelection - 1 + count) % count;
+                        }
+                        break;
+                    case SDLK_DOWN:
+                        if (mState == GameState::MAIN_MENU)
+                            mMainMenu.SelectNext();
+                        if (mState == GameState::PAUSED)
+                            mPauseMenu.SelectNext();
+                        if (mState == GameState::TRADING && mActiveMerchant) {
+                            int count = static_cast<int>(mActiveMerchant->GetOffers().size());
+                            if (count > 0) mTradeMenuSelection = (mTradeMenuSelection + 1) % count;
+                        }
+                        break;
+                    case SDLK_RETURN:
+                        if (mState == GameState::MAIN_MENU)
+                            mMainMenu.ActivateSelected();
+                        if (mState == GameState::PAUSED)
+                            mPauseMenu.ActivateSelected();
+                        if (mState == GameState::TRADING && mActiveMerchant) {
+                            const auto& offers = mActiveMerchant->GetOffers();
+                            if (mTradeMenuSelection >= 0 && mTradeMenuSelection < static_cast<int>(offers.size())) {
+                                const auto& offer = offers[mTradeMenuSelection];
+                                TradeResult result = mActiveMerchant->BuyFromMerchant(*mOverworldPlayer, offer.mItemName, 1);
+                                if (result.mStatus == TradeStatus::Success) {
+                                    mPickupMessage = "Bought " + offer.mItemName + " for " + std::to_string(offer.mBuyPrice) + " gold";
+                                } else {
+                                    mPickupMessage = result.mMessage;
+                                }
+                                mPickupMessageTime = SDL_GetTicks();
+                            }
+                        }
+                        break;
 
                 case SDLK_w:
                 case SDLK_s:
@@ -544,74 +600,97 @@ namespace cse498
                     break;
 
                 case SDLK_e:
-                    if ((mState == GameState::OVERWORLD) && !mShowBackpack)
+                    if (mState == GameState::TRADING) {
+                        // Close trade menu
+                        mActiveMerchant = nullptr;
+                        mState = mPreviousState;
+                    }
+                    else if ((mState == GameState::OVERWORLD) && !mShowBackpack)
                     {
-                        // First, collect from all spawns
-                        std::string combined;
-                        for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
-                            AgentBase& agent = mOverWorld->GetAgentByIndex(i);
-                            if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
-                                int collected = spawn->Collect();
-                                if (collected > 0) {
-                                    mOverWorld->GetInventory().AddItem(spawn->GetItemType(), collected);
-                                    if (!combined.empty()) combined += "  ";
-                                    combined += std::to_string(collected) + " " + std::string(ItemTypeToString(spawn->GetItemType()));
-                                }
-                            }
-                        }
-                        if (!combined.empty()) {
-                            mPickupMessage = "Collected: " + combined;
-                            mPickupMessageTime = SDL_GetTicks();
-                        }
-
-                        // Then, try to upgrade adjacent building
+                        // Check for adjacent merchant first
                         WorldPosition playerPos = mOverworldPlayer->GetLocation().AsWorldPosition();
                         std::array<WorldPosition, 4> adjacent = {
                             playerPos.Up(), playerPos.Down(), playerPos.Left(), playerPos.Right()
                         };
 
+                        bool openedTrade = false;
                         for (const auto& adjPos : adjacent) {
+                            if (openedTrade) break;
                             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
                                 AgentBase& agent = mOverWorld->GetAgentByIndex(i);
                                 if (!agent.GetLocation().IsPosition()) continue;
                                 if (agent.GetLocation().AsWorldPosition() != adjPos) continue;
 
-                                if (auto* building = dynamic_cast<Building*>(&agent)) {
-                                    if (building->IsMaxLevel()) {
-                                        mPickupMessage = building->GetName() + " is max level!";
-                                        mPickupMessageTime = SDL_GetTicks();
-                                    } else {
-                                        auto upgradeInfo = building->GetNextUpgradeInfo();
-                                        if (upgradeInfo) {
-                                            auto& inv = mOverWorld->GetInventory();
-                                            ItemType needed = upgradeInfo->item;
-                                            int cost = upgradeInfo->quantity;
-
-                                            if (inv.HasEnough(needed, cost)) {
-                                                auto result = building->Upgrade(needed, cost);
-                                                if (result) {
-                                                    inv.RemoveItem(needed, cost);
-                                                    mPickupMessage = building->GetName() + " upgraded to level "
-                                                        + std::to_string(building->GetCurrentLevel()) + "!";
-                                                } else {
-                                                    mPickupMessage = building->GetName() + ": "
-                                                        + std::string(Building::UpgradeRejectionTypeToString(result.error()));
-                                                }
-                                            } else {
-                                                mPickupMessage = building->GetName() + " needs "
-                                                    + std::to_string(cost) + " "
-                                                    + std::string(ItemTypeToString(needed))
-                                                    + " (have " + std::to_string(inv.GetAmount(needed)) + ")";
-                                            }
-                                            mPickupMessageTime = SDL_GetTicks();
-                                        }
-                                    }
+                                if (auto* merchant = dynamic_cast<MerchantAgent*>(&agent)) {
+                                    mActiveMerchant = merchant;
+                                    mTradeMenuSelection = 0;
+                                    mPreviousState = mState;
+                                    mState = GameState::TRADING;
+                                    openedTrade = true;
                                     break;
                                 }
                             }
                         }
+
+                        // If no merchant found, collect resources and try upgrade
+                        if (!openedTrade) {
+                            std::string combined;
+                            for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                                AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+                                if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
+                                    int collected = spawn->Collect();
+                                    if (collected > 0) {
+                                        mOverWorld->GetInventory().AddItem(spawn->GetItemType(), collected);
+                                        if (!combined.empty()) combined += "  ";
+                                        combined += std::to_string(collected) + " " + std::string(ItemTypeToString(spawn->GetItemType()));
+                                    }
+                                }
+                            }
+                            if (!combined.empty()) {
+                                mPickupMessage = "Collected: " + combined;
+                                mPickupMessageTime = SDL_GetTicks();
+                            }
+
+                            // Try upgrade adjacent building
+                            for (const auto& adjPos : adjacent) {
+                                for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                                    AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+                                    if (!agent.GetLocation().IsPosition()) continue;
+                                    if (agent.GetLocation().AsWorldPosition() != adjPos) continue;
+
+                                    if (auto* building = dynamic_cast<Building*>(&agent)) {
+                                        if (building->IsMaxLevel()) {
+                                            mPickupMessage = building->GetName() + " is max level!";
+                                            mPickupMessageTime = SDL_GetTicks();
+                                        } else {
+                                            auto upgradeInfo = building->GetNextUpgradeInfo();
+                                            if (upgradeInfo) {
+                                                auto& inv = mOverWorld->GetInventory();
+                                                ItemType needed = upgradeInfo->item;
+                                                int cost = upgradeInfo->quantity;
+                                                if (inv.HasEnough(needed, cost)) {
+                                                    auto result = building->Upgrade(needed, cost);
+                                                    if (result) {
+                                                        inv.RemoveItem(needed, cost);
+                                                        mPickupMessage = building->GetName() + " upgraded to level "
+                                                            + std::to_string(building->GetCurrentLevel()) + "!";
+                                                    }
+                                                } else {
+                                                    mPickupMessage = building->GetName() + " needs "
+                                                        + std::to_string(cost) + " "
+                                                        + std::string(ItemTypeToString(needed))
+                                                        + " (have " + std::to_string(inv.GetAmount(needed)) + ")";
+                                                }
+                                                mPickupMessageTime = SDL_GetTicks();
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
-                    break;
+                    break; // end case e (finally)
 
                 // Number keys 0-9: move backpack item to hotbar slot
                 case SDLK_0:
@@ -642,7 +721,7 @@ namespace cse498
                     }
                     break;
 
-                    // Pause / resume
+                // Pause / resume
                 case SDLK_ESCAPE:
                     if (mState == GameState::OVERWORLD || mState == GameState::DUNGEON)
                     {
@@ -655,6 +734,11 @@ namespace cse498
                     else if (mState == GameState::SETTINGS || mState == GameState::STATS)
                     {
                         Resume();
+                    }
+                    else if (mState == GameState::TRADING)
+                    {
+                        mActiveMerchant = nullptr;
+                        mState = mPreviousState;
                     }
                     break;
 
@@ -1093,6 +1177,102 @@ void Game::UpdateOverworld()
         mPickupText.SetContent(mPickupMessage);
         int text_x = (w - mPickupText.GetWidth()) / 2;
         mPickupText.Draw(text_x, 40);
+    }
+
+
+    void Game::UpdateTrading() {
+        // Nothing to update — trade menu is event-driven
+        // Put here for consistency or possible stat logging.
+    }
+
+    void Game::RenderTrading() {
+        // Draw the overworld underneath
+        RenderOverworld();
+
+        if (!mActiveMerchant) return;
+
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        // Dark overlay
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
+        SDL_Rect overlay = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &overlay);
+
+        int panel_w = 400;
+        int panel_h = 350;
+        int panel_x = (w - panel_w) / 2;
+        int panel_y = (h - panel_h) / 2;
+
+        // Panel background
+        SDL_SetRenderDrawColor(renderer, 30, 30, 40, 240);
+        SDL_Rect panel = {panel_x, panel_y, panel_w, panel_h};
+        SDL_RenderFillRect(renderer, &panel);
+
+        // Panel border
+        SDL_SetRenderDrawColor(renderer, 100, 100, 120, 255);
+        SDL_RenderDrawRect(renderer, &panel);
+
+        int y = panel_y + 15;
+
+        // Merchant greeting
+        mPickupText.SetSize(20);
+        mPickupText.SetBold(true);
+        mPickupText.SetContent(mActiveMerchant->GetTradeGreeting());
+        int text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
+        mPickupText.Draw(text_x, y);
+        y += 35;
+
+        // Player gold
+        mPickupText.SetSize(16);
+        mPickupText.SetBold(false);
+        mPickupText.SetContent("Your gold: " + std::to_string(mOverworldPlayer->GetGold()));
+        mPickupText.Draw(panel_x + 20, y);
+        y += 30;
+
+        // Offers list
+        const auto& offers = mActiveMerchant->GetOffers();
+        for (int i = 0; i < static_cast<int>(offers.size()); ++i) {
+            const auto& offer = offers[i];
+
+            std::string line = offer.mItemName + "  -  " + std::to_string(offer.mBuyPrice) + " gold";
+            if (offer.mStockMode == TradeStockMode::Limited) {
+                line += "  [" + std::to_string(offer.mStock) + " left]";
+            }
+
+            mPickupText.SetSize(16);
+            mPickupText.SetBold(i == mTradeMenuSelection);
+            mPickupText.SetContent(line);
+            mPickupText.Draw(panel_x + 30, y);
+
+            // Selection highlight
+            if (i == mTradeMenuSelection) {
+                SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+                SDL_RenderDrawRect(renderer, &sel);
+            }
+
+            y += 25;
+        }
+
+        if (offers.empty()) {
+            mPickupText.SetSize(16);
+            mPickupText.SetBold(false);
+            mPickupText.SetContent("No items for sale.");
+            mPickupText.Draw(panel_x + 30, y);
+            y += 25;
+        }
+
+        // Instructions
+        y = panel_y + panel_h - 30;
+        mPickupText.SetSize(14);
+        mPickupText.SetBold(false);
+        mPickupText.SetContent("UP/DOWN: browse   ENTER: buy   E: close");
+        text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
+        mPickupText.Draw(text_x, y);
     }
 
     size_t Game::KeyToAction(SDL_Keycode key) {

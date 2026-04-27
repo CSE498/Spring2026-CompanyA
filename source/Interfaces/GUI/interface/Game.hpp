@@ -23,10 +23,11 @@
 #include "../source/Worlds/Dungeon/DungeonWorld.hpp"
 //#include "OverWorld.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
-#include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../../source/Worlds/Hub/Building.hpp"
+#include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../../source/Worlds/Hub/ResourceProducer.hpp"
 #include "../../../source/Worlds/Hub/ResourceSpawn.hpp"
+#include "../../../Agents/Classic/FarmingAgent.hpp"
 
 namespace cse498
 {
@@ -43,6 +44,7 @@ namespace cse498
         PAUSED,    /// Paused state (reachable from OVERWORLD or DUNGEON)
         SETTINGS,  /// Settings screen (placeholder)
         STATS,     /// Contains information captured in gameplay
+        TRADING,   /// Trading with a merchant
         QUIT       /// Exit state
     };
 
@@ -131,6 +133,13 @@ namespace cse498
         DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
         Text mStatsText; /// Text object used for stats screen
 
+
+        // -------------------------
+        // Merchant system state
+        // -------------------------
+        MerchantAgent* mActiveMerchant = nullptr; /// Currently interacting merchant
+        int mTradeMenuSelection = 0;              /// Selected offer index in trade menu
+
         // -------------------------
         // Runtime flags
         // -------------------------
@@ -170,6 +179,8 @@ namespace cse498
         void RenderBackpack(const Inventory& inventory);
         void RenderWorldInventory();
         void RenderPickupMessage();
+        void UpdateTrading();
+        void RenderTrading();
 
         /**
          * @brief Convert SDL keycode to world action ID.
