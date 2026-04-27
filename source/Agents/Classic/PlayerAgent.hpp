@@ -42,8 +42,8 @@ public:
      */
     size_t SelectPlayerAction(char input);
 
-    [[nodiscard]] Inventory& GetInventory() { return mInventory; }
-    [[nodiscard]] const Inventory& GetInventory() const { return mInventory; }
+    [[nodiscard]] Inventory& GetInventory() override { return mInventory; }
+    [[nodiscard]] const Inventory& GetInventory() const override { return mInventory; }
 
     [[nodiscard]] std::size_t GetGold() const { return mGold; }
 

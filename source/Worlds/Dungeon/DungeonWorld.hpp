@@ -351,7 +351,7 @@ namespace cse498 {
 		}
 
         void UpdateWorld() override {
-        	if ((mLevelNum == 5)) {
+        	if (mLevelNum == 5) {
         		mRunOver = true;
         		return;
         	}
