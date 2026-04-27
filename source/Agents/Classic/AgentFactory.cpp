@@ -44,8 +44,9 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const Wo
     });
 }
 
-
-std::unique_ptr<Node> AgentFactory::AttackPlayer(const Enemy& enemy, const WorldBase& world) {
+// KAREN: Modified AttackPlayer to take in a non-const 'world' object
+// This lets us call the non-const overload of TryGetAgent
+std::unique_ptr<Node> AgentFactory::AttackPlayer(const Enemy& enemy, WorldBase& world) {
     return TreeBuilder::Act("Attack Player", [&world, &enemy](ExecutionContext&) {
         auto* player = world.TryGetAgent(0);
         if (player == nullptr || !player->IsAlive())
@@ -181,7 +182,7 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInBoundedRange(const Enemy& enemy, c
 //
 //////////////////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<Node> AgentFactory::CreateTestFunctionTree(const Enemy& enemy, const WorldBase& world) {
+std::unique_ptr<Node> AgentFactory::CreateTestFunctionTree(const Enemy& enemy, WorldBase& world) {
     // Root node continually runs the enemy behavior.
     auto root = TreeBuilder::Repeat("Example Root");
 
@@ -208,7 +209,7 @@ std::unique_ptr<Node> AgentFactory::CreateTestFunctionTree(const Enemy& enemy, c
 }
 
 
-std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const WorldBase& world) {
+std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, WorldBase& world) {
     /*
      * The Tree:
      * If not within range of player chase + reset tile distance count
@@ -242,7 +243,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const
     return root;
 }
 
-std::unique_ptr<Node> AgentFactory::CreateGoblinTree(const Enemy& enemy, const WorldBase& world) {
+std::unique_ptr<Node> AgentFactory::CreateGoblinTree(const Enemy& enemy, WorldBase& world) {
     auto root = TreeBuilder::Repeat("Goblin Root");
 
     auto selector = TreeBuilder::Sel("Goblin Behavior");

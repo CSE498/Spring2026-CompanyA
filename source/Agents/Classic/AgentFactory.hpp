@@ -42,7 +42,7 @@ private:
      * @return Action node. True if player is in range
      */
     static std::unique_ptr<BehaviorTrees::Node> IsPlayerInRange(const Enemy& enemy, const WorldBase& world);
-    static std::unique_ptr<BehaviorTrees::Node> AttackPlayer(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> AttackPlayer(const Enemy& enemy, WorldBase& world);
     static std::unique_ptr<BehaviorTrees::Node> ChasePlayer(const Enemy& enemy, const WorldBase& world);
     static std::unique_ptr<BehaviorTrees::Node> RangeChasePlayer(const Enemy& enemy, const WorldBase& world);
     static std::unique_ptr<BehaviorTrees::Node> IsPlayerInBoundedRange(const Enemy& enemy, const WorldBase& world);
@@ -52,7 +52,7 @@ private:
      * @param world - the world from the enemy
      * @return root node for the tree
      */
-    static std::unique_ptr<BehaviorTrees::Node> CreateSkeletonTree(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> CreateSkeletonTree(const Enemy& enemy, WorldBase& world);
 
     /**
      * Creates the behavior tree for the goblin (attack in range, else chase).
@@ -60,7 +60,7 @@ private:
      * @param world - the world from the enemy
      * @return root node for the tree
      */
-    static std::unique_ptr<BehaviorTrees::Node> CreateGoblinTree(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> CreateGoblinTree(const Enemy& enemy, WorldBase& world);
 
 
     /// Tree that alternates left/right every tick (for patrol agent).
@@ -116,7 +116,7 @@ public:
      * @param world - the world the enemy lives in
      * @return the root node
      */
-    static std::unique_ptr<BehaviorTrees::Node> CreateTestFunctionTree(const Enemy& enemy, const WorldBase& world);
+    static std::unique_ptr<BehaviorTrees::Node> CreateTestFunctionTree(const Enemy& enemy, WorldBase& world);
 
     /**
      * Create a goblin enemy from a definition and spawn position.
