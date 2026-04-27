@@ -477,6 +477,7 @@ std::unordered_map<char, std::string>& WebInterface::GetSymbolPathMap() {
         case WebState::DUNGEON:
             return mSymbolPathDungeon;
         default:
+            assert(false && "GetSymbolPathMap() is only valid during active gameplay world states");
             // Should not reach here, but return a reference to avoid null pointer issues
             // In practice, this should only be called when rendering an active world
             static std::unordered_map<char, std::string> empty;
