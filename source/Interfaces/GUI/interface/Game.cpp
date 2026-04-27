@@ -822,6 +822,8 @@ void Game::UpdateOverworld()
 
     void Game::UpdateStats() {
         if (mAnalyticsManager) {
+            mOverWorld->SyncAgentLogsToAnalytics();
+            mDungeonWorld->SyncAgentLogsToAnalytics();
             mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
         }
     }
