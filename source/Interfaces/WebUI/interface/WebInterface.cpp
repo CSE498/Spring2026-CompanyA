@@ -542,9 +542,12 @@ bool WebInterface::IsPaused() const {
            mState == WebState::INVENTORY || mState == WebState::STATS;
 }
 
+/// Returns the active gameplay world.
+/// Precondition: an active gameplay world must exist.
+/// Use GetCurrentWorld() instead when the caller may be in a menu-only state.
 WorldBase& WebInterface::GetWorld() const {
     WorldBase* currentWorld = GetCurrentWorld();
-    assert(currentWorld && "No active world for current state");
+    assert(currentWorld && "GetWorld() is only valid when an active gameplay world exists");
     return *currentWorld;
 }
 
@@ -574,6 +577,7 @@ std::unordered_map<char, std::string>& WebInterface::GetSymbolPathMap() {
         case WebState::DUNGEON:
             return mSymbolPathDungeon;
         default:
+            assert(false && "GetSymbolPathMap() is only valid during active gameplay world states");
             // Should not reach here, but return a reference to avoid null pointer issues
             // In practice, this should only be called when rendering an active world
             static std::unordered_map<char, std::string> empty;
@@ -931,7 +935,7 @@ void WebInterface::PopulateInventoryMenu() {
 void WebInterface::OpenInventory() {
     if (mState == WebState::INVENTORY) {
         TransitionTo(mPreviousState);
-    } else if (mState == WebState::DUNGEON) {
+    } else if (mState == WebState::OVERWORLD || mState == WebState::DUNGEON) {
         mPreviousState = mState;
         TransitionTo(WebState::INVENTORY);
         PopulateInventoryMenu();
@@ -1048,7 +1052,13 @@ void WebInterface::RenderHUD() {
                                   kInventorySelectedSlotHighlightColor);
             }
 
-            std::string imagePath = array[i].GetItem()->GetImagePath();
+            const Item* item = array[i].GetItem();
+            if (!item) {
+                leftOffset += itemDrawSize;
+                continue;
+            }
+
+            std::string imagePath = item->GetImagePath();
             if (imagePath.empty()) {
                 leftOffset += itemDrawSize;
                 continue;
