@@ -175,6 +175,8 @@ namespace cse498 {
 
         cse498::WeightedSet<std::string> mItemPool; // A pool of possible items to generate
 
+        size_t mNextItemId = 0; // Item id tracker
+
         /// Provide the agent with movement actions.
         void ConfigAgent(AgentBase &agent) override {
             agent.AddAction("up", DungeonActions::MOVE_UP);
@@ -558,12 +560,11 @@ namespace cse498 {
                 if (agent.IsPlayerAgent()) {
                     Inventory &inventory = agent.GetInventory();
                     std::string item_str = GetRandomItem();
-                    Random rng;
-                    size_t item_id = rng.GetValue(MIN_ID, MAX_ID).value();
+                    mNextItemId++;
 
                     if (item_str == "Sword") {
                         std::unique_ptr<ItemWeaponSword> sword = std::make_unique<ItemWeaponSword>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_sword_1.png",
                             BASE_GOLD + 1,
@@ -576,7 +577,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword));
                     } else if (item_str == "Sword +1") {
                         std::unique_ptr<ItemWeaponSword> sword1 = std::make_unique<ItemWeaponSword>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_sword_1.png",
                             BASE_GOLD + 2,
@@ -589,7 +590,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword1));
                     } else if (item_str == "Sword +2") {
                         std::unique_ptr<ItemWeaponSword> sword2 = std::make_unique<ItemWeaponSword>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_sword_1.png",
                             BASE_GOLD + 3,
@@ -602,7 +603,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword2));
                     } else if (item_str == "Sword +3") {
                         std::unique_ptr<ItemWeaponSword> sword3 = std::make_unique<ItemWeaponSword>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_sword_1.png",
                             BASE_GOLD + 4,
@@ -615,7 +616,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword3));
                     } else if (item_str == "Sword +4") {
                         std::unique_ptr<ItemWeaponSword> sword4 = std::make_unique<ItemWeaponSword>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_sword_1.png",
                             BASE_GOLD + 5,
@@ -628,7 +629,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword4));
                     } else if (item_str == "Sword +5") {
                         std::unique_ptr<ItemWeaponSword> sword5 = std::make_unique<ItemWeaponSword>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_sword_1.png",
                             BASE_GOLD + 6,
@@ -643,7 +644,7 @@ namespace cse498 {
 
                     if (item_str == "Bow") {
                         std::unique_ptr<ItemWeaponBow> bow = std::make_unique<ItemWeaponBow>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_bow_1.png",
                             BASE_GOLD + 1,
@@ -656,7 +657,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow));
                     } else if (item_str == "Bow +1") {
                         std::unique_ptr<ItemWeaponBow> bow1 = std::make_unique<ItemWeaponBow>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_bow_1.png",
                             BASE_GOLD + 2,
@@ -669,7 +670,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow1));
                     } else if (item_str == "Bow +2") {
                         std::unique_ptr<ItemWeaponBow> bow2 = std::make_unique<ItemWeaponBow>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_bow_1.png",
                             BASE_GOLD + 3,
@@ -682,7 +683,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow2));
                     } else if (item_str == "Bow +3") {
                         std::unique_ptr<ItemWeaponBow> bow3 = std::make_unique<ItemWeaponBow>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_bow_1.png",
                             BASE_GOLD + 4,
@@ -695,7 +696,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow3));
                     } else if (item_str == "Bow +4") {
                         std::unique_ptr<ItemWeaponBow> bow4 = std::make_unique<ItemWeaponBow>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_bow_1.png",
                             BASE_GOLD + 5,
@@ -708,7 +709,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow4));
                     } else if (item_str == "Bow +5") {
                         std::unique_ptr<ItemWeaponBow> bow5 = std::make_unique<ItemWeaponBow>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_bow_1.png",
                             BASE_GOLD + 6,
@@ -721,7 +722,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow5));
                     } else if (item_str == "Healing Potion") {
                         std::unique_ptr<ItemConsumableHealing> healing = std::make_unique<ItemConsumableHealing>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/potion_healing.png",
                             BASE_GOLD,
@@ -733,7 +734,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(healing));
                     } else if (item_str == "Defense Potion") {
                         std::unique_ptr<ItemConsumableDefense> defense = std::make_unique<ItemConsumableDefense>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/potion_defense.png",
                             BASE_GOLD,
@@ -745,7 +746,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(defense));
                     } else if (item_str == "Speed Potion") {
                         std::unique_ptr<ItemConsumableSpeed> speed = std::make_unique<ItemConsumableSpeed>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/potion_speed.png",
                             BASE_GOLD,
@@ -757,7 +758,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(speed));
                     } else if (item_str == "Axe") {
                         std::unique_ptr<ItemWeaponToolAxe> axe = std::make_unique<ItemWeaponToolAxe>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_axe.png",
                             BASE_GOLD,
@@ -772,7 +773,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(axe));
                     } else if (item_str == "Pickaxe") {
                         std::unique_ptr<ItemWeaponToolPickaxe> pickaxe = std::make_unique<ItemWeaponToolPickaxe>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_pickaxe.png",
                             BASE_GOLD,
@@ -787,7 +788,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(pickaxe));
                     } else if (item_str == "Shovel") {
                         std::unique_ptr<ItemWeaponToolShovel> shovel = std::make_unique<ItemWeaponToolShovel>(
-                            item_id,
+                            mNextItemId,
                             item_str,
                             "/assets/item/item_shovel.png",
                             BASE_GOLD,

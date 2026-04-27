@@ -63,7 +63,7 @@ namespace cse498 {
         }
 
         ///@brief Overloaded function dedicated to loading in the exit room to the next level, separate from the room_pool
-        void SetCurrentRoom(std::vector<std::string> exit_room) {
+        void SetCurrentRoom(const std::vector<std::string>& exit_room) {
             m_current_room = exit_room;
         }
 
