@@ -225,3 +225,17 @@ TEST_CASE("Simple test case with skeleton functionality")
 
 
 }
+
+TEST_CASE("Skeleton chase fails cleanly when no path exists", "[Skeleton][safety][pathing]") {
+    SkeletonTestWorld world;
+    auto skeleton = AgentFactory::CreateEnemySkeleton({"Blocked", 0, {1, 1}}, world);
+    REQUIRE(skeleton != nullptr);
+    auto& stored = world.AddAgent(std::move(skeleton));
+
+    world.SetPlayerPosition({6, 1});
+    world.SetWall({2, 1});
+    world.SetWall({1, 2});
+
+    const size_t action = stored.SelectAction(world.GetGrid());
+    CHECK(action == WorldActions::REMAIN_STILL);
+}

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstddef> // for size_t
 
 namespace cse498 {

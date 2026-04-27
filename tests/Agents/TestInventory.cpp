@@ -237,7 +237,7 @@ TEST_CASE("Inventory RemoveItem all-or-nothing flag behavior", "[inventory, remo
 
     SECTION("False flag removes what is available") {
         const auto remaining = inv.RemoveItem("TestItem", 12, false);
-        CHECK(remaining == 0); // everything was removed
+        CHECK(remaining == 0);
         CHECK(inv.GetTotal("TestItem") == 3);
     }
 
@@ -333,6 +333,8 @@ TEST_CASE("Inventory Other methods", "[inventory, methods]") {
     CHECK(inv.GetHandSlotIndex() == 0);
     inv.HotBarIndexMove(4);
     CHECK(inv.GetHandSlotIndex() == 4);
+    inv.HotBarIndexMove(Inventory::HOTBAR_SIZE + 3);
+    CHECK(inv.GetHandSlotIndex() == 3);
 
     inv.HotBarIndexInc();
     CHECK(inv.GetHandSlotIndex() == 5);
@@ -346,6 +348,9 @@ TEST_CASE("Check Asserts, some edge cases", "[none]") {
     // some edge cases:
     auto result = inv.RemoveItem("none", 3);
     CHECK(result == 3);
+
+    auto remaining = inv.AddItem(nullptr, 5);
+    CHECK(remaining == 5);
 
     // Should hit assert:
     auto item = std::make_unique<RealUItem>(1, 5, world);

@@ -25,11 +25,11 @@ void PlayerAgent::SetStats(const AgentStats& stats) {
 
 void PlayerAgent::RefreshCombatFromHand() {
     mStats = mBaseCombatStats;
-    Item* hand = mInventory.GetHand();
+    const Item* hand = mInventory.GetHand();
     if (hand == nullptr || !hand->IsWeapon()) {
         return;
     }
-    auto* weapon = dynamic_cast<ItemWeapon*>(hand);
+    auto* weapon = dynamic_cast<const ItemWeapon*>(hand);
     if (weapon == nullptr || weapon->IsTool()) {
         return;
     }
@@ -73,9 +73,11 @@ size_t PlayerAgent::SelectPlayerAction(const char input) {
             return GetActionID("e");
         case 'q':
         case 'Q':
-            return GetActionID("quit");
-        default:
-            return GetActionID("stay");
+            return GetActionID("q");
+        default: {
+            const size_t stayAction = GetActionID("stay");
+            return stayAction;
+        }
     }
 }
 

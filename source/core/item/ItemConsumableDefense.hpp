@@ -22,7 +22,7 @@ public:
 
     bool IsDefense() const override { return true; }
 
-    int GetDefense() { return m_defense; }
+    int GetDefense() const { return m_defense; }
     void SetDefense(int defense) { m_defense = defense; }
 };
 } // namespace cse498
