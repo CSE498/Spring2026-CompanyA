@@ -27,12 +27,15 @@
 namespace {
 
 using namespace cse498;
+class App {
+public:
+    inline static std::unique_ptr<cse498::WebInterface> webInterface = nullptr;
+    App() {
+        auto overworld = std::make_unique<InteractiveWorld>();
+        auto dungeon = std::make_unique<DungeonWorld>();
 
-std::unique_ptr<InteractiveWorld> SetupOverworld() {
-    auto overworld = std::make_unique<InteractiveWorld>();
-
-    overworld->GetInventory().AddItem(ItemType::Wood, 10);
-    overworld->GetInventory().AddItem(ItemType::Stone, 5);
+        overworld->GetInventory().AddItem(ItemType::Wood, 10);
+        overworld->GetInventory().AddItem(ItemType::Stone, 5);
 
         auto townHallPtr = std::make_unique<TownHall>(overworld->GetNextAgentId(), "Town Hall", *overworld,
                                                       overworld->GetInventoryPtr());
@@ -45,17 +48,17 @@ std::unique_ptr<InteractiveWorld> SetupOverworld() {
         lumberYard.SetSymbol('W');
         lumberYard.AddUpgrade(ItemType::Wood, 15);
 
-    Building& quarry = overworld->AddAgent<Building>("Quarry");
-    quarry.SetSymbol('Q');
-    quarry.AddUpgrade(ItemType::Wood, 50);
-    quarry.AddUpgrade(ItemType::Stone, 50);
-    quarry.AddUpgrade(ItemType::Metal, 35);
+        Building& quarry = overworld->AddAgent<Building>("Quarry");
+        quarry.SetSymbol('Q');
+        quarry.AddUpgrade(ItemType::Wood, 50);
+        quarry.AddUpgrade(ItemType::Stone, 50);
+        quarry.AddUpgrade(ItemType::Metal, 35);
 
-    Building& mine = overworld->AddAgent<Building>("Mine");
-    mine.SetSymbol('M');
-    mine.AddUpgrade(ItemType::Stone, 100);
-    mine.AddUpgrade(ItemType::Metal, 50);
-    mine.AddUpgrade(ItemType::Metal, 100);
+        Building& mine = overworld->AddAgent<Building>("Mine");
+        mine.SetSymbol('M');
+        mine.AddUpgrade(ItemType::Stone, 100);
+        mine.AddUpgrade(ItemType::Metal, 50);
+        mine.AddUpgrade(ItemType::Metal, 100);
 
         // Resource spawns occupy the three corners farthest from the player start.
         auto woodSpawnPtr =
@@ -87,9 +90,9 @@ std::unique_ptr<InteractiveWorld> SetupOverworld() {
         std::shared_ptr<ResourceProducer> metalProducer =
                 std::make_shared<ResourceProducer>(mine, metalSpawn, ItemType::Metal, 0.5);
 
-    overworld->AddProducer(woodProducer);
-    overworld->AddProducer(stoneProducer);
-    overworld->AddProducer(metalProducer);
+        overworld->AddProducer(woodProducer);
+        overworld->AddProducer(stoneProducer);
+        overworld->AddProducer(metalProducer);
 
         overworld->AddBuilding(lumberYard, WorldPosition{15, 3});
         overworld->AddBuilding(quarry, WorldPosition{5, 7});
@@ -155,6 +158,8 @@ std::unique_ptr<InteractiveWorld> SetupOverworld() {
         webInterface->RunFrame(emscripten_performance_now());
     }
 };
+
+} // namespace
 
 int main() {
     App app{};
