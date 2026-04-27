@@ -543,26 +543,74 @@ namespace cse498
                     }
                     break;
 
-                    case SDLK_e:
-                        if ((mState == GameState::OVERWORLD) && !mShowBackpack)
-                        {
-                            std::string combined;
-                            for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
-                                AgentBase& agent = mOverWorld->GetAgentByIndex(i);
-                                if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
-                                    int collected = spawn->Collect();
-                                    if (collected > 0) {
-                                        mOverWorld->GetInventory().AddItem(spawn->GetItemType(), collected);
-                                        if (!combined.empty()) combined += "  ";
-                                        combined += std::to_string(collected) + " " + std::string(ItemTypeToString(spawn->GetItemType()));
-                                    }
+                case SDLK_e:
+                    if ((mState == GameState::OVERWORLD) && !mShowBackpack)
+                    {
+                        // First, collect from all spawns
+                        std::string combined;
+                        for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                            AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+                            if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
+                                int collected = spawn->Collect();
+                                if (collected > 0) {
+                                    mOverWorld->GetInventory().AddItem(spawn->GetItemType(), collected);
+                                    if (!combined.empty()) combined += "  ";
+                                    combined += std::to_string(collected) + " " + std::string(ItemTypeToString(spawn->GetItemType()));
                                 }
                             }
-                            if (!combined.empty()) {
-                                mPickupMessage = "Collected: " + combined;
-                                mPickupMessageTime = SDL_GetTicks();
+                        }
+                        if (!combined.empty()) {
+                            mPickupMessage = "Collected: " + combined;
+                            mPickupMessageTime = SDL_GetTicks();
+                        }
+
+                        // Then, try to upgrade adjacent building
+                        WorldPosition playerPos = mOverworldPlayer->GetLocation().AsWorldPosition();
+                        std::array<WorldPosition, 4> adjacent = {
+                            playerPos.Up(), playerPos.Down(), playerPos.Left(), playerPos.Right()
+                        };
+
+                        for (const auto& adjPos : adjacent) {
+                            for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                                AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+                                if (!agent.GetLocation().IsPosition()) continue;
+                                if (agent.GetLocation().AsWorldPosition() != adjPos) continue;
+
+                                if (auto* building = dynamic_cast<Building*>(&agent)) {
+                                    if (building->IsMaxLevel()) {
+                                        mPickupMessage = building->GetName() + " is max level!";
+                                        mPickupMessageTime = SDL_GetTicks();
+                                    } else {
+                                        auto upgradeInfo = building->GetNextUpgradeInfo();
+                                        if (upgradeInfo) {
+                                            auto& inv = mOverWorld->GetInventory();
+                                            ItemType needed = upgradeInfo->item;
+                                            int cost = upgradeInfo->quantity;
+
+                                            if (inv.HasEnough(needed, cost)) {
+                                                auto result = building->Upgrade(needed, cost);
+                                                if (result) {
+                                                    inv.RemoveItem(needed, cost);
+                                                    mPickupMessage = building->GetName() + " upgraded to level "
+                                                        + std::to_string(building->GetCurrentLevel()) + "!";
+                                                } else {
+                                                    mPickupMessage = building->GetName() + ": "
+                                                        + std::string(Building::UpgradeRejectionTypeToString(result.error()));
+                                                }
+                                            } else {
+                                                mPickupMessage = building->GetName() + " needs "
+                                                    + std::to_string(cost) + " "
+                                                    + std::string(ItemTypeToString(needed))
+                                                    + " (have " + std::to_string(inv.GetAmount(needed)) + ")";
+                                            }
+                                            mPickupMessageTime = SDL_GetTicks();
+                                        }
+                                    }
+                                    break;
+                                }
                             }
                         }
+                    }
                     break;
 
                 // Number keys 0-9: move backpack item to hotbar slot
