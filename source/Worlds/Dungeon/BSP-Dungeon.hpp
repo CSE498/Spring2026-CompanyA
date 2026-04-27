@@ -12,14 +12,9 @@
 
 #include <vector>
 #include <iostream>
-#include <fstream>
-#include <unordered_map>
-#include <random>
-#include <string>
 #include <optional>
 #include <concepts>
 #include <cassert>
-#include <print>
 #include "RoomHolder.hpp"
 #include "../../tools/Random.hpp"
 #include "LevelBase.hpp"
@@ -35,10 +30,12 @@ namespace cse498 {
     struct BSPNode {
         int left_child = -1; // Left node of the tree
         int right_child = -1; // right node of the tree
-        int x, y, width, height; // (x,y) - (origin point of the grid (top-left corner))
+        int x = 0; // x-coordinate of the grid, default set to origin point (top-left corner)
+        int y = 0; // y-coordinate of the grid, default set to origin point (top-left corner)
+        int width = 0; //width of the room
+        int height = 0; //height of the room 
         // (width, height) - dimension of the grid cut (lxw)
-        std::string name; //Name of the node for debugging purposes
-        std::string file_name; //placeholder just in case we're loading in images directly from BSPNodes
+        std::string name = ""; //Name of the node for debugging purposes
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
 
         /// @brief Default constructor
@@ -55,7 +52,7 @@ namespace cse498 {
          * @param name Debug name for the node
          */
         BSPNode(int l, int r, int x, int y, int width, int height, std::string name)
-            : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {
+            : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(std::move(name)) {
         }
     };
 
@@ -166,7 +163,7 @@ namespace cse498 {
 
             if (!m_exit_door) {
                 auto val_one = m_rng.GetValue(0.0, 1.0);
-                if ((val_one.value() < lower_threshold && !m_exit_door)) {
+                if (val_one.value() < lower_threshold) {
                     m_exit_door = true;
                     m_room_holder.SetCurrentRoom(m_room_holder.LoadRoom(m_exit_door));
                     return;
@@ -228,7 +225,7 @@ namespace cse498 {
                 }
             }
 
-            for (auto i: grid) {
+            for (const auto& i: grid) {
                 std::cout << i << std::endl;
             }
         }
@@ -275,13 +272,13 @@ namespace cse498 {
 
         /// @brief grabs height of the grid map
         /// @return HEIGHT value
-        [[nodiscard]] int GetHeight() {
+        [[nodiscard]] int GetHeight() const {
             return m_height;
         }
 
         /// @brief grabs width of the rid map
         /// @return WIDTH value
-        [[nodiscard]] int GetWidth() {
+        [[nodiscard]] int GetWidth() const {
             return m_width;
         }
 

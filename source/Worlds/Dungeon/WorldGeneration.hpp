@@ -40,6 +40,10 @@ namespace cse498 {
     /// @brief Level 3 BSP iterations
     constexpr int LEVEL_THREE_ITERATIONS = 20;
 
+    constexpr std::array WALL_SET{'?', '!', '$', '@',
+                        '1','2','3','4', 
+                        '0','-','=','9'};
+
     /**
      * @struct Point
      * @brief Represents a 2D coordinate point.
@@ -242,25 +246,15 @@ namespace cse498 {
          */
         void ConnectBSPRooms(LinkedRooms RoomCoordinates, const int& current_level) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
-            auto const wall_set = {'?', '!', '$', '@',
-                                    '1','2','3','4', 
-                                    '0','-','=','9'};
 
             auto point_x = x2_value - x1_value;
             auto point_y = y2_value - y1_value;
 
-            bool negative_y = false;
-            bool negative_x = false;
+            bool negative_y = point_y < 0;
+            bool negative_x = point_x < 0;
 
-            if (point_y < 0) {
-                negative_y = true;
-                point_y = std::abs(point_y);
-            }
-
-            if (point_x < 0) {
-                negative_x = true;
-                point_x = std::abs(point_x);
-            }
+            point_y = std::abs(point_y);
+            point_x = std::abs(point_x);
 
             for (int y = 0; y <= point_y; ++y) {
                 int y_point;
@@ -268,9 +262,9 @@ namespace cse498 {
                 else y_point = y1_value + y;
 
                 auto &y_char = m_grid[y_point][x1_value];
-                auto it = std::ranges::find(wall_set, y_char);
+                auto it = std::ranges::find(WALL_SET, y_char);
 
-                if (y_char == '#' || it != wall_set.end()) {
+                if (y_char == '#' || it != WALL_SET.end()) {
                     TunnelTileSelector(y_char, current_level);
                 }
             }
@@ -281,9 +275,9 @@ namespace cse498 {
                 else x_point = x1_value + x;
 
                 auto &x_char = m_grid[y2_value][x_point];
-                auto it = std::ranges::find(wall_set, x_char);
+                auto it = std::ranges::find(WALL_SET, x_char);
 
-                if (x_char == '#' || it != wall_set.end()) {
+                if (x_char == '#' || it != WALL_SET.end()) {
                     TunnelTileSelector(x_char, current_level);
                     
                 }
@@ -294,7 +288,7 @@ namespace cse498 {
         /// @details DFS to go through the populated BSP tree in order to connect rooms together
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         /// @return (x,y) pair coordinate struct of room's location in the grid
-        Point PostOrderRoomConnect(BSPNode node) { 
+        Point PostOrderRoomConnect(BSPNode& node) { 
             if (node.left_child == -1 && node.right_child == -1) {
                 auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
 
