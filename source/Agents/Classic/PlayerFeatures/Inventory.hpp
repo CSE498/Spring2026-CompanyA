@@ -67,9 +67,10 @@ public:
      * if a unique item --> remove 7 then removes the first 7 with matching names
      * @param name item category
      * @param amount - amount of the item to remove.
-     * @param isAllOrNothing - true: remove only if the requested amount is available (otherwise no-op)
-     * false: remove up to amount (partial removals allowed)
-     * @return amount remaining (0 when fully satisfied)
+     * @param isAllOrNothing - True ==> removes all or removes nothing. False then removes what is available
+     * True ==> return amount if nothing removed , 0 everything removed
+     * False ==> return amount removed. Requested 5 removal, had 2 --> return 2
+     * @return ^^^
      */
     size_t RemoveItem(const std::string& name, size_t amount = 1, bool isAllOrNothing = false);
 

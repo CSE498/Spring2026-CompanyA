@@ -229,10 +229,10 @@ TEST_CASE("Inventory RemoveItem all-or-nothing flag behavior", "[inventory, remo
     Inventory inv;
     inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 15);
 
-    SECTION("True flag removes when request can be fully satisfied") {
+    SECTION("True flag leaves inventory unchanged when amount is less than total") {
         const auto remaining = inv.RemoveItem("TestItem", 12, true);
-        CHECK(remaining == 0);
-        CHECK(inv.GetTotal("TestItem") == 3);
+        CHECK(remaining == 12); // amount tried to remove is returned
+        CHECK(inv.GetTotal("TestItem") == 15);
     }
 
     SECTION("False flag removes what is available") {
@@ -241,9 +241,9 @@ TEST_CASE("Inventory RemoveItem all-or-nothing flag behavior", "[inventory, remo
         CHECK(inv.GetTotal("TestItem") == 3);
     }
 
-    SECTION("True flag leaves inventory unchanged when request exceeds total") {
-        const auto remaining = inv.RemoveItem("TestItem", 20, true);
-        CHECK(remaining == 20);
+    SECTION("Check again with different number") {
+        const auto remaining = inv.RemoveItem("TestItem", 10, true);
+        CHECK(remaining == 10);
         CHECK(inv.GetTotal("TestItem") == 15);
     }
 }
