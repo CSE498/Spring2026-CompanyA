@@ -226,7 +226,7 @@ private:
     /// @param grid The world grid to draw.
     /// @param itemIds IDs of items to display.
     /// @param agentIds IDs of agents to display.
-    void DrawGrid(const WorldGrid& grid, const std::vector<size_t>& itemIds, const std::vector<size_t>& agentIds);
+    void DrawGrid(const WorldGrid& grid, const std::vector<size_t>& agentIds);
 
     /// @brief Gets the current active world based on the current state.
     /// @return Pointer to the current world, or nullptr if no world is active.

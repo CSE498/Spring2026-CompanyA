@@ -999,19 +999,17 @@ void WebInterface::Resume() {
 
 void WebInterface::RenderOverworld() {
     PlayerAgent& player = *mInteractiveWorld->GetPlayer();
-    auto itemIds = mInteractiveWorld->GetKnownItems(player);
     auto agentIds = mInteractiveWorld->GetKnownAgents(player);
     auto grid = mInteractiveWorld->GetGrid();
-    DrawGrid(grid, itemIds, agentIds);
+    DrawGrid(grid, agentIds);
     RenderHUD();
 }
 
 void WebInterface::RenderDungeon() {
     PlayerAgent& player = *mDungeon->GetPlayer();
-    auto itemIds = mDungeon->GetKnownItems(player);
     auto agentIds = mDungeon->GetKnownAgents(player);
     auto grid = mDungeon->GetGrid();
-    DrawGrid(grid, itemIds, agentIds);
+    DrawGrid(grid, agentIds);
     RenderHUD();
 }
 
@@ -1110,9 +1108,7 @@ const char WebInterface::SelectAction() {
     }
 }
 
-void WebInterface::DrawGrid(const WorldGrid& grid,
-                            const std::vector<size_t>& itemIds,
-                            const std::vector<size_t>& agentIds) {
+void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& agentIds) {
     int canvasWidth;
     int canvasHeight;
     emscripten_get_canvas_element_size("#web-canvas", &canvasWidth, &canvasHeight);
