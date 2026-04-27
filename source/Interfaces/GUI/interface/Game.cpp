@@ -331,47 +331,6 @@ namespace cse498
             }
         }
 
-        /// @internal Group 17 AI hook: drop a @ref SmartEnemyAgent into the dungeon.
-        ///
-        /// The current @c DungeonWorld API does not expose a "first room center"
-        /// helper, so we scan the grid for the first cell whose registered type
-        /// name starts with "floor" (all dungeon floor tiles use that convention)
-        /// and is distinct from the player's spawn at {1,1}. This keeps the goblin
-        /// on a walkable tile without assuming anything about the dungeon layout.
-        auto& goblin = mDungeonWorld->AddAgent<SmartEnemyAgent>("Goblin");
-        for (size_t y = 0; y < world_h; ++y)
-        {
-            for (size_t x = 0; x < world_w; ++x)
-            {
-                if (x == 1 && y == 1) continue;
-                WorldPosition pos(x, y);
-                const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
-                if (cell_name.rfind("floor", 0) == 0) {
-                    goblin.SetLocation(pos);
-                    y = world_h; // break outer loop once placed
-                    break;
-                }
-            }
-        }
-
-        /// @internal Group 17 AI hook: drop a @ref SmartEnemyAgent into the dungeon.
-        ///
-        /// The current @c DungeonWorld API does not expose a "first room center"
-        /// helper, so we scan the grid for the first cell whose registered type
-        /// name starts with "floor" (all dungeon floor tiles use that convention)
-        /// and is distinct from the player's spawn at {1,1}. This keeps the goblin
-        /// on a walkable tile without assuming anything about the dungeon layout.
-        auto& goblin = mDungeonWorld->AddAgent<SmartEnemyAgent>("Goblin");
-        for (size_t y = 0; y < world_h; ++y)
-        {
-            for (size_t x = 0; x < world_w; ++x)
-            {
-                if (x == 1 && y == 1) continue;
-                WorldPosition pos(x, y);
-                const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
-                mDungeonGrid->SetCell(x, y, cell_name);
-            }
-        }
         mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
     }
 

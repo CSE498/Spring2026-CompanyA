@@ -17,7 +17,7 @@ TEST_CASE("ResourceBank starts empty", "[core][InteractiveWorld][ResourceBank]")
     CHECK(bank.GetStoredAmount(ItemType::Wood) == 0);
     CHECK(bank.GetStoredAmount(ItemType::Stone) == 0);
     CHECK(bank.GetStoredAmount(ItemType::Metal) == 0);
-    CHECK(bank.GetInventory().Empty());
+    CHECK(bank.GetOverworldInventory().Empty());
 }
 
 TEST_CASE("ResourceBank stores and withdraws resources", "[core][InteractiveWorld][ResourceBank]") {
