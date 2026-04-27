@@ -168,6 +168,7 @@ namespace cse498
         void RenderStats();
         void RenderHotbar(const Inventory& inventory);
         void RenderBackpack(const Inventory& inventory);
+        void RenderWorldInventory();
         void RenderPickupMessage();
 
         /**

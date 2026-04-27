@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <array>
 #include "../../../core/AgentBase.hpp"
 // Group 17 AI-agent integration: required so this TU can construct
 // SmartEnemyAgent (dungeon goblin) and LearningExplorerAgent (overworld explorer).
@@ -248,17 +249,17 @@ namespace cse498
         auto& mineRef = mOverWorld->AddAgent<Building>(std::move(mine));
         mOverWorld->AddBuilding(mineRef, WorldPosition{8, 5});
 
-        // Resource spawns
+        // Resource spawns — placed adjacent to their buildings
         auto woodSpawn = std::make_unique<ResourceSpawn>(100, "Wood Spawn", *mOverWorld, ItemType::Wood);
-        woodSpawn->SetLocation(WorldPosition{3, 1});
+        woodSpawn->SetLocation(WorldPosition{3, 1});  // next to Lumber Yard at {2,1}
         auto& woodSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(woodSpawn));
 
         auto stoneSpawn = std::make_unique<ResourceSpawn>(101, "Stone Spawn", *mOverWorld, ItemType::Stone);
-        stoneSpawn->SetLocation(WorldPosition{6, 3});
+        stoneSpawn->SetLocation(WorldPosition{5, 4});  // below Quarry at {5,3}
         auto& stoneSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(stoneSpawn));
 
         auto metalSpawn = std::make_unique<ResourceSpawn>(102, "Metal Spawn", *mOverWorld, ItemType::Metal);
-        metalSpawn->SetLocation(WorldPosition{9, 5});
+        metalSpawn->SetLocation(WorldPosition{8, 6});  // below Ore Mine at {8,5}
         auto& metalSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(metalSpawn));
 
         // Resource producers
@@ -542,6 +543,28 @@ namespace cse498
                     }
                     break;
 
+                    case SDLK_e:
+                        if ((mState == GameState::OVERWORLD) && !mShowBackpack)
+                        {
+                            std::string combined;
+                            for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                                AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+                                if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
+                                    int collected = spawn->Collect();
+                                    if (collected > 0) {
+                                        mOverWorld->GetInventory().AddItem(spawn->GetItemType(), collected);
+                                        if (!combined.empty()) combined += "  ";
+                                        combined += std::to_string(collected) + " " + std::string(ItemTypeToString(spawn->GetItemType()));
+                                    }
+                                }
+                            }
+                            if (!combined.empty()) {
+                                mPickupMessage = "Collected: " + combined;
+                                mPickupMessageTime = SDL_GetTicks();
+                            }
+                        }
+                    break;
+
                 // Number keys 0-9: move backpack item to hotbar slot
                 case SDLK_0:
                 case SDLK_1:
@@ -625,8 +648,15 @@ namespace cse498
 
     void Game::UpdateMainMenu() {}
 
-    void Game::UpdateOverworld()
+
+void Game::UpdateOverworld()
     {
+        // Tick resource producers every frame regardless of turn
+        // Producers are private, and UpdateWorld function is also private so needed a getter
+        for (const auto& producer : mOverWorld->GetProducers()) {
+            producer->Update();
+        }
+
         if (mTurnTaken) {
             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
                 AgentBase& agent = mOverWorld->GetAgentByIndex(i);
@@ -638,6 +668,8 @@ namespace cse498
             mTurnTaken = false;
         }
     }
+
+
     void Game::UpdateDungeon()
     {
         // skip the player in the world agent list, they should choose their own move when needed to.
@@ -715,7 +747,7 @@ namespace cse498
                 } else if (name == "Ore Mine") {
                     sprite = "ow_building_mine";
                 } else {
-                    sprite = "ow_building_lumberyard"; // fallback
+                    sprite = "ow_building_lumberyard";
                 }
             } else if (dynamic_cast<ResourceSpawn*>(&agent)) {
                 continue;
@@ -726,7 +758,9 @@ namespace cse498
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
         }
 
-        // Todo world inventory
+        // World resource inventory at top
+        RenderWorldInventory();
+        RenderPickupMessage();
         RenderHotbar(mOverworldPlayer->GetInventory());
         if (mShowBackpack) RenderBackpack(mOverworldPlayer->GetInventory());
     }
@@ -974,6 +1008,29 @@ namespace cse498
         }
     }
 
+    void Game::RenderWorldInventory() {
+            SDL_Renderer* renderer = mGameView->GetRenderer();
+            int w = mGameView->GetWidth();
+
+            // Background bar at top
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160);
+            SDL_Rect bg = {0, 0, w, 40};
+            SDL_RenderFillRect(renderer, &bg);
+
+            const auto& inv = mOverWorld->GetInventory();
+
+            std::string text = "Wood: " + std::to_string(inv.GetAmount(ItemType::Wood))
+                             + "   Stone: " + std::to_string(inv.GetAmount(ItemType::Stone))
+                             + "   Metal: " + std::to_string(inv.GetAmount(ItemType::Metal));
+
+            mPickupText.SetContent(text);
+            mPickupText.SetSize(18);
+            mPickupText.SetBold(false);
+            int text_x = (w - mPickupText.GetWidth()) / 2;
+            mPickupText.Draw(text_x, 10);
+    }
+
     void Game::RenderPickupMessage() {
         if (mPickupMessage.empty()) return;
 
@@ -987,7 +1044,7 @@ namespace cse498
 
         mPickupText.SetContent(mPickupMessage);
         int text_x = (w - mPickupText.GetWidth()) / 2;
-        mPickupText.Draw(text_x, 20);
+        mPickupText.Draw(text_x, 40);
     }
 
     size_t Game::KeyToAction(SDL_Keycode key) {
