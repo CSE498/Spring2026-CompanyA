@@ -167,7 +167,7 @@ TEST_CASE("WebInterface Quit from Main Menu") {
     CHECK(app.IsQuit());
 }
 
-TEST_CASE("WebInterface Inventory Menu - Cannot Open in Overworld") {
+TEST_CASE("WebInterface Open Inventory Menu in Overworld") {
     TestingApp app{};
 
     // Go to overworld
@@ -176,14 +176,13 @@ TEST_CASE("WebInterface Inventory Menu - Cannot Open in Overworld") {
 
     CHECK(app.IsInOverworld());
 
-    // Try to press 'i' to open inventory - should not work in overworld
+    // Press 'i' to open inventory in overworld
     keyboardEvent("i", "keydown");
     app.RunFrame(32.0);
     keyboardEvent("i", "keyup");
 
-    // Should not still be in overworld, not inventory
-    CHECK(!app.IsInOverworld());
     CHECK(app.IsInInventoryMenu());
+    CHECK(app.IsPaused());
 }
 
 TEST_CASE("WebInterface Open Inventory Menu in Dungeon") {
@@ -322,13 +321,28 @@ TEST_CASE("WebInterface Hotbar Selection with Hand Slot Verification") {
     clickButton("New Game");
     app.RunFrame(16.0);
 
-    keyboardEvent("Escape", "keydown");
+    PlayerAgent* overworldPlayer = app.GetCurrentPlayer();
+    REQUIRE(overworldPlayer != nullptr);
+
+    keyboardEvent("1", "keydown");
     app.RunFrame(32.0);
+    keyboardEvent("1", "keyup");
+
+    CHECK(overworldPlayer->GetInventory().GetHandSlotIndex() == 0);
+
+    keyboardEvent("5", "keydown");
+    app.RunFrame(48.0);
+    keyboardEvent("5", "keyup");
+
+    CHECK(overworldPlayer->GetInventory().GetHandSlotIndex() == 4);
+
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(64.0);
     keyboardEvent("Escape", "keyup");
 
     // Enter dungeon
     clickButton("Go to Dungeon");
-    app.RunFrame(32.0);
+    app.RunFrame(80.0);
 
     PlayerAgent* player = app.GetCurrentPlayer();
     REQUIRE(player != nullptr);
@@ -336,31 +350,62 @@ TEST_CASE("WebInterface Hotbar Selection with Hand Slot Verification") {
     // Test number keys for hotbar selection (1-9)
     // '1' should map to slot 0
     keyboardEvent("1", "keydown");
-    app.RunFrame(32.0);
+    app.RunFrame(96.0);
     keyboardEvent("1", "keyup");
 
     CHECK(player->GetInventory().GetHandSlotIndex() == 0);
 
     // '5' should map to slot 4
     keyboardEvent("5", "keydown");
-    app.RunFrame(48.0);
+    app.RunFrame(112.0);
     keyboardEvent("5", "keyup");
 
     CHECK(player->GetInventory().GetHandSlotIndex() == 4);
 
     // '9' should map to slot 8
     keyboardEvent("9", "keydown");
-    app.RunFrame(64.0);
+    app.RunFrame(128.0);
     keyboardEvent("9", "keyup");
 
     CHECK(player->GetInventory().GetHandSlotIndex() == 8);
 
     // '0' should map to slot 9
     keyboardEvent("0", "keydown");
-    app.RunFrame(80.0);
+    app.RunFrame(144.0);
     keyboardEvent("0", "keyup");
 
     CHECK(player->GetInventory().GetHandSlotIndex() == 9);
+}
+
+TEST_CASE("WebInterface Quit State Is Terminal") {
+    TestingApp app{};
+
+    clickButton("Quit");
+    app.RunFrame(16.0);
+
+    REQUIRE(app.IsQuit());
+
+    clickButton("New Game");
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    CHECK(app.IsQuit());
+}
+
+TEST_CASE("WebInterface GetLastActionChar Tracks Latest Input") {
+    TestingApp app{};
+
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    CHECK(app.GetLastActionChar() == '\0');
+
+    keyboardEvent("d", "keydown");
+    app.RunFrame(300.0);
+    keyboardEvent("d", "keyup");
+
+    CHECK(app.GetLastActionChar() == 'd');
 }
 
 TEST_CASE("WebInterface Movement Paused in Menu") {

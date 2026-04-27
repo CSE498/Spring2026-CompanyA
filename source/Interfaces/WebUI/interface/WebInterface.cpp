@@ -477,7 +477,7 @@ void WebInterface::RunFrame(double currentTimeMs) {
     if (mGameState == WebState::OVERWORLD) {
         // always select an action based on current input, even if paused,
         // to handle unpausing and menu switching
-        const char actionChar = SelectAction(mInteractiveWorld->GetGrid());
+        const char actionChar = SelectAction();
 
         if (IsPaused()) {
             return;
@@ -506,7 +506,7 @@ void WebInterface::RunFrame(double currentTimeMs) {
     } else {
         // always select an action based on current input, even if paused,
         // to handle unpausing and menu switching
-        const char actionChar = SelectAction(mDungeon->GetGrid());
+        const char actionChar = SelectAction();
 
         if (IsPaused()) {
             return;
@@ -957,6 +957,10 @@ void WebInterface::OnInventorySlotClick(size_t slotIndex) {
 }
 
 void WebInterface::TransitionTo(WebState newState) {
+    if (mState == WebState::QUIT) {
+        return;
+    }
+
     if (newState == mState)
         return;
 
@@ -1075,7 +1079,7 @@ void WebInterface::RenderHUD() {
     }
 }
 
-const char WebInterface::SelectAction(const WorldGrid& grid) {
+const char WebInterface::SelectAction() {
     auto userAction = mInputManager.GetAction();
     if (mState != WebState::OVERWORLD && mState != WebState::DUNGEON) {
         return ACTION_NONE;
@@ -1286,15 +1290,10 @@ void WebInterface::HandlePause() {
 }
 
 void WebInterface::SetPlayerHotbarIndex(size_t slotIndex) {
-    if (mGameState == WebState::OVERWORLD) {
-        // auto player = mOverworld->GetPlayer();
-        // if (player) {
-        //     player->GetInventory().HotBarIndexMove(slotIndex);
-        // }
-    } else if (mGameState == WebState::DUNGEON) {
-        auto player = mDungeon->GetPlayer();
+    if (mGameState == WebState::OVERWORLD || mGameState == WebState::DUNGEON) {
+        PlayerAgent* player = GetCurrentPlayer();
         if (player) {
-            player->GetInventory().HotBarIndexMove(slotIndex);
+            player->GetInventory().HotBarIndexMove(static_cast<int>(slotIndex));
         }
     }
     RenderHUD();

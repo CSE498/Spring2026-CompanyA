@@ -45,6 +45,11 @@ public:
     /// @return The active action.
     ActiveAction GetAction();
 
+    /// @brief Checks if any key is pressed.
+    /// @return True if keys are pressed.
+    int IsKeyPressed() const { return !mKeysPressed.empty(); }
+
+private:
     /// @brief Adds a pressed key to the deque.
     /// @param key The key string.
     void AddKeyPressed(const std::string& key) { mKeysPressed.push_front(key); }
@@ -52,11 +57,6 @@ public:
     /// @brief Removes a released key from the deque.
     void RemoveKeyPressed(const std::string& key) { std::erase(mKeysPressed, key); }
 
-    /// @brief Checks if any key is pressed.
-    /// @return True if keys are pressed.
-    int IsKeyPressed() const { return !mKeysPressed.empty(); }
-
-private:
     /// @brief Reference to the WebInterface.
     WebInterface& mInterface;
 

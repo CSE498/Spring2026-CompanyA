@@ -43,9 +43,8 @@ public:
     ~WebInterface() = default;
 
     /// @brief Selects an action based on user input.
-    /// @param grid The world grid.
     /// @return The selected action ID.
-    [[nodiscard]] const char SelectAction(const WorldGrid& grid);
+    [[nodiscard]] const char SelectAction();
 
     /// @brief Runs one frame of the application.
     /// @param currentTimeMs Current time stamp in milliseconds.

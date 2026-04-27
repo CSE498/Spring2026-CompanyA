@@ -12,7 +12,7 @@ using std::string;
 /// @brief Convert a string to lower case
 /// @param key the string to convert
 /// @return the original string in all lower case
-std::string ToLower(std::string& key) {
+std::string ToLower(const std::string& key) {
     // clang-format off
     std::string lowerKey =
         key
@@ -28,7 +28,16 @@ InputManager::InputManager(WebInterface& interface) : mInterface(interface) {
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, true, InputManager::OnKeyUp);
 }
 
-InputManager::~InputManager() { emscripten_html5_remove_all_event_listeners(); }
+InputManager::~InputManager() {
+    emscripten_html5_remove_event_listener(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                           this,
+                                           EMSCRIPTEN_EVENT_KEYDOWN,
+                                           reinterpret_cast<void*>(InputManager::OnKeyDown));
+    emscripten_html5_remove_event_listener(EMSCRIPTEN_EVENT_TARGET_WINDOW,
+                                           this,
+                                           EMSCRIPTEN_EVENT_KEYUP,
+                                           reinterpret_cast<void*>(InputManager::OnKeyUp));
+}
 
 EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* inputManagerPointer) {
     if (eventType != EMSCRIPTEN_EVENT_KEYDOWN || inputManagerPointer == nullptr || keyEvent->repeat)
