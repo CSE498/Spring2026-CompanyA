@@ -911,7 +911,13 @@ void WebInterface::RenderHUD() {
                                   kInventorySelectedSlotHighlightColor);
             }
 
-            std::string imagePath = array[i].GetItem()->GetImagePath();
+            const Item* item = array[i].GetItem();
+            if (!item) {
+                leftOffset += itemDrawSize;
+                continue;
+            }
+
+            std::string imagePath = item->GetImagePath();
             if (imagePath.empty()) {
                 leftOffset += itemDrawSize;
                 continue;
