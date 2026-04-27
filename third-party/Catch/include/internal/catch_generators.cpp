@@ -6,29 +6,27 @@
  */
 
 #include "catch_generators.hpp"
-
-#include "catch_interfaces_capture.h"
 #include "catch_random_number_generator.h"
+#include "catch_interfaces_capture.h"
 
 #include <limits>
 #include <set>
 
 namespace Catch {
 
-    IGeneratorTracker::~IGeneratorTracker() {}
+IGeneratorTracker::~IGeneratorTracker() {}
 
-    const char* GeneratorException::what() const noexcept { return m_msg; }
+const char* GeneratorException::what() const noexcept {
+    return m_msg;
+}
 
-    namespace Generators {
+namespace Generators {
 
-        GeneratorUntypedBase::~GeneratorUntypedBase() {}
+    GeneratorUntypedBase::~GeneratorUntypedBase() {}
 
-        auto acquireGeneratorTracker( StringRef generatorName,
-                                      SourceLineInfo const& lineInfo )
-            -> IGeneratorTracker& {
-            return getResultCapture().acquireGeneratorTracker( generatorName,
-                                                               lineInfo );
-        }
+    auto acquireGeneratorTracker( StringRef generatorName, SourceLineInfo const& lineInfo ) -> IGeneratorTracker& {
+        return getResultCapture().acquireGeneratorTracker( generatorName, lineInfo );
+    }
 
-    } // namespace Generators
+} // namespace Generators
 } // namespace Catch

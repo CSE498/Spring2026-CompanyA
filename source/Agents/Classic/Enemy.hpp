@@ -10,8 +10,8 @@
 
 
 #include "../../core/AgentBase.hpp"
-#include "core/WorldBase.hpp"
-#include "tools/DamageCalculator.hpp"
+#include "../../core/WorldBase.hpp"
+#include "../../tools/DamageCalculator.hpp"
 
 namespace cse498 {
 class Enemy : public AgentBase {
@@ -20,9 +20,11 @@ private:
 
     std::size_t mGoldDrop = 5; // Gold amount rewarded upon defeat
     bool mGoldClaimed = false; // Whether gold has been claimed
+    std::string mBuiltInWeaponName; // Intrinsic weapon identity (e.g., "Dagger")
 
 public:
     Enemy(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
+    [[nodiscard]] bool IsEnemy() const override { return true; }
 
     /**
      * Carries out the action of the enemy -- Triggers the behavior tree and allows a turn
@@ -43,6 +45,17 @@ public:
      * Returns configured enemy drop amount without consuming it.
      */
     [[nodiscard]] std::size_t GetGoldDrop() const { return mGoldDrop; }
+
+    /**
+     * Sets this enemy's intrinsic (non-inventory) weapon label.
+     * @param weaponName Display/identity name for built-in weapon behavior.
+     */
+    void SetBuiltInWeaponName(const std::string& weaponName) { mBuiltInWeaponName = weaponName; }
+
+    /**
+     * @return configured intrinsic weapon label, or empty string if unspecified.
+     */
+    [[nodiscard]] const std::string& GetBuiltInWeaponName() const { return mBuiltInWeaponName; }
 
     /**
      * Claims the enemy's gold reward once.

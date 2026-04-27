@@ -62,11 +62,13 @@ enum class CircleDirectionFlag {
  */
 class PathGenerator {
 private:
+    /// Default hard cap to avoid unbounded A* exploration.
     static constexpr int MAX_SEARCH_DISTANCE = 300;
-    // for double comparison
+    /// Epsilon used for tolerant floating-point comparisons.
     static constexpr double EP = 1e-6;
-    // Consider this hard coded. Logic depends on it. though I do want to change this just need more structure
+    /// Neighbor expansion step size used throughout grid traversal logic.
     static constexpr double STEP_SIZE = 1.0;
+    /// Tolerance multiplier used when stepping around circle paths.
     static constexpr double STEP_CIRCLE_TOLERANCE = 1.4; // this * step_size
     // Max search distance relative to circle radius of whatever distance to get there. -- arbitrary and could add param
     // for it
@@ -406,6 +408,12 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition& from,
     storage.push_back(std::make_unique<ANode>(from, 0, 0, nullptr));
     pq.push(storage.back().get());
     visited.insert({from.X(), from.Y()});
+    // Standard A* loop:
+    // 1) pop best frontier node
+    // 2) early-stop checks
+    // 3) optional closest tracking
+    // 4) goal check
+    // 5) push valid neighbors
     while (!pq.empty()) {
         auto node =
                 pq.top(); // at no point can these be null because storage is never manipulated and all comes from there
@@ -431,6 +439,7 @@ std::vector<WorldPosition> PathGenerator::AStarSearch(const WorldPosition& from,
             return AStarReconstruction(node);
         }
         // Otherwise continue adding to priority queue
+        // Explore all 8-connected neighbor directions from this node.
         for (const auto& dir: directions) {
             WorldPosition neighbor = node->mPos + dir;
             // if the neighbor is not a valid walking tile then skip it

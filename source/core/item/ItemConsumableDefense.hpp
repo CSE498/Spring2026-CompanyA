@@ -9,7 +9,7 @@
 #include <string>
 #include "Item.hpp"
 #include "ItemConsumable.hpp"
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemConsumableDefense : public ItemConsumable {
@@ -18,13 +18,11 @@ private:
 
 public:
     ItemConsumableDefense(size_t id, const std::string& name, const std::string& image_path, int gold,
-                          const WorldBase& world) : ItemConsumable(id, name, image_path, gold, world) {
-        SetImagePath("assets/items/consumables/defense.png");
-    }
+                          const WorldBase& world) : ItemConsumable(id, name, image_path, gold, world) {}
 
     bool IsDefense() const override { return true; }
 
-    int GetDefense() { return m_defense; }
+    int GetDefense() const { return m_defense; }
     void SetDefense(int defense) { m_defense = defense; }
 };
 } // namespace cse498

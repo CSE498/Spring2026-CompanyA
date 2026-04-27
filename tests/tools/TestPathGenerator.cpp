@@ -877,26 +877,30 @@ TEST_CASE("PathGenerator directional stepping - minimal but complete coverage", 
 }
 
 
-TEST_CASE("Find Point Away tests -- Implicitly tests Find Furthest Point", "[FindPointAway, FindFurthestPoint]") {
+TEST_CASE("Find Point Away tests -- Implicitly tests Find Furthest Point", "[FindPointAway, FindFurthestPoint]")
+{
     cse498::CircleWorld world;
     PathRequest request({}, world.GetGrid());
 
-    SECTION("Simple Left case") {
+    SECTION("Simple Left case")
+    {
 
-        auto result = PathGenerator::FindPointAway({4, 1}, {6, 1}, request, 3);
-        vector<WorldPosition> ans = {{4, 1}, {3, 1}};
+        auto result = PathGenerator::FindPointAway({4,1}, {6,1}, request, 3);
+        vector<WorldPosition> ans = {{4,1}, {3,1}};
         CHECK(result == WorldPath(ans));
     }
-    SECTION("No movement once distance is reached") {
-        auto result = PathGenerator::FindPointAway({3, 1}, {6, 1}, request, 3);
+    SECTION("No movement once distance is reached")
+    {
+        auto result = PathGenerator::FindPointAway({3,1}, {6,1}, request, 3);
         CHECK(result.Empty());
-        result = PathGenerator::FindPointAway({2, 1}, {6, 1}, request, 3);
+        result = PathGenerator::FindPointAway({2,1}, {6,1}, request, 3);
         CHECK(result.Empty());
     }
 
-    SECTION("Diagonal to left") {
-        WorldPosition start = {5, 4};
-        WorldPosition center = {6, 5};
+    SECTION("Diagonal to left")
+    {
+        WorldPosition start = {5,4};
+        WorldPosition center = {6,5};
         auto result = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(result.Length() <= 5);
         CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
@@ -904,21 +908,25 @@ TEST_CASE("Find Point Away tests -- Implicitly tests Find Furthest Point", "[Fin
         PathVector vec = start - center;
         start = start + vec;
         auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
-        vector<WorldPosition> ans2 = {{3, 4}, {2, 4}, {1, 4}};
+        vector<WorldPosition> ans2 = {{3,4} ,{2,4} ,{1,4}};
         CHECK(result2.Length() < result.Length());
         CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
     }
 
-    SECTION("Diagonal Left trapped") {
-        WorldPosition start = {1, 1};
-        WorldPosition center = {2, 2};
+    SECTION("Diagonal Left trapped")
+    {
+        WorldPosition start = {1,1};
+        WorldPosition center = {2,2};
         auto result = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(result.Empty());
     }
 
-    SECTION("Diagonal to Right") {
-        WorldPosition start = {7, 4};
-        WorldPosition center = {6, 5};
+    SECTION("Diagonal to Right")
+    {
+        WorldPosition start = {7,4};
+        WorldPosition center = {6,5};
         auto result = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
 
@@ -926,10 +934,13 @@ TEST_CASE("Find Point Away tests -- Implicitly tests Find Furthest Point", "[Fin
         start = start + vec;
         auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
     }
-    SECTION("Diagonal to Bottom left") {
-        WorldPosition start = {5, 6};
-        WorldPosition center = {6, 5};
+    SECTION("Diagonal to Bottom left")
+    {
+        WorldPosition start = {5,6};
+        WorldPosition center = {6,5};
         auto result = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
 
@@ -937,10 +948,13 @@ TEST_CASE("Find Point Away tests -- Implicitly tests Find Furthest Point", "[Fin
         start = start + vec;
         auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
     }
-    SECTION("Diagonal to Bottom right") {
-        WorldPosition start = {7, 6};
-        WorldPosition center = {6, 5};
+    SECTION("Diagonal to Bottom right")
+    {
+        WorldPosition start = {7,6};
+        WorldPosition center = {6,5};
         auto result = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(PathGenerator::EuclideanDistance(result.Back(), center) > 5);
 
@@ -948,63 +962,89 @@ TEST_CASE("Find Point Away tests -- Implicitly tests Find Furthest Point", "[Fin
         start = start + vec;
         auto result2 = PathGenerator::FindPointAway(start, center, request, 5);
         CHECK(PathGenerator::EuclideanDistance(result2.Back(), center) > 5);
+
+
     }
+
 }
 
 
-TEST_CASE("Path Generator Manhattan Distance - quick") {
+
+TEST_CASE("Path Generator Manhattan Distance - quick")
+{
     {
-        WorldPosition start = {1, 1};
-        WorldPosition center = {2, 2};
-        CHECK(ManhattanCompare(start, center, 2));
+        WorldPosition start = {1,1};
+        WorldPosition center = {2,2};
+        CHECK(ManhattanCompare(start, center,2));
     }
     {
-        WorldPosition start = {-5, 1};
-        WorldPosition center = {3, 2};
-        CHECK(ManhattanCompare(start, center, 9));
+        WorldPosition start = {-5,1};
+        WorldPosition center = {3,2};
+        CHECK(ManhattanCompare(start, center,9));
     }
     {
-        WorldPosition start = {0, 1};
-        WorldPosition center = {22, 10};
-        CHECK(ManhattanCompare(start, center, 31));
+        WorldPosition start = {0,1};
+        WorldPosition center = {22,10};
+        CHECK(ManhattanCompare(start, center,31));
     }
+
 }
 
 
-TEST_CASE("line of sight") {
+
+TEST_CASE("line of sight")
+{
     // TODO: Logan is coming back to this once more is known.
-    // cse498::TestPathClear world;
-    // PathRequest request = PathRequest(world.GetGrid());
-    // {
-    //     WorldPosition skeleton = {3,3};
-    //     WorldPosition player = {4,4};
-    //
-    //     CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {3,2};
-    //     WorldPosition player = {4,4};
-    //
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {5,2};
-    //     WorldPosition player = {4,4};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {5,2};
-    //     WorldPosition player = {4,4};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {4,1};
-    //     WorldPosition player = {1,2};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
-    // {
-    //     WorldPosition skeleton = {4,2};
-    //     WorldPosition player = {1,2};
-    //     CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
-    // }
+    cse498::TestPathClear world;
+    PathRequest request = PathRequest(world.GetGrid());
+    {
+        WorldPosition skeleton = {3,3};
+        WorldPosition player = {4,4};
+
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {5,3};
+        WorldPosition player = {4,4};
+
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {3,2};
+        WorldPosition player = {4,4};
+
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {5,2};
+        WorldPosition player = {4,4};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {4,1};
+        WorldPosition player = {1,2};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {4,2};
+        WorldPosition player = {1,2};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {2,1};
+        WorldPosition player = {1,2};
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {2,3};
+        WorldPosition player = {1,2};
+        CHECK(!PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+    {
+        WorldPosition skeleton = {2,1};
+        WorldPosition player = {8,1};
+        CHECK(PathGenerator::IsPathClear(skeleton, player-skeleton, request));
+    }
+
+
 }

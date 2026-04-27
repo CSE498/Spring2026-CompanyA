@@ -18,6 +18,7 @@
 #include "Location.hpp"
 #include "WorldGrid.hpp"
 #include "WorldPosition.hpp"
+#include "../Agents/Classic/PlayerFeatures/Inventory.hpp"
 
 namespace cse498 {
 
@@ -125,26 +126,39 @@ public:
 
     [[nodiscard]] bool IsAlive() const { return mAlive; }
     [[nodiscard]] const AgentStats& GetStats() const { return mStats; }
-    void SetStats(const AgentStats& stats) { mStats = stats; }
+    virtual void SetStats(const AgentStats& stats) { mStats = stats; }
     [[nodiscard]] double GetCurrentHealth() const { return mStats.mHp; }
     [[nodiscard]] double GetMaxHealth() const { return mStats.mMaxHp; }
     [[nodiscard]] double GetAtk() const { return mStats.mAtk; }
     [[nodiscard]] double GetDef() const { return mStats.mDef; }
-    [[nodiscard]] size_t GetAtkRange() const { return mStats.mRange; }
+    [[nodiscard]] double GetAtkRange() const { return mStats.mRange; }
     [[nodiscard]] size_t GetLevel() const { return mStats.mLevel; }
-
     /**
-     * sets hp and forces within proper range [0, mMaxHp]
-     * @param h - health
+     * @brief Cross-team hook used by Group 17 AI agents to identify hostiles without
+     *        relying on runtime type info (RTTI) or dynamic_cast chains.
+     *
+     * @details AI logic such as SmartEnemyAgent::GetTargetPlayerPosition() iterates
+     *          @ref WorldBase::GetAgents() and picks a @b non-enemy as its target.
+     *          Tagging agents here keeps the AI world-agnostic: any world (OverWorld,
+     *          DungeonWorld, AIWorld, etc.) can host a SmartEnemyAgent as long as its
+     *          enemies report @c true and its players/NPCs inherit the default @c false.
+     *
+     * @retval true  This agent should be considered hostile (enemy).
+     * @retval false Default; friendly/neutral agent (players, merchants, explorers).
      */
-    void SetHealth(double h) {
-        if (h < 0)
-            h = 0;
-        else if (h > mStats.mMaxHp)
-            h = mStats.mMaxHp;
-        mStats.mHp = h;
-    }
-    void SetMaxHealth(double h) { mStats.mMaxHp = h; }
+    [[nodiscard]] virtual bool IsEnemy() const { return false; }
+
+        /**
+         * sets hp and forces within proper range [0, mMaxHp]
+         * @param h - health
+         */
+        void SetHealth(double h) {
+            if (h < 0) h = 0;
+            else if (h > mStats.mMaxHp) h = mStats.mMaxHp;
+            mStats.mHp = h;
+        }
+
+        void SetMaxHealth(double h) { mStats.mMaxHp = h; }
 
     /// Called after agent is added to the world. Override to register or init state.
     virtual void OnSpawn() {}
@@ -166,6 +180,7 @@ public:
     // Accessors
 
     [[nodiscard]] char GetSymbol() const { return mSymbol; }
+
     AgentBase& SetSymbol(char in) {
         mSymbol = in;
         return *this;
@@ -206,16 +221,16 @@ public:
     virtual bool Interact() { return false; }
 
 
-    //////////////////////////////////////////////////////////////////////////
-    //
-    //  Agent API -- the member functions below are intended to be called
-    //  from a World to:
-    //   * provide options of available actions
-    //   * request an agent to select their next action
-    //   * notify an agent about the result of their latest action
-    //   * provide any additional notifications to an agent
-    //
-    //////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+        //
+        //  Agent API -- the member functions below are intended to be called
+        //  from a World to:
+        //   * provide options of available actions
+        //   * request an agent to select their next action
+        //   * notify an agent about the result of their latest action
+        //   * provide any additional notifications to an agent
+        //
+        //////////////////////////////////////////////////////////////////////////
 
     /// Provide info about an action that this agent can take.
     virtual AgentBase& AddAction(const std::string& action_name, size_t action_id) {
@@ -243,6 +258,18 @@ public:
     /// @param msg_type Category of message, such as "item_alert", "damage", or "enemy"
     /// @note: For DEVELOPERS - you may want more info provided with notifications.
     virtual void Notify(const std::string& /*message*/, const std::string& /*msg_type*/ = "none") {}
+
+	virtual bool IsPlayerAgent() const {return false;}
+
+	[[nodiscard]] virtual Inventory& GetInventory() { return sEmptyInventory; }
+    [[nodiscard]] virtual const Inventory& GetInventory() const { return sEmptyInventory; }
+
+	private:
+
+	/// Used to enforce polymorphism - all non players share an empty inventory
+	/// This helps to avoid the use of dynamic casting within the world classes
+	/// NOTE: should check if isPlayerAgent() so that the override getters run instead
+	inline static Inventory sEmptyInventory{};
 };
 
 } // End of namespace cse498

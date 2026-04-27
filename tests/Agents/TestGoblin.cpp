@@ -126,6 +126,7 @@ TEST_CASE("Goblin factory applies differentiated stats and spawn data", "[Goblin
     REQUIRE(goblin->GetAtk() == Approx(23.0));
     REQUIRE(goblin->GetDef() == Approx(9.0));
     REQUIRE(goblin->GetAtkRange() == 2);
+    REQUIRE(goblin->GetBuiltInWeaponName() == "Dagger");
     REQUIRE(goblin->GetLevel() == 5);
     REQUIRE(goblin->IsAlive());
 
@@ -159,4 +160,17 @@ TEST_CASE("Goblin chases then attacks from shorter range with higher damage", "[
 
     REQUIRE(stored.SelectAction(world.GetGrid()) == WorldActions::REMAIN_STILL);
     REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(before - expectedDamage));
+}
+
+TEST_CASE("Goblin behavior fails safely when player is dead", "[Goblin][safety]") {
+    GoblinTestWorld world;
+    auto goblin = AgentFactory::CreateEnemyGoblin(AgentDefinition("Gobbo", 0, {1, 1}), world);
+    REQUIRE(goblin != nullptr);
+    auto& stored = world.AddAgent(std::move(goblin));
+
+    world.GetPlayer()->TakeDamage(10000.0);
+    REQUIRE_FALSE(world.GetPlayer()->IsAlive());
+
+    const size_t action = stored.SelectAction(world.GetGrid());
+    CHECK(action == WorldActions::REMAIN_STILL);
 }

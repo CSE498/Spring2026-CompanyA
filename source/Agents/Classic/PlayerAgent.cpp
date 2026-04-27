@@ -5,17 +5,44 @@
 #include "PlayerAgent.hpp"
 #include <iostream>
 #include "../../core/WorldBase.hpp"
+#include "../../core/item/Item.hpp"
+#include "../../core/item/ItemWeapon.hpp"
 
 namespace cse498 {
 
 PlayerAgent::PlayerAgent(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
+
+bool PlayerAgent::Initialize() {
+    mInventory.SetChangeNotifier([this]() { RefreshCombatFromHand(); });
+    RefreshCombatFromHand();
+    return true;
+}
+
+void PlayerAgent::SetStats(const AgentStats& stats) {
+    mBaseCombatStats = stats;
+    RefreshCombatFromHand();
+}
+
+void PlayerAgent::RefreshCombatFromHand() {
+    mStats = mBaseCombatStats;
+    const Item* hand = mInventory.GetHand();
+    if (hand == nullptr || !hand->IsWeapon()) {
+        return;
+    }
+    auto* weapon = dynamic_cast<const ItemWeapon*>(hand);
+    if (weapon == nullptr || weapon->IsTool()) {
+        return;
+    }
+    mStats.mAtk = mBaseCombatStats.mAtk + weapon->GetDamage();
+    mStats.mRange = weapon->GetRange();
+}
 
 size_t PlayerAgent::SelectAction(const WorldGrid& /*grid*/) {
     // This function isn't usable. Don't call it. It needs an override.
     // 1. WorldGrid input is useless since we have that in Entity.
     // 2. This is only designed around this being in the interface implementation, but
     // that creates so many limitations that just annoys me.
-    assert(false);
+    // assert(false); // removed for compatibility with Demos
     return 0;
 }
 
@@ -28,24 +55,29 @@ size_t PlayerAgent::SelectPlayerAction(const char input) {
     switch (input) {
         case 'a':
         case 'A':
-            return GetActionID("a");
+            return GetActionID("left");
         case 'w':
         case 'W':
-            return GetActionID("w");
+            return GetActionID("up");
         case 's':
         case 'S':
-            return GetActionID("s");
+            return GetActionID("down");
         case 'd':
         case 'D':
-            return GetActionID("d");
+            return GetActionID("right");
         case 'e':
         case 'E':
+            if (!HasAction("e")) {
+                return GetActionID("interact");
+            }
             return GetActionID("e");
         case 'q':
         case 'Q':
             return GetActionID("q");
-        default:
-            return GetActionID("stay");
+        default: {
+            const size_t stayAction = GetActionID("stay");
+            return stayAction;
+        }
     }
 }
 

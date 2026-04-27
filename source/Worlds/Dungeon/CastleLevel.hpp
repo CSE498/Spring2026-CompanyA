@@ -1,6 +1,6 @@
 /**
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
- * @brief A World that consists only of walls and open cells.
+ * @brief 
  * @note Status: PROPOSAL
  **/
 
@@ -8,23 +8,20 @@
 #pragma once
 
 #include <cassert>
-
-#include "DungeonBase.hpp"
+#include <array>
+#include "../../tools/WeightedSet.hpp"
+#include "LevelBase.hpp"
 
 namespace cse498 {
-    /**
-   * @class DungeonOne
-   * @brief A concrete dungeon world that generates rooms from a predefined pool.
+
+	/**
+   * @class CastleLevel
+   * @brief Class that contains information specific to Castle level
    *
    * @details
-   * DungeonOne extends DungeonBase and defines a fixed set of room templates
-   * with associated weights. These weights determine the likelihood of each
-   * room being selected during dungeon generation.
    *
-   * The room pool is constructed using a WeightedSet of file paths, where each
-   * file corresponds to a room layout.
    */
-    class DungeonOne : public DungeonBase {
+    class CastleLevel : public LevelBase {
     private:
         /**
         * @brief Static room ID and weight pairs.
@@ -48,13 +45,17 @@ namespace cse498 {
         };
 
         /**
-         * @brief Prefix for room file paths.
+         * @brief Room file paths for castle level.
          *
          * @details
-         * This string is prepended to each room number when constructing
-         * file paths for loading room layouts.
+         * This string is used to load castle rooms
          */
-        inline static const std::string PREFIX = "one_pool/room_";
+#ifndef __EMSCRIPTEN__
+        inline static const std::string m_room_dir =
+                static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_three_pool/room_";
+#else
+        inline static const std::string m_room_dir = "/rooms/Dungeon_three_pool/room_";
+#endif
 
         /**
          * @brief Constructs the weighted room pool.
@@ -68,31 +69,45 @@ namespace cse498 {
          * @note Each insertion is expected to succeed. Assertions are used
          * to enforce this during development.
          */
-        static cse498::WeightedSet<std::string> MakeRoomPool() {
-            cse498::WeightedSet<std::string> rooms;
+        static cse498::WeightedSet<int> MakeRoomPool() {
+            cse498::WeightedSet<int> rooms;
 
             for (const auto &[num, weight]: ROOM_DATA) {
-                auto result = rooms.Insert(PREFIX + std::to_string(num) + ".txt", weight);
+                auto result = rooms.Insert(num, weight);
                 assert(result.has_value());
             }
 
             return rooms;
         }
 
-    public:
-        /**
-         * @brief Constructs a DungeonOne world.
-         *
-         * @details
-         * Initializes the base DungeonBase with a generated room pool
-         * specific to DungeonOne.
-         */
-        DungeonOne() : DungeonBase(MakeRoomPool()) {
-        }
+        cse498::WeightedSet<int> m_room_pool;
+
+	public:
+		/**
+		 * @brief Constructs a CastleLevel.
+		 *
+		 * @details
+		 * Initializes the base CastleLevel with a generated room pool
+		 */
+		CastleLevel()
+		: m_room_pool(MakeRoomPool()) {}
 
         /**
          * @brief Default destructor.
          */
-        ~DungeonOne() = default;
+        ~CastleLevel() = default;
+
+        /**
+         *@brief grabs the set of rooms that can spawn in the dungeon
+         */
+        [[nodiscard]] const cse498::WeightedSet<int> &GetRoomPool() const override {
+            return m_room_pool;
+        }
+
+		/// @brief Grabs a string reference to the filepath of CastleLevel's room directory
+		/// @return string reference
+        [[nodiscard]] const std::string &GetRoomDir() const override {
+            return m_room_dir;
+        }
     };
 } // End of namespace cse498

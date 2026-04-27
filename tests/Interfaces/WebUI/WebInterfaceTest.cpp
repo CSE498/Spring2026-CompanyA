@@ -1,8 +1,8 @@
 #ifdef __EMSCRIPTEN__
 
-#include "../../../source/Agents/PacingAgent.hpp"
-#include "../../../source/Interfaces/WebUI/interface/MockWorld.hpp"
 #include "../../../source/Interfaces/WebUI/interface/WebInterface.hpp"
+#include "../../../source/Worlds/Dungeon/DungeonWorld.hpp"
+#include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include <iostream>
@@ -22,191 +22,467 @@ EM_JS(void, keyboardEvent, (const char* key, const char* type), {
     window.dispatchEvent(event);
 });
 
-class TestingMockWorld : MockWorld {
-public:
-    WorldPosition interfaceStartingPosition = WorldPosition{1, 1};
-    MockWorld::ActionType lastAction{MockWorld::ActionType::REMAIN_STILL};
-    bool userQuit{false};
-
-    TestingMockWorld() {
-        AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
-        AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
-        AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(WorldPosition{7, 7});
-        AddAgent<PacingAgent>("Guard 2").SetHorizontal().ToggleDirection().SetLocation(WorldPosition{8, 8});
-        AddInterface<WebInterface>("Web UI").SetSymbol('@').SetLocation(interfaceStartingPosition);
-    }
-
-    WorldPosition GetInterfacePosition() { return mInterface->GetLocation().AsWorldPosition(); }
-
-    bool IsPaused() { return mInterface->IsPaused(); }
-
-    /// @brief Runs the main game loop iteration.
-    void Run() override {
-        size_t action_id = mInterface->SelectAction(main_grid);
-        int result = DoAction(*mInterface, action_id);
-        if (action_id == QUIT)
-            Teardown();
-        lastAction = static_cast<MockWorld::ActionType>(action_id);
-        mInterface->SetActionResult(result);
-        if (!mInterface->IsPaused()) {
-            RunAgents();
+/// @brief Helper to click a button by its text content
+/// @param buttonText The text content of the button to click
+EM_JS(void, clickButton, (const char* buttonText), {
+    const textStr = UTF8ToString(buttonText);
+    const buttons = document.querySelectorAll('button');
+    // clang-format off
+    for (let btn of buttons) {
+        if (btn.textContent === textStr) {
+            btn.click();
+            break;
         }
-        mInterface->RenderFrame();
     }
+    // clang-format on
+});
 
-    void Teardown() override { userQuit = true; }
+class TestingApp : public WebInterface {
+public:
+    TestingApp() : WebInterface(std::make_unique<InteractiveWorld>(), std::make_unique<DungeonWorld>()) {}
+
+    bool IsInMainMenu() const { return GetCurrentState() == WebState::MAIN_MENU; }
+    bool IsInOverworld() const { return GetCurrentState() == WebState::OVERWORLD; }
+    bool IsInDungeon() const { return GetCurrentState() == WebState::DUNGEON; }
+    bool IsInPauseMenu() const { return GetCurrentState() == WebState::PAUSED; }
+    bool IsInSettingsMenu() const { return GetCurrentState() == WebState::SETTINGS; }
+    bool IsInInventoryMenu() const { return GetCurrentState() == WebState::INVENTORY; }
+    bool IsQuit() const { return GetCurrentState() == WebState::QUIT; }
+
+    /// @brief Get player position for movement tests
+    [[nodiscard]] WorldPosition GetPlayerPosition() const {
+        PlayerAgent* player = GetCurrentPlayer();
+        if (player) {
+            return player->GetLocation().AsWorldPosition();
+        }
+        return WorldPosition{0, 0};
+    }
 };
 
-TEST_CASE("WebInterface Basic Movement Test") {
-    TestingMockWorld world{};
+TEST_CASE("WebInterface Initial State") {
+    TestingApp app{};
 
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition);
+    CHECK(app.IsInMainMenu());
+    CHECK(app.IsPaused());
+}
 
+TEST_CASE("WebInterface Main Menu to Overworld") {
+    TestingApp app{};
+
+    CHECK(app.IsInMainMenu());
+
+    // Click "New Game" button to transition to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    // Should now be in overworld
+    CHECK(app.IsInOverworld());
+    CHECK(!app.IsPaused());
+}
+
+TEST_CASE("WebInterface Pause and Resume from Overworld") {
+    TestingApp app{};
+
+    // Start in main menu
+    CHECK(app.IsInMainMenu());
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    CHECK(app.IsInOverworld());
+    CHECK(!app.IsPaused());
+
+    // Pause with Escape
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    CHECK(app.IsInPauseMenu());
+    CHECK(app.IsPaused());
+
+    // Resume by clicking "Resume" button
+    clickButton("Resume");
+    app.RunFrame(48.0);
+
+    CHECK(app.IsInOverworld());
+    CHECK(!app.IsPaused());
+}
+
+TEST_CASE("WebInterface Open Settings from Pause Menu") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    // Pause
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    CHECK(app.IsInPauseMenu());
+
+    // Click Settings button
+    clickButton("Settings");
+    app.RunFrame(48.0);
+
+    CHECK(app.IsInSettingsMenu());
+    CHECK(app.IsPaused());
+}
+
+TEST_CASE("WebInterface Close Settings") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    // Pause and go to settings
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    clickButton("Settings");
+    app.RunFrame(48.0);
+
+    CHECK(app.IsInSettingsMenu());
+
+    // Click "Back" button to return to pause menu
+    clickButton("Back");
+    app.RunFrame(64.0);
+
+    CHECK(app.IsInPauseMenu());
+}
+
+TEST_CASE("WebInterface Quit from Main Menu") {
+    TestingApp app{};
+
+    CHECK(app.IsInMainMenu());
+
+    // Click Quit button
+    clickButton("Quit");
+    app.RunFrame(16.0);
+
+    CHECK(app.IsQuit());
+}
+
+TEST_CASE("WebInterface Open Inventory Menu in Overworld") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    CHECK(app.IsInOverworld());
+
+    // Press 'i' to open inventory in overworld
+    keyboardEvent("i", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("i", "keyup");
+
+    CHECK(app.IsInInventoryMenu());
+    CHECK(app.IsPaused());
+}
+
+TEST_CASE("WebInterface Open Inventory Menu in Dungeon") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    CHECK(app.IsInOverworld());
+
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    // Enter dungeon
+    clickButton("Go to Dungeon");
+    app.RunFrame(32.0);
+
+    CHECK(app.IsInDungeon());
+
+    // Press 'i' to open inventory in dungeon
+    keyboardEvent("i", "keydown");
+    app.RunFrame(48.0);
+    keyboardEvent("i", "keyup");
+
+    CHECK(app.IsInInventoryMenu());
+    CHECK(app.IsPaused());
+}
+
+TEST_CASE("WebInterface Close Inventory Menu in Dungeon") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    // Enter dungeon
+    clickButton("Go to Dungeon");
+    app.RunFrame(32.0);
+
+    // Open inventory
+    keyboardEvent("i", "keydown");
+    app.RunFrame(48.0);
+    keyboardEvent("i", "keyup");
+
+    CHECK(app.IsInInventoryMenu());
+
+    // Click Close button to return to dungeon
+    clickButton("Close");
+    app.RunFrame(64.0);
+
+    CHECK(app.IsInDungeon());
+    CHECK(!app.IsPaused());
+}
+
+TEST_CASE("WebInterface toggle Inventory Menu in Dungeon") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    // Enter dungeon
+    clickButton("Go to Dungeon");
+    app.RunFrame(32.0);
+
+    CHECK(app.IsInDungeon());
+
+    // Open inventory
+    keyboardEvent("i", "keydown");
+    app.RunFrame(48.0);
+    keyboardEvent("i", "keyup");
+
+    CHECK(app.IsInInventoryMenu());
+
+    // Press 'i' again to toggle back
+    keyboardEvent("i", "keydown");
+    app.RunFrame(64.0);
+    keyboardEvent("i", "keyup");
+
+    CHECK(app.IsInDungeon());
+    CHECK(!app.IsPaused());
+}
+
+TEST_CASE("WebInterface Player Movement - Basic Directions") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    const WorldPosition startPos = app.GetPlayerPosition();
+
+    // Test moving down
     keyboardEvent("s", "keydown");
-    world.Run();
+    app.RunFrame(300.0); // Exceed action interval
     keyboardEvent("s", "keyup");
 
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition.Down());
+    CHECK(app.GetPlayerPosition() == startPos.Down());
 
-    keyboardEvent("W", "keydown");
-    world.Run();
+    // Test moving up
+    keyboardEvent("w", "keydown");
+    app.RunFrame(600.0); // Exceed action interval
     keyboardEvent("w", "keyup");
 
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition);
+    CHECK(app.GetPlayerPosition() == startPos);
+
+    // Test moving right
+    keyboardEvent("d", "keydown");
+    app.RunFrame(900.0); // Exceed action interval
+    keyboardEvent("d", "keyup");
+
+    CHECK(app.GetPlayerPosition() == startPos.Right());
+
+    // Test moving left
+    keyboardEvent("a", "keydown");
+    app.RunFrame(1200.0); // Exceed action interval
+    keyboardEvent("a", "keyup");
+
+    CHECK(app.GetPlayerPosition() == startPos);
+}
+
+TEST_CASE("WebInterface Hotbar Selection with Hand Slot Verification") {
+    TestingApp app{};
+
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    PlayerAgent* overworldPlayer = app.GetCurrentPlayer();
+    REQUIRE(overworldPlayer != nullptr);
+
+    keyboardEvent("1", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("1", "keyup");
+
+    CHECK(overworldPlayer->GetInventory().GetHandSlotIndex() == 0);
+
+    keyboardEvent("5", "keydown");
+    app.RunFrame(48.0);
+    keyboardEvent("5", "keyup");
+
+    CHECK(overworldPlayer->GetInventory().GetHandSlotIndex() == 4);
+
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(64.0);
+    keyboardEvent("Escape", "keyup");
+
+    // Enter dungeon
+    clickButton("Go to Dungeon");
+    app.RunFrame(80.0);
+
+    PlayerAgent* player = app.GetCurrentPlayer();
+    REQUIRE(player != nullptr);
+
+    // Test number keys for hotbar selection (1-9)
+    // '1' should map to slot 0
+    keyboardEvent("1", "keydown");
+    app.RunFrame(96.0);
+    keyboardEvent("1", "keyup");
+
+    CHECK(player->GetInventory().GetHandSlotIndex() == 0);
+
+    // '5' should map to slot 4
+    keyboardEvent("5", "keydown");
+    app.RunFrame(112.0);
+    keyboardEvent("5", "keyup");
+
+    CHECK(player->GetInventory().GetHandSlotIndex() == 4);
+
+    // '9' should map to slot 8
+    keyboardEvent("9", "keydown");
+    app.RunFrame(128.0);
+    keyboardEvent("9", "keyup");
+
+    CHECK(player->GetInventory().GetHandSlotIndex() == 8);
+
+    // '0' should map to slot 9
+    keyboardEvent("0", "keydown");
+    app.RunFrame(144.0);
+    keyboardEvent("0", "keyup");
+
+    CHECK(player->GetInventory().GetHandSlotIndex() == 9);
+}
+
+TEST_CASE("WebInterface Quit State Is Terminal") {
+    TestingApp app{};
+
+    clickButton("Quit");
+    app.RunFrame(16.0);
+
+    REQUIRE(app.IsQuit());
+
+    clickButton("New Game");
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    CHECK(app.IsQuit());
+}
+
+TEST_CASE("WebInterface GetLastActionChar Tracks Latest Input") {
+    TestingApp app{};
+
+    clickButton("New Game");
+    app.RunFrame(16.0);
+
+    CHECK(app.GetLastActionChar() == '\0');
 
     keyboardEvent("d", "keydown");
-    world.Run();
-    keyboardEvent("D", "keyup");
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition.Right());
-
-    keyboardEvent("A", "keydown");
-    world.Run();
-    keyboardEvent("a", "keyup");
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition);
-}
-
-TEST_CASE("WebInterface Multiple Keys Pressed and Released") {
-    TestingMockWorld world{};
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition);
-
-    keyboardEvent("S", "keydown");
-    world.Run();
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition.Down());
-
-    keyboardEvent("w", "keydown");
-    world.Run();
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition);
-
-    keyboardEvent("D", "keydown");
-    world.Run();
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition.Right());
-
-    keyboardEvent("a", "keydown");
-    world.Run();
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition);
-
-    keyboardEvent("a", "keyup");
-    keyboardEvent("w", "keyup");
-    world.Run();
-
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition.Right());
-
+    app.RunFrame(300.0);
     keyboardEvent("d", "keyup");
-    world.Run();
 
-    CHECK(world.GetInterfacePosition() == world.interfaceStartingPosition.Right().Down());
+    CHECK(app.GetLastActionChar() == 'd');
 }
 
-TEST_CASE("WebInterface Interaction Action") {
-    TestingMockWorld world{};
+TEST_CASE("WebInterface Movement Paused in Menu") {
+    TestingApp app{};
 
-    keyboardEvent("e", "keydown");
-    world.Run();
-    keyboardEvent("e", "keyup");
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
 
-    CHECK(world.lastAction == MockWorld::ActionType::INTERACT);
+    const WorldPosition startPos = app.GetPlayerPosition();
 
-    world.Run();
-
-    CHECK(world.lastAction == MockWorld::ActionType::REMAIN_STILL);
-}
-
-TEST_CASE("WebInterface Pausing Action") {
-    TestingMockWorld world{};
-
+    // Pause the game
     keyboardEvent("Escape", "keydown");
-    world.Run();
-
-    CHECK(world.IsPaused());
-    CHECK(world.lastAction == MockWorld::ActionType::REMAIN_STILL);
-
-    keyboardEvent("E", "keydown");
-    world.Run();
-    keyboardEvent("E", "keyup");
-
-    CHECK(world.IsPaused());
-    CHECK(world.lastAction == MockWorld::ActionType::REMAIN_STILL);
-
-    keyboardEvent("Escape", "keyup");
-    world.Run();
-
-    keyboardEvent("e", "keydown");
-    world.Run();
-    keyboardEvent("e", "keyup");
-
-    CHECK(world.IsPaused());
-    CHECK(world.lastAction == MockWorld::ActionType::REMAIN_STILL);
-
-    keyboardEvent("Escape", "keydown");
-    world.Run();
+    app.RunFrame(32.0);
     keyboardEvent("Escape", "keyup");
 
-    CHECK(!world.IsPaused());
-    CHECK(world.lastAction == MockWorld::ActionType::REMAIN_STILL);
+    CHECK(app.IsInPauseMenu());
 
-    keyboardEvent("e", "keydown");
-    world.Run();
-    keyboardEvent("e", "keyup");
+    // Try to move - should not move while paused
+    keyboardEvent("s", "keydown");
+    app.RunFrame(300.0);
+    keyboardEvent("s", "keyup");
 
-    CHECK(!world.IsPaused());
-    CHECK(world.lastAction == MockWorld::ActionType::INTERACT);
+    CHECK(app.GetPlayerPosition() == startPos);
 }
 
-TEST_CASE("WebInterface Quit Action") {
-    TestingMockWorld world{};
+TEST_CASE("WebInterface Enter and Exit Dungeon") {
+    TestingApp app{};
 
-    keyboardEvent("q", "keydown");
-    world.Run();
-    keyboardEvent("Q", "keyup");
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
 
-    CHECK(world.lastAction == MockWorld::ActionType::QUIT);
-    CHECK(world.userQuit);
+    CHECK(app.IsInOverworld());
+
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    // Enter dungeon by clicking dungeon entrance (simulated by "Enter" button)
+    clickButton("Go to Dungeon");
+    app.RunFrame(32.0);
+
+    CHECK(app.IsInDungeon());
+
+    keyboardEvent("Escape", "keydown");
+    app.RunFrame(32.0);
+    keyboardEvent("Escape", "keyup");
+
+    // Exit dungeon back to overworld
+    clickButton("Go to Overworld");
+    app.RunFrame(48.0);
+
+    CHECK(app.IsInOverworld());
 }
 
-TEST_CASE("WebInterface Unknown Key Handling") {
-    TestingMockWorld world{};
-    WorldPosition startPos = world.GetInterfacePosition();
+TEST_CASE("WebInterface Invalid Key Handling") {
+    TestingApp app{};
 
-    std::vector<std::string> unknownKeys = {"p", "Enter", "Shift", "7", " ", "z"};
+    // Go to overworld
+    clickButton("New Game");
+    app.RunFrame(16.0);
 
-    for (const std::string& key: unknownKeys) {
+    const WorldPosition startPos = app.GetPlayerPosition();
+
+    std::vector<std::string> invalidKeys = {"p", "Enter", "Shift", "Tab"};
+
+    double currentTime = 32.0;
+    for (const std::string& key: invalidKeys) {
         keyboardEvent(key.c_str(), "keydown");
-        world.Run();
-
-        CHECK(world.GetInterfacePosition() == startPos);
-        CHECK(world.lastAction == MockWorld::ActionType::REMAIN_STILL);
-        CHECK(!world.IsPaused());
-        CHECK(!world.userQuit);
-
+        app.RunFrame(currentTime);
         keyboardEvent(key.c_str(), "keyup");
-        world.Run();
+
+        // Position should not change
+        CHECK(app.GetPlayerPosition() == startPos);
+        CHECK(app.IsInOverworld());
+        currentTime += 300.0; // Increment time for next input
     }
 }
 

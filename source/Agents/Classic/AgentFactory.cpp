@@ -34,10 +34,11 @@ namespace cse498 {
 std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("Player in Range", [&world, &enemy](ExecutionContext&) {
         assert(enemy.IsAlive());
-        if (!world.GetPlayer()->IsAlive()) // if player dead then not in range
+        const auto* player = world.GetPlayer();
+        if (player == nullptr || !player->IsAlive()) // if player missing/dead then not in range
             return Failure;
 
-        if (IsInRange(enemy, world.GetPlayerPosition(), world.GetGrid()))
+        if (IsInRange(enemy, player->GetPosition(), world.GetGrid()))
             return Success;
         return Failure;
     });
@@ -46,21 +47,23 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const Wo
 
 std::unique_ptr<Node> AgentFactory::AttackPlayer(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("Attack Player", [&world, &enemy](ExecutionContext&) {
-        if (world.GetPlayer()->IsAlive() == false)
+        auto* player = world.GetPlayer();
+        if (player == nullptr || !player->IsAlive())
             return Failure;
-        auto dmg = DamageCalculator::Calculate(enemy.GetStats(), world.GetPlayer()->GetStats());
-        world.GetPlayer()->TakeDamage(dmg);
+        auto dmg = DamageCalculator::Calculate(enemy.GetStats(), player->GetStats());
+        player->TakeDamage(dmg);
         return Success;
     });
 }
 
 std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("Chase Player", [&enemy, &world](ExecutionContext& ctx) {
-        if (!world.GetPlayer()->IsAlive()) // can't chase dead players
+        const auto* player = world.GetPlayer();
+        if (player == nullptr || !player->IsAlive()) // can't chase dead/missing players
             return Failure;
 
         const WorldPosition enemyPos = enemy.GetLocation().AsWorldPosition();
-        const WorldPosition playerPos = world.GetPlayerPosition();
+        const WorldPosition playerPos = player->GetPosition();
 
         // Build a simple pathfinding request for this enemy on the world's main grid.
         const WorldGrid& grid = world.GetGrid();
@@ -85,11 +88,15 @@ std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldB
         auto dir = nextPos - curPos;
 
         auto action_name = MovementTypes::GetActionName(dir);
-        // Just checks that the next position is indeed in the 8 diagonal positions
-        // otherwise action_name will be false from std::optional
+        if (action_name.empty()) {
+            return Failure;
+        }
+        // Make sure the direction maps to a valid movement action string.
 
         // Sanity check: ensure the destination tile is walkable.
-        assert(grid.IsWalkable(nextPos));
+        if (!grid.IsWalkable(nextPos)) {
+            return Failure;
+        }
 
         size_t action_id = enemy.GetActionID(action_name);
         if (action_id == 0)
@@ -104,37 +111,38 @@ std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldB
 std::unique_ptr<Node> AgentFactory::RangeChasePlayer(const Enemy& enemy, const WorldBase& world) {
     //* If not within range of player chase + reset tile distance count
     return TreeBuilder::Act("(ranged) Chase Player", [&enemy, &world](ExecutionContext& ctx) {
-        if (!world.GetPlayer()->IsAlive()) // can't chase dead players
+        const auto* player = world.GetPlayer();
+        if (player == nullptr || !player->IsAlive()) // can't chase dead players
             return Failure;
         // We are either Far away or too close or In range but no line of sight
         // if we are far away
-        if (PathGenerator::EuclideanDistance(enemy.GetPosition(), world.GetPlayerPosition()) > enemy.GetAtkRange()) {
+        if (PathGenerator::EuclideanDistance(enemy.GetPosition(), player->GetPosition()) > static_cast<double>(enemy.GetAtkRange())) {
             // then move closer
             ctx.mBlackboard.Set<size_t>("step_count", 0);
-            auto path = PathGenerator::FindShortestPath(enemy.GetPosition(), world.GetPlayerPosition(),
+            auto path = PathGenerator::FindShortestPath(enemy.GetPosition(), player->GetPosition(),
                                                         PathRequest(world.GetGrid()));
             if (path && path.value().Size() >= 2) {
-                ResolveMovement(enemy, path.value().At(2), ctx);
+                ResolveMovement(enemy, path.value().At(1), ctx);
                 return Success;
             }
 
             return Failure; // most likely trapped by walls. Can't do anything
         }
         // if we are too close (AKA < manhattan tiles away from player)
-        if (PathGenerator::ManhattanDistance(enemy.GetPosition(), world.GetPlayerPosition()) < enemy.GetAtkRange()) {
+        if (PathGenerator::ManhattanDistance(enemy.GetPosition(), player->GetPosition()) < enemy.GetAtkRange()) {
             // Move further away
-            if (ctx.mBlackboard.Get<size_t>("step_count", 0) == SKELETON_MAX_STEP_AWAY_COUNT)
+            if (ctx.mBlackboard.Get<size_t>("step_count", 0) >= SKELETON_MAX_STEP_AWAY_COUNT)
                 return Failure; // No movement should be tried just attack.
 
             ctx.mBlackboard.Set<size_t>("step_count", ctx.mBlackboard.Get<size_t>("step_count", 0) + 1);
 
-            auto path = PathGenerator::FindPointAway(enemy.GetPosition(), world.GetPlayerPosition(),
+            auto path = PathGenerator::FindPointAway(enemy.GetPosition(), player->GetPosition(),
                                                      PathRequest(world.GetGrid()));
             // if empty then attack if possible
             if (path.Empty())
                 return Failure;
             assert(path.Size() >= 2);
-            ResolveMovement(enemy, path.At(2), ctx);
+            ResolveMovement(enemy, path.At(1), ctx);
             return Success;
         }
         // otherwise last case: We are in range but no line of sight
@@ -150,14 +158,21 @@ std::unique_ptr<Node> AgentFactory::RangeChasePlayer(const Enemy& enemy, const W
 
 std::unique_ptr<Node> AgentFactory::IsPlayerInBoundedRange(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("(ranged) Chase Player", [&enemy, &world](ExecutionContext) {
+        const auto* player = world.GetPlayer();
+        if (player == nullptr || !player->IsAlive()) {
+            return Failure;
+        }
         // If within range but still has Range tiles away from player then ... attack
-        if (IsInRange(enemy, world.GetPlayerPosition(), world.GetGrid()) &&
-            PathGenerator::ManhattanDistance(enemy.GetPosition(), world.GetPlayerPosition()) >= enemy.GetAtkRange()) {
+        if (IsInRange(enemy, player->GetPosition(), world.GetGrid()) &&
+            PathGenerator::ManhattanDistance(enemy.GetPosition(), player->GetPosition()) >= enemy.GetAtkRange()) {
             return Success;
         }
+
         return Failure;
     });
 }
+
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +219,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const
     auto root = TreeBuilder::Repeat("Skeleton Root");
     auto selector = TreeBuilder::Sel("Skeleton Behavior");
 
-    auto atkSeq = TreeBuilder::Seq("Skeelton Attack Sequence");
+    auto atkSeq = TreeBuilder::Seq("Skeleton Attack Sequence");
     // Check if player is in range and if so then attack
     atkSeq->AddChild(IsPlayerInBoundedRange(enemy, world));
     atkSeq->AddChild(AttackPlayer(enemy, world));
@@ -212,7 +227,11 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, const
     // 1. not in OPTIMAL range of player or 2. Player's dead. Ignore case 2 since it won't matter -->
     // not in range of player so move closer:
     auto moveSeq = TreeBuilder::Seq("Skeleton Move");
-    moveSeq->AddChild(RangeChasePlayer(enemy, world));
+    // We need failure on movement and success on needing to continue to attack which is backwards.
+    // I did it the intuitive way so invert comes in handy here
+    auto temp = TreeBuilder::Inv("Inversion of range chase");
+    temp->SetChild(RangeChasePlayer(enemy, world));
+    moveSeq->AddChild(std::move(temp));
     // if failure then try to attack! because no movement could be done
     moveSeq->AddChild(IsPlayerInRange(enemy, world)); // UNBOUNDED -- We are close enough and can't move so attack
     moveSeq->AddChild(AttackPlayer(enemy, world));
@@ -319,6 +338,7 @@ std::unique_ptr<Enemy> AgentFactory::CreateEnemySkeleton(const AgentDefinition& 
 std::unique_ptr<Enemy> AgentFactory::CreateEnemyGoblin(const AgentDefinition& def, WorldBase& world) {
     AgentStats stats = AgentLevels::GetGoblinStats(def.mLevel);
     auto enemy = CreateAgent(def, stats, world); // createAgent can't return nullptr
+    enemy->SetBuiltInWeaponName("Dagger");
     enemy->SetBehaviorTree(CreateGoblinTree(*enemy, world));
     return enemy;
 }
@@ -339,13 +359,12 @@ std::unique_ptr<Enemy> AgentFactory::CreateAgent(const AgentDefinition& def, con
  *////////////////////////////////////////////////////////////////////////
 
 bool AgentFactory::IsInRange(const Enemy& enemy, const WorldPosition& entityPosition, const WorldGrid& grid) {
-    const WorldPosition& p1 = enemy.GetLocation().AsWorldPosition();
+    const WorldPosition& p1 = enemy.GetPosition();
     const WorldPosition& p2 = entityPosition;
 
     if (PathGenerator::IsPathClear(p1, p2 - p1, {{}, grid})) {
         // then we are pretty much good. Just check Euclidean Distance is less than range with respect to the player
-        // hitbox. TODO: update once hitbox information is more well-defined
-        if ((p1 - p2).GetMagnitude() < static_cast<double>(enemy.GetAtkRange()))
+        if ((p1 - p2).GetMagnitude() <= static_cast<double>(enemy.GetAtkRange()) + EP)
             return true;
     }
     return false;

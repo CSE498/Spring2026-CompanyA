@@ -21,26 +21,35 @@ public:
 
     /// @enum ActiveAction
     /// @brief Enumeration of possible user actions.
-    enum class ActiveAction { Up, Left, Down, Right, Interact, Pause, Quit, None };
+    enum class ActiveAction { Up, Left, Down, Right, Interact, Quit, None };
 
     /// @brief Callback for key down events.
-    /// @param eventType The event type.
+    /// @param eventType The event type (should be EMSCRIPTEN_EVENT_KEYDOWN).
     /// @param keyEvent The keyboard event.
-    /// @param userData User data pointer.
+    /// @param inputManagerPointer Pointer to this InputManager instance. This is needed
+    ///                            to access the instance from the static callback function.
+    ///                            It must be void * to match the expected signature of the Emscripten callback.
     /// @return EM_BOOL indicating if the event was handled.
-    static EM_BOOL OnKeyDown(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* userData);
+    static EM_BOOL OnKeyDown(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* inputManagerPointer);
 
     /// @brief Callback for key up events.
-    /// @param eventType The event type.
+    /// @param eventType The event type (should be EMSCRIPTEN_EVENT_KEYUP).
     /// @param keyEvent The keyboard event.
-    /// @param userData User data pointer.
+    /// @param inputManagerPointer Pointer to this InputManager instance. This is needed
+    ///                            to access the instance from the static callback function.
+    ///                            It must be void * to match the expected signature of the Emscripten callback.
     /// @return EM_BOOL indicating if the event was handled.
-    static EM_BOOL OnKeyUp(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* userData);
+    static EM_BOOL OnKeyUp(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* inputManagerPointer);
 
     /// @brief Gets the current active action.
     /// @return The active action.
     ActiveAction GetAction();
 
+    /// @brief Checks if any key is pressed.
+    /// @return True if keys are pressed.
+    int IsKeyPressed() const { return !mKeysPressed.empty(); }
+
+private:
     /// @brief Adds a pressed key to the deque.
     /// @param key The key string.
     void AddKeyPressed(const std::string& key) { mKeysPressed.push_front(key); }
@@ -48,23 +57,15 @@ public:
     /// @brief Removes a released key from the deque.
     void RemoveKeyPressed(const std::string& key) { std::erase(mKeysPressed, key); }
 
-    /// @brief Checks if any key is pressed.
-    /// @return True if keys are pressed.
-    int IsKeyPressed() const { return !mKeysPressed.empty(); }
-
-    /// @brief Sets the tap action.
-    /// @param key The key for tap action.
-    void SetTapAction(std::string& key) { mTapAction = key; }
-
-private:
     /// @brief Reference to the WebInterface.
     WebInterface& mInterface;
 
     /// @brief Deque of currently pressed keys.
+    /// We use a deque to allow for multiple keys to be pressed
+    /// simultaneously and to maintain the order of key presses.
+    /// Example: user presses 'w', they move up, then they press 'd',
+    /// they start moving right, they release 'd', the start moving up again.
     std::deque<std::string> mKeysPressed{};
-
-    /// @brief Current tap action key.
-    std::string mTapAction{};
 };
 
 } // namespace cse498

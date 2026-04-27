@@ -9,7 +9,8 @@
 #include <string>
 #include "Item.hpp"
 #include "ItemWeapon.hpp"
-#include "WorldBase.hpp"
+#include "../WorldBase.hpp"
+#include "../WorldBase.hpp"
 
 namespace cse498 {
 class ItemWeaponSword : public ItemWeapon {
@@ -17,7 +18,9 @@ private:
 public:
     ItemWeaponSword(size_t id, const std::string& name, const std::string& image_path, int gold,
                     const WorldBase& world) : ItemWeapon(id, name, image_path, gold, world) {
-        SetImagePath("assets/items/weapons/sword.png");
+        SetRange(1.0);
+        SetDamage(5.0);
+        SetHitBonus(0.0);
     }
 
     bool IsSword() const override { return true; }
