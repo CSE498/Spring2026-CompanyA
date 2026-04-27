@@ -5,7 +5,7 @@
  *
  * The goal of this class is to provide a time based sequence of numeric values and provides statistics on them.
  * Caller will add a numeric value and the class will associate a timestamp from when the instance was constructed.
- * Used AI to help in developing the Min, Max, Mean, and Threshold functions.
+ * Used AI to help in developing the Min, Max, Mean, Threshold functions, and function comments
  **/
 
 #include "DataLog.hpp"
@@ -15,14 +15,15 @@
 
 namespace cse498 {
 
-/*
-Constructor for DataLog
-*/
+/**
+ * DataLog constructor
+ */
 DataLog::DataLog() = default;
 
-/*
-Adds a new data value and the function associates a timestamp with the data
-*/
+/**
+ * Adds a new data value and the function associates a timestamp with the data
+ * @param value The numeric value that is added to the log
+ */
 void DataLog::Add(double value) {
     DataSample sample;
     sample.value = value;
@@ -30,25 +31,30 @@ void DataLog::Add(double value) {
     mDataValues.push_back(sample);
 }
 
-/*
-Function returns a reference to the collection of data samples
-*/
+/**
+ * Function returns a const reference to the collection of data samples
+ * @return A const reference to the vector of DataSample objects stored in the DataLog
+ */
 const std::vector<DataLog::DataSample>& DataLog::DataSamples() const { return mDataValues; }
 
-/*
-Function clears all samples from the data log
-Timestamp is not reset
-*/
+
+/**
+ * Function clears all samples from the data log
+ * Timestamp is not reset
+ */
 void DataLog::Clear() { mDataValues.clear(); }
 
-/*
-Function returns the number of samples stored in the data log
-*/
+
+/**
+ * Function returns the number of samples stored in the data log
+ * @return The number of samples in the data log
+ */
 std::size_t DataLog::Count() const { return mDataValues.size(); }
 
-/*
-Function returns the smallest value in the data log
-*/
+/**
+ * Function returns the smallest value in the data log
+ * @return The smallest value in the data log, or std::nullopt if the log is empty
+ */
 std::optional<double> DataLog::Min() const {
 
     if (mDataValues.empty()) {
@@ -62,9 +68,10 @@ std::optional<double> DataLog::Min() const {
     return min->value;
 }
 
-/*
-Function returns the largest value in the data log
-*/
+/**
+ * Function returns the largest value in the data log
+ * @return The largest value in the data log, or std::nullopt if the log is empty
+ */
 std::optional<double> DataLog::Max() const {
     if (mDataValues.empty()) {
         return std::nullopt;
@@ -77,9 +84,10 @@ std::optional<double> DataLog::Max() const {
     return max->value;
 }
 
-/*
-Function returns the average of the data values in the data log
-*/
+/**
+ * Function returns the average of the data values in the data log
+ * @return The average of the values in the data log, or std::nullopt if the log is empty
+ */
 std::optional<double> DataLog::Mean() const {
 
     if (mDataValues.empty()) {
@@ -94,9 +102,10 @@ std::optional<double> DataLog::Mean() const {
     return sum / num_size;
 }
 
-/*
-Function returns the median of the values in the data log
-*/
+/**
+ * Function returns the median of the values in the data log
+ * @return The median of the values in the data log, or std::nullopt if the log is empty
+ */
 std::optional<double> DataLog::Median() const {
     if (mDataValues.empty()) {
         return std::nullopt;
@@ -124,9 +133,11 @@ std::optional<double> DataLog::Median() const {
     return median;
 }
 
-/*
-Function returns the total time that the values in datalog were under a specific threshold
-*/
+/**
+ * Function returns the total time that the values in datalog were under a specific threshold
+ * @param threshold The threshold to compare the data values against
+ * @return The total time that the values in datalog were under the specified threshold
+ */
 double DataLog::TimeUnderThreshold(double threshold) const {
     // 2 samples needed for an interval
     if (mDataValues.size() < 2) {
@@ -150,9 +161,11 @@ double DataLog::TimeUnderThreshold(double threshold) const {
     return total_time;
 }
 
-/*
-Function returns the total time that the values in datalog were over a specific threshold
-*/
+/**
+ * Function returns the total time that the values in datalog were over a specific threshold
+ * @param threshold The threshold to compare the data values against
+ * @return The total time that the values in datalog were over the specified threshold
+ */
 double DataLog::TimeOverThreshold(double threshold) const {
     // 2 samples needed for an interval
     if (mDataValues.size() < 2) {
@@ -176,9 +189,10 @@ double DataLog::TimeOverThreshold(double threshold) const {
     return total_time;
 }
 
-/*
-Helper function whose purpose is to advance the Timer for timestamp testing purposes without manually waiting
-*/
+/**
+ * Helper function whose purpose is to advance the Timer for timestamp testing purposes without manually waiting
+ * @param seconds The amount of time to advance by
+ */
 void DataLog::advanceTimeForTesting(double seconds) { mTimer.advanceTime(seconds); }
 
 } // namespace cse498
