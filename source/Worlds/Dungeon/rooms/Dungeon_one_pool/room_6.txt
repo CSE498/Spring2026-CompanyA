@@ -1,8 +1,8 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-<                        >
-<    $$$$$$$$$$$$$$$$$   >
-<    $     lllll     $   >
-<    $               $   >
-<    $$$$$$$   $$$$$$$   >
-<                        >
-&&&&&&&&&&&&&&&&&&&&&&&&&&
+11111111111111111111111111
+3aaacaaaaaaaaaaaaaaaaabaa4
+3aaaa66666666666666666aaa4
+3aaaa6aaaadllllldaaaa6aaa4
+3aaaa6aaaa<aaaaaa<aaa6aaa4
+3aaaa5555555aaa5555555aaa4
+3aaaaacaaaaaaaaaaaaabaaaa4
+22222222222222222222222222

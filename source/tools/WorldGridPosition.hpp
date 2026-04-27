@@ -16,11 +16,17 @@
 #include "../source/core/WorldPosition.hpp"
 
 namespace cse498 {
-    /// @class WorldPosition
-    /// @brief Represents a position within a 2D world.
-    /// Stored as floating point, but can be converted to coordinates
+    /**
+    * @class WorldGridPosition
+    * @brief Represents a position within a 2D world grid with directional orientation.
+    * @details ...
+    */
     class WorldGridPosition : public WorldPosition {
     public:
+        /**
+         * @enum Orientation
+         * @brief Cardinal directions for entity facing.
+         */
         enum class Orientation { NORTH, SOUTH, EAST, WEST }; // enum states for direction
 
     private:
@@ -29,28 +35,53 @@ namespace cse498 {
     public:
         using WorldPosition::WorldPosition;
 
-        [[nodiscard]] Orientation Dir() const { return m_dir; } // Returns the current facing direction
+        /**
+         * @brief Gets the current facing direction.
+         * @return Current Orientation value
+         */
+        [[nodiscard]] Orientation Dir() const { return m_dir; }
 
-        void SetDir(Orientation new_dir) { m_dir = new_dir; } // Sets a new facing direction
+        /**
+         * @brief Sets a new facing direction.
+         * @param new_dir The new Orientation to face
+         */
+        void SetDir(Orientation new_dir) { m_dir = new_dir; }
 
-        // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
+        /**
+         * @brief Checks if this position occupies the same cell as another.
+         * @param other The other position to compare against
+         * @return True if both positions are in the same cell
+         */
         [[nodiscard]] bool IsColliding(const WorldPosition &other) const {
             return (CellX() == other.CellX() && CellY() == other.CellY());
         }
 
-        ///Check if two positions are in adjacent cells
+        /**
+         * @brief Checks if two positions are in adjacent cells.
+         * @param other The other position to check adjacency with
+         * @return True if cells are exactly one step apart (Manhattan distance of 1)
+         */
         [[nodiscard]] bool IsAdjacentCell(const WorldPosition &other) const {
             size_t dx = std::max(CellX(), other.CellX()) - std::min(CellX(), other.CellX());
             size_t dy = std::max(CellY(), other.CellY()) - std::min(CellY(), other.CellY());
             return (dx + dy == 1);
         }
 
-        /// Return a the WorldPosition at the requested offset.
+        /**
+         * @brief Returns a new position offset from this one.
+         * @param offset_x Horizontal offset to apply
+         * @param offset_y Vertical offset to apply
+         * @return New WorldGridPosition at the offset location
+         */
         [[nodiscard]] WorldGridPosition Offset(double offset_x, double offset_y) const {
             return WorldGridPosition{X() + offset_x, Y() + offset_y};
         }
 
-        // Gets the distance between two positions
+        /**
+         * @brief Calculates the Manhattan distance between two positions.
+         * @param other The other position to measure distance to
+         * @return Manhattan distance in cells (|dx| + |dy|)
+         */
         [[nodiscard]] size_t CellDistance(const WorldPosition &other) const {
             size_t dx = std::max(CellX(), other.CellX()) - std::min(CellX(), other.CellX());
             size_t dy = std::max(CellY(), other.CellY()) - std::min(CellY(), other.CellY());

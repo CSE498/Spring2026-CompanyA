@@ -1,14 +1,14 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-<  m                     >
-<       $                >
-<        $               >
-<         $     m        >
-<          $             >
-<           $            >
-<            $           >
-<             $          >
-<              $         >
-<               $        >
-<                $       >
-<           t            >
-&&&&&&&&&&&&&&&&&&&&&&&&&&
+11111111111111111111111111
+3a<gaaaaaaaaaaaaaaaaaaaaa4
+3aaaaaac5aaaaaaaaaaaaaaca4
+3aaaaaaad5aaaaaaaaaaaaaaa4
+3aaaaaaaaa5aaaaagaaaaaaaa4
+3aaaaaaaaaa5aaaaaaaaaaaaa4
+3aaabaaaaaaa5<aaaaaaaaaaa4
+3abbaaaaaaaaa5caaaaaaaaaa4
+3aaabaaaaaaaaa5aaaaaaaaaa4
+3aaaaaaaaaaaaaa5aaaaaacaa4
+3aaaaaaaaaaaaaaa5aaaaaaaa4
+3aaaaaaaaaaaaaaaa5aaaaaaa4
+3aaaaaaaaaaataaaaaaaaaaaa4
+22222222222222222222222222

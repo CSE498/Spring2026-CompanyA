@@ -22,35 +22,67 @@
 #include <print>
 #include "RoomHolder.hpp"
 #include "../../tools/Random.hpp"
-
+#include "LevelBase.hpp"
 
 namespace cse498 {
-    /// @brief Holds basic information of the grids
+    /**
+     * @struct BSPNode
+     * @brief Represents a node in the BSP tree containing grid partition information.
+     *
+     * @details Each node stores its position, dimensions, child indices, and optionally
+     * a room layout when it's a leaf node.
+     */
     struct BSPNode {
-        int left_child = -1; //Left node of the tree
-        int right_child = -1; //right node of the tree
+        int left_child = -1; // Left node of the tree
+        int right_child = -1; // right node of the tree
         int x, y, width, height; // (x,y) - (origin point of the grid (top-left corner))
         // (width, height) - dimension of the grid cut (lxw)
         std::string name; //Name of the node for debugging purposes
-        std::string file_name; //
+        std::string file_name; //placeholder just in case we're loading in images directly from BSPNodes
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
 
-
+        /// @brief Default constructor
         BSPNode() = default;
 
+        /**
+         * @brief Constructs a BSPNode with specified parameters.
+         * @param l Left child index
+         * @param r Right child index
+         * @param x X coordinate of top-left corner
+         * @param y Y coordinate of top-left corner
+         * @param width Width of the partition
+         * @param height Height of the partition
+         * @param name Debug name for the node
+         */
         BSPNode(int l, int r, int x, int y, int width, int height, std::string name)
             : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {
         }
     };
 
 
-    static constexpr int DEFAULT_WIDTH = 150;
+    /// @brief Default grid width for dungeon generation
+    static constexpr int DEFAULT_WIDTH = 125;
+    /// @brief Default grid height for dungeon generation
     static constexpr int DEFAULT_HEIGHT = 100;
+    /// @brief Minimum width before BSP stops splitting
     static constexpr int DEFAULT_WIDTH_THRESHOLD = 30;
-    static constexpr int DEFAULT_HEIGHT_THRESHOLD = 20;
-    static constexpr int DEFAULT_ITERATIONS = 20;
+    /// @brief Minimum height before BSP stops splitting
+    static constexpr int DEFAULT_HEIGHT_THRESHOLD = 15;
+    /// @brief Default number of BSP split iterations
+    static constexpr int DEFAULT_ITERATIONS = 2;
+    /// @brief Probability increment for exit door spawning each room
+    constexpr double DOOR_EXIT_PROBABILITY_INCREMENT = 0.2;
+    /// @brief Maximum probability for exit door spawning
+    constexpr double DOOR_EXIT_PROBABILITY_LIMIT = 1.0;
 
-    ///Class which handles the creation, management, and modification of a Binary Space Partition (BSP) Tree in its dungeon creation
+    /**
+     * @class BSP
+     * @brief Class which handles the creation, management, and modification of a Binary Space Partition (BSP) Tree in its dungeon creation
+     *
+     * @details This class recursively partitions a 2D grid space into smaller regions,
+     * then populates each leaf region with a room from the room pool. The BSP algorithm
+     * ensures rooms are well-distributed across the dungeon space.
+     */
     class BSP {
     protected:
         RoomHolder m_room_holder; //Holds the rooms that populates the BSPNodes
@@ -64,28 +96,28 @@ namespace cse498 {
         int m_iterations = DEFAULT_ITERATIONS; //number of splits into the grid
         Random m_rng; //Random number generator
 
+        bool m_exit_door = false; //Switch that works to spawn only one exit room
+        double mExitProbabilityState = 0.0; //Escalating probability value to determine when exit room spawns
 
     public:
         /// @brief Constructor call creates the BSP Tree from the get-go, meaning that BSP_Tree and its leaf nodes are already populated
-        /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
-        BSP(const cse498::WeightedSet<std::string> &room_pool,
-            const std::string &file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_")
-            : m_room_holder(room_pool, file_path) {
-            insert_split(m_iterations); //Creates BSP Tree
-            PostOrderDFS(); //Grabs all the generated room slots from the tree
+        /// @param level The level configuration providing room pool and directory
+        BSP(const LevelBase &level)
+            : m_room_holder(level) {
+            // insert_split(m_iterations); //Creates BSP Tree
+            // PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
 
         /// @brief Constructor call creates BSP Tree with a set seed
         /// @attention This constructor is purely meant to be used for debugging purposes to test proper Tree/Leaf Node initialization
         /// @param room_pool A pool of different rooms, each with a unique weight value, used to populate the dungeon room
         /// @param seed Set int value to determine room generation layout
-        BSP(const cse498::WeightedSet<std::string> &room_pool,
-            uint64_t seed,
-            const std::string &file_path = std::string(DUNGEON_ROOMS_DIR) + "/Dungeon_")
-            : m_room_holder(room_pool, file_path) {
+        BSP(const LevelBase &level,
+            uint64_t seed)
+            : m_room_holder(level) {
             m_rng.SetSeed(seed);
-            insert_split(m_iterations);
-            PostOrderDFS();
+            insert_split(m_iterations); //Creates BSP Tree
+            PostOrderDFS(); //Grabs all the generated room slots from the tree
         }
 
         ////////////////////////////////////
@@ -102,12 +134,58 @@ namespace cse498 {
             return insert_split(root_node, iter);
         }
 
+        /// @brief When Ran, this will create the BSP Tree used in Dungeon creation in WorldGeneration
+        /**
+         * @brief Creates the BSP Tree used in dungeon generation.
+         * @details Calls insert_split to build the tree, then PostOrderDFS to populate rooms.
+         */
+        void CreateBSPTree() {
+            insert_split(m_iterations); //Creates BSP Tree
+            PostOrderDFS(); //Grabs all the generated room slots from the tree
+        }
+
+        /**
+          * @brief Clears the BSP tree state for regeneration.
+          * @details Resets tree, leaf nodes, and exit door flag.
+          */
+        void ClearState() {
+            m_BSP_tree.clear();
+            m_leaf_nodes.clear();
+            m_exit_door = false;
+        }
+
+        /// @brief Ensures that no matter the width/height of a node split, a suitable room is found for that split
+        /// @param node leaf node that has a room stored in it
+        void RoomCompatibility() {
+            // bool valid_room = false; // To ensure that a valid room is found when generating dungeon
+
+            auto &lower_threshold = mExitProbabilityState; //lower prob bound
+            const auto upper_threshold = DOOR_EXIT_PROBABILITY_LIMIT; //upper prob bound
+            const auto probability_increment = DOOR_EXIT_PROBABILITY_INCREMENT;
+
+            if (!m_exit_door) {
+                auto val_one = m_rng.GetValue(0.0, 1.0);
+                if ((val_one.value() < lower_threshold && !m_exit_door)) {
+                    m_exit_door = true;
+                    m_room_holder.SetCurrentRoom(m_room_holder.LoadRoom(m_exit_door));
+                    return;
+                }
+
+                mExitProbabilityState = std::min(
+                    mExitProbabilityState + probability_increment,
+                    upper_threshold
+                );
+            }
+            m_room_holder.SetCurrentRoom();
+        }
+
+
         /// @brief Grabs all the leaf nodes of the BSP_Tree using Post-Order DFS, for map generation
         /// @param node root_node
         void PostOrderDFS(BSPNode &node) {
             if (node.left_child == -1 && node.right_child == -1) {
                 //Populating node with room and coordinate offset info
-                m_room_holder.SetCurrentRoom();
+                RoomCompatibility();
                 node.vector_room = m_room_holder.GetCurrentRoom();
 
                 m_leaf_nodes.push_back(node);
@@ -124,27 +202,8 @@ namespace cse498 {
             PostOrderDFS(m_BSP_tree[0]);
         }
 
-        void ClearState() {
-            m_BSP_tree.clear();
-            m_leaf_nodes.clear();
-        }
-
-        void RepopulateTree() {
-            insert_split(m_iterations); //Creates BSP Tree
-            PostOrderDFS(); //Grabs all the generated room slots from the tree
-        }
-
-        /**
-         * @brief Regenerates the BSP Tree incase any modifications to width/height/properties after its creation are made in order to
-         * ensure the object's state is up to date when new dungeons are later created
-         */
-        void RegenerateObjectState() {
-            ClearState();
-            RepopulateTree();
-        }
-
         ////////////////////////////////////
-        //    BSP Tree Debug Info
+        //    BSP Tree Debug Functions
         ///////////////////////////////////
 
         /// @brief Generates Dungeon Map World outline of solely the splits from the BSP Tree without the rooms populated in them
@@ -167,6 +226,10 @@ namespace cse498 {
                     }
                 }
             }
+
+            for (auto i: grid) {
+                std::cout << i << std::endl;
+            }
         }
 
         /// @brief Simple parser that'll output the contents of the BSP Vector.
@@ -188,6 +251,12 @@ namespace cse498 {
             }
         }
 
+        /// @brief Clears and rebuilds the BSP tree with current parameters
+        void RegenerateObjectState() {
+            ClearState();
+            CreateBSPTree();
+        }
+ 
         /// @brief Sets RNG seed primarily for test case purposes
         /// @param integer seed value we want to set the RNG object too
         void SetRngSeed(uint64_t integer) {
@@ -315,7 +384,7 @@ namespace cse498 {
                         value();
                 const int stored_width = width_distributor;
 
-                left_split = {
+                left_split = BSPNode{
                     -1, -1, // left right child
                     node.x, node.y, // x-y coordinate
                     stored_width, // width
@@ -324,7 +393,7 @@ namespace cse498 {
                 };
 
                 ///Right split
-                right_split = {
+                right_split = BSPNode{
                     -1, -1, // left right child
                     node.x + left_split.width, node.y, // x-y coordinate
                     node.width - left_split.width, // width
@@ -337,7 +406,7 @@ namespace cse498 {
                 const int stored_height = height_distributor;
 
                 ///top split
-                left_split = {
+                left_split = BSPNode{
                     -1, -1, // left right child
                     node.x, node.y, // x-y coordinate
                     node.width, // width
@@ -346,7 +415,7 @@ namespace cse498 {
                 };
 
                 ///bottom split
-                right_split = {
+                right_split = BSPNode{
                     -1, -1, // left right child
                     node.x, node.y + left_split.height, // x-y coordinate
                     node.width, // width

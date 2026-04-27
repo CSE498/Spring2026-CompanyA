@@ -1,11 +1,14 @@
-^^^^^^^^^^^^^^^^^^^^^^^
-<          m          >
-<                     >
-<       $$$$$$$       >
-<       $     $       >
-<       $  $  $       >
-<       $     $       >
-<       $$$$$$$       >
-<                     >
-s          m          >
-&&&&&&&&&&&&&&&&&&&&&&&
+99999999999999999999999999
+-mmn[[mmmmmmmmmmmmmmmmmmm=
+-mmmmmmmmmmmmmmmmmmmmommm=
+-mmmmmmn[]mmmmmmmmmmmmmmm=
+-mmmmmmm][mmmmmm[[mmmmmmm=
+-mmmmmmm]]mmsmnm][mmmmmmm=
+-mmmmmmmmmmmgmmmmmmmmmmmm=
+-mmmmmmm][mmsmmm[[mmmmmmm=
+-mmmmmmm]]mmmmmm][mmmmmmm=
+-mmmmmmmmmmmmmmmmmmmmmmmm=
+-mmmmmmm66mmmmmm56mmmmmmm=
+-mmmmnmmmmmmmmmmmmmmmmmmm=
+-mmmmmmmmmmmmmmmmmommmmmm=
+00000000000000000000000000

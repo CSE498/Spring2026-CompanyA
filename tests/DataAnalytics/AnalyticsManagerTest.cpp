@@ -8,12 +8,10 @@ TEST_CASE("Empty State Test", "[DataAnalytics]") {
 
     cse498::AnalyticsManager analytics;
 
-    CHECK(analytics.GetHealthLog().Count() == 0);
-    CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
+    CHECK(analytics.GetEnemiesKilledLog().Count() == 0);
     CHECK(analytics.GetDamageDealtLog().Count() == 0);
 
-    CHECK_FALSE(analytics.GetHealthLog().Mean().has_value());
-    CHECK_FALSE(analytics.GetEnemiesTrackedLog().Median().has_value());
+    CHECK_FALSE(analytics.GetEnemiesKilledLog().Median().has_value());
     CHECK_FALSE(analytics.GetDamageDealtLog().Max().has_value());
     CHECK_FALSE(analytics.GetDamageDealtLog().Min().has_value());
 }
@@ -26,25 +24,19 @@ TEST_CASE("Populated Log Test", "[DataAnalytics]") {
 
     cse498::AnalyticsManager analytics;
 
-    analytics.LogHealth(100.0);
-    analytics.LogHealth(80.0);
-
-    analytics.LogEnemiesTracked(5);
-    analytics.LogEnemiesTracked(3);
+    analytics.LogEnemiesKilled(5);
+    analytics.LogEnemiesKilled(3);
 
     analytics.LogDamageDealt(50.0);
     analytics.LogDamageDealt(25.0);
 
-    CHECK(analytics.GetHealthLog().Count() == 2);
-    CHECK(analytics.GetEnemiesTrackedLog().Count() == 2);
+    CHECK(analytics.GetEnemiesKilledLog().Count() == 2);
     CHECK(analytics.GetDamageDealtLog().Count() == 2);
 
-    CHECK(analytics.GetHealthLog().DataSamples()[0].value == 100.0);
-    CHECK(analytics.GetEnemiesTrackedLog().DataSamples()[1].value == 3.0);
+    CHECK(analytics.GetEnemiesKilledLog().DataSamples()[1].value == 3.0);
     CHECK(analytics.GetDamageDealtLog().DataSamples()[0].value == 50.0);
 
-    CHECK(analytics.GetHealthLog().Mean().value() == 90.0);
-    CHECK(analytics.GetEnemiesTrackedLog().Median().value() == 4.0);
+    CHECK(analytics.GetEnemiesKilledLog().Median().value() == 4.0);
     CHECK(analytics.GetDamageDealtLog().Max().value() == 50.0);
     CHECK(analytics.GetDamageDealtLog().Min().value() == 25.0);
 }
@@ -56,38 +48,29 @@ TEST_CASE("Reset Log Test", "[DataAnalytics]") {
 
     cse498::AnalyticsManager analytics;
 
-    analytics.LogHealth(100.0);
-
-    analytics.LogEnemiesTracked(5);
+    analytics.LogEnemiesKilled(5);
 
     analytics.LogDamageDealt(50.0);
 
-    CHECK(analytics.GetHealthLog().Count() == 1);
-    CHECK(analytics.GetEnemiesTrackedLog().Count() == 1);
+    CHECK(analytics.GetEnemiesKilledLog().Count() == 1);
     CHECK(analytics.GetDamageDealtLog().Count() == 1);
 
-    analytics.ResetHealthLog();
-    analytics.ResetEnemiesTrackedLog();
+    analytics.ResetEnemiesKilledLog();
     analytics.ResetDamageDealtLog();
 
-    CHECK(analytics.GetHealthLog().Count() == 0);
-    CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
+    CHECK(analytics.GetEnemiesKilledLog().Count() == 0);
     CHECK(analytics.GetDamageDealtLog().Count() == 0);
 
-    analytics.LogHealth(10.0);
-
-    analytics.LogEnemiesTracked(2);
+    analytics.LogEnemiesKilled(2);
 
     analytics.LogDamageDealt(50.0);
 
-    CHECK(analytics.GetHealthLog().Count() == 1);
-    CHECK(analytics.GetEnemiesTrackedLog().Count() == 1);
+    CHECK(analytics.GetEnemiesKilledLog().Count() == 1);
     CHECK(analytics.GetDamageDealtLog().Count() == 1);
 
     analytics.Reset();
 
-    CHECK(analytics.GetHealthLog().Count() == 0);
-    CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
+    CHECK(analytics.GetEnemiesKilledLog().Count() == 0);
     CHECK(analytics.GetDamageDealtLog().Count() == 0);
 }
 
@@ -99,14 +82,11 @@ TEST_CASE("Negative Value Test", "[DataAnalytics]") {
 
     cse498::AnalyticsManager analytics;
 
-    analytics.LogHealth(-100.0);
-
-    analytics.LogEnemiesTracked(-5);
+    analytics.LogEnemiesKilled(-5);
 
     analytics.LogDamageDealt(-50.0);
 
-    CHECK(analytics.GetHealthLog().Count() == 0);
-    CHECK(analytics.GetEnemiesTrackedLog().Count() == 0);
+    CHECK(analytics.GetEnemiesKilledLog().Count() == 0);
     CHECK(analytics.GetDamageDealtLog().Count() == 0);
 }
 

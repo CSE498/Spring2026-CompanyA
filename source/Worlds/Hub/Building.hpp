@@ -7,6 +7,7 @@
 #pragma once
 
 #include "ItemType.hpp"
+#include "ResourceBank.hpp"
 
 #include <cassert>
 #include <expected>
@@ -18,8 +19,9 @@
 
 namespace cse498 {
 /// @class Building
-/// @brief Upgradable building. Starts at level 0.
-class Building {
+/// @brief Upgradable resource building. Starts at level 0 and can also store
+///        hauled resources for its production lane.
+class Building : public ResourceBank {
 public:
     // The quantity and type of items needed for an upgrade
     struct BuildingUpgrade {
@@ -44,7 +46,6 @@ public:
     }
 
 private:
-    std::string m_name{}; // Name of the building
     int m_level{}; // The current level of the building
     float m_rateModifier = 0.25; // Percent increase as decimal ex: 0.25->25%
     std::vector<BuildingUpgrade> m_upgrades{}; // The upgrade cost per level
@@ -86,9 +87,12 @@ public:
     Building() = delete;
     /**
      * Constructor
+     * @param id unique id for the building
      * @param name name of the building
+     * @param world world this building belongs to
+     * @param buildingName
      */
-    Building(std::string name) : m_name{std::move(name)} {};
+    Building(size_t id, const std::string& name, const WorldBase& world) : ResourceBank(id, name, world) {}
     /**
      * Get Max level for this building
      * @return max level as an int
@@ -99,6 +103,18 @@ public:
      * @return current level as int
      */
     int GetCurrentLevel() const { return m_level; }
+    /**
+     * Set the current building level
+     * @param level level to set building to
+     * @return bool if setting level was successful
+     */
+    [[maybe_unused]] bool SetCurrentLevel(int level) {
+        if (level < 0 || level > GetMaxLevel())
+            return false;
+        m_level = level;
+        return true;
+    }
+    size_t SelectAction(const WorldGrid&) override { return 0; }
     /**
      * Get Next Upgrade level
      * For UI. Returns the level the next upgrade would reach. If the building is
@@ -116,11 +132,6 @@ public:
      */
     bool IsMaxLevel() const { return m_level >= GetMaxLevel(); }
     /**
-     * Set the name of the building
-     * @param newName new name of the building
-     */
-    void SetName(std::string newName) { m_name = std::move(newName); }
-    /**
      * Set the rate modifier
      * @param rate rate to set to
      */
@@ -130,11 +141,6 @@ public:
      * @return rate modifier
      */
     float GetRateModifier() const { return m_rateModifier; }
-    /**
-     * Get the name of the building
-     * @return name of the building
-     */
-    std::string GetName() const { return m_name; }
     /**
      * Add an upgrade level to the building
      * @param item type of item needed for the upgrade

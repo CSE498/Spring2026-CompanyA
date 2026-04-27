@@ -16,9 +16,17 @@
 
 #include "../tools/io_utils.hpp"
 
+/// @brief ID used for unknown or invalid cell types
 constexpr size_t UNKNOWN_CELL_TYPE_ID = 0;
 
 namespace cse498 {
+    /**
+     * @struct CellTypeModifiers
+     * @brief Stores modifier flags for a cell type.
+     *
+     * @details Contains boolean flags that determine cell behavior such as
+     * whether it can be broken, is locked, or can be traversed by agents.
+     */
     struct CellTypeModifiers {
         bool isBreakable = false; ///< Checks if tile is breakable (hidden walls)
         bool locked = false; ///< Boolean checker if tile is locked (chest/door)
@@ -31,6 +39,13 @@ namespace cse498 {
         }
     };
 
+    /**
+     * @class WorldGridState
+     * @brief Extends WorldGrid with cell type modifiers for game logic.
+     *
+     * @details Adds a parallel vector of CellTypeModifiers that tracks additional
+     * properties for each cell type
+     */
     class WorldGridState : public WorldGrid {
     protected:
         /// Parallel to WorldGrid::cell_types
@@ -38,21 +53,34 @@ namespace cse498 {
         std::vector<CellTypeModifiers> mCellTypeModifiers{};
 
     public:
+        /**
+          * @brief Constructs a grid with specified dimensions.
+          * @param width Number of cells in each row
+          * @param height Number of rows
+          * @param default_type Default cell type ID for all cells
+          */
         WorldGridState(size_t width, size_t height, size_t default_type = 0)
             : WorldGrid(width, height, default_type) {
             mCellTypeModifiers.resize(GetCellTypes().size());
         }
 
+        /**
+         * @brief Default constructor creating an empty grid.
+         */
         WorldGridState() : WorldGrid() {
             mCellTypeModifiers.resize(GetCellTypes().size());
         }
 
+        /// @brief Copy constructor
         WorldGridState(const WorldGridState &) = default;
 
+        /// @brief Move constructor
         WorldGridState(WorldGridState &&) = default;
 
+        /// @brief Copy assignment operator
         WorldGridState &operator=(const WorldGridState &) = default;
 
+        /// @brief Move assignment operator
         WorldGridState &operator=(WorldGridState &&) = default;
 
 
@@ -80,23 +108,41 @@ namespace cse498 {
             return id;
         }
 
-        /// @return The grid state at the provided x and y coordinates
+        /**
+         * @brief Gets the cell type ID at the specified coordinates.
+         * @param coordinates Pair of (x, y) coordinates
+         * @return Cell type ID at that position
+         */
         [[nodiscard]] size_t operator[](std::pair<size_t, size_t> coordinates) const {
             assert(IsValid(coordinates.first, coordinates.second));
             return cells[ToIndex(coordinates.first, coordinates.second)];
         }
 
-        /// @return A reference to the grid state at the provided x and y coordinates
+        /**
+         * @brief Gets a reference to the cell type ID at the specified coordinates.
+         * @param coordinates Pair of (x, y) coordinates
+         * @return Reference to cell type ID at that position
+         */
         [[nodiscard]] size_t &operator[](std::pair<size_t, size_t> coordinates) {
             assert(IsValid(coordinates.first, coordinates.second));
             return cells[ToIndex(coordinates.first, coordinates.second)];
         }
 
+        /**
+         * @brief Gets the cell type ID at a world position.
+         * @param pos World position to query
+         * @return Cell type ID at that position
+         */
         [[nodiscard]] size_t operator[](WorldPosition pos) const {
             assert(IsValid(pos));
             return cells[ToIndex(pos)];
         }
 
+        /**
+         * @brief Gets a reference to the cell type ID at a world position.
+         * @param pos World position to query
+         * @return Reference to cell type ID at that position
+         */
         [[nodiscard]] size_t &operator[](WorldPosition pos) {
             assert(IsValid(pos));
             return cells[ToIndex(pos)];
@@ -105,7 +151,11 @@ namespace cse498 {
         // -- Accessors --
 
 
-        /// @brief Get modifiers for a given cell type ID.
+        /**
+          * @brief Gets modifiers for a given cell type ID.
+          * @param id Cell type ID to query
+          * @return Const reference to the modifiers (default modifiers if ID out of range)
+          */
         [[nodiscard]] const CellTypeModifiers &GetCellTypeModifiers(size_t id) const {
             static const CellTypeModifiers default_modifiers{};
 
@@ -117,45 +167,69 @@ namespace cse498 {
         }
 
 
-        /// @brief Get modifiers for the cell at a given world position.
+        /**
+         * @brief Gets modifiers for the cell at a given world position.
+         * @param pos World position to query
+         * @return Const reference to the modifiers at that position
+         */
         [[nodiscard]] const CellTypeModifiers &GetCellModifiers(WorldPosition pos) const {
             return GetCellTypeModifiers((*this)[pos]);
         }
 
-        /// @brief Check if a cell type ID is traversable.
+
+        /**
+         * @brief Checks if a cell type ID is traversable.
+         * @param id Cell type ID to check
+         * @return True if the cell type is traversable
+         */
         [[nodiscard]] bool IsTraversable(size_t id) const {
             return GetCellTypeModifiers(id).traversable;
         }
 
-        /// @brief Check if the cell at a given position is traversable.
+        /**
+           * @brief Checks if a cell type ID is breakable.
+           * @param id Cell type ID to check
+           * @return True if the cell type is breakable
+           */
         [[nodiscard]] bool IsTraversable(WorldPosition pos) const {
             if (!IsValid(pos)) return false;
             return GetCellModifiers(pos).traversable;
         }
 
-        /// @brief Check if a cell type ID is breakable.
-        [[nodiscard]] bool IsBreakable(size_t id) const {
-            return GetCellTypeModifiers(id).isBreakable;
-        }
-
-        /// @brief Check if the cell at a given position is breakable.
+        /**
+          * @brief Checks if the cell at a given position is breakable.
+          * @param pos World position to check
+          * @return True if the cell is breakable, false if invalid or not breakable
+          */
         [[nodiscard]] bool IsBreakable(WorldPosition pos) const {
             if (!IsValid(pos)) return false;
             return GetCellModifiers(pos).isBreakable;
         }
 
-        /// @brief Check if a cell type ID is locked.
+        /**
+         * @brief Checks if a cell type ID is locked.
+         * @param id Cell type ID to check
+         * @return True if the cell type is locked
+         */
         [[nodiscard]] bool IsLocked(size_t id) const {
             return GetCellTypeModifiers(id).locked;
         }
 
-        /// @brief Check if the cell at a given position is locked.
+        /**
+         * @brief Checks if the cell at a given position is locked.
+         * @param pos World position to check
+         * @return True if the cell is locked, false if invalid or not locked
+         */
         [[nodiscard]] bool IsLocked(WorldPosition pos) const {
             if (!IsValid(pos)) return false;
             return GetCellModifiers(pos).locked;
         }
 
-        /// @brief Grabs symbol at position.
+        /**
+         * @brief Gets the symbol character at a position.
+         * @param pos World position to query
+         * @return Character symbol for the cell type at that position
+         */
         [[nodiscard]] char GetSymbol(WorldPosition pos) const {
             return GetCellTypeSymbol((*this)[pos]);
         }

@@ -9,16 +9,16 @@
 // #include "../tools/ActionLog.hpp"
 int main() {
     cse498::AnalyticsManager analytics;
-    analytics.LogHealth(100.0);
-    analytics.LogEnemiesTracked(5);
+    // analytics.LogHealth(100.0);
+    analytics.LogEnemiesKilled(5);
     analytics.LogDamageDealt(50.0);
 
-    analytics.LogHealth(80.0);
-    analytics.LogEnemiesTracked(3);
+    // analytics.LogHealth(80.0);
+    analytics.LogEnemiesKilled(3);
     analytics.LogDamageDealt(25.0);
 
-    analytics.LogHealth(100.0);
-    analytics.LogEnemiesTracked(1);
+    // analytics.LogHealth(100.0);
+    analytics.LogEnemiesKilled(1);
     analytics.LogDamageDealt(50.0);
 
     cse498::ActionLog log;

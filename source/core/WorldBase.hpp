@@ -11,14 +11,18 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
+#include <optional>
+
 
 #include "../Agents/Classic/PlayerAgent.hpp"
+#include "../Analyze/AnalyticsManager.hpp"
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
+#include "WorldPosition.hpp"
 
 namespace cse498 {
 using item_ptr_t = std::unique_ptr<ItemBase>;
@@ -32,6 +36,8 @@ private:
     /// Note this also fixed a potential bug -- It used to be defined by size of agent_size but that changes
     /// up and down which gives multiple duplicate ids to multiple agents..
     size_t mAgentIdIndex = 0;
+
+    std::shared_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
 
 protected:
     /// NOTE: derived worlds may choose to have more than one grid.
@@ -210,6 +216,23 @@ public:
 
     size_t GetNextAgentId() { return mAgentIdIndex++; }
 
+    /**
+     * @brief Optional per-world bridge exposing a keyboard-controlled player's grid cell.
+     *
+     * @details Some worlds drive the player through something other than a registered
+     *          @ref PlayerAgent (for example, direct keyboard input captured by the GUI
+     *          layer). AI agents such as @ref SmartEnemyAgent prefer targeting the
+     *          player regardless of how that player is represented, so they consult
+     *          this hook first before falling back to scanning @ref GetAgents().
+     *
+     * @return @c std::nullopt by default. Concrete worlds override this to expose the
+     *         live player position in grid coordinates.
+     *
+     * @note Returning @c std::nullopt is fine; callers degrade gracefully to agent
+     *       iteration when the world does not maintain a tracked player.
+     */
+    [[nodiscard]] virtual std::optional<WorldPosition> GetTrackedPlayerPosition() const { return std::nullopt; }
+
     // -- Agent Management --
 
     /// @brief Build a new agent of the specified type
@@ -279,6 +302,26 @@ public:
         }
     }
 
+    /// @brief UpdateWorld() is run after every agent has a turn.
+    /// Override this function to manage background events for a world.
+    /// (E.g., weather, growth, regular physics, etc.)
+    virtual void UpdateWorld() {}
+
+    /// @brief Run all agents repeatedly until an end condition is met.
+    virtual void Run() {
+        mRunOver = false;
+        while (!mRunOver) {
+            RunAgents();
+            RemoveDeadAgents();
+            UpdateWorld();
+        }
+    }
+
+    void SetAnalyticsManager(std::shared_ptr<AnalyticsManager> analytics_manager) {
+        mAnalyticsManager = analytics_manager;
+    }
+
+    [[nodiscard]] std::shared_ptr<AnalyticsManager> GetAnalyticsManager() const { return mAnalyticsManager; }
     /**
      * virtual just in case it is needed somewhere. I'm not expecting this to be overridden
      * This is to be called from 'DoAction' when the main player presses "E"
@@ -330,22 +373,27 @@ public:
         return false;
     }
 
+    /**
+     * @brief Collects all actions from every agent's ActionLog and forwards them
+     *        into the AnalyticsManager's consolidated ActionLog.
+     * @note  Call this manually (e.g., from the GUI) whenever you want the
+     *        AnalyticsManager to reflect the latest agent activity.
+     */
+    void SyncAgentLogsToAnalytics() {
+        if (!mAnalyticsManager) return;
 
-    /// @brief UpdateWorld() is run after every agent has a turn.
-    /// Override this function to manage background events for a world.
-    /// (E.g., weather, growth, regular physics, etc.)
-    virtual void UpdateWorld() {}
-
-    /// @brief Run all agents repeatedly until an end condition is met.
-    virtual void Run() {
-        mRunOver = false;
-        while (!mRunOver) {
-            RunAgents();
-            RemoveDeadAgents();
-            UpdateWorld();
+        for (const auto& agent_ptr : agent_set) {
+            if (!agent_ptr) continue;
+            for (const Action& action : agent_ptr->GetActionLog().GetActions()) {
+                mAnalyticsManager->LogAction(
+                    action.EntityId,
+                    action.ActionType,
+                    action.Position,
+                    action.NewPosition
+                );
+            }
         }
     }
-
 
     //////////////////////////////////////////////////////////////////////////
     //
