@@ -442,9 +442,12 @@ bool WebInterface::IsPaused() const {
            mState == WebState::INVENTORY || mState == WebState::STATS;
 }
 
+/// Returns the active gameplay world.
+/// Precondition: an active gameplay world must exist.
+/// Use GetCurrentWorld() instead when the caller may be in a menu-only state.
 WorldBase& WebInterface::GetWorld() const {
     WorldBase* currentWorld = GetCurrentWorld();
-    assert(currentWorld && "No active world for current state");
+    assert(currentWorld && "GetWorld() is only valid when an active gameplay world exists");
     return *currentWorld;
 }
 
