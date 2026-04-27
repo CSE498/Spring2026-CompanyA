@@ -229,21 +229,21 @@ TEST_CASE("Inventory RemoveItem all-or-nothing flag behavior", "[inventory, remo
     Inventory inv;
     inv.AddItem(std::make_unique<MockTestItem>(0, "TestItem"), 15);
 
-    SECTION("True flag leaves inventory unchanged when amount is less than total") {
+    SECTION("True flag removes when request can be fully satisfied") {
         const auto remaining = inv.RemoveItem("TestItem", 12, true);
-        CHECK(remaining == 12); // amount tried to remove is returned
-        CHECK(inv.GetTotal("TestItem") == 15);
+        CHECK(remaining == 0);
+        CHECK(inv.GetTotal("TestItem") == 3);
     }
 
     SECTION("False flag removes what is available") {
         const auto remaining = inv.RemoveItem("TestItem", 12, false);
-        CHECK(remaining == 0); // everything was removed
+        CHECK(remaining == 0);
         CHECK(inv.GetTotal("TestItem") == 3);
     }
 
-    SECTION("Check again with different number") {
-        const auto remaining = inv.RemoveItem("TestItem", 10, true);
-        CHECK(remaining == 10);
+    SECTION("True flag leaves inventory unchanged when request exceeds total") {
+        const auto remaining = inv.RemoveItem("TestItem", 20, true);
+        CHECK(remaining == 20);
         CHECK(inv.GetTotal("TestItem") == 15);
     }
 }
@@ -333,6 +333,8 @@ TEST_CASE("Inventory Other methods", "[inventory, methods]") {
     CHECK(inv.GetHandSlotIndex() == 0);
     inv.HotBarIndexMove(4);
     CHECK(inv.GetHandSlotIndex() == 4);
+    inv.HotBarIndexMove(Inventory::HOTBAR_SIZE + 3);
+    CHECK(inv.GetHandSlotIndex() == 3);
 
     inv.HotBarIndexInc();
     CHECK(inv.GetHandSlotIndex() == 5);
@@ -346,6 +348,9 @@ TEST_CASE("Check Asserts, some edge cases", "[none]") {
     // some edge cases:
     auto result = inv.RemoveItem("none", 3);
     CHECK(result == 3);
+
+    auto remaining = inv.AddItem(nullptr, 5);
+    CHECK(remaining == 5);
 
     // Should hit assert:
     auto item = std::make_unique<RealUItem>(1, 5, world);

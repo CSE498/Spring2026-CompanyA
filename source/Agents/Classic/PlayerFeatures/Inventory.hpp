@@ -15,6 +15,8 @@
 #pragma once
 
 #include <array>
+#include <cassert>
+#include <concepts>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -65,10 +67,9 @@ public:
      * if a unique item --> remove 7 then removes the first 7 with matching names
      * @param name item category
      * @param amount - amount of the item to remove.
-     * @param isAllOrNothing - True ==> removes all or removes nothing. False then removes what is available
-     * True ==> return amount if nothing removed , 0 everything removed
-     * False ==> return amount removed. Requested 5 removal, had 2 --> return 2
-     * @return ^^^
+     * @param isAllOrNothing - true: remove only if the requested amount is available (otherwise no-op)
+     * false: remove up to amount (partial removals allowed)
+     * @return amount remaining (0 when fully satisfied)
      */
     size_t RemoveItem(const std::string& name, size_t amount = 1, bool isAllOrNothing = false);
 
@@ -99,8 +100,8 @@ public:
      * Set active hotbar slot directly.
      * @param index New hotbar index.
      */
-    void HotBarIndexMove(int index) {
-        mCurrentHotbarSlot = static_cast<size_t>(index);
+    void HotBarIndexMove(size_t index) {
+        mCurrentHotbarSlot = index % HOTBAR_SIZE;
         NotifyChanged();
     }
     /**
@@ -131,7 +132,7 @@ public:
      * Hand slot item. Quantity is other method
      * @return Gives you the item in the hand slot.
      */
-    Item* GetHand() const { return mInventory.at(mCurrentHotbarSlot).GetItem(); }
+    const Item* GetHand() const { return mInventory.at(mCurrentHotbarSlot).GetItem(); }
     size_t GetHandQuantity() const { return mInventory.at(mCurrentHotbarSlot).GetQuantity(); }
     [[nodiscard]] size_t GetHandSlotIndex() const { return mCurrentHotbarSlot; }
 
@@ -183,8 +184,8 @@ public:
             return *this;
         }
         explicit operator bool() const { return static_cast<bool>(mItem); }
-        [[nodiscard]] bool Contains(const std::string& name) { return (mItem && mItem->GetName() == name); }
-        [[nodiscard]] bool Contains(const size_t itemId) { return (mItem && mItem->GetId() == itemId); }
+        [[nodiscard]] bool Contains(const std::string& name) const { return (mItem && mItem->GetName() == name); }
+        [[nodiscard]] bool Contains(size_t itemId) const { return (mItem && mItem->GetId() == itemId); }
         /**
          * Inserts and overrides the slot with specified quantity
          * @param item some defined item
