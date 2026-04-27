@@ -71,7 +71,7 @@ public:
     /**
      * @return Read-only access to the bank's inventory
      */
-    [[nodiscard]] const InteractiveWorldInventory& GetInventory() const { return m_inventory; }
+    [[nodiscard]] const InteractiveWorldInventory& GetOverworldInventory() const { return m_inventory; }
 
     size_t SelectAction(const WorldGrid&) override { return 0; }
 

@@ -331,25 +331,44 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
     assert(mInteractiveWorld && "InteractiveWorld instance is required");
     assert(mDungeon && "DungeonWorld instance is required");
 
-    // Set up the symbol-to-path map for the interactive world, hardcoded because
-    // InteractiveWorld doesn't have a data-driven way to specify these currently
-    mSymbolPathOverworld[' '] = kOverworldGrassTile1Path;
-    mSymbolPathOverworld['#'] = kOverworldBorderTopForestPath;
-    mSymbolPathOverworld['L'] = kOverworldLumberYardPath;
-    mSymbolPathOverworld['Q'] = kOverworldQuarryPath;
-    mSymbolPathOverworld['M'] = kOverworldOreMinePath;
-    mSymbolPathOverworld['l'] = kOverworldWoodSpawnTilePath;
-    mSymbolPathOverworld['q'] = kOverworldStoneSpawnTilePath;
-    mSymbolPathOverworld['m'] = kOverworldMetalSpawnTilePath;
-
-    // Set up the symbol-to-path map for the dungeon world
-
     const std::string basePath = "/assets/world/";
     const std::string forest = "forest/";
     const std::string cave = "cave/";
     const std::string castle = "castle/";
     const std::string floor = "floor_tiles/";
     const std::string wall = "walls/external/";
+
+    // Set up the symbol-to-path map for the interactive world
+    mSymbolPathOverworld['.'] = basePath + forest + floor + "tile_grass_1.png";
+    mSymbolPathOverworld['f'] = basePath + forest + floor + "tile_grass_5.png";
+    mSymbolPathOverworld['b'] = basePath + forest + floor + "tile_grass_4.png";
+    mSymbolPathOverworld['m'] = basePath + forest + floor + "tile_grass_3.png";
+    mSymbolPathOverworld['r'] = basePath + forest + floor + "tile_grass_2.png";
+    mSymbolPathOverworld['E'] = basePath + forest + wall + "door_left_forest.png";
+
+    mSymbolPathOverworld['T'] = "/assets/agents/playerCharacter/agent_player.png";
+    mSymbolPathOverworld['W'] = "/assets/tiles/lumber_yard.png";
+    mSymbolPathOverworld['Q'] = "/assets/tiles/quarry.png";
+    mSymbolPathOverworld['M'] = "/assets/tiles/ore_mine.png";
+
+    mSymbolPathOverworld['L'] = basePath + forest + wall + "border_left_forest.png";
+    mSymbolPathOverworld['R'] = basePath + forest + wall + "border_right_forest.png";
+    mSymbolPathOverworld['U'] = basePath + forest + wall + "border_top_forest.png";
+    mSymbolPathOverworld['B'] = basePath + forest + wall + "border_bottom_forest.png";
+
+    mSymbolPathOverworld['C'] = basePath + forest + wall + "border_top_forest.png";
+
+    mSymbolPathOverworld['X'] = basePath + forest + floor + "tile_grass_1.png";
+
+    mSymbolPathOverworld['1'] = kMonsterImagePath;
+    mSymbolPathOverworld['2'] = kMonsterImagePath;
+    mSymbolPathOverworld['3'] = kMonsterImagePath;
+    mSymbolPathOverworld['4'] = kMonsterImagePath;
+    mSymbolPathOverworld['5'] = kMonsterImagePath;
+    mSymbolPathOverworld['6'] = kMonsterImagePath;
+    mSymbolPathOverworld['7'] = "/assets/agents/monsters/agent_monster_skeleton.png";
+
+    // Set up the symbol-to-path map for the dungeon world
 
     // Floors
     mSymbolPathDungeon['a'] = basePath + forest + floor + "tile_grass_1.png";
@@ -483,7 +502,6 @@ void WebInterface::RunFrame(double currentTimeMs) {
         if (mAgentTimer >= kActionIntervalMs) {
             mAgentTimer = 0.0;
             mInteractiveWorld->RunAgents();
-            mInteractiveWorld->UpdateWorld();
         }
     } else {
         // always select an action based on current input, even if paused,
@@ -1142,6 +1160,11 @@ void WebInterface::DrawGrid(const WorldGrid& grid,
             int left = CellXToScreenLeft(x);
             int top = CellYToScreenTop(y);
 
+            if (mGameState == WebState::OVERWORLD) {
+                mCanvas->DrawTexture(bitmap.as_handle(), left, top, scale);
+                continue;
+            }
+
             if (cell == kDungeonLoot || cell == kDungeonTrap) {
                 std::string floorImagePath{};
                 switch (mDungeon->GetLevel()) {
@@ -1186,19 +1209,19 @@ void WebInterface::DrawGrid(const WorldGrid& grid,
         }
 
         char agentSymbol = agent.GetSymbol();
-        std::string imagePath = agent.IsPlayerAgent() ? kPlayerImagePath : kMonsterImagePath;
+        std::string imagePath = GetImagePath(agentSymbol);
 
-        // if (symbolPathMap.contains(agentSymbol)) {
-        //     if (symbolPathMap.at(agentSymbol) != imagePath) {
-        //         symbolPathMap[agentSymbol] = imagePath;
-        //     }
-        // } else {
-        //     symbolPathMap.emplace(agentSymbol, imagePath);
-        // }
+        if (symbolPathMap.contains(agentSymbol)) {
+            if (symbolPathMap.at(agentSymbol) != imagePath) {
+                symbolPathMap[agentSymbol] = imagePath;
+            }
+        } else {
+            symbolPathMap.emplace(agentSymbol, imagePath);
+        }
 
-        // if (imagePath.empty() || !imagePath.contains(kPngFileExtension)) {
-        //     continue;
-        // }
+        if (imagePath.empty() || !imagePath.contains(kPngFileExtension)) {
+            imagePath = kPlayerImagePath;
+        }
 
         auto agentTexture = GetOrLoadBitmap(imagePath);
         int agentLeft = CellXToScreenLeft(agentCellX);

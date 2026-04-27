@@ -178,6 +178,10 @@ public:
             "LmmmmmmmmmmmmmmmmmmmmmmrR",
             "CBBBBBBBBBBBBBBBBBBBBBBBC"
         });
+
+        auto& player = AddAgent<PlayerAgent>("Player");
+        player.SetSymbol('Z').SetLocation(WorldPosition{1, 1});
+        mPlayer = &player;
     }
 
     /**
@@ -242,7 +246,7 @@ public:
                 new_position = cur_position.Right();
                 break;
             case INTERACT:
-                if (agent.IsInterface() && agent.GetLocation().IsPosition()) {
+                if (agent.GetLocation().IsPosition()) {
                     return TryInteractAdjacent(cur_position, &agent);
                 }
                 return true;
