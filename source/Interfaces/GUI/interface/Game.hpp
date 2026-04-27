@@ -102,13 +102,6 @@ namespace cse498
         std::shared_ptr<InteractiveWorld> mOverWorld; /// Overworld game logic
         std::unique_ptr<DungeonWorld> mDungeonWorld; /// Dungeon world game logic
 
-        // -------------------------
-        // Overworld buildings
-        // -------------------------
-        std::shared_ptr<Building> mLumberYard;
-        std::shared_ptr<Building> mQuarry;
-        std::shared_ptr<Building> mMine;
-
         int mCamX = 0; /// Camera X position in tile coordinates
         int mCamY = 0; /// Camera Y position in tile coordinates
 

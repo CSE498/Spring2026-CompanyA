@@ -81,7 +81,10 @@ namespace cse498
         if (!LoadCheck("ow_wall_top", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
         if (!LoadCheck("ow_wall_bottom", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_bottom_forest.png")) return false;
         if (!LoadCheck("ow_wall_corner", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("ow_building", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/door_left_forest.png")) return false;
+        if (!LoadCheck("ow_building", std::string(ASSETS_DIR) + "/" + "tiles/lumber_yard.png")) return false;
+        if (!LoadCheck("ow_building_lumberyard", std::string(ASSETS_DIR) + "/" + "tiles/lumber_yard.png")) return false;
+        if (!LoadCheck("ow_building_quarry", std::string(ASSETS_DIR) + "/" + "tiles/quarry.png")) return false;
+        if (!LoadCheck("ow_building_mine", std::string(ASSETS_DIR) + "/" + "tiles/ore_mine.png")) return false;
 
         // Mobs
         if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png"))
@@ -220,29 +223,30 @@ namespace cse498
         mOverWorld->GetInventory().AddItem(ItemType::Wood, 10);
         mOverWorld->GetInventory().AddItem(ItemType::Stone, 5);
 
-        // Buildings
-        mLumberYard = std::make_shared<Building>(1, "Lumber Yard", *mOverWorld);
-        mLumberYard->SetSymbol('L');
-        mLumberYard->AddUpgrade(ItemType::Wood, 15);
-        mLumberYard->AddUpgrade(ItemType::Wood, 50);
-        mLumberYard->AddUpgrade(ItemType::Stone, 50);
+        // Buildings — world owns them via AddAgent
+        auto lumberYard = std::make_unique<Building>(1, "Lumber Yard", *mOverWorld);
+        lumberYard->SetSymbol('L');
+        lumberYard->AddUpgrade(ItemType::Wood, 15);
+        lumberYard->AddUpgrade(ItemType::Wood, 50);
+        lumberYard->AddUpgrade(ItemType::Stone, 50);
+        auto& lumberYardRef = mOverWorld->AddAgent<Building>(std::move(lumberYard));
+        mOverWorld->AddBuilding(lumberYardRef, WorldPosition{2, 1});
 
-        mQuarry = std::make_shared<Building>(2, "Quarry", *mOverWorld);
-        mQuarry->SetSymbol('Q');
-        mQuarry->AddUpgrade(ItemType::Wood, 50);
-        mQuarry->AddUpgrade(ItemType::Stone, 50);
-        mQuarry->AddUpgrade(ItemType::Metal, 35);
+        auto quarry = std::make_unique<Building>(2, "Quarry", *mOverWorld);
+        quarry->SetSymbol('Q');
+        quarry->AddUpgrade(ItemType::Wood, 50);
+        quarry->AddUpgrade(ItemType::Stone, 50);
+        quarry->AddUpgrade(ItemType::Metal, 35);
+        auto& quarryRef = mOverWorld->AddAgent<Building>(std::move(quarry));
+        mOverWorld->AddBuilding(quarryRef, WorldPosition{5, 3});
 
-        mMine = std::make_shared<Building>(3, "Ore Mine", *mOverWorld);
-        mMine->SetSymbol('M');
-        mMine->AddUpgrade(ItemType::Stone, 100);
-        mMine->AddUpgrade(ItemType::Metal, 50);
-        mMine->AddUpgrade(ItemType::Metal, 100);
-
-        // Place buildings in world
-        mOverWorld->AddBuilding(*mLumberYard, WorldPosition{2, 1});
-        mOverWorld->AddBuilding(*mQuarry, WorldPosition{5, 3});
-        mOverWorld->AddBuilding(*mMine, WorldPosition{8, 5});
+        auto mine = std::make_unique<Building>(3, "Ore Mine", *mOverWorld);
+        mine->SetSymbol('M');
+        mine->AddUpgrade(ItemType::Stone, 100);
+        mine->AddUpgrade(ItemType::Metal, 50);
+        mine->AddUpgrade(ItemType::Metal, 100);
+        auto& mineRef = mOverWorld->AddAgent<Building>(std::move(mine));
+        mOverWorld->AddBuilding(mineRef, WorldPosition{8, 5});
 
         // Resource spawns
         auto woodSpawn = std::make_unique<ResourceSpawn>(100, "Wood Spawn", *mOverWorld, ItemType::Wood);
@@ -258,9 +262,9 @@ namespace cse498
         auto& metalSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(metalSpawn));
 
         // Resource producers
-        auto woodProducer = std::make_shared<ResourceProducer>(*mLumberYard, woodSpawnRef, ItemType::Wood, 2.0f);
-        auto stoneProducer = std::make_shared<ResourceProducer>(*mQuarry, stoneSpawnRef, ItemType::Stone, 1.0f);
-        auto metalProducer = std::make_shared<ResourceProducer>(*mMine, metalSpawnRef, ItemType::Metal, 0.5f);
+        auto woodProducer = std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2.0f);
+        auto stoneProducer = std::make_shared<ResourceProducer>(quarryRef, stoneSpawnRef, ItemType::Stone, 1.0f);
+        auto metalProducer = std::make_shared<ResourceProducer>(mineRef, metalSpawnRef, ItemType::Metal, 0.5f);
         mOverWorld->AddProducer(woodProducer);
         mOverWorld->AddProducer(stoneProducer);
         mOverWorld->AddProducer(metalProducer);
@@ -703,9 +707,18 @@ namespace cse498
             } else if (agent.GetName() == "Explorer") {
                 sprite = "goblin";
             } else if (dynamic_cast<Building*>(&agent)) {
-                sprite = "ow_building";
+                const std::string& name = agent.GetName();
+                if (name == "Lumber Yard") {
+                    sprite = "ow_building_lumberyard";
+                } else if (name == "Quarry") {
+                    sprite = "ow_building_quarry";
+                } else if (name == "Ore Mine") {
+                    sprite = "ow_building_mine";
+                } else {
+                    sprite = "ow_building_lumberyard"; // fallback
+                }
             } else if (dynamic_cast<ResourceSpawn*>(&agent)) {
-                continue; // spawns are invisible
+                continue;
             } else {
                 sprite = "skeleton";
             }
