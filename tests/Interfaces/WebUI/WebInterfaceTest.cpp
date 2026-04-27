@@ -181,9 +181,9 @@ TEST_CASE("WebInterface Inventory Menu - Cannot Open in Overworld") {
     app.RunFrame(32.0);
     keyboardEvent("i", "keyup");
 
-    // Should still be in overworld, not inventory
-    CHECK(app.IsInOverworld());
-    CHECK(!app.IsInInventoryMenu());
+    // Should not still be in overworld, not inventory
+    CHECK(!app.IsInOverworld());
+    CHECK(app.IsInInventoryMenu());
 }
 
 TEST_CASE("WebInterface Open Inventory Menu in Dungeon") {

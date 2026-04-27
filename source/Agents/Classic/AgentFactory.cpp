@@ -34,7 +34,7 @@ namespace cse498 {
 std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("Player in Range", [&world, &enemy](ExecutionContext&) {
         assert(enemy.IsAlive());
-        const auto* player = world.TryGetAgent(0);
+        const auto* player = world.GetPlayer();
         if (player == nullptr || !player->IsAlive()) // if player missing/dead then not in range
             return Failure;
 
@@ -47,7 +47,7 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const Wo
 
 std::unique_ptr<Node> AgentFactory::AttackPlayer(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("Attack Player", [&world, &enemy](ExecutionContext&) {
-        auto* player = world.TryGetAgent(0);
+        auto* player = world.GetPlayer();
         if (player == nullptr || !player->IsAlive())
             return Failure;
         auto dmg = DamageCalculator::Calculate(enemy.GetStats(), player->GetStats());
@@ -58,7 +58,7 @@ std::unique_ptr<Node> AgentFactory::AttackPlayer(const Enemy& enemy, const World
 
 std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("Chase Player", [&enemy, &world](ExecutionContext& ctx) {
-        const auto* player = world.TryGetAgent(0);
+        const auto* player = world.GetPlayer();
         if (player == nullptr || !player->IsAlive()) // can't chase dead/missing players
             return Failure;
 
@@ -111,7 +111,7 @@ std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldB
 std::unique_ptr<Node> AgentFactory::RangeChasePlayer(const Enemy& enemy, const WorldBase& world) {
     //* If not within range of player chase + reset tile distance count
     return TreeBuilder::Act("(ranged) Chase Player", [&enemy, &world](ExecutionContext& ctx) {
-        const auto* player = world.TryGetAgent(0);
+        const auto* player = world.GetPlayer();
         if (player == nullptr || !player->IsAlive()) // can't chase dead players
             return Failure;
         // We are either Far away or too close or In range but no line of sight
@@ -158,7 +158,7 @@ std::unique_ptr<Node> AgentFactory::RangeChasePlayer(const Enemy& enemy, const W
 
 std::unique_ptr<Node> AgentFactory::IsPlayerInBoundedRange(const Enemy& enemy, const WorldBase& world) {
     return TreeBuilder::Act("(ranged) Chase Player", [&enemy, &world](ExecutionContext) {
-        const auto* player = world.TryGetAgent(0);
+        const auto* player = world.GetPlayer();
         if (player == nullptr || !player->IsAlive()) {
             return Failure;
         }

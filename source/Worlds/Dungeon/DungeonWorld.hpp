@@ -700,12 +700,7 @@ namespace cse498 {
                         inventory.AddItem(std::move(pickaxe));
                     } else if (item_str == "Shovel") {
                         std::unique_ptr<ItemWeaponToolShovel> shovel = std::make_unique<ItemWeaponToolShovel>(
-                            item_id,
-                            item_str,
-                            "/assets/item/item_shovel.png",
-                            BASE_GOLD,
-                            *this
-                        );
+                                item_id, item_str, "/assets/items/item_shovel.png", BASE_GOLD, *this);
                         shovel->SetRange(BASE_RANGE);
                         shovel->SetDamage(BASE_DAMAGE);
                         shovel->SetHitBonus(BASE_BONUS);
