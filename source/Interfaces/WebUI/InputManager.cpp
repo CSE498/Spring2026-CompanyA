@@ -40,8 +40,9 @@ InputManager::~InputManager() {
 }
 
 EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* inputManagerPointer) {
-    if (eventType != EMSCRIPTEN_EVENT_KEYDOWN || inputManagerPointer == nullptr || keyEvent->repeat)
+    if (eventType != EMSCRIPTEN_EVENT_KEYDOWN || inputManagerPointer == nullptr || keyEvent == nullptr || keyEvent->repeat) {
         return EM_FALSE;
+    }
 
     auto manager = static_cast<InputManager*>(inputManagerPointer);
 
@@ -80,8 +81,9 @@ EM_BOOL InputManager::OnKeyDown(int eventType, const EmscriptenKeyboardEvent* ke
 }
 
 EM_BOOL InputManager::OnKeyUp(int eventType, const EmscriptenKeyboardEvent* keyEvent, void* inputManagerPointer) {
-    if (eventType != EMSCRIPTEN_EVENT_KEYUP || inputManagerPointer == nullptr)
+    if (eventType != EMSCRIPTEN_EVENT_KEYUP || inputManagerPointer == nullptr || keyEvent == nullptr) {
         return EM_FALSE;
+    }
 
     auto manager = static_cast<InputManager*>(inputManagerPointer);
 
