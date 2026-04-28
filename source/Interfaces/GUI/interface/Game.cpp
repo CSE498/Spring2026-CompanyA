@@ -17,6 +17,11 @@
 #include "../../../Agents/AI/SmartEnemyAgent.hpp"
 #include "../../../Agents/AI/LearningExplorerAgent.hpp"
 #include "../../../Agents/Classic/TradeSystem/TradeTypes.hpp"
+#include "../../../Agents/AI/EnemyAgent.hpp"
+#include "../../../Agents/AI/SmartEnemyAgent.hpp"
+#include "../../../Agents/AI/LearningExplorerAgent.hpp"
+#include "../../../Agents/AI/TrailblazerAgent.hpp"
+#include "../../../Agents/AI/FetchAgent.hpp"
 
 namespace cse498
 {
@@ -88,9 +93,12 @@ namespace cse498
         if (!LoadCheck("ow_building_quarry", std::string(ASSETS_DIR) + "/" + "tiles/quarry.png")) return false;
         if (!LoadCheck("ow_building_mine", std::string(ASSETS_DIR) + "/" + "tiles/ore_mine.png")) return false;
 
+
         // Mobs
         if (!LoadCheck("skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png"))
             return false;
+        if (!LoadCheck("goblin", std::string(ASSETS_DIR) + "/" + "agents/monsters/agent_monster_goblin.png")) return false;
+        if (!LoadCheck("dun_monster", std::string(ASSETS_DIR) + "/" + "agents/monsters/agent_monster_skeleton.png")) return false;
 
         // --- Level 1 floors (forest) ---
         if (!LoadCheck("floor_l1v1", std::string(ASSETS_DIR) + "/" +  "world/forest/floor_tiles/tile_grass_1.png")) return false;
@@ -222,6 +230,7 @@ namespace cse498
         /// @internal Group 17 AI hook: drops a @ref LearningExplorerAgent into the
         /// overworld so the user sees an AI-driven NPC wandering alongside the
         /// scripted @ref PacingAgent. Rendered as a goblin in RenderOverworld().
+        /// group 1 code is used to generate the agent
         mOverWorld->AddLearningExplorerAgent(5, 5);
 
         // Starting resources
@@ -265,6 +274,17 @@ namespace cse498
         auto metalSpawn = std::make_unique<ResourceSpawn>(102, "Metal Spawn", *mOverWorld, ItemType::Metal);
         metalSpawn->SetLocation(WorldPosition{8, 6});  // below Ore Mine at {8,5}
         auto& metalSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(metalSpawn));
+
+        // Fetch Agent (Group 1 AI)
+        auto& fetcher = mOverWorld->AddAgent<FetchAgent>("Fetcher");
+        fetcher.SetLocation(WorldPosition{3, 2});
+        fetcher.SetOrigin(woodSpawnRef);        // where it collects from
+        fetcher.SetDepositPoint(lumberYardRef); // where it delivers to
+
+        auto& stoneFetcher = mOverWorld->AddAgent<FetchAgent>("StoneFetcher");
+        stoneFetcher.SetLocation(WorldPosition{5, 5});
+        stoneFetcher.SetOrigin(stoneSpawnRef);
+        stoneFetcher.SetDepositPoint(quarryRef);
 
         // Resource producers
         auto woodProducer = std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2.0f);
@@ -385,6 +405,39 @@ namespace cse498
 
         std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
 
+        /*
+         * Helper: PlaceOnNextFloor
+         * Scans the dungeon grid for the first valid walkable floor tile
+         * and assigns that position to the given agent.
+         *
+         * We skip the player spawn at {1,1} and rely on the convention
+         * that all dungeon floor tiles have names starting with "floor".
+         * this also tracks used tiles so agents don't all spawn on the
+         * same tile.
+         */
+        std::unordered_set<std::string> usedPositions;
+
+        auto PlaceOnNextFloor = [&](AgentBase& agent) {
+            for (size_t y = 0; y < world_h; ++y) {
+                for (size_t x = 0; x < world_w; ++x) {
+                    if (x == 1 && y == 1) continue;
+
+                    WorldPosition pos(x, y);
+                    std::string key = std::to_string(x) + "," + std::to_string(y);
+
+                    if (usedPositions.count(key)) continue;
+
+                    const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
+
+                    if (cell_name.rfind("floor", 0) == 0) {
+                        agent.SetLocation(pos);
+                        usedPositions.insert(key);
+                        return;
+                    }
+                }
+            }
+        };
+
         /// @internal Group 17 AI hook: drop a @ref SmartEnemyAgent into the dungeon.
         ///
         /// The current @c DungeonWorld API does not expose a "first room center"
@@ -393,20 +446,18 @@ namespace cse498
         /// and is distinct from the player's spawn at {1,1}. This keeps the goblin
         /// on a walkable tile without assuming anything about the dungeon layout.
         auto& goblin = mDungeonWorld->AddAgent<SmartEnemyAgent>("Goblin");
-        for (size_t y = 0; y < world_h; ++y)
-        {
-            for (size_t x = 0; x < world_w; ++x)
-            {
-                if (x == 1 && y == 1) continue;
-                WorldPosition pos(x, y);
-                const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
-                if (cell_name.rfind("floor", 0) == 0) {
-                    goblin.SetLocation(pos);
-                    y = world_h; // break outer loop once placed
-                    break;
-                }
-            }
-        }
+        PlaceOnNextFloor(goblin);
+
+        auto& enemy = mDungeonWorld->AddAgent<EnemyAgent>("EnemyAgent");
+        PlaceOnNextFloor(enemy);
+
+        auto& smartEnemy = mDungeonWorld->AddAgent<SmartEnemyAgent>("SmartEnemy");
+        PlaceOnNextFloor(smartEnemy);
+
+        auto& trailblazer = mDungeonWorld->AddAgent<TrailblazerAgent>("Trailblazer");
+        PlaceOnNextFloor(trailblazer);
+        std::cout << "Trailblazer at: " << trailblazer.GetLocation().AsWorldPosition().CellX()
+          << "," << trailblazer.GetLocation().AsWorldPosition().CellY() << std::endl;
 
         // Map every cell type name to its matching image name
         for (size_t y = 0; y < world_h; ++y)
