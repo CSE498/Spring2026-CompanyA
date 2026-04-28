@@ -19,7 +19,6 @@
 #include "CastleLevel.hpp"
 #include "LevelBase.hpp"
 #include "../../Interfaces/TrashInterface.hpp"
-#include "../../Agents/PacingAgent.hpp"
 #include "../../Agents/Classic/Enemy.hpp"
 
 #include "../../core/item/ItemWeaponSword.hpp"
@@ -70,7 +69,6 @@ namespace cse498 {
 		std::vector<size_t> mSpawnedEnemyIds;
 
         size_t mPlayerId;
-        size_t mEnemyId;
 
 		//Track level change to prevent an extra enemy turn
 		bool mLevelJustAdvanced = false;
@@ -179,10 +177,10 @@ namespace cse498 {
 
         /// Provide the agent with movement actions.
         void ConfigAgent(AgentBase &agent) override {
-            agent.AddAction("up", DungeonActions::MOVE_UP);
-            agent.AddAction("down", DungeonActions::MOVE_DOWN);
-            agent.AddAction("left", DungeonActions::MOVE_LEFT);
-            agent.AddAction("right", DungeonActions::MOVE_RIGHT);
+            agent.AddAction("w", DungeonActions::MOVE_UP);
+            agent.AddAction("s", DungeonActions::MOVE_DOWN);
+            agent.AddAction("a", DungeonActions::MOVE_LEFT);
+            agent.AddAction("d", DungeonActions::MOVE_RIGHT);
             agent.AddAction(DungeonActions::INTERACT_STRING, DungeonActions::INTERACT);
             agent.AddAction(DungeonActions::REMAIN_STILL_STRING, DungeonActions::REMAIN_STILL);
         }
@@ -343,14 +341,14 @@ namespace cse498 {
 
 			int goblin_num = 1;
 			for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
-				auto &agent = AddAgent<PacingAgent>("Goblin " + std::to_string(goblin_num++));
+				auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
 				agent.SetLocation(WorldPosition{x, y});
 				mSpawnedEnemyIds.push_back(agent.GetID());
 			}
 
 			int skeleton_num = 1;
 			for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
-				auto &agent = AddAgent<PacingAgent>("Skeleton " + std::to_string(skeleton_num++));
+				auto &agent = AddAgent<Enemy>("Skeleton " + std::to_string(skeleton_num++));
 				agent.SetLocation(WorldPosition{x, y});
 				mSpawnedEnemyIds.push_back(agent.GetID());
 			}
@@ -477,6 +475,11 @@ namespace cse498 {
             // Determine where the agent is trying to move.
             WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
 
+            // Currently unused based on current agent implementation. Can be uncommented to expand combat system
+            //bool agentIsEnemy = std::find(mSpawnedEnemyIds.begin(), mSpawnedEnemyIds.end(), agent.GetID())
+            //            != mSpawnedEnemyIds.end();
+            //auto agentId = agent.GetID();
+
             if (action_id == DungeonActions::INTERACT) {
                 // Legacy method of handling interactions. Kept here in case below code does not work with both agent groups.
                 /*std::array<WorldPosition, 4> neighbors = {
@@ -495,7 +498,6 @@ namespace cse498 {
                 bool interacted = false;
                 
                 for (size_t i = 0; i < GetNumAgents(); ++i) {
-                    mEnemyId = mSpawnedEnemyIds[i];
                     AgentBase& other = GetAgentByIndex(i);
                     if (&other == &agent) {
                         continue;
@@ -503,14 +505,19 @@ namespace cse498 {
                     if (!other.IsAlive()) {
                         continue;
                     }
+
+                    bool otherIsEnemy = std::find(mSpawnedEnemyIds.begin(), mSpawnedEnemyIds.end(), other.GetID())
+                        != mSpawnedEnemyIds.end();
+                    auto otherId = other.GetID();
+
                     const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
                     const double dx = std::abs(cur_position.X() - other_pos.X());
                     const double dy = std::abs(cur_position.Y() - other_pos.Y());
 
                     if (dx <= 1.0 && dy <= 1.0) {
                         interacted = true;
-                        if (other.GetID() == mEnemyId) {
-                            const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
+                        if (otherIsEnemy) {
+                            const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(otherId).GetStats());
                             other.TakeDamage(dealt);
                             std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
                             if (!other.IsAlive()) {
@@ -519,7 +526,7 @@ namespace cse498 {
                                 HandleEnemyDefeat(enemy, player);
                                 return 1;
                             }
-                            const double retaliate = DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
+                            const double retaliate = DamageCalculator::Calculate(GetAgent(otherId).GetStats(), GetPlayer()->GetStats());
                             agent.TakeDamage(retaliate);
                             std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
                             if (!agent.IsAlive()) {
