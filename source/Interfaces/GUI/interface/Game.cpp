@@ -193,8 +193,7 @@ namespace cse498
             return false;
 
         // Merchant Items
-        if (!LoadCheck("Crown", std::string(ASSETS_DIR) + "/" + "items/item_sword_1.png")) return false;
-        // todo - other merchant items
+        if (!LoadCheck("Crown", std::string(ASSETS_DIR) + "/" + "items/item_crown.png")) return false;
 
         // UI
         if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/" +  "/gui/inventory_bar.png"))
@@ -278,7 +277,7 @@ namespace cse498
         // Player
         auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
         player.SetLocation(WorldPosition{1, 1});
-        player.AddGold(25); // starting gold for trading demo
+        player.AddGold(10000); // starting gold for trading demo
         mOverworldPlayer = &player;
 
         // Farming merchant NPC
@@ -1039,8 +1038,8 @@ void Game::UpdateOverworld()
                 }
             } else if (dynamic_cast<ResourceSpawn*>(&agent)) {
                 continue;
-            } else if (agent.GetName() == "Trader") {
-                sprite = "skeleton"; // use skeleton sprite as placeholder for trader
+            } else if (agent.GetName() == "Trader" || agent.GetName() == "Farmer") {
+                sprite = "player"; // use player sprite as placeholder for trader and farmer
             } else {
                 sprite = "skeleton";
             }
