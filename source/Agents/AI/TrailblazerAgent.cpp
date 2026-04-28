@@ -49,6 +49,13 @@ struct GoapActionDef {
  * @return true if the state satisfies the goal condition; false otherwise.
  */
 bool MeetsGoal(uint32_t state, uint32_t goal_mask, uint32_t goal_value) { return (state & goal_mask) == goal_value; }
+
+bool IsBlockedCellName(const std::string& cell_name) {
+    if (cell_name == "wall") {
+        return true;
+    }
+    return cell_name.rfind("wall_", 0) == 0;
+}
 } // namespace
 
 
@@ -75,8 +82,8 @@ bool TrailblazerAgent::Initialize() {
 bool TrailblazerAgent::IsWalkable(const WorldGrid& grid, WorldPosition pos) const {
     if (!grid.IsValid(pos))
         return false;
-    const char tile = grid.GetCellTypeSymbol(grid[pos]);
-    return tile != '#';
+    const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
+    return !IsBlockedCellName(cell_name);
 }
 
 /**
@@ -535,9 +542,81 @@ size_t TrailblazerAgent::SelectAction(const WorldGrid& grid) {
     if (!GetLocation().IsPosition())
         return 0;
     const auto* ai_world = dynamic_cast<const AIWorld*>(&world);
-    if (!ai_world)
-        return 0;
     const WorldPosition current = GetLocation().AsWorldPosition();
+
+    // Fallback behavior for worlds that are not AIWorld (e.g., DungeonWorld):
+    // chase the nearest player-like target; otherwise explore.
+    if (!ai_world) {
+        mVisitCounts[current] += 1;
+        mRecentPositions.push_back(current);
+        if (mRecentPositions.size() > kRecentMemory) {
+            mRecentPositions.pop_front();
+        }
+
+        std::optional<WorldPosition> target_pos = world.GetTrackedPlayerPosition();
+        if (!target_pos.has_value()) {
+            int best_dist = std::numeric_limits<int>::max();
+            for (size_t i = 0; i < world.GetNumAgents(); ++i) {
+                const AgentBase& other = world.GetAgentByIndex(i);
+                if (&other == this || !other.GetLocation().IsPosition() || !other.IsAlive()) {
+                    continue;
+                }
+                if (!other.IsPlayerAgent()) {
+                    continue;
+                }
+
+                const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
+                const int dist =
+                    static_cast<int>(std::abs(static_cast<int>(other_pos.CellX()) - static_cast<int>(current.CellX())) +
+                                     std::abs(static_cast<int>(other_pos.CellY()) - static_cast<int>(current.CellY())));
+                if (dist < best_dist) {
+                    best_dist = dist;
+                    target_pos = other_pos;
+                }
+            }
+        }
+
+        if (target_pos.has_value()) {
+            const std::array<std::pair<WorldPosition, size_t>, 4> options{{{current.Up(), GetActionID("up")},
+                                                                            {current.Down(), GetActionID("down")},
+                                                                            {current.Left(), GetActionID("left")},
+                                                                            {current.Right(), GetActionID("right")}}};
+
+            size_t best_action = 0;
+            int best_dist = std::numeric_limits<int>::max();
+            size_t best_visit_score = std::numeric_limits<size_t>::max();
+            for (const auto& [pos, action]: options) {
+                if (!IsWalkable(grid, pos)) {
+                    continue;
+                }
+                if (action == 0) {
+                    continue;
+                }
+
+                const int dist = static_cast<int>(std::abs(static_cast<int>(pos.CellX()) -
+                                                           static_cast<int>(target_pos->CellX())) +
+                                                  std::abs(static_cast<int>(pos.CellY()) -
+                                                           static_cast<int>(target_pos->CellY())));
+                size_t visit_score = mVisitCounts.contains(pos) ? mVisitCounts.at(pos) : 0;
+                if (!mRecentPositions.empty() && pos == mRecentPositions.back()) {
+                    visit_score += 100;
+                }
+
+                if (dist < best_dist || (dist == best_dist && visit_score < best_visit_score)) {
+                    best_dist = dist;
+                    best_visit_score = visit_score;
+                    best_action = action;
+                }
+            }
+
+            if (best_action != 0) {
+                return best_action;
+            }
+        }
+
+        const auto fallback = ExploreMove(grid);
+        return fallback.value_or(GetActionID("stay"));
+    }
 
     // Tactical reflexes before planning: fight/pickup opportunities now.
     if (const auto attack = AttackActionForAdjacentEnemy(); attack.has_value()) {
