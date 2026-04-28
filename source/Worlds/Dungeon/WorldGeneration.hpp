@@ -163,23 +163,21 @@ namespace cse498 {
         /// @brief takes the leaf node's (x,y) coordinates and room information from the BSP_Tree and translates it onto mGrid
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode &node) {
-            int room_height = node.vector_room.size();
+            size_t room_height = node.vector_room.size();
             assert(room_height != 0); //Ensures room is properly assigned and not empty
 
-            int room_width = node.vector_room[0].length();
+            size_t room_width = node.vector_room[0].length();
             assert(room_width != 0); //Ensures room is properly assigned and not empty
 
-            int base_y = node.y; //Copy of y coord
-            int base_x = node.x; //Copy of x coord
+            size_t base_y = node.y; //Copy of y coord
+            size_t base_x = node.x; //Copy of x coord
 
-            for (int y = 0; y < room_height; ++y) {
-                int grid_y = base_y + y; // Grid's current location (y-axis)
-                assert(grid_y >= 0 && grid_y < (int)m_grid.size());
+            for (size_t y = 0; y < room_height; ++y) {
+                size_t grid_y = base_y + y; // Grid's current location (y-axis)
 
-                for (int x = 0; x < room_width; ++x) {
-                    int grid_x = base_x + x;
+                for (size_t x = 0; x < room_width; ++x) {
+                    size_t grid_x = base_x + x;
 
-                    assert(grid_x >= 0 && grid_x < (int)m_grid[0].size());
                     char c = node.vector_room[y][x];
 
                     //if (c == '#') continue; //Skips the outer outline of the room

@@ -68,7 +68,8 @@ namespace cse498 {
             cse498::WeightedSet<int> rooms;
 
             for (const auto &[num, weight]: ROOM_DATA) {
-                auto result = rooms.Insert(num, weight);
+                assert(num <= static_cast<size_t>(std::numeric_limits<int>::max()));
+                auto result = rooms.Insert(static_cast<int>(num), weight);
                 assert(result.has_value());
             }
 

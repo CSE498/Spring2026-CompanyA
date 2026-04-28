@@ -33,6 +33,10 @@
 
 namespace cse498 {
 
+    /*
+    * DungeonActions is a renamed version of WorldActions, moved here to resolve issues with other class having access
+    * to it, and to allow us to customize the actions to our world if needed.
+    */
     struct DungeonActions // just so they aren't globals
     {
         // Note 0 should ALWAYS Be stay based on AgentBase GetActionID implementation
@@ -75,7 +79,7 @@ namespace cse498 {
          * @brief Builds the room pool for the current level.
          */
         void LoadLevelData() {
-            std::cout << "Currently on level: " << mLevelNum << std::endl;
+            std::cout << "DEBUG::DungeonWorld:: Currently on level: " << mLevelNum << std::endl;
             switch (mLevelNum) {
                 case 1:
                     mLevel = std::make_unique<ForestLevel>();
@@ -455,10 +459,10 @@ namespace cse498 {
         void HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player) {
             const std::size_t goldReward = enemy.ClaimGoldDrop();
 
-            std::cout << "Enemy defeated.\n";
+            std::cout << "DEBUG::DungeonWorld:: Enemy defeated.\n";
             if (goldReward > 0) {
                 player.AddGold(goldReward);
-                std::cout << player.GetName() << " gains " << goldReward << " gold.\n";
+                std::cout <<"DEBUG::DungeonWorld:: " << player.GetName() << " gains " << goldReward << " gold.\n";
             }
         }
 
@@ -516,7 +520,7 @@ namespace cse498 {
                         if (otherIsEnemy) {
                             const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(otherId).GetStats());
                             other.TakeDamage(dealt);
-                            std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
+                            std::cout << "DEBUG::DungeonWorld:: " << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
                             if (!other.IsAlive()) {
                                 auto& enemy = dynamic_cast<Enemy&>(other);
                                 auto& player = dynamic_cast<PlayerAgent&>(agent);
@@ -525,9 +529,9 @@ namespace cse498 {
                             }
                             const double retaliate = DamageCalculator::Calculate(GetAgent(otherId).GetStats(), GetPlayer()->GetStats());
                             agent.TakeDamage(retaliate);
-                            std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
+                            std::cout << "DEBUG::DungeonWorld:: Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
                             if (!agent.IsAlive()) {
-                                std::cout << agent.GetName() << " has fallen.\n";
+                                std::cout <<"DEBUG::DungeonWorld:: " << agent.GetName() << " has fallen.\n";
                                 mRunOver = true;
                                 return 1;
                             }
@@ -535,7 +539,7 @@ namespace cse498 {
                     }
                 }
                 if (!interacted) {
-                    std::cout << "No one nearby to interact with.\n";
+                    std::cout << "DEBUG::DungeonWorld:: No one nearby to interact with.\n";
                 }
                 return interacted ? 1 : 0;
                 /// The above code inside this if statement was adapted from the combat system in Group 2's demo code
@@ -867,7 +871,7 @@ namespace cse498 {
             assert(rngItem.has_value());
             double item = rngItem.value();
 
-            std::string retItem = mItemPool.Sample(item);
+            auto retItem = mItemPool.Sample(item);
             assert(retItem.has_value());
             return retItem.value();
         }

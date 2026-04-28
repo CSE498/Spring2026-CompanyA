@@ -39,18 +39,18 @@ namespace cse498 {
         std::string m_room_dir; //File path used to access the directory of different .txt rooms
         std::string m_image_path = "../../../assets/"; //File path location for images
 
-        Random m_rng; //Random
-        WeightedSet<int> m_room_pool;
+        Random mRng; //Random
+        WeightedSet<int> mRoomPool;
 
     public:
         RoomHolder(const LevelBase &level)
             : m_room_dir(level.GetRoomDir()),
-              m_rng(),
-              m_room_pool(level.GetRoomPool()) {
+              mRng(),
+              mRoomPool(level.GetRoomPool()) {
         }
 
         /// @brief Grabs the currently selected room from the WeightedSets room_pool
-        /// @return returns currently selected room from the m_room_pool
+        /// @return returns currently selected room from the mRoomPool
         [[nodiscard]] const std::vector<std::string> &GetCurrentRoom() {
             return m_current_room;
         }
@@ -91,11 +91,11 @@ namespace cse498 {
         /// @brief Generates a room from the pool
         /// @return Generated room number
         [[nodiscard]] std::string GenerateFilePath() {
-            auto rng_select = m_rng.GetValue(0.0, m_room_pool.GetTotalWeight());
+            auto rng_select = mRng.GetValue(0.0, mRoomPool.GetTotalWeight());
             assert(rng_select.has_value());
             auto room_select = rng_select.value();
 
-            auto sample_result = m_room_pool.Sample(room_select);
+            auto sample_result = mRoomPool.Sample(room_select);
             assert(sample_result.has_value());
             std::string room = std::to_string(sample_result.value());
 
@@ -137,7 +137,7 @@ namespace cse498 {
                     }
 
                     // Variant floor tiles
-                    auto rng_value = m_rng.GetValue(2, 5);
+                    auto rng_value = mRng.GetValue(2, 5);
                     assert(rng_value.has_value());
                     file_path += std::to_string(rng_value.value());
                     file_path += ".png";
@@ -182,7 +182,7 @@ namespace cse498 {
             } else if (tile_c == 'm') {
                 file_path += "agents/monsters/agent_monster_";
 
-                auto rng_monster = m_rng.GetValue(1, 2);
+                auto rng_monster = mRng.GetValue(1, 2);
                 assert(rng_monster.has_value());
                 int monster = rng_monster.value();
                 if (monster == 1) {
