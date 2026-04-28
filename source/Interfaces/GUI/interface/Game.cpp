@@ -170,8 +170,19 @@ namespace cse498
         if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "items/item_potion_defense.png")) return false;
         if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png")) return false;
         if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_goblin.png")) return false;
-        if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_right_dungeon.png")) return false;
-        if (!LoadCheck("exit", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        // KAREN: Changes to match DungeonWorld
+        // if (!LoadCheck("wall_secret", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        // if (!LoadCheck("exit", std::string(ASSETS_DIR) + "/" +  "world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        // Secret doors
+        if (!LoadCheck("wall_secret_top",    std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_secret_bottom", std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_secret_left",   std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        if (!LoadCheck("wall_secret_right",  std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_right_dungeon.png")) return false;
+        // Exits
+        if (!LoadCheck("exit_l1", std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("exit_l2", std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("exit_l3", std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_left_dungeon.png")) return false;
+        if (!LoadCheck("exit_l4", std::string(ASSETS_DIR) + "/world/dungeon/walls/external/door_left_dungeon.png")) return false;
 
         // Item sprites — keyed by item name to match what Inventory stores
         if (!LoadCheck("Sword", std::string(ASSETS_DIR) + "/" +  "items/item_sword_1.png")) return false;
@@ -461,7 +472,8 @@ namespace cse498
         // PlaceOnNextFloor(trailblazer);
         // std::cout << "Trailblazer at: " << trailblazer.GetLocation().AsWorldPosition().CellX()
         //   << "," << trailblazer.GetLocation().AsWorldPosition().CellY() << std::endl;
-
+        
+        RebuildDungeonGrid();
         mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
     }
 
