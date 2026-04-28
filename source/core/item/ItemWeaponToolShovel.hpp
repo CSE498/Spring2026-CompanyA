@@ -16,9 +16,7 @@ namespace cse498 {
 class ItemWeaponToolShovel : public ItemWeaponTool {
 public:
     ItemWeaponToolShovel(size_t id, const std::string& name, const std::string& image_path, int gold,
-                         const WorldBase& world) : ItemWeaponTool(id, name, image_path, gold, world) {
-        SetImagePath("assets/items/weapons/tools/shovel.png");
-    }
+                         const WorldBase& world) : ItemWeaponTool(id, name, image_path, gold, world) {}
 
     bool IsShovel() const override { return true; }
 };

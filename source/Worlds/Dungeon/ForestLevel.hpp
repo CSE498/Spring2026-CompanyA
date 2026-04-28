@@ -1,14 +1,14 @@
 /**
  * This file is part of the Spring 2026, CSE 498, section 2, course project.
- * @brief 
+ * @brief
  * @note Status: PROPOSAL
  **/
 
 
 #pragma once
 
-#include <cassert>
 #include <array>
+#include <cassert>
 #include "../../tools/WeightedSet.hpp"
 #include "LevelBase.hpp"
 
@@ -50,9 +50,13 @@ namespace cse498 {
 		 * @details
 		 * This string is used to load forest rooms
 		 */
-		inline static const std::string m_room_dir = static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_one_pool/room_";
-
-		/**
+#ifndef __EMSCRIPTEN__
+        inline static const std::string m_room_dir =
+                static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_one_pool/room_";
+#else
+        inline static const std::string m_room_dir = "/rooms/Dungeon_one_pool/room_";
+#endif
+        /**
 		 * @brief Constructs the weighted room pool.
 		 *
 		 * @details
@@ -77,31 +81,26 @@ namespace cse498 {
 
 		cse498::WeightedSet<int> m_room_pool;
 
-	public:
-		/**
-		 * @brief Constructs a ForestLevel.
-		 *
-		 * @details
-		 * Initializes the base ForestLevel with a generated room pool
-		 */
-		ForestLevel()
-		: m_room_pool(MakeRoomPool()) {}
+public:
+    /**
+     * @brief Constructs a ForestLevel.
+     *
+     * @details
+     * Initializes the base ForestLevel with a generated room pool
+     */
+    ForestLevel() : m_room_pool(MakeRoomPool()) {}
 
-		/**
-		 * @brief Default destructor.
-		 */
-		~ForestLevel() = default;
+    /**
+     * @brief Default destructor.
+     */
+    ~ForestLevel() = default;
 
-		/**
-		 * 
-		 */
-		[[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override {
-    		return m_room_pool;
-		}
+    /**
+     *
+     */
+    [[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override { return m_room_pool; }
 
-		[[nodiscard]] const std::string& GetRoomDir() const override {
-			return m_room_dir;
-		}
-	};
+    [[nodiscard]] const std::string& GetRoomDir() const override { return m_room_dir; }
+};
 
 } // End of namespace cse498

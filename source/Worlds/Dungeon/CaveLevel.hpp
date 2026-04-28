@@ -49,8 +49,12 @@ namespace cse498 {
          * @details
          * This string is used to load cave rooms
          */
+#ifndef __EMSCRIPTEN__
         inline static const std::string m_room_dir =
                 static_cast<std::string>(DUNGEON_ROOMS_DIR) + "/Dungeon_two_pool/room_";
+#else
+        inline static const std::string m_room_dir = "/rooms/Dungeon_two_pool/room_";
+#endif
 
         /**
          * @brief Constructs the weighted room pool.

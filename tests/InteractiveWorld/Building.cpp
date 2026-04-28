@@ -36,7 +36,7 @@ TEST_CASE("Test Building Setters and Getters", "[core][InteractiveWorld][Buildin
 TEST_CASE("Building stores banked resources for its lane", "[core][InteractiveWorld][Building]") {
     cse498::Building lumberYard(3, "Lumber Yard", world);
 
-    CHECK(lumberYard.GetInventory().Empty());
+    CHECK(lumberYard.GetOverworldInventory().Empty());
     CHECK(lumberYard.DepositResource(cse498::ItemType::Wood, 12));
     CHECK(lumberYard.DepositResource(cse498::ItemType::Stone, 3));
     CHECK(lumberYard.GetStoredAmount(cse498::ItemType::Wood) == 12);

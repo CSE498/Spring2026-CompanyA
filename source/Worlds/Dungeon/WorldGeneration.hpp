@@ -101,8 +101,8 @@ namespace cse498 {
             PostOrderRoomConnect(tree[0]);
             //Tried to implement BFS Room connection for more varied layouts, but duplicating DFS is better
 
-            TunnelConnectDungeon();
-        }
+        TunnelConnectDungeon();
+    }
 
         /**
          * @brief Resets and regenerates the dungeon for level progression.
@@ -117,11 +117,9 @@ namespace cse498 {
         }
 
 
-        /// @brief Grabs the Dungeon map vector grid for loading the information in WorldGrid
-        /// @return
-        [[nodiscard]] std::vector<std::string> GetDungeon() const {
-            return m_grid;
-        }
+    /// @brief Grabs the Dungeon map vector grid for loading the information in WorldGrid
+    /// @return
+    [[nodiscard]] std::vector<std::string> GetDungeon() const { return m_grid; }
 
         /// @brief Grabs the Generated BSP Tree in order to extract room information to extract onto the grid
         /// @returnBSP tree object
@@ -160,24 +158,23 @@ namespace cse498 {
         /// @param node BSPNode filled with room information (x/y coords, room width/height, room vector string)
         void RasterizeGrid(const BSPNode &node) {
             int room_height = node.vector_room.size();
-
-
             assert(room_height != 0); //Ensures room is properly assigned and not empty
 
             int room_width = node.vector_room[0].length();
+            assert(room_width != 0); //Ensures room is properly assigned and not empty
 
-            int base_y = node.y; //Copy of y coord
-            int base_x = node.x; //Copy of x coord
+        int base_y = node.y; // Copy of y coord
+        int base_x = node.x; // Copy of x coord
 
-            for (int y = 0; y < room_height; ++y) {
-                int grid_y = base_y + y; // Grid's current location (y-axis)
-                assert(grid_y >= 0 && grid_y < (int)m_grid.size());
+        for (int y = 0; y < room_height; ++y) {
+            int grid_y = base_y + y; // Grid's current location (y-axis)
+            assert(grid_y >= 0 && grid_y < (int) m_grid.size());
 
-                for (int x = 0; x < room_width; ++x) {
-                    int grid_x = base_x + x;
+            for (int x = 0; x < room_width; ++x) {
+                int grid_x = base_x + x;
 
-                    assert(grid_x >= 0 && grid_x < (int)m_grid[0].size());
-                    char c = node.vector_room[y][x];
+                assert(grid_x >= 0 && grid_x < (int) m_grid[0].size());
+                char c = node.vector_room[y][x];
 
                     //if (c == '#') continue; //Skips the outer outline of the room
 					// Find goblin spawn locations
@@ -189,21 +186,23 @@ namespace cse498 {
 						m_skeleton_spawns.push_back({grid_x, grid_y});
 					}
 
-                    m_grid[grid_y][grid_x] = c;
-                }
+                m_grid[grid_y][grid_x] = c;
             }
         }
+    }
 
 
         /// @brief Calculate center of room placed in grid
         /// @param room we're inputting the BSP_Tree Node's room value
         /// @return pair of coordinates
         [[nodiscard]] Point CalcRoomCenter(const std::vector<std::string> &room) const {
+            assert(!room.empty());
+
             auto width = room[0].length();
             auto height = room.size();
 
-            return Point(width / 2, height / 2);
-        }
+        return Point(width / 2, height / 2);
+    }
 
         /// @brief Parses through the list of Room Nodes (BSPNodes) that have a relation with each other and connects those
         void TunnelConnectDungeon() {
@@ -220,44 +219,50 @@ namespace cse498 {
          */
         void ConnectBSPRooms(LinkedRooms RoomCoordinates) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
-            auto const wall_set = {'1', '2', '3', '4'};
+            auto const wall_set = {'?', '!', '$', '@',
+                                    '1','2','3','4', 
+                                    '0','-','=','9'};
 
-            auto point_x = x2_value - x1_value;
-            auto point_y = y2_value - y1_value;
+        auto point_x = x2_value - x1_value;
+        auto point_y = y2_value - y1_value;
 
-            bool negative_y = false;
-            bool negative_x = false;
+        bool negative_y = false;
+        bool negative_x = false;
 
-            if (point_y < 0) {
-                negative_y = true;
-                point_y = std::abs(point_y);
-            }
+        if (point_y < 0) {
+            negative_y = true;
+            point_y = std::abs(point_y);
+        }
 
-            if (point_x < 0) {
-                negative_x = true;
-                point_x = std::abs(point_x);
-            }
+        if (point_x < 0) {
+            negative_x = true;
+            point_x = std::abs(point_x);
+        }
 
-            for (int y = 0; y <= point_y; ++y) {
-                int y_point;
-                if (negative_y) y_point = y1_value - y;
-                else y_point = y1_value + y;
+        for (int y = 0; y <= point_y; ++y) {
+            int y_point;
+            if (negative_y)
+                y_point = y1_value - y;
+            else
+                y_point = y1_value + y;
 
-                auto &y_char = m_grid[y_point][x1_value];
-                auto it = std::ranges::find(wall_set, y_char);
+            auto& y_char = m_grid[y_point][x1_value];
+            auto it = std::ranges::find(wall_set, y_char);
 
                 if (y_char == '#' || it != wall_set.end()) {
                     y_char = 'a';
                 }
             }
 
-            for (int x = 0; x <= point_x; ++x) {
-                int x_point;
-                if (negative_x) x_point = x1_value - x;
-                else x_point = x1_value + x;
+        for (int x = 0; x <= point_x; ++x) {
+            int x_point;
+            if (negative_x)
+                x_point = x1_value - x;
+            else
+                x_point = x1_value + x;
 
-                auto &x_char = m_grid[y2_value][x_point];
-                auto it = std::ranges::find(wall_set, x_char);
+            auto& x_char = m_grid[y2_value][x_point];
+            auto it = std::ranges::find(wall_set, x_char);
 
                 if (x_char == '#' || it != wall_set.end()) x_char = 'a';
             }
@@ -271,21 +276,21 @@ namespace cse498 {
             if (node.left_child == -1 && node.right_child == -1) {
                 auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
 
-                return (Point{node.x + pair.x, node.y + pair.y});
-            }
+            return (Point{node.x + pair.x, node.y + pair.y});
+        }
 
-            Point left = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.left_child]);
-            Point right = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.right_child]);
+        Point left = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.left_child]);
+        Point right = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.right_child]);
 
 
-            m_connected_rooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
+        m_connected_rooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); // x1,y1,x2,y2 respectively
 
-            auto return_determiner = m_rng.GetValue(0, 1); //Determines which node is returned
+        auto return_determiner = m_rng.GetValue(0, 1); // Determines which node is returned
 
-            //sends a node upwards, allowing connectivity between nodes for linking
-            if (return_determiner == 0) {
-                return right;
-            }
+        // sends a node upwards, allowing connectivity between nodes for linking
+        if (return_determiner == 0) {
+            return right;
+        }
 
             return left;
         }

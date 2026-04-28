@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -23,6 +24,7 @@
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
 #include "WorldPosition.hpp"
+#include "../Agents/Classic/PlayerAgent.hpp"
 
 namespace cse498 {
 using item_ptr_t = std::unique_ptr<ItemBase>;

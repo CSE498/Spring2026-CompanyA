@@ -152,6 +152,7 @@ namespace cse498 {
             m_BSP_tree.clear();
             m_leaf_nodes.clear();
             m_exit_door = false;
+            mExitProbabilityState = 0.0;
         }
 
         /// @brief Ensures that no matter the width/height of a node split, a suitable room is found for that split

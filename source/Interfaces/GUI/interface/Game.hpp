@@ -241,21 +241,21 @@ namespace cse498
          */
         void RebuildDungeonGrid();
 
-        /**
-         * @brief Transition to a new game state.
-         * @param new_state Target state
-         */
-        void TransitionTo(GameState new_state);
+    /**
+     * @brief Transition to a new game state.
+     * @param new_state Target state
+     */
+    void TransitionTo(GameState new_state);
 
-        /**
-         * @brief Enter paused state.
-         */
-        void Pause();
+    /**
+     * @brief Enter paused state.
+     */
+    void Pause();
 
-        /**
-         * @brief Resume previous state from pause.
-         */
-        void Resume();
+    /**
+     * @brief Resume previous state from pause.
+     */
+    void Resume();
 
     public:
         /**
@@ -271,42 +271,42 @@ namespace cse498
         {
         }
 
-        /**
-         * @brief Default destructor.
-         */
-        ~Game() = default;
+    /**
+     * @brief Default destructor.
+     */
+    ~Game() = default;
 
-        Game(const Game &) = delete;
-        Game &operator=(const Game &) = delete;
+    Game(const Game&) = delete;
+    Game& operator=(const Game&) = delete;
 
-        Game(Game &&) = default;
-        Game &operator=(Game &&) = default;
+    Game(Game&&) = default;
+    Game& operator=(Game&&) = default;
 
-        /**
-         * @brief Initialize SDL, window, renderer, and menus.
-         * @return true if initialization succeeds, false otherwise
-         */
-        bool Initialize();
+    /**
+     * @brief Initialize SDL, window, renderer, and menus.
+     * @return true if initialization succeeds, false otherwise
+     */
+    bool Initialize();
 
-        /**
-         * @brief Run the main game loop.
-         */
-        void Run();
+    /**
+     * @brief Run the main game loop.
+     */
+    void Run();
 
-        /**
-         * @brief Signal the game loop to stop.
-         */
-        void Quit() { mRunning = false; }
+    /**
+     * @brief Signal the game loop to stop.
+     */
+    void Quit() { mRunning = false; }
 
-        // -------------------------
-        // Accessors
-        // -------------------------
+    // -------------------------
+    // Accessors
+    // -------------------------
 
-        /**
-         * @brief Get the GameView instance.
-         * @return Shared pointer to GameView
-         */
-        [[nodiscard]] std::shared_ptr<GameView> GetGameView() const { return mGameView; }
+    /**
+     * @brief Get the GameView instance.
+     * @return Shared pointer to GameView
+     */
+    [[nodiscard]] std::shared_ptr<GameView> GetGameView() const { return mGameView; }
 
         /**
          * @brief Get the current game state.

@@ -18,6 +18,7 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#include "../WebErrorManager/WebErrorManager.hpp"
 #include "../WebLayout/WebLayout.hpp"
 #endif
 
@@ -57,16 +58,14 @@ WebCanvas::WebCanvas(const std::string& id) {
     }
 #ifdef __EMSCRIPTEN__
     mElement = GetDocument().call<emscripten::val>("getElementById", mId);
-    mExisting = !mElement.isNull() && !mElement.isUndefined();
+    mAdoptsExistingDom = !mElement.isNull() && !mElement.isUndefined();
 
-    if (!mExisting) {
-        const std::string errorMsg = "WebCanvas error: required canvas element with id '" + mId + "' was not found.";
-
-        emscripten::val::global("console").call<void>("error", errorMsg);
-        emscripten::val::global("alert")(errorMsg);
-
-        // TODO: Provide a unified Emscripten/Web error reporting helper
-        // instead of issuing direct console/alert calls at each failure site.
+    if (!mAdoptsExistingDom) {
+        WebErrorManager::Options options;
+        options.showAlert = true;
+        // clang-format off
+        WebErrorManager::Error("WebCanvas error: required canvas element with id '" + mId + "' was not found.", options);
+        // clang-format on
         return;
     }
 

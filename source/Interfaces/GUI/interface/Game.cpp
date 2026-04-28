@@ -459,16 +459,6 @@ namespace cse498
         std::cout << "Trailblazer at: " << trailblazer.GetLocation().AsWorldPosition().CellX()
           << "," << trailblazer.GetLocation().AsWorldPosition().CellY() << std::endl;
 
-        // Map every cell type name to its matching image name
-        for (size_t y = 0; y < world_h; ++y)
-        {
-            for (size_t x = 0; x < world_w; ++x)
-            {
-                WorldPosition pos(x, y);
-                const std::string &cell_name = grid.GetCellTypeName(grid[pos]);
-                mDungeonGrid->SetCell(x, y, cell_name);
-            }
-        }
         mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
     }
 
@@ -1551,9 +1541,9 @@ void Game::UpdateOverworld()
             int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
             int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
 
-            mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
-        }
+        mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
+        mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
+    }
 
         else if (mState == GameState::DUNGEON) {
             // Snapshot inventory count before move

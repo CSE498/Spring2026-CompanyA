@@ -37,7 +37,12 @@ namespace cse498 {
     protected:
         std::vector<std::string> m_current_room; //Holds the currently selected/stored room
         std::string m_room_dir; //File path used to access the directory of different .txt rooms
-        std::string m_image_path = "../../../assets/"; //File path location for images
+#ifndef __EMSCRIPTEN__
+        std::string m_image_path = "../../../assets/"; // File path location for images
+#else
+        std::string m_image_path = "/assets/"; // File path location for images
+#endif
+
 
         cse498::Random m_rng; //Random
         cse498::WeightedSet<int> m_room_pool;
@@ -60,6 +65,7 @@ namespace cse498 {
         void SetCurrentRoom() {
             auto determined_room = LoadRoom();
             m_current_room = determined_room;
+            
         }
 
         ///@brief Overloaded function dedicated to loading in the exit room to the next level, separate from the room_pool
@@ -112,8 +118,8 @@ namespace cse498 {
             std::string file_path = m_image_path;
 
             // World objects (floor tiles, walls, doors, barriers, ect.)
-            if (tile_c == '&' || tile_c == '^' || tile_c == '<' || tile_c == '>' || tile_c == '$'
-                || tile_c == 'd' || tile_c == 's' || tile_c == ' ' || tile_c == 'v') {
+            if (tile_c == '&' || tile_c == '^' || tile_c == '<' || tile_c == '>' || tile_c == '$' || tile_c == 'd' ||
+                tile_c == 's' || tile_c == ' ' || tile_c == 'v') {
                 // Level folder
                 file_path += "world/";
                 if (level == LEVEL_ONE) { file_path += "forest/"; } else if (level == LEVEL_TWO) {
@@ -174,7 +180,7 @@ namespace cse498 {
             } else if (tile_c == 't') {
                 // TODO: Trap tile, waiting for image assests to be created
             } else if (tile_c == 'l') {
-                // TODO: Loot tile, waiting for image assests to be created
+                file_path += "items/item_potion_healing.png";
             } else if (tile_c == 'm') {
                 file_path += "agents/monsters/agent_monster_";
 

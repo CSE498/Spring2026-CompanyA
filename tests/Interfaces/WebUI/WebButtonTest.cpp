@@ -676,4 +676,206 @@ TEST_CASE("Large size values are stored correctly", "[WebButton]") {
     CHECK_MSG(btn.GetHeight() == 3000, "large height should be stored");
 }
 
+// ========================================================
+// Test 48: Template SetCallback with lambda
+// ========================================================
+TEST_CASE("Template SetCallback with lambda", "[WebButton]") {
+    WebButton btn("test");
+    int count = 0;
+
+    auto lambda = [&count]() { ++count; };
+    btn.SetCallback(std::move(lambda));
+    btn.Click();
+
+    CHECK_MSG(count == 1, "template SetCallback should accept lambda");
+}
+
+// ========================================================
+// Test 49: Template SetCallback with function pointer
+// ========================================================
+namespace {
+int g_funcPtrCount = 0;
+void IncrementGlobal() { ++g_funcPtrCount; }
+} // namespace
+
+TEST_CASE("Template SetCallback with function pointer", "[WebButton]") {
+    WebButton btn("test");
+    g_funcPtrCount = 0;
+
+    btn.SetCallback(&IncrementGlobal);
+    btn.Click();
+
+    CHECK_MSG(g_funcPtrCount == 1, "template SetCallback should accept function pointer");
+}
+
+// ========================================================
+// Test 50: Template SetCallback with functor
+// ========================================================
+TEST_CASE("Template SetCallback with functor", "[WebButton]") {
+    struct ClickCounter {
+        int& count;
+        void operator()() { ++count; }
+    };
+
+    WebButton btn("test");
+    int count = 0;
+
+    btn.SetCallback(ClickCounter{count});
+    btn.Click();
+
+    CHECK_MSG(count == 1, "template SetCallback should accept functor");
+}
+
+// ========================================================
+// Test 51: Template SetCallback replaces previous callback
+// ========================================================
+TEST_CASE("Template SetCallback replaces previous callback", "[WebButton]") {
+    WebButton btn("test");
+    int first = 0;
+    int second = 0;
+
+    btn.SetCallback([&first]() { ++first; });
+    btn.Click();
+    CHECK_MSG(first == 1, "first callback should fire");
+
+    btn.SetCallback([&second]() { ++second; });
+    btn.Click();
+    CHECK_MSG(first == 1, "first should not fire again");
+    CHECK_MSG(second == 1, "second callback should fire");
+}
+
+// ========================================================
+// Test 52: SetCanvasRect does not crash
+// ========================================================
+TEST_CASE("SetCanvasRect does not crash", "[WebButton]") {
+    WebButton btn("test");
+    REQUIRE_NOTHROW(btn.SetCanvasRect(10.0f, 20.0f, 100.0f, 50.0f));
+}
+
+// ========================================================
+// Test 53: SetCanvasRect with default dimensions
+// ========================================================
+TEST_CASE("SetCanvasRect with default dimensions", "[WebButton]") {
+    WebButton btn("test");
+    REQUIRE_NOTHROW(btn.SetCanvasRect(5.0f, 5.0f));
+}
+
+// ========================================================
+// Test 54: SetCanvasRect at origin
+// ========================================================
+TEST_CASE("SetCanvasRect at origin", "[WebButton]") {
+    WebButton btn("test");
+    REQUIRE_NOTHROW(btn.SetCanvasRect(0.0f, 0.0f, 80.0f, 30.0f));
+}
+
+// ========================================================
+// Test 55: SetCanvasRect with negative position
+// ========================================================
+TEST_CASE("SetCanvasRect with negative position", "[WebButton]") {
+    WebButton btn("test");
+    REQUIRE_NOTHROW(btn.SetCanvasRect(-10.0f, -20.0f, 80.0f, 30.0f));
+}
+
+// ========================================================
+// Test 56: WebButton implements ICanvasElement
+// ========================================================
+TEST_CASE("WebButton implements ICanvasElement", "[WebButton]") {
+    STATIC_REQUIRE(std::is_base_of_v<ICanvasElement, WebButton>);
+}
+
+// ========================================================
+// Test 57: ZIndex default is zero
+// ========================================================
+TEST_CASE("ZIndex default is zero", "[WebButton]") {
+    WebButton btn("test");
+    CHECK_MSG(btn.ZIndex() == 0, "default z-index should be 0");
+}
+
+// ========================================================
+// Test 58: SetZIndex and ZIndex
+// ========================================================
+TEST_CASE("SetZIndex and ZIndex", "[WebButton]") {
+    WebButton btn("test");
+    btn.SetZIndex(5);
+    CHECK_MSG(btn.ZIndex() == 5, "z-index should be 5");
+    btn.SetZIndex(-1);
+    CHECK_MSG(btn.ZIndex() == -1, "z-index should accept negative values");
+}
+
+// ========================================================
+// Test 59: ICanvasElement Visible default is true
+// ========================================================
+TEST_CASE("ICanvasElement Visible default is true", "[WebButton]") {
+    WebButton btn("test");
+    CHECK_MSG(btn.Visible() == true, "canvas visibility should default to true");
+}
+
+// ========================================================
+// Test 60: SetVisible toggles canvas visibility
+// ========================================================
+TEST_CASE("SetVisible toggles canvas visibility", "[WebButton]") {
+    WebButton btn("test");
+    btn.SetVisible(false);
+    CHECK_MSG(btn.Visible() == false, "should be hidden");
+    btn.SetVisible(true);
+    CHECK_MSG(btn.Visible() == true, "should be visible again");
+}
+
+// ========================================================
+// Test 61: HandleClick on moved-from object is safe
+// ========================================================
+TEST_CASE("HandleClick on moved-from object is safe", "[WebButton]") {
+    WebButton original("move-handle");
+    original.SetCallback([]() {});
+    WebButton moved(std::move(original));
+
+    REQUIRE_NOTHROW(original.HandleClick());
+}
+
+// ========================================================
+// Test 62: Very long label string
+// ========================================================
+TEST_CASE("Very long label string", "[WebButton]") {
+    std::string longLabel(10000, 'A');
+    WebButton btn(longLabel);
+    CHECK_MSG(btn.GetLabel() == longLabel, "should store very long label");
+    CHECK_MSG(btn.GetLabel().size() == 10000, "label length should be 10000");
+}
+
+// ========================================================
+// Test 63: SetLabel with special characters
+// ========================================================
+TEST_CASE("SetLabel with special characters", "[WebButton]") {
+    WebButton btn("test");
+    btn.SetLabel("<script>alert('xss')</script>");
+    CHECK_MSG(btn.GetLabel() == "<script>alert('xss')</script>", "should store raw HTML string");
+}
+
+// ========================================================
+// Test 64: SetLabel with unicode characters
+// ========================================================
+TEST_CASE("SetLabel with unicode characters", "[WebButton]") {
+    WebButton btn("test");
+    btn.SetLabel("Click here \xC3\xA9\xC3\xA0\xC3\xBC");
+    CHECK_MSG(!btn.GetLabel().empty(), "unicode label should not be empty");
+}
+
+// ========================================================
+// Test 65: SyncFromModel after move assignment
+// ========================================================
+TEST_CASE("SyncFromModel after move assignment", "[WebButton]") {
+    WebButton src("sync-src");
+    src.SetSize(75, 25);
+    src.SetBackgroundColor("#123456");
+    src.Disable();
+
+    WebButton dest("sync-dest");
+    dest = std::move(src);
+    REQUIRE_NOTHROW(dest.SyncFromModel());
+
+    CHECK_MSG(dest.GetLabel() == "sync-src", "label should transfer");
+    CHECK_MSG(dest.GetWidth() == 75, "width should transfer");
+    CHECK_MSG(dest.IsEnabled() == false, "disabled state should transfer");
+}
+
 #endif // __EMSCRIPTEN__

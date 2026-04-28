@@ -10,8 +10,8 @@
 
 
 #include "../../core/AgentBase.hpp"
-#include "core/WorldBase.hpp"
-#include "tools/DamageCalculator.hpp"
+#include "../../core/WorldBase.hpp"
+#include "../../tools/DamageCalculator.hpp"
 
 namespace cse498 {
 class Enemy : public AgentBase {

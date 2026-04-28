@@ -5,7 +5,7 @@
 
 # Group 18's Write-up for Initial C++ Class (WebUI)
 
-*Last updated: Feb 16, 2026*
+*Last updated: Apr 20, 2026*
 
 ## 3.3 `WebButton` Class Specification
 
@@ -17,7 +17,9 @@ A C++ class that represents a clickable button in the Web UI. It manages an HTML
 
 `WebButton` is a reusable UI component: it stores *what* the button looks like and *how* it behaves, but **not** *where* it is rendered. Positioning is handled by `WebLayout` (Flex/Grid/Free).
 
-The class implements the **`IDomElement`** interface for integration with `WebLayout` (DOM-based rendering).
+The class implements the **`IDomElement`** interface for integration with `WebLayout` (DOM-based rendering) and the **`ICanvasElement`** interface for optional drawing onto a `WebCanvas`.
+
+All classes live under the `cse498` namespace.
 
 ---
 
@@ -26,12 +28,13 @@ The class implements the **`IDomElement`** interface for integration with `WebLa
 - **`std::function`** - for storing the click callback
 - **`std::string`** - for storing label text
 - **Emscripten's `val`** - for JavaScript/DOM interaction
+- **`std::invocable` (C++20 concept)** - used to constrain the template `SetCallback` overload
 
 ---
 
 ### 3.3.3 Key Functions
 
-#### Construction & Destruction
+#### Construction and Destruction
 
 ```cpp
 explicit WebButton(const std::string& label = "");
@@ -55,8 +58,15 @@ std::string GetLabel() const;
 
 ```cpp
 void SetCallback(std::function<void()> callback);
+
+template<typename F>
+    requires std::invocable<F>
+void SetCallback(F&& callable);
+
 void Click();
 ```
+
+The template overload accepts any callable type (lambda, functor, function pointer) without requiring an explicit `std::function` wrap.
 
 #### Size
 
@@ -65,6 +75,8 @@ void SetSize(int width, int height);
 int GetWidth() const;
 int GetHeight() const;
 ```
+
+Passing 0 for width or height means use the browser default.
 
 #### Styling
 
@@ -87,11 +99,30 @@ bool IsVisible() const;
 #### IDomElement Interface
 
 ```cpp
-void mountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
-void unmount() override;
-void syncFromModel() override;
-const std::string& Id() const override;
+void MountToLayout(WebLayout& parent, Alignment align = Alignment::Start) override;
+void SyncFromModel() override;
 ```
+
+`MountToLayout` delegates to `WebLayout::AddElement`. `SyncFromModel` pushes the current model state (label, size, colors, enabled, visible) to the DOM element.
+
+The `Unmount()` and `Id()` methods are inherited from the `IDomElement` base class.
+
+#### ICanvasElement Interface
+
+```cpp
+void SetCanvasRect(float x, float y, float w = -1.0f, float h = -1.0f);
+void Draw(WebCanvas& canvas) override;
+```
+
+`SetCanvasRect` sets the position and size for canvas rendering. `Draw` renders the button background rectangle and centered label text onto a `WebCanvas`.
+
+#### Internal
+
+```cpp
+void HandleClick();
+```
+
+Called by the JavaScript click listener trampoline to forward DOM click events into C++.
 
 ---
 
@@ -102,7 +133,7 @@ const std::string& Id() const override;
 | Programmer error | Negative width/height, null callback | `assert()` |
 | User error | Clicking disabled button | Ignore silently |
 
-Following instructor guidance, **no C++ exceptions** will be thrown inside `WebButton` for WebAssembly builds.
+Following instructor guidance, **no C++ exceptions** are thrown inside `WebButton` for WebAssembly builds.
 
 ---
 
@@ -112,6 +143,7 @@ Following instructor guidance, **no C++ exceptions** will be thrown inside `WebB
 - DOM manipulation from C++
 - Memory cleanup (removing DOM elements, unbinding listeners)
 - Coordinating with WebLayout for proper mount/unmount lifecycle
+- Canvas rendering as an alternative to DOM-based display
 
 ---
 
@@ -122,40 +154,53 @@ Following instructor guidance, **no C++ exceptions** will be thrown inside `WebB
 | `WebLayout` | 18 | Manages button positioning via IDomElement interface |
 | `WebTextbox` | 18 | Shared IDomElement pattern, consistent styling approach |
 | `WebImage` | 18 | Shared IDomElement pattern, consistent lifecycle |
-| `WebCanvas` | 18 | Optional: visual representation of buttons inside canvas |
+| `WebCanvas` | 18 | ICanvasElement rendering for canvas-based display |
+| `WebInterface` | 18 | Main menu buttons, pause menu, settings menu |
+| `Color` | 18 | Compile-time color validation for default hex values |
 | `ActionMap` | 2 (Classic Agents) | Similar string-to-function mapping pattern |
 | `Menu` | 17 (GUI Interface) | Common interface for both GUI systems |
-| `OutputManager` | 16 (Data Analytics) | Logging button events |
 
 ---
 
 ### 3.3.7 File Structure
 
 ```
-WebUI/WebButton/
-  WebButton.hpp        # Header with class declaration
-  WebButton.cpp        # Implementation using Emscripten
-  WebButtonTest.cpp    # Unit tests (Catch2)
-  main.cpp             # Demo program
-  index.html           # Demo HTML page
+source/Interfaces/WebUI/WebButton/
+    WebButton.hpp          # Header with class declaration
+    WebButton.cpp          # Implementation using Emscripten
+    main.cpp               # Standalone demo program
+
+tests/Interfaces/WebUI/
+    WebButtonTest.cpp      # Unit tests (Catch2, 47 test cases)
+
+demos/WebUI/
+    Group18_main.cpp       # Full integrated demo
+    index.html             # Demo HTML page
 ```
 
 ---
 
-### 3.3.8 Unit Test Run Instructions (`WebButtonTest.cpp`)
+### 3.3.8 Build and Test Instructions
 
-The test file uses Catch2 and can be compiled natively (without Emscripten) since it stubs out DOM dependencies. From the repo root:
-
-```bash
-make test
-```
-
-Or compile directly:
+#### Building the demo (from repo root)
 
 ```bash
-g++ -std=c++20 -I third-party/Catch/single_include \
-  WebButtonTest.cpp -o webbutton_test && ./webbutton_test
+cmake -S . -B build
+cmake --build build --target group18_demo
+emrun demos/WebUI/index.html --no_browser --serve_root .
 ```
+
+Then open `http://localhost:6931/demos/WebUI/index.html` in a browser.
+
+#### Building and running tests (from repo root)
+
+```bash
+cmake --build build --target web_test
+cd tests/build/web_tests
+python3 -m http.server 8000
+```
+
+Then open `http://localhost:8000/WebButtonTest.html` in a browser. Test results appear in the browser console (F12).
 
 ---
 
@@ -164,4 +209,5 @@ g++ -std=c++20 -I third-party/Catch/single_include \
 | Date | Changes |
 |------|---------|
 | Jan 30, 2026 | Initial specification |
-| Feb 16, 2026 | **v2**: Removed position control (handled by WebLayout); implemented IDomElement interface (mountToLayout, unmount, syncFromModel, Id); added unique ID generation; added GetWidth/GetHeight; updated tests to Catch2; aligned patterns with WebImage and WebTextbox |
+| Feb 16, 2026 | Removed position control (handled by WebLayout); implemented IDomElement interface; added unique ID generation; added GetWidth/GetHeight; updated tests to Catch2 |
+| Apr 20, 2026 | Added ICanvasElement interface (SetCanvasRect, Draw); added template SetCallback overload with std::invocable constraint; added cse498 namespace; updated IDomElement methods to PascalCase (MountToLayout, SyncFromModel); added compile-time color validation via Color utility; expanded test suite to 47 test cases; updated file structure and build instructions to CMake; added coordination with WebInterface and Color |

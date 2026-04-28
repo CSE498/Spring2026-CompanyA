@@ -42,8 +42,8 @@ public:
      */
     size_t SelectPlayerAction(char input);
 
-    [[nodiscard]] Inventory& GetInventory() { return mInventory; }
-    [[nodiscard]] const Inventory& GetInventory() const { return mInventory; }
+    [[nodiscard]] Inventory& GetInventory() override { return mInventory; }
+    [[nodiscard]] const Inventory& GetInventory() const override { return mInventory; }
 
     [[nodiscard]] std::size_t GetGold() const { return mGold; }
 
@@ -62,6 +62,8 @@ public:
      * Sets gold to a known value. Mainly useful for demos/tests.
      */
     void SetGold(std::size_t amount) { mGold = amount; }
+
+	bool IsPlayerAgent() const override {return true;}
 
     /**
      * Stores base combat stats and recomputes effective combat values from the
