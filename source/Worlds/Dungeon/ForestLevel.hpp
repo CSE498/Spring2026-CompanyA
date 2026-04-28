@@ -88,11 +88,6 @@ namespace cse498 {
 		: m_room_pool(MakeRoomPool()) {}
 
 		/**
-		 * @brief Default destructor.
-		 */
-		~ForestLevel() = default;
-
-		/**
 		 * 
 		 */
 		[[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override {

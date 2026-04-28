@@ -48,13 +48,13 @@ namespace cse498 {
         static constexpr std::size_t INTERACT = 5; // "e"
         static constexpr std::size_t QUIT = 6; // "q"
 
-        static constexpr std::string REMAIN_STILL_STRING = "stay";
-        static constexpr std::string MOVE_UP_STRING = "w";
-        static constexpr std::string MOVE_DOWN_STRING = "s";
-        static constexpr std::string MOVE_LEFT_STRING = "a";
-        static constexpr std::string MOVE_RIGHT_STRING = "d";
-        static constexpr std::string INTERACT_STRING = "e";
-        static constexpr std::string QUIT_STRING = "q";
+        static constexpr std::string_view REMAIN_STILL_STRING = "stay";
+        static constexpr std::string_view MOVE_UP_STRING = "w";
+        static constexpr std::string_view MOVE_DOWN_STRING = "s";
+        static constexpr std::string_view MOVE_LEFT_STRING = "a";
+        static constexpr std::string_view MOVE_RIGHT_STRING = "d";
+        static constexpr std::string_view INTERACT_STRING = "e";
+        static constexpr std::string_view QUIT_STRING = "q";
     };
     
     class DungeonWorld : public WorldBase {
@@ -183,8 +183,8 @@ namespace cse498 {
             agent.AddAction("s", DungeonActions::MOVE_DOWN);
             agent.AddAction("a", DungeonActions::MOVE_LEFT);
             agent.AddAction("d", DungeonActions::MOVE_RIGHT);
-            agent.AddAction(DungeonActions::INTERACT_STRING, DungeonActions::INTERACT);
-            agent.AddAction(DungeonActions::REMAIN_STILL_STRING, DungeonActions::REMAIN_STILL);
+            agent.AddAction(std::string(DungeonActions::INTERACT_STRING), DungeonActions::INTERACT);
+            agent.AddAction(std::string(DungeonActions::REMAIN_STILL_STRING), DungeonActions::REMAIN_STILL);
         }
 
     public:
