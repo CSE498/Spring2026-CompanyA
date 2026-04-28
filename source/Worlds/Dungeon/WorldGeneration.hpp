@@ -93,7 +93,7 @@ namespace cse498 {
 
 
         /// @brief Dungeon rasterized to the grid, then connected to each other after room-to-roomrelationship is created through PostOrderRoomConnect()
-        void CreateDungeon(int &level_value) {
+        void CreateDungeon(int const &level_value) {
             LevelManager(level_value); //Loads in the width/height parameters of level
 
             m_bsp.CreateBSPTree();
@@ -334,7 +334,7 @@ namespace cse498 {
 
         /// @brief Will change the width and height of the Dungeon level depending on what level the Player is im
         /// @param level_value int value that determines the level the player is currently on
-        void LevelManager(int &level_value) {
+        void LevelManager(int const &level_value) {
             switch (level_value) {
                 case 1:
                     LevelOneState();

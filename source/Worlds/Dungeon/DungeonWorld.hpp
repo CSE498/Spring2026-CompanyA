@@ -68,13 +68,11 @@ namespace cse498 {
         //The currently pointed to level that the player agent is on
 		std::vector<size_t> mSpawnedEnemyIds;
 
-        size_t mPlayerId;
-
 		//Track level change to prevent an extra enemy turn
 		bool mLevelJustAdvanced = false;
+        
         /**
          * @brief Builds the room pool for the current level.
-         * @return WeightedSet of room file paths and weights.
          */
         void LoadLevelData() {
             std::cout << "Currently on level: " << mLevelNum << std::endl;
@@ -281,7 +279,6 @@ namespace cse498 {
 			auto& player = AddAgent<PlayerAgent>("Player");
 			player.SetSymbol('Z').SetLocation(WorldPosition{1,1});
 			mPlayer = &player;
-            mPlayerId = player.GetID();
 
 			auto& ui = AddAgent<TrashInterface>("Interface");
 			ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
@@ -865,8 +862,14 @@ namespace cse498 {
         */
         std::string GetRandomItem() {
             cse498::Random rng;
-            double item = rng.GetValue(1.0, mItemPool.GetTotalWeight()).value();
-            return mItemPool.Sample(item).value();
+
+            auto rngItem = rng.GetValue(1.0, mItemPool.GetTotalWeight());
+            assert(rngItem.has_value());
+            double item = rngItem.value();
+
+            std::string retItem = mItemPool.Sample(item);
+            assert(retItem.has_value());
+            return retItem.value();
         }
     };
 } // End of namespace cse498

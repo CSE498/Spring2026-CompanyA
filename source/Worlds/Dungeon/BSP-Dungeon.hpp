@@ -163,6 +163,7 @@ namespace cse498 {
 
             if (!m_exit_door) {
                 auto val_one = m_rng.GetValue(0.0, 1.0);
+                assert(val_one.has_value());
                 if (val_one.value() < lower_threshold) {
                     m_exit_door = true;
                     m_room_holder.SetCurrentRoom(m_room_holder.LoadRoom(m_exit_door));
@@ -371,7 +372,9 @@ namespace cse498 {
             bool directional_split;
 
             if (split_width && split_height) {
-                directional_split = (m_rng.GetValue(0, 1).value() == 0);
+                auto left_side = m_rng.GetValue(0, 1);
+                assert(left_side.has_value());
+                directional_split = (left_side.value() == 0);
             } else {
                 directional_split = split_width;
             }
@@ -399,8 +402,10 @@ namespace cse498 {
                     std::to_string(iter) //tree-depth (descending from iter) name
                 };
             } else {
-                auto height_distributor = m_rng.GetValue(m_threshold_height_value,
-                                                         node.height - m_threshold_height_value).value();
+                auto rng_h_distributor = m_rng.GetValue(m_threshold_height_value,
+                                                         node.height - m_threshold_height_value);
+                assert(rng_h_distributor.has_value());
+                auto height_distributor = rng_h_distributor.value();
                 const int stored_height = height_distributor;
 
                 ///top split
