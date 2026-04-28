@@ -139,6 +139,7 @@ namespace cse498
         // -------------------------
         MerchantAgent* mActiveMerchant = nullptr; /// Currently interacting merchant
         int mTradeMenuSelection = 0;              /// Selected offer index in trade menu
+        bool mTradeBuyMode = true;                /// true = buying, false = selling resources
 
         // -------------------------
         // Runtime flags

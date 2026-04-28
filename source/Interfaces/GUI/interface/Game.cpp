@@ -192,6 +192,10 @@ namespace cse498
         if (!LoadCheck("player", std::string(ASSETS_DIR) + "/" +  "agents/playerCharacter/agent_player.png"))
             return false;
 
+        // Merchant Items
+        if (!LoadCheck("Crown", std::string(ASSETS_DIR) + "/" + "items/item_sword_1.png")) return false;
+        // todo - other merchant items
+
         // UI
         if (!LoadCheck("inventory_bar", std::string(ASSETS_DIR) + "/" +  "/gui/inventory_bar.png"))
             return false;
@@ -274,6 +278,7 @@ namespace cse498
         // Player
         auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
         player.SetLocation(WorldPosition{1, 1});
+        player.AddGold(25); // starting gold for trading demo
         mOverworldPlayer = &player;
 
         // Farming merchant NPC
@@ -303,6 +308,45 @@ namespace cse498
             .mStock = 0
         });
         farmer.SetGold(50);
+
+        // Resource trader — buys world resources for gold
+        auto& trader = mOverWorld->AddAgent<MerchantAgent>("Trader");
+        trader.SetLocation(WorldPosition{10, 5});
+        trader.SetTradeGreeting("I'll buy your resources.");
+        trader.SetGold(11000); // enough so that if anyone actually tries to buy the crown they can
+
+        trader.AddInitialOffer(TradeOffer{
+            .mItemName = "Wood",
+            .mBuyPrice = 0,
+            .mSellPrice = 2,
+            .mItemValue = 2,
+            .mStockMode = TradeStockMode::Unlimited,
+            .mStock = 0
+        });
+        trader.AddInitialOffer(TradeOffer{
+            .mItemName = "Stone",
+            .mBuyPrice = 0,
+            .mSellPrice = 3,
+            .mItemValue = 3,
+            .mStockMode = TradeStockMode::Unlimited,
+            .mStock = 0
+        });
+        trader.AddInitialOffer(TradeOffer{
+            .mItemName = "Metal",
+            .mBuyPrice = 0,
+            .mSellPrice = 5,
+            .mItemValue = 5,
+            .mStockMode = TradeStockMode::Unlimited,
+            .mStock = 0
+        });
+        trader.AddInitialOffer(TradeOffer{
+            .mItemName = "Crown",
+            .mBuyPrice = 10000,
+            .mSellPrice = 5000,
+            .mItemValue = 10000,
+            .mStockMode = TradeStockMode::Limited,
+            .mStock = 1
+        });
 
         // Build the image grid
         const WorldGrid& grid = mOverWorld->GetGrid();
@@ -529,7 +573,14 @@ namespace cse498
                         if (mState == GameState::PAUSED)
                             mPauseMenu.SelectPrevious();
                         if (mState == GameState::TRADING && mActiveMerchant) {
-                            int count = static_cast<int>(mActiveMerchant->GetOffers().size());
+                            int count = 0;
+                            if (mTradeBuyMode) {
+                                for (const auto& offer : mActiveMerchant->GetOffers()) {
+                                    if (offer.mBuyPrice > 0) count++;
+                                }
+                            } else {
+                                count = static_cast<int>(mActiveMerchant->GetOffers().size());
+                            }
                             if (count > 0) mTradeMenuSelection = (mTradeMenuSelection - 1 + count) % count;
                         }
                         break;
@@ -539,8 +590,23 @@ namespace cse498
                         if (mState == GameState::PAUSED)
                             mPauseMenu.SelectNext();
                         if (mState == GameState::TRADING && mActiveMerchant) {
-                            int count = static_cast<int>(mActiveMerchant->GetOffers().size());
-                            if (count > 0) mTradeMenuSelection = (mTradeMenuSelection + 1) % count;
+                            int count = 0;
+                            if (mTradeBuyMode) {
+                                for (const auto& offer : mActiveMerchant->GetOffers()) {
+                                    if (offer.mBuyPrice > 0) count++;
+                                }
+                            } else {
+                                count = static_cast<int>(mActiveMerchant->GetOffers().size());
+                            }
+                            if (count > 0) mTradeMenuSelection = (mTradeMenuSelection + 1 + count) % count;
+                        }
+                        break;
+
+                    case SDLK_LEFT:
+                    case SDLK_RIGHT:
+                        if (mState == GameState::TRADING) {
+                            mTradeBuyMode = !mTradeBuyMode;
+                            mTradeMenuSelection = 0;
                         }
                         break;
                     case SDLK_RETURN:
@@ -549,16 +615,56 @@ namespace cse498
                         if (mState == GameState::PAUSED)
                             mPauseMenu.ActivateSelected();
                         if (mState == GameState::TRADING && mActiveMerchant) {
-                            const auto& offers = mActiveMerchant->GetOffers();
-                            if (mTradeMenuSelection >= 0 && mTradeMenuSelection < static_cast<int>(offers.size())) {
-                                const auto& offer = offers[mTradeMenuSelection];
-                                TradeResult result = mActiveMerchant->BuyFromMerchant(*mOverworldPlayer, offer.mItemName, 1);
-                                if (result.mStatus == TradeStatus::Success) {
-                                    mPickupMessage = "Bought " + offer.mItemName + " for " + std::to_string(offer.mBuyPrice) + " gold";
-                                } else {
-                                    mPickupMessage = result.mMessage;
+                            if (mTradeBuyMode) {
+                                const auto& offers = mActiveMerchant->GetOffers();
+                                int displayIndex = 0;
+                                for (int i = 0; i < static_cast<int>(offers.size()); ++i) {
+                                    const auto& offer = offers[i];
+                                    if (offer.mBuyPrice == 0) continue;
+
+                                    if (displayIndex == mTradeMenuSelection) {
+                                        TradeResult result = mActiveMerchant->BuyFromMerchant(*mOverworldPlayer, offer.mItemName, 1);
+                                        if (result.mStatus == TradeStatus::Success) {
+                                            mPickupMessage = "Bought " + offer.mItemName + " for " + std::to_string(offer.mBuyPrice) + " gold";
+                                        } else {
+                                            mPickupMessage = result.mMessage;
+                                        }
+                                        mPickupMessageTime = SDL_GetTicks();
+                                        break;
+                                    }
+                                    displayIndex++;
                                 }
-                                mPickupMessageTime = SDL_GetTicks();
+                            } else {
+                                // Sell resources from world inventory to merchant for gold
+                                const auto& offers = mActiveMerchant->GetOffers();
+                                if (mTradeMenuSelection >= 0 && mTradeMenuSelection < static_cast<int>(offers.size())) {
+                                    const auto& offer = offers[mTradeMenuSelection];
+
+                                    // Map offer name to ItemType
+                                    auto& worldInv = mOverWorld->GetInventory();
+                                    ItemType type = ItemType::Wood;
+                                    bool validType = true;
+                                    if (offer.mItemName == "Wood") type = ItemType::Wood;
+                                    else if (offer.mItemName == "Stone") type = ItemType::Stone;
+                                    else if (offer.mItemName == "Metal") type = ItemType::Metal;
+                                    else validType = false;
+
+                                    if (validType && worldInv.HasEnough(type, 1)) {
+                                        if (mActiveMerchant->SpendGold(offer.mSellPrice)) {
+                                            worldInv.RemoveItem(type, 1);
+                                            mOverworldPlayer->AddGold(offer.mSellPrice);
+                                            mPickupMessage = "Sold 1 " + offer.mItemName + " for "
+                                                + std::to_string(offer.mSellPrice) + " gold";
+                                        } else {
+                                            mPickupMessage = "Merchant can't afford that.";
+                                        }
+                                    } else if (!validType) {
+                                        mPickupMessage = "Can't sell that item.";
+                                    } else {
+                                        mPickupMessage = "No " + offer.mItemName + " to sell.";
+                                    }
+                                    mPickupMessageTime = SDL_GetTicks();
+                                }
                             }
                         }
                         break;
@@ -624,6 +730,7 @@ namespace cse498
                                 if (auto* merchant = dynamic_cast<MerchantAgent*>(&agent)) {
                                     mActiveMerchant = merchant;
                                     mTradeMenuSelection = 0;
+                                    mTradeBuyMode = true; // default to buy tab
                                     mPreviousState = mState;
                                     mState = GameState::TRADING;
                                     openedTrade = true;
@@ -691,6 +798,53 @@ namespace cse498
                         }
                     }
                     break; // end case e (finally)
+
+                    // Just used for crown Easter Egg really, shortens the selling menu time.
+                    case SDLK_r:
+                        if (mState == GameState::TRADING && !mTradeBuyMode && mActiveMerchant) {
+                            auto& worldInv = mOverWorld->GetInventory();
+                            const auto& offers = mActiveMerchant->GetOffers();
+                            size_t totalGold = 0;
+                            std::string combined;
+
+                            for (const auto& offer : offers) {
+                                ItemType type = ItemType::Wood;
+                                bool validType = true;
+                                if (offer.mItemName == "Wood") type = ItemType::Wood;
+                                else if (offer.mItemName == "Stone") type = ItemType::Stone;
+                                else if (offer.mItemName == "Metal") type = ItemType::Metal;
+                                else validType = false;
+
+                                if (!validType) continue;
+
+                                size_t have = worldInv.GetAmount(type);
+                                if (have == 0) continue;
+
+                                size_t payout = have * offer.mSellPrice;
+                                if (!mActiveMerchant->SpendGold(payout)) {
+                                    // Sell as much as merchant can afford
+                                    have = mActiveMerchant->GetGold() / offer.mSellPrice;
+                                    if (have == 0) continue;
+                                    payout = have * offer.mSellPrice;
+                                    mActiveMerchant->SpendGold(payout);
+                                }
+
+                                worldInv.RemoveItem(type, have);
+                                mOverworldPlayer->AddGold(payout);
+                                totalGold += payout;
+
+                                if (!combined.empty()) combined += "  ";
+                                combined += std::to_string(have) + " " + offer.mItemName;
+                            }
+
+                            if (totalGold > 0) {
+                                mPickupMessage = "Sold " + combined + " for " + std::to_string(totalGold) + " gold";
+                            } else {
+                                mPickupMessage = "Nothing to sell.";
+                            }
+                            mPickupMessageTime = SDL_GetTicks();
+                        }
+                    break;
 
                 // Number keys 0-9: move backpack item to hotbar slot
                 case SDLK_0:
@@ -885,6 +1039,8 @@ void Game::UpdateOverworld()
                 }
             } else if (dynamic_cast<ResourceSpawn*>(&agent)) {
                 continue;
+            } else if (agent.GetName() == "Trader") {
+                sprite = "skeleton"; // use skeleton sprite as placeholder for trader
             } else {
                 sprite = "skeleton";
             }
@@ -1188,7 +1344,6 @@ void Game::UpdateOverworld()
     }
 
     void Game::RenderTrading() {
-        // Draw the overworld underneath
         RenderOverworld();
 
         if (!mActiveMerchant) return;
@@ -1203,8 +1358,8 @@ void Game::UpdateOverworld()
         SDL_Rect overlay = {0, 0, w, h};
         SDL_RenderFillRect(renderer, &overlay);
 
-        int panel_w = 400;
-        int panel_h = 350;
+        int panel_w = 420;
+        int panel_h = 380;
         int panel_x = (w - panel_w) / 2;
         int panel_y = (h - panel_h) / 2;
 
@@ -1212,8 +1367,6 @@ void Game::UpdateOverworld()
         SDL_SetRenderDrawColor(renderer, 30, 30, 40, 240);
         SDL_Rect panel = {panel_x, panel_y, panel_w, panel_h};
         SDL_RenderFillRect(renderer, &panel);
-
-        // Panel border
         SDL_SetRenderDrawColor(renderer, 100, 100, 120, 255);
         SDL_RenderDrawRect(renderer, &panel);
 
@@ -1225,54 +1378,97 @@ void Game::UpdateOverworld()
         mPickupText.SetContent(mActiveMerchant->GetTradeGreeting());
         int text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
         mPickupText.Draw(text_x, y);
-        y += 35;
+        y += 30;
+
+        // Buy/Sell tabs
+        mPickupText.SetSize(18);
+        std::string buyLabel = mTradeBuyMode ? "[ BUY ]" : "  BUY  ";
+        std::string sellLabel = !mTradeBuyMode ? "[ SELL ]" : "  SELL  ";
+        mPickupText.SetBold(mTradeBuyMode);
+        mPickupText.SetContent(buyLabel);
+        mPickupText.Draw(panel_x + panel_w / 4 - mPickupText.GetWidth() / 2, y);
+        mPickupText.SetBold(!mTradeBuyMode);
+        mPickupText.SetContent(sellLabel);
+        mPickupText.Draw(panel_x + 3 * panel_w / 4 - mPickupText.GetWidth() / 2, y);
+        y += 30;
 
         // Player gold
         mPickupText.SetSize(16);
         mPickupText.SetBold(false);
-        mPickupText.SetContent("Your gold: " + std::to_string(mOverworldPlayer->GetGold()));
+        mPickupText.SetContent("Gold: " + std::to_string(mOverworldPlayer->GetGold()));
         mPickupText.Draw(panel_x + 20, y);
-        y += 30;
+        y += 25;
 
-        // Offers list
-        const auto& offers = mActiveMerchant->GetOffers();
-        for (int i = 0; i < static_cast<int>(offers.size()); ++i) {
-            const auto& offer = offers[i];
+        if (mTradeBuyMode) {
+            const auto& offers = mActiveMerchant->GetOffers();
+            int displayIndex = 0;
+            for (int i = 0; i < static_cast<int>(offers.size()); ++i) {
+                const auto& offer = offers[i];
+                if (offer.mBuyPrice == 0) continue; // not for sale
 
-            std::string line = offer.mItemName + "  -  " + std::to_string(offer.mBuyPrice) + " gold";
-            if (offer.mStockMode == TradeStockMode::Limited) {
-                line += "  [" + std::to_string(offer.mStock) + " left]";
+                std::string line = offer.mItemName + "  -  " + std::to_string(offer.mBuyPrice) + " gold";
+                if (offer.mStockMode == TradeStockMode::Limited) {
+                    line += "  [" + std::to_string(offer.mStock) + " left]";
+                }
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(displayIndex == mTradeMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (displayIndex == mTradeMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 25;
+                displayIndex++;
             }
 
-            mPickupText.SetSize(16);
-            mPickupText.SetBold(i == mTradeMenuSelection);
-            mPickupText.SetContent(line);
-            mPickupText.Draw(panel_x + 30, y);
-
-            // Selection highlight
-            if (i == mTradeMenuSelection) {
-                SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
-                SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
-                SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-                SDL_RenderDrawRect(renderer, &sel);
+            if (displayIndex == 0) {
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(false);
+                mPickupText.SetContent("No items for sale.");
+                mPickupText.Draw(panel_x + 30, y);
             }
+        } else {
+            // Show world resources available to sell
+            const auto& worldInv = mOverWorld->GetInventory();
+            const auto& offers = mActiveMerchant->GetOffers();
 
-            y += 25;
-        }
+            for (int i = 0; i < static_cast<int>(offers.size()); ++i) {
+                const auto& offer = offers[i];
 
-        if (offers.empty()) {
-            mPickupText.SetSize(16);
-            mPickupText.SetBold(false);
-            mPickupText.SetContent("No items for sale.");
-            mPickupText.Draw(panel_x + 30, y);
-            y += 25;
+                // Get quantity from world inventory
+                size_t have = 0;
+                if (offer.mItemName == "Wood") have = worldInv.GetAmount(ItemType::Wood);
+                else if (offer.mItemName == "Stone") have = worldInv.GetAmount(ItemType::Stone);
+                else if (offer.mItemName == "Metal") have = worldInv.GetAmount(ItemType::Metal);
+
+                std::string line = offer.mItemName + "  -  " + std::to_string(offer.mSellPrice)
+                    + " gold  (have " + std::to_string(have) + ")";
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(i == mTradeMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (i == mTradeMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 25;
+            }
         }
 
         // Instructions
         y = panel_y + panel_h - 30;
-        mPickupText.SetSize(14);
+        mPickupText.SetSize(12);
         mPickupText.SetBold(false);
-        mPickupText.SetContent("UP/DOWN: browse   ENTER: buy   E: close");
+        mPickupText.SetContent("LEFT/RIGHT:  buy/sell  UP/DOWN: browse  ENTER: confirm  R: sell all  E: close");
         text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
         mPickupText.Draw(text_x, y);
     }
