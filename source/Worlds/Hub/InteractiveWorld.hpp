@@ -220,6 +220,7 @@ public:
     InteractiveWorldInventory& GetInventory() { return *m_inventory; }
     const InteractiveWorldInventory& GetInventory() const { return *m_inventory; }
     std::shared_ptr<InteractiveWorldInventory> GetInventoryPtr() { return m_inventory; }
+    [[nodiscard]] const std::vector<std::shared_ptr<ResourceProducer>>& GetProducers() const { return m_producers; }
     /**
      * Have agent perform an action
      * @param agent Agent to perform action on

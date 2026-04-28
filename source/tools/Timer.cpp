@@ -104,10 +104,10 @@ double cse498::Timer::elapsed() const {
 bool cse498::Timer::isRunning() const { return mRunning; }
 
 /**
- * Returns the vector containing the lap times for the Timer.
  * If the Timer is running, add the elapsed time into the current lap time to
  * get an accurate lap time, and adjust the starting point as necessary for
  * future calculations.
+ * @return Returns the vector containing the lap times for the Timer.
  */
 std::vector<double> cse498::Timer::getLaps() {
     if (mRunning) {
@@ -131,9 +131,9 @@ void cse498::Timer::advanceTime(double seconds) {
 }
 
 /**
- * Returns a string containing the state of the timer in xx:xx.xxx format
- * (minutes, seconds, milliseconds)
  * @param withLaps Should the string include lap information or not
+ * @return Returns a string containing the state of the timer in xx:xx.xxx format
+ * (minutes, seconds, milliseconds)
  */
 std::string cse498::Timer::toString(bool withLaps) const {
     double time = elapsed();

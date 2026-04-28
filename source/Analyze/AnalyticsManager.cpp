@@ -46,10 +46,10 @@ void AnalyticsManager::Reset() {
     ResetActionLog();
 }
 
-
-/*
-Adds a new enemy count value to the enemies killed log
-*/
+/**
+ * Adds a new enemy count value to the enemies killed log
+ * @param count_enemies enemies
+ */
 void AnalyticsManager::LogEnemiesKilled(double count_enemies) {
     // Ignore negative values
     if (count_enemies < 0) {
@@ -70,9 +70,9 @@ void AnalyticsManager::LogDamageDealt(double damage) {
     mDamageDealtLog.Add(damage);
 }
 
-/*
-Returns a const reference to the enemies killed log
-*/
+/** 
+ * Returns a const reference to the enemies killed log
+ */
 const DataLog& AnalyticsManager::GetEnemiesKilledLog() const noexcept { return mEnemiesKilledLog; }
 
 /**

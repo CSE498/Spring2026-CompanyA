@@ -11,8 +11,12 @@ namespace cse498 {
 
 // StatsTracker
 
-/*
- * Builds the dashboard-facing summary for one numeric series.
+/**
+ * Builds a summary for one numeric series.
+ * @param key Stable identifier for the series.
+ * @param label Human-readable name for dashboard display.
+ * @param log Existing DataLog from the analytics layer.
+ * @return Summary data if the series contains samples, otherwise std::nullopt.
  */
 std::optional<StatSummary> StatsTracker::BuildSeriesSummary(const std::string& key, const std::string& label,
                                                             const DataLog& log) const {
@@ -37,8 +41,10 @@ std::optional<StatSummary> StatsTracker::BuildSeriesSummary(const std::string& k
     return summary;
 }
 
-/*
- * Combines all numeric series summaries and counters into one snapshot payload.
+/**
+ * Builds a full dashboard snapshot of all tracked data.
+ * @param analytics Analytics manager that owns the underlying logs.
+ * @return Combined snapshot of numeric series summaries and action summaries.
  */
 DashboardSnapshot StatsTracker::BuildSnapshot(const AnalyticsManager& analytics) const {
     DashboardSnapshot snapshot;
@@ -60,8 +66,12 @@ DashboardSnapshot StatsTracker::BuildSnapshot(const AnalyticsManager& analytics)
     return snapshot;
 }
 
-/*
- * Builds the dashboard-facing summary for one action log.
+/**
+ * Builds a summary for one action log.
+ * @param key Stable identifier for the action summary.
+ * @param label Human-readable name for dashboard display.
+ * @param log Existing ActionLog from the analytics layer.
+ * @return Summary data if the log contains actions, otherwise std::nullopt.
  */
 std::optional<ActionSummary> StatsTracker::BuildActionSummary(const std::string& key, const std::string& label,
                                                               const ActionLog& log) const {
@@ -78,9 +88,10 @@ std::optional<ActionSummary> StatsTracker::BuildActionSummary(const std::string&
     return summary;
 }
 
-/*
+/**
  * Prepares and outputs dashboard data through the analytics manager.
  * Used as a temporary way to output the summaries to the console until the GUI is implemented.
+ * @param Analytics manager that owns the underlying logs.
  */
 void StatsTracker::DisplayData(const AnalyticsManager& analytics) const{
     auto snapshot = BuildSnapshot(analytics);
