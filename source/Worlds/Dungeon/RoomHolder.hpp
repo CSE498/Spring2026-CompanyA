@@ -39,8 +39,8 @@ namespace cse498 {
         std::string m_room_dir; //File path used to access the directory of different .txt rooms
         std::string m_image_path = "../../../assets/"; //File path location for images
 
-        cse498::Random m_rng; //Random
-        cse498::WeightedSet<int> m_room_pool;
+        Random m_rng; //Random
+        WeightedSet<int> m_room_pool;
 
     public:
         RoomHolder(const LevelBase &level)
