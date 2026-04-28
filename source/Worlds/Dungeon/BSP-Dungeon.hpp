@@ -145,7 +145,7 @@ namespace cse498 {
           * @brief Clears the BSP tree state for regeneration.
           * @details Resets tree, leaf nodes, and exit door flag.
           */
-        void ClearState() {
+        void Empty() {
             m_BSP_tree.clear();
             m_leaf_nodes.clear();
             m_exit_door = false;
@@ -251,7 +251,7 @@ namespace cse498 {
 
         /// @brief Clears and rebuilds the BSP tree with current parameters
         void RegenerateObjectState() {
-            ClearState();
+            Empty();
             CreateBSPTree();
         }
  

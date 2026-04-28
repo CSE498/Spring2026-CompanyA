@@ -114,7 +114,7 @@ namespace cse498 {
          */
         void ClearLevel() {
             m_grid = std::vector<std::string>(m_bsp.GetHeight(), std::string(m_bsp.GetWidth(), '#')); //reset grid
-            m_bsp.ClearState(); //Clear BSP State
+            m_bsp.Empty(); //Clear BSP State
             m_connected_rooms.clear(); //get rid of tunneling list
             m_goblin_spawns.clear();
     		m_skeleton_spawns.clear();
@@ -185,11 +185,11 @@ namespace cse498 {
                     //if (c == '#') continue; //Skips the outer outline of the room
 					// Find goblin spawn locations
 					if (c == 'g') {
-						m_goblin_spawns.push_back({grid_x, grid_y});
+						m_goblin_spawns.emplace_back(grid_x, grid_y);
 					}
 					// Find skeleton spawn locations
 					if (c == 's') {
-						m_skeleton_spawns.push_back({grid_x, grid_y});
+						m_skeleton_spawns.emplace_back(grid_x, grid_y);
 					}
 
                     m_grid[grid_y][grid_x] = c;
@@ -204,8 +204,8 @@ namespace cse498 {
         [[nodiscard]] Point CalcRoomCenter(const std::vector<std::string> &room) const {
             assert(!room.empty());
 
-            auto width = room[0].length();
-            auto height = room.size();
+            int width = static_cast<int>(room[0].length());
+            int height = static_cast<int>(room.size());
 
             return Point(width / 2, height / 2);
         }

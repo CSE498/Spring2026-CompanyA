@@ -291,9 +291,14 @@ namespace cse498 {
             GenerateLevel();
         }
 
+        /*
+        * @breif Deconstructor for DungeonWorld
+        */
         ~DungeonWorld() = default;
 
-        /// @brief Generates the DungeonWorld based on the currently selected level from mLevel
+        /*
+        * @brief Generates the DungeonWorld based on the currently selected level from mLevel
+        */
         void GenerateLevel() {
             LoadLevelData();
 
@@ -304,10 +309,17 @@ namespace cse498 {
 			SpawnDungeonAgents();
         }
 
+        /*
+        * @brief Getter for the current level
+        * @return An int representing the current level number
+        */
         int GetLevel() {
             return mLevelNum;
         }
 
+        /*
+        * @brief Moves the game to the next level
+        */
 		void AdvanceLevel() {
 			DespawnDungeonAgents();
 
@@ -321,6 +333,9 @@ namespace cse498 {
 			mLevelJustAdvanced = true;
         }
 
+        /*
+        * @brief Spawns all the agents when entering a new world
+        */
 		void SpawnDungeonAgents() {
 			if (!mGeneration) return;
 
@@ -341,6 +356,9 @@ namespace cse498 {
 			}
 		}
 
+        /*
+        * @brief Deletes all agents when moving to a new level
+        */
 		void DespawnDungeonAgents() {
 			for (size_t id : mSpawnedEnemyIds) {
 				if (AgentBase *agent = TryGetAgent(id)) {
@@ -354,12 +372,21 @@ namespace cse498 {
 			mSpawnedEnemyIds.clear();
 		}
 
+        /*
+        * @brief UpdateWorld() is run after every agent has a turn.
+        */
         void UpdateWorld() override {
         	if ((mLevelNum == 5)) {
         		mRunOver = true;
         		return;
         	}
 		}
+
+        /*
+        * @brief Getting for mNextItemId
+        * @returns a size_t representing the next item id
+        */
+        size_t GetNextItemId () {return mNextItemId;}
 
 
         /// @brief Grabs user input to determine whether or not to move to the next level.
@@ -383,6 +410,10 @@ namespace cse498 {
         //     return;
         // }
 
+
+        /*
+        * @brief Runs all of the agents and lets them take actions
+        */
 		void RunAgents() override {
 			TrashInterface* ui = nullptr;
 
