@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "Building.hpp"
-#include "InteractiveWorldInventory.hpp"
+#include "ResourceSpawn.hpp"
 
 namespace cse498 {
 /**
@@ -21,18 +21,18 @@ class ResourceProducer {
 public:
     /**
      * Construct the ResourceProducer
-     * @param buildingPtr pointer to the building modifying the output rate
-     * @param inv       pointer to the world
+     * @param building the building modifying the output rate
+     * @param spawn the spawn for this resource
      * @param itemType    type of item being produced by this producer
      * @param startRate   base rate of production with no upgrades
      */
-    ResourceProducer(std::shared_ptr<Building> buildingPtr, InteractiveWorldInventory& inv, ItemType itemType,
-                     float startRate) : m_inventory(inv) {
+    ResourceProducer(Building& building, ResourceSpawn& spawn, ItemType itemType, float startRate) :
+        m_resourceSpawn(&spawn) {
         m_lastTime = std::chrono::steady_clock::now();
         m_outputType = itemType;
         m_baseRate = startRate;
 
-        SetBuilding(buildingPtr);
+        SetBuilding(building);
     }
     /**
      * Get the current rate of production
@@ -60,6 +60,9 @@ public:
      * Update the resource production
      */
     void Update() {
+        // Refresh rate each tick so building upgrades take effect immediately.
+        CalculateRate();
+
         // Get current time
         auto now = std::chrono::steady_clock::now();
         // Get delta time since last update
@@ -72,14 +75,14 @@ public:
         // accumulator
         int whole = static_cast<int>(m_accumulator);
         if (whole > 0) {
-            m_inventory.AddItem(m_outputType, whole);
+            m_resourceSpawn->AddResource(whole);
             m_accumulator -= whole;
         }
     }
 
 private:
-    InteractiveWorldInventory& m_inventory; // World Inventory
-    std::shared_ptr<Building> m_building; // Building modifying the output rate
+    ResourceSpawn* m_resourceSpawn;
+    Building* m_building = nullptr; // Building modifying the output rate
     float m_baseRate{}; // Base production rate
     float m_rate{}; // Current Production Rate
     float m_accumulator{0.0f}; // Accumulated fraction of a resource over time
@@ -88,11 +91,10 @@ private:
 
     /**
      * Set the building that modifies this production
-     * @param newBuilding pointer to building that modifies this producer
+     * @param newBuilding reference to building that modifies this producer
      */
-    void SetBuilding(std::shared_ptr<Building> newBuilding) {
-        m_building = newBuilding;
-        // Adjust rate
+    void SetBuilding(Building& building) {
+        m_building = &building;
         CalculateRate();
     }
 };

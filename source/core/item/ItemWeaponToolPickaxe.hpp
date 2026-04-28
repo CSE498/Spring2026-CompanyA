@@ -16,9 +16,7 @@ namespace cse498 {
 class ItemWeaponToolPickaxe : public ItemWeaponTool {
 public:
     ItemWeaponToolPickaxe(size_t id, const std::string& name, const std::string& image_path, int gold,
-                          const WorldBase& world) : ItemWeaponTool(id, name, image_path, gold, world) {
-        SetImagePath("assets/items/weapons/tools/pickaxe.png");
-    }
+                          const WorldBase& world) : ItemWeaponTool(id, name, image_path, gold, world) {}
 
     bool IsPickaxe() const override { return true; }
 };

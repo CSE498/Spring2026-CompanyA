@@ -8,29 +8,26 @@
 #ifndef TWOBLUECUBES_CATCH_DEFAULT_MAIN_HPP_INCLUDED
 #define TWOBLUECUBES_CATCH_DEFAULT_MAIN_HPP_INCLUDED
 
-#include "catch_platform.h"
 #include "catch_session.h"
+#include "catch_platform.h"
 
 #ifndef __OBJC__
 
-#    ifndef CATCH_INTERNAL_CDECL
-#        ifdef _MSC_VER
-#            define CATCH_INTERNAL_CDECL __cdecl
-#        else
-#            define CATCH_INTERNAL_CDECL
-#        endif
-#    endif
+#ifndef CATCH_INTERNAL_CDECL
+#ifdef _MSC_VER
+#define CATCH_INTERNAL_CDECL __cdecl
+#else
+#define CATCH_INTERNAL_CDECL
+#endif
+#endif
 
-#    if defined( CATCH_CONFIG_WCHAR ) && defined( CATCH_PLATFORM_WINDOWS ) && \
-        defined( _UNICODE ) && !defined( DO_NOT_USE_WMAIN )
+#if defined(CATCH_CONFIG_WCHAR) && defined(CATCH_PLATFORM_WINDOWS) && defined(_UNICODE) && !defined(DO_NOT_USE_WMAIN)
 // Standard C/C++ Win32 Unicode wmain entry point
-extern "C" int CATCH_INTERNAL_CDECL wmain( int argc,
-                                           wchar_t* argv[],
-                                           wchar_t*[] ) {
-#    else
+extern "C" int CATCH_INTERNAL_CDECL wmain (int argc, wchar_t * argv[], wchar_t * []) {
+#else
 // Standard C/C++ main entry point
-int CATCH_INTERNAL_CDECL main( int argc, char* argv[] ) {
-#    endif
+int CATCH_INTERNAL_CDECL main (int argc, char * argv[]) {
+#endif
 
     return Catch::Session().run( argc, argv );
 }
@@ -38,17 +35,17 @@ int CATCH_INTERNAL_CDECL main( int argc, char* argv[] ) {
 #else // __OBJC__
 
 // Objective-C entry point
-int main( int argc, char* const argv[] ) {
-#    if !CATCH_ARC_ENABLED
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-#    endif
+int main (int argc, char * const argv[]) {
+#if !CATCH_ARC_ENABLED
+    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+#endif
 
     Catch::registerTestMethods();
     int result = Catch::Session().run( argc, (char**)argv );
 
-#    if !CATCH_ARC_ENABLED
+#if !CATCH_ARC_ENABLED
     [pool drain];
-#    endif
+#endif
 
     return result;
 }

@@ -61,6 +61,8 @@ third-party/SDL2/
 /demos/WebUI/*.wasm.map
 /demos/*_demo*
 
+interactive_world_save.json
+
 # ====== Doxygen Output ======
 # The folder where the result reports generated after each Doxygen scan are stored
 # (config this in your Doxyfile: OUTPUT_DIRECTORY = ./doxygen-output)

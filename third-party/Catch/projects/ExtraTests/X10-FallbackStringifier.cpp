@@ -4,7 +4,8 @@
 #include <string>
 
 // A catch-all stringifier
-template <typename T> std::string fallbackStringifier( T const& ) {
+template <typename T>
+std::string fallbackStringifier(T const&) {
     return "{ !!! }";
 }
 
@@ -12,7 +13,11 @@ template <typename T> std::string fallbackStringifier( T const& ) {
 #include <catch2/catch.hpp>
 
 struct foo {
-    explicit operator bool() const { return true; }
+    explicit operator bool() const {
+        return true;
+    }
 };
 
-TEST_CASE( "aa" ) { REQUIRE( foo{} ); }
+TEST_CASE("aa") {
+    REQUIRE(foo{});
+}

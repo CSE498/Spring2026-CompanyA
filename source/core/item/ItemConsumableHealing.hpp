@@ -18,9 +18,7 @@ private:
 
 public:
     ItemConsumableHealing(size_t id, const std::string& name, const std::string& image_path, int gold,
-                          const WorldBase& world) : ItemConsumable(id, name, image_path, gold, world) {
-        SetImagePath("assets/items/consumables/healing.png");
-    }
+                          const WorldBase& world) : ItemConsumable(id, name, image_path, gold, world) {}
 
     bool IsHealing() const override { return true; }
 

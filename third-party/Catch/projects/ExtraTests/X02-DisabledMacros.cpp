@@ -5,6 +5,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
+
 // CATCH_CONFIG_DISABLE also prevents reporter registration.
 // We need to manually register at least one reporter for our tests
 static Catch::ReporterRegistrar<Catch::ConsoleReporter> temporary( "console" );
@@ -12,8 +13,12 @@ static Catch::ReporterRegistrar<Catch::ConsoleReporter> temporary( "console" );
 #include <iostream>
 
 struct foo {
-    foo() { REQUIRE_NOTHROW( print() ); }
-    void print() const { std::cout << "This should not happen\n"; }
+    foo(){
+        REQUIRE_NOTHROW( print() );
+    }
+    void print() const {
+        std::cout << "This should not happen\n";
+    }
 };
 
 // Construct foo, but `foo::print` should not be run

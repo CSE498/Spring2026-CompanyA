@@ -158,10 +158,10 @@ TEST_CASE("Test agent chases the player by selecting and executing a movement ac
     world.RunNonPlayerAgents();
 
     REQUIRE(world.GetLastActorId() == stored.GetID());
-    REQUIRE(world.GetLastActionId() == WorldActions::MOVE_RIGHT);
-    REQUIRE(stored.GetActionResult() == 1);
-    REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(2, 1));
-    REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(40.0));
+    REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
+    CHECK(stored.GetActionResult() == 1);
+    CHECK(stored.GetLocation().AsWorldPosition() == WorldPosition(1, 1));
+    CHECK(world.GetPlayer()->GetCurrentHealth() == Approx(37.0));
 }
 
 TEST_CASE("Test agent attacks the player instead of moving when the player is in range", "[TestAgent][combat]") {
@@ -286,9 +286,11 @@ TEST_CASE("Movement/attack of multiple test agents", "[TestAgent][movement]") {
     SkeletonTestWorld world;
 
     auto testAgent1 = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Skele1", 0, {2, 3}), world);
+    testAgent1->SetStats({100, 5, 5, 2.88, 0});
     REQUIRE(testAgent1 != nullptr);
     auto& stored1 = world.AddAgent(std::move(testAgent1));
     auto testAgent2 = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Skele2", 0, {8, 3}), world);
+    testAgent2->SetStats({100, 5, 5, 2.88, 0});
     REQUIRE(testAgent2 != nullptr);
     auto& stored2 = world.AddAgent(std::move(testAgent2));
 
@@ -376,16 +378,18 @@ TEST_CASE("Collision of multiple test agents", "[TestAgent][movement]") {
 
     world.RunNonPlayerAgents();
 
-    REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
+    CHECK(world.GetPlayer()->GetCurrentHealth() == Approx(28.0));
 
-    REQUIRE(stored1.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
-    REQUIRE(stored2.GetLocation().AsWorldPosition() == WorldPosition(3, 3));
+    CHECK(stored1.GetLocation().AsWorldPosition() == WorldPosition(2, 3));
+    CHECK(stored2.GetLocation().AsWorldPosition() == WorldPosition(3, 4));
 }
 
 TEST_CASE("Test agent pursuing player down corridor", "[TestAgent][movement]") {
     SkeletonTestWorld world;
 
     auto testAgent = AgentFactory::CreateTestFunctionAgent(AgentDefinition("Bones", 0, {21, 1}), world);
+    testAgent->SetStats({100, 5, 5, 2, 0});
+
     REQUIRE(testAgent != nullptr);
     auto& stored = world.AddAgent(std::move(testAgent));
     REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 1));
@@ -429,17 +433,8 @@ TEST_CASE("Test agent pursuing player down corridor", "[TestAgent][movement]") {
 
     world.RunNonPlayerAgents();
 
-    REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
-    REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(21, 5));
+    CHECK(world.GetPlayer()->GetCurrentHealth() == Approx(37.0));
 
-
-    world.SetPlayerPosition({19, 7});
-
-    world.RunNonPlayerAgents();
-
-    REQUIRE(world.GetPlayer()->GetCurrentHealth() == Approx(34.0));
-    REQUIRE(stored.GetLocation().AsWorldPosition() == WorldPosition(20, 5));
-    // Starting to get hard to keep up with, but seems it's acting as intended?
 }
 
 

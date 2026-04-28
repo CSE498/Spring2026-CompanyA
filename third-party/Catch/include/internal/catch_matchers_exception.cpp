@@ -7,25 +7,24 @@
 
 #include "catch_matchers_exception.hpp"
 
+
 namespace Catch {
-    namespace Matchers {
-        namespace Exception {
+namespace Matchers {
+namespace Exception {
 
-            bool
-            ExceptionMessageMatcher::match( std::exception const& ex ) const {
-                return ex.what() == m_message;
-            }
+bool ExceptionMessageMatcher::match(std::exception const& ex) const {
+    return ex.what() == m_message;
+}
 
-            std::string ExceptionMessageMatcher::describe() const {
-                return "exception message matches \"" + m_message + "\"";
-            }
+std::string ExceptionMessageMatcher::describe() const {
+    return "exception message matches \"" + m_message + "\"";
+}
 
-        } // namespace Exception
-        Exception::ExceptionMessageMatcher
-        Message( std::string const& message ) {
-            return Exception::ExceptionMessageMatcher( message );
-        }
+}
+Exception::ExceptionMessageMatcher Message(std::string const& message) {
+    return Exception::ExceptionMessageMatcher(message);
+}
 
-        // namespace Exception
-    } // namespace Matchers
+// namespace Exception
+} // namespace Matchers
 } // namespace Catch

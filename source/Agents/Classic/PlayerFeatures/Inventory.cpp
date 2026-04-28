@@ -24,8 +24,10 @@ size_t Inventory::AddItem(std::unique_ptr<Item> item, size_t quantity) {
             // Check each spot for the first spot NOT FULL
             if (!mInventory.at(slotIndex).IsFull()) {
                 quantity = mInventory.at(slotIndex).Insert(quantity);
-                if (quantity == 0)
+                if (quantity == 0) {
+                    NotifyChanged();
                     return 0;
+                }
             }
         }
     }
@@ -43,6 +45,7 @@ size_t Inventory::AddItem(std::unique_ptr<Item> item, size_t quantity) {
                 quantity = mInventory.at(index).InsertNew(std::move(item), quantity);
                 mItemMap[name].insert(index);
                 assert(quantity == 0);
+                NotifyChanged();
                 return 0;
             }
             // ELSE:
@@ -51,8 +54,10 @@ size_t Inventory::AddItem(std::unique_ptr<Item> item, size_t quantity) {
             quantity = mInventory.at(index).InsertNew(std::move(itemCpy), quantity);
             // when [] is actually useful to insert if it doesn't exist
             mItemMap[name].insert(index);
-            if (quantity == 0)
+            if (quantity == 0) {
+                NotifyChanged();
                 return 0;
+            }
         }
     }
     return quantity;
@@ -86,6 +91,7 @@ size_t Inventory::RemoveItem(const std::string& name, size_t amount, bool isAllO
     if (itemIndices.empty())
         mItemMap.erase(itr);
 
+    NotifyChanged();
     return amount;
 }
 size_t Inventory::GetTotal(const std::string& name) const {
@@ -117,6 +123,7 @@ size_t Inventory::RemoveUniqueItem(const size_t itemId) {
             auto itemSlot = mInventory.at(i).GetItem();
             mItemMap.at(itemSlot->GetName()).erase(i);
             mInventory.at(i).Reset();
+            NotifyChanged();
             return 0;
         }
     }
@@ -136,12 +143,14 @@ void Inventory::SwapSlots(size_t slotIndex1, size_t slotIndex2) {
         mItemMap.at(slot2Item->GetName()).insert(slotIndex1);
     }
     std::swap(mInventory.at(slotIndex1), mInventory.at(slotIndex2));
+    NotifyChanged();
 }
 void Inventory::ClearInventory() {
     mItemMap.clear();
     for (auto& slot: mInventory) {
         slot.Reset();
     }
+    NotifyChanged();
 }
 std::ostream& operator<<(std::ostream& os, const Inventory::InventorySlot& slot) {
     // just for some visualization to check state.

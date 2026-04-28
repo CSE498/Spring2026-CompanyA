@@ -11,10 +11,10 @@
 #ifndef TWOBLUECUBES_CATCH_CHRONOMETER_HPP_INCLUDED
 #define TWOBLUECUBES_CATCH_CHRONOMETER_HPP_INCLUDED
 
-#include "../catch_meta.hpp"
 #include "catch_clock.hpp"
 #include "catch_optimizer.hpp"
 #include "detail/catch_complete_invoke.hpp"
+#include "../catch_meta.hpp"
 
 namespace Catch {
     namespace Benchmark {
@@ -29,9 +29,7 @@ namespace Catch {
                 void start() override { started = Clock::now(); }
                 void finish() override { finished = Clock::now(); }
 
-                ClockDuration<Clock> elapsed() const {
-                    return finished - started;
-                }
+                ClockDuration<Clock> elapsed() const { return finished - started; }
 
                 TimePoint<Clock> started;
                 TimePoint<Clock> finished;
@@ -40,25 +38,26 @@ namespace Catch {
 
         struct Chronometer {
         public:
-            template <typename Fun> void measure( Fun&& fun ) {
-                measure( std::forward<Fun>( fun ), is_callable<Fun( int )>() );
-            }
+            template <typename Fun>
+            void measure(Fun&& fun) { measure(std::forward<Fun>(fun), is_callable<Fun(int)>()); }
 
             int runs() const { return k; }
 
-            Chronometer( Detail::ChronometerConcept& meter, int k ):
-                impl( &meter ), k( k ) {}
+            Chronometer(Detail::ChronometerConcept& meter, int k)
+                : impl(&meter)
+                , k(k) {}
 
         private:
-            template <typename Fun> void measure( Fun&& fun, std::false_type ) {
-                measure( [&fun]( int ) { return fun(); }, std::true_type() );
+            template <typename Fun>
+            void measure(Fun&& fun, std::false_type) {
+                measure([&fun](int) { return fun(); }, std::true_type());
             }
 
-            template <typename Fun> void measure( Fun&& fun, std::true_type ) {
+            template <typename Fun>
+            void measure(Fun&& fun, std::true_type) {
                 Detail::optimizer_barrier();
                 impl->start();
-                for ( int i = 0; i < k; ++i )
-                    invoke_deoptimized( fun, i );
+                for (int i = 0; i < k; ++i) invoke_deoptimized(fun, i);
                 impl->finish();
                 Detail::optimizer_barrier();
             }

@@ -7,24 +7,22 @@
  */
 
 #include "catch_section.h"
-
 #include "catch_capture.hpp"
 #include "catch_uncaught_exceptions.h"
 
 namespace Catch {
 
-    Section::Section( SectionInfo const& info ):
-        m_info( info ),
-        m_sectionIncluded(
-            getResultCapture().sectionStarted( m_info, m_assertions ) ) {
+    Section::Section( SectionInfo const& info )
+    :   m_info( info ),
+        m_sectionIncluded( getResultCapture().sectionStarted( m_info, m_assertions ) )
+    {
         m_timer.start();
     }
 
     Section::~Section() {
-        if ( m_sectionIncluded ) {
-            SectionEndInfo endInfo{
-                m_info, m_assertions, m_timer.getElapsedSeconds() };
-            if ( uncaught_exceptions() )
+        if( m_sectionIncluded ) {
+            SectionEndInfo endInfo{ m_info, m_assertions, m_timer.getElapsedSeconds() };
+            if( uncaught_exceptions() )
                 getResultCapture().sectionEndedEarly( endInfo );
             else
                 getResultCapture().sectionEnded( endInfo );
@@ -32,6 +30,9 @@ namespace Catch {
     }
 
     // This indicates whether the section should be executed or not
-    Section::operator bool() const { return m_sectionIncluded; }
+    Section::operator bool() const {
+        return m_sectionIncluded;
+    }
+
 
 } // end namespace Catch

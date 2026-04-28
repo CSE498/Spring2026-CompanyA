@@ -121,11 +121,9 @@ namespace cse498 {
         }
 
 
-        /// @brief Grabs the Dungeon map vector grid for loading the information in WorldGrid
-        /// @return
-        [[nodiscard]] std::vector<std::string> GetDungeon() const {
-            return m_grid;
-        }
+    /// @brief Grabs the Dungeon map vector grid for loading the information in WorldGrid
+    /// @return
+    [[nodiscard]] std::vector<std::string> GetDungeon() const { return m_grid; }
 
         /// @brief Grabs the Generated BSP Tree in order to extract room information to extract onto the grid
         /// @returnBSP tree object
@@ -190,10 +188,10 @@ namespace cse498 {
 						m_skeleton_spawns.emplace_back(grid_x, grid_y);
 					}
 
-                    m_grid[grid_y][grid_x] = c;
-                }
+                m_grid[grid_y][grid_x] = c;
             }
         }
+    }
 
 
         /// @brief Calculate center of room placed in grid
@@ -205,8 +203,8 @@ namespace cse498 {
             int width = static_cast<int>(room[0].length());
             int height = static_cast<int>(room.size());
 
-            return Point(width / 2, height / 2);
-        }
+        return Point(width / 2, height / 2);
+    }
 
         /// @brief Parses through the list of Room Nodes (BSPNodes) that have a relation with each other and connects those
         void TunnelConnectDungeon(const int& current_level) {
@@ -245,8 +243,8 @@ namespace cse498 {
         void ConnectBSPRooms(LinkedRooms RoomCoordinates, const int& current_level) {
             auto [x1_value, y1_value, x2_value , y2_value] = RoomCoordinates;
 
-            auto point_x = x2_value - x1_value;
-            auto point_y = y2_value - y1_value;
+        auto point_x = x2_value - x1_value;
+        auto point_y = y2_value - y1_value;
 
             bool negative_y = point_y < 0;
             bool negative_x = point_x < 0;
@@ -254,10 +252,12 @@ namespace cse498 {
             point_y = std::abs(point_y);
             point_x = std::abs(point_x);
 
-            for (int y = 0; y <= point_y; ++y) {
-                int y_point;
-                if (negative_y) y_point = y1_value - y;
-                else y_point = y1_value + y;
+        for (int y = 0; y <= point_y; ++y) {
+            int y_point;
+            if (negative_y)
+                y_point = y1_value - y;
+            else
+                y_point = y1_value + y;
 
                 auto &y_char = m_grid[y_point][x1_value];
                 auto it = std::ranges::find(WALL_SET, y_char);
@@ -267,10 +267,12 @@ namespace cse498 {
                 }
             }
 
-            for (int x = 0; x <= point_x; ++x) {
-                int x_point;
-                if (negative_x) x_point = x1_value - x;
-                else x_point = x1_value + x;
+        for (int x = 0; x <= point_x; ++x) {
+            int x_point;
+            if (negative_x)
+                x_point = x1_value - x;
+            else
+                x_point = x1_value + x;
 
                 auto &x_char = m_grid[y2_value][x_point];
                 auto it = std::ranges::find(WALL_SET, x_char);
@@ -290,21 +292,21 @@ namespace cse498 {
             if (node.left_child == -1 && node.right_child == -1) {
                 auto pair = CalcRoomCenter(node.vector_room); //midpoint x and y of room
 
-                return (Point{node.x + pair.x, node.y + pair.y});
-            }
+            return (Point{node.x + pair.x, node.y + pair.y});
+        }
 
-            Point left = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.left_child]);
-            Point right = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.right_child]);
+        Point left = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.left_child]);
+        Point right = PostOrderRoomConnect(m_bsp.GetBSPTree()[node.right_child]);
 
 
-            m_connected_rooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); //x1,y1,x2,y2 respectively
+        m_connected_rooms.push_back(LinkedRooms{left.x, left.y, right.x, right.y}); // x1,y1,x2,y2 respectively
 
-            auto return_determiner = m_rng.GetValue(0, 1); //Determines which node is returned
+        auto return_determiner = m_rng.GetValue(0, 1); // Determines which node is returned
 
-            //sends a node upwards, allowing connectivity between nodes for linking
-            if (return_determiner == 0) {
-                return right;
-            }
+        // sends a node upwards, allowing connectivity between nodes for linking
+        if (return_determiner == 0) {
+            return right;
+        }
 
             return left;
         }

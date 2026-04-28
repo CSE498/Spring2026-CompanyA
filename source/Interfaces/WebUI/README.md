@@ -60,17 +60,17 @@ cmake --build build --target group18_demo
 then
 ```bash
 # From the repo root (Emscripten environment must be active)
-emrun /source/index.html --browser <chrome | edge | ...> --serve-root .
+emrun /demos/WebUI --browser <chrome | edge | ...> --serve-root .
 ```
 The --serve-root argument is important for loading image assets.
 
 Alternative, run
 ```bash
-emrun /source/index.html --no_browser --serve-root .
+emrun /demos/WebUI --no_browser --serve-root .
 ```
 then open in browser
 ```bash
-http://localhost:6931/source/index.html
+http://localhost:6931/demos/WebUI
 ```
 
 ## Running Tests

@@ -19,10 +19,10 @@ namespace cse498 {
         static constexpr std::size_t QUIT = 6; // "q"
 
         static constexpr std::string REMAIN_STILL_STRING = "stay";
-        static constexpr std::string MOVE_UP_STRING = "w";
-        static constexpr std::string MOVE_DOWN_STRING = "s";
-        static constexpr std::string MOVE_LEFT_STRING = "a";
-        static constexpr std::string MOVE_RIGHT_STRING = "d";
+        static constexpr std::string MOVE_UP_STRING = "up";
+        static constexpr std::string MOVE_DOWN_STRING = "down";
+        static constexpr std::string MOVE_LEFT_STRING = "left";
+        static constexpr std::string MOVE_RIGHT_STRING = "right";
         static constexpr std::string INTERACT_STRING = "e";
         static constexpr std::string QUIT_STRING = "q";
     };

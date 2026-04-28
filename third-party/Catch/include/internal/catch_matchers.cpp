@@ -8,21 +8,21 @@
 #include "catch_matchers.h"
 
 namespace Catch {
-    namespace Matchers {
-        namespace Impl {
+namespace Matchers {
+    namespace Impl {
 
-            std::string MatcherUntypedBase::toString() const {
-                if ( m_cachedToString.empty() )
-                    m_cachedToString = describe();
-                return m_cachedToString;
-            }
+        std::string MatcherUntypedBase::toString() const {
+            if( m_cachedToString.empty() )
+                m_cachedToString = describe();
+            return m_cachedToString;
+        }
 
-            MatcherUntypedBase::~MatcherUntypedBase() = default;
+        MatcherUntypedBase::~MatcherUntypedBase() = default;
 
-        } // namespace Impl
-    } // namespace Matchers
+    } // namespace Impl
+} // namespace Matchers
 
-    using namespace Matchers;
-    using Matchers::Impl::MatcherBase;
+using namespace Matchers;
+using Matchers::Impl::MatcherBase;
 
 } // namespace Catch

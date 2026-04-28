@@ -63,6 +63,16 @@ private:
 
     auto Find(std::string_view name) const { return mActions.find(std::string(name)); }
 
+    /**
+     * Safe typed view into a std::any payload.
+     *
+     * This wraps pointer-style std::any_cast so callers can validate argument
+     * types without exceptions. A nullptr means the payload is not T.
+     *
+     * @tparam T Desired extracted type.
+     * @param value Packed std::any value.
+     * @return Pointer to stored T on success, otherwise nullptr.
+     */
     template<typename T>
     static const std::remove_cvref_t<T>* AnyPtr(const std::any& value) {
         return std::any_cast<std::remove_cvref_t<T>>(&value);
@@ -281,6 +291,21 @@ public:
         return mActions.emplace(std::move(name), std::move(entry)).second;
     }
 
+    /**
+     * Trigger a typed action and decode its return value.
+     *
+     * Returns std::nullopt if:
+     * - action name is missing/invalid
+     * - provided argument types/count do not match registered signature
+     * - invoker fails type validation
+     * - return payload could not be cast to R
+     *
+     * @tparam R Expected return type.
+     * @tparam Args Call argument types.
+     * @param name Action identifier.
+     * @param args Packed invocation arguments.
+     * @return Decoded return value on success; std::nullopt on failure.
+     */
     template<typename R, typename... Args>
     std::optional<R> TriggerTyped(std::string_view name, Args&&... args) const {
         static_assert(!std::is_void_v<R>, "Use TriggerVoid<Args...>() for void-returning typed actions.");
@@ -303,6 +328,14 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * Trigger a void-returning typed action.
+     *
+     * @tparam Args Call argument types.
+     * @param name Action identifier.
+     * @param args Arguments to pass into registered action.
+     * @return True if invocation and argument validation succeeded.
+     */
     template<typename... Args>
     bool TriggerVoid(std::string_view name, Args&&... args) const {
         using Signature = std::function<void(Args...)>;

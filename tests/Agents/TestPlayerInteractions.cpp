@@ -216,3 +216,48 @@ TEST_CASE("Quit action ends the demo world", "[player][world]") {
     CHECK(result == 1);
     CHECK(world.IsRunOver());
 }
+
+TEST_CASE("BuildDiamondNeighborsByRange returns expected tiles for range 2", "[player][interaction][range]") {
+    const WorldPosition center(10, 10);
+    const auto neighbors = WorldBase::BuildDiamondNeighborsByRange(center, 2);
+
+    // |dx| + |dy| <= 2 excluding center => 12 tiles
+    CHECK(neighbors.size() == 12);
+    CHECK_FALSE(neighbors.contains(center));
+
+    CHECK(neighbors.contains(WorldPosition(11, 10))); // right 1
+    CHECK(neighbors.contains(WorldPosition(10, 9)));  // up 1
+    CHECK(neighbors.contains(WorldPosition(10, 11))); // down 1
+    CHECK(neighbors.contains(WorldPosition(9, 10)));  // left 1
+
+    CHECK(neighbors.contains(WorldPosition(12, 10))); // right 2
+    CHECK(neighbors.contains(WorldPosition(10, 8)));  // up 2
+    CHECK(neighbors.contains(WorldPosition(10, 12))); // down 2
+    CHECK(neighbors.contains(WorldPosition(8, 10)));  // left 2
+
+    CHECK(neighbors.contains(WorldPosition(11, 9)));  // (+1, -1)
+    CHECK(neighbors.contains(WorldPosition(11, 11))); // (+1, +1)
+    CHECK(neighbors.contains(WorldPosition(9, 11)));  // (-1, +1)
+    CHECK(neighbors.contains(WorldPosition(9, 9)));   // (-1, -1)
+}
+
+TEST_CASE("BuildDiamondNeighborsByRange preserves cardinal-first priority order", "[player][interaction][range]") {
+    const WorldPosition center(3, 3);
+    const auto neighbors = WorldBase::BuildDiamondNeighborsByRange(center, 2);
+
+    REQUIRE(neighbors.at(WorldPosition(4, 3)) == 1); // right 1
+    REQUIRE(neighbors.at(WorldPosition(3, 2)) == 2); // up 1
+    REQUIRE(neighbors.at(WorldPosition(3, 4)) == 3); // down 1
+    REQUIRE(neighbors.at(WorldPosition(2, 3)) == 4); // left 1
+
+    REQUIRE(neighbors.at(WorldPosition(5, 3)) == 5); // right 2
+    REQUIRE(neighbors.at(WorldPosition(3, 1)) == 6); // up 2
+    REQUIRE(neighbors.at(WorldPosition(3, 5)) == 7); // down 2
+    REQUIRE(neighbors.at(WorldPosition(1, 3)) == 8); // left 2
+
+    // Ring-edge non-cardinal points come after cardinals at same distance.
+    CHECK(neighbors.at(WorldPosition(4, 2)) > neighbors.at(WorldPosition(5, 3)));
+    CHECK(neighbors.at(WorldPosition(4, 4)) > neighbors.at(WorldPosition(5, 3)));
+    CHECK(neighbors.at(WorldPosition(2, 4)) > neighbors.at(WorldPosition(5, 3)));
+    CHECK(neighbors.at(WorldPosition(2, 2)) > neighbors.at(WorldPosition(5, 3)));
+}

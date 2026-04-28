@@ -11,26 +11,25 @@
 #include <memory>
 #include <vector>
 
-#include "../../core/WorldBase.hpp"
-#include "WorldGeneration.hpp"
-#include "../../tools/WeightedSet.hpp"
-#include "ForestLevel.hpp"
-#include "CaveLevel.hpp"
-#include "CastleLevel.hpp"
-#include "LevelBase.hpp"
 #include "../../Interfaces/TrashInterface.hpp"
-#include "../../Agents/Classic/Enemy.hpp"
+#include "../../core/WorldBase.hpp"
+#include "../../tools/WeightedSet.hpp"
+#include "CastleLevel.hpp"
+#include "CaveLevel.hpp"
+#include "ForestLevel.hpp"
+#include "LevelBase.hpp"
+#include "WorldGeneration.hpp"
 
-#include "../../core/item/ItemWeaponSword.hpp"
-#include "../../core/item/ItemWeaponBow.hpp"
+#include "../../Agents/Classic/Enemy.hpp"
+#include "../../Worlds/DemoG2/WorldActions.hpp"
 #include "../../core/item/ItemConsumableDefense.hpp"
 #include "../../core/item/ItemConsumableHealing.hpp"
 #include "../../core/item/ItemConsumableSpeed.hpp"
+#include "../../core/item/ItemWeaponBow.hpp"
+#include "../../core/item/ItemWeaponSword.hpp"
 #include "../../core/item/ItemWeaponToolAxe.hpp"
 #include "../../core/item/ItemWeaponToolPickaxe.hpp"
 #include "../../core/item/ItemWeaponToolShovel.hpp"
-#include "../../Agents/Classic/PlayerFeatures/Inventory.hpp"
-
 namespace cse498 {
 
     /*
@@ -284,8 +283,8 @@ namespace cse498 {
 			player.SetSymbol('Z').SetLocation(WorldPosition{1,1});
 			mPlayer = &player;
 
-			auto& ui = AddAgent<TrashInterface>("Interface");
-			ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
+            // auto& ui = AddAgent<TrashInterface>("Interface");
+            // ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
 
             GenerateLevel();
         }
@@ -375,7 +374,7 @@ namespace cse498 {
         * @brief UpdateWorld() is run after every agent has a turn.
         */
         void UpdateWorld() override {
-        	if ((mLevelNum == 5)) {
+        	if (mLevelNum == 5) {
         		mRunOver = true;
         		return;
         	}
@@ -414,31 +413,31 @@ namespace cse498 {
         * @brief Runs all of the agents and lets them take actions
         */
 		void RunAgents() override {
-			TrashInterface* ui = nullptr;
+            // TrashInterface* ui = nullptr;
 
-			for (const auto& agent_ptr : agent_set) {
-				if (agent_ptr->IsInterface()) {
-					ui = static_cast<TrashInterface*>(agent_ptr.get());
-					break;
-				}
-			}
+            // for (const auto& agent_ptr : agent_set) {
+            // 	if (agent_ptr->IsInterface()) {
+            // 		ui = static_cast<TrashInterface*>(agent_ptr.get());
+            // 		break;
+            // 	}
+            // }
 
-			assert(ui);
-			assert(mPlayer);
+            // assert(ui);
+            assert(mPlayer);
 
-			size_t action = ui->SelectAction(main_grid);
-			int result = DoAction(*mPlayer, action);
-			mPlayer->SetActionResult(result);
+            // size_t action = ui->SelectAction(main_grid);
+            // int result = DoAction(*mPlayer, action);
+            // mPlayer->SetActionResult(result);
 
-			ui->SetLocation(mPlayer->GetLocation());
+            // ui->SetLocation(mPlayer->GetLocation());
 
-			//Prevent enemies from taking a turn before new level is drawn
-			if (mLevelJustAdvanced) {
-				mLevelJustAdvanced = false;
+            // Prevent enemies from taking a turn before new level is drawn
+            if (mLevelJustAdvanced) {
+                mLevelJustAdvanced = false;
 				return;
-			}
+            }
 
-			for (const auto& agent_ptr : agent_set) {
+            for (const auto& agent_ptr : agent_set) {
 				AgentBase* agent = agent_ptr.get();
 
 				if (agent->IsPlayerAgent()) continue;
