@@ -65,8 +65,8 @@ namespace cse498 {
          * @note Each insertion is expected to succeed. Assertions are used
          * to enforce this during development.
          */
-        static cse498::WeightedSet<int> MakeRoomPool() {
-            cse498::WeightedSet<int> rooms;
+        static WeightedSet<int> MakeRoomPool() {
+            WeightedSet<int> rooms;
 
             for (const auto &[num, weight]: ROOM_DATA) {
                 auto result = rooms.Insert(num, weight);
@@ -76,7 +76,7 @@ namespace cse498 {
             return rooms;
         }
 
-        cse498::WeightedSet<int> m_room_pool;
+        WeightedSet<int> m_room_pool;
 
 	public:
 		/**
@@ -96,7 +96,7 @@ namespace cse498 {
         /**
          *@brief grabs the set of rooms that can spawn in the dungeon
          */
-        [[nodiscard]] const cse498::WeightedSet<int> &GetRoomPool() const override {
+        [[nodiscard]] const WeightedSet<int> &GetRoomPool() const override {
             return m_room_pool;
         }
 
