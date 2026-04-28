@@ -21,6 +21,7 @@
 #include "LevelBase.hpp"
 #include "WorldGeneration.hpp"
 
+#include "../../Agents/AI/EnemyAgent.hpp"
 #include "../../Agents/Classic/Enemy.hpp"
 #include "../../Worlds/DemoG2/WorldActions.hpp"
 #include "../../core/item/ItemConsumableDefense.hpp"
@@ -349,7 +350,7 @@ namespace cse498 {
 
 			int skeleton_num = 1;
 			for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
-				auto &agent = AddAgent<Enemy>("Skeleton " + std::to_string(skeleton_num++));
+				auto &agent = AddAgent<EnemyAgent>("Skeleton " + std::to_string(skeleton_num++));
 				agent.SetLocation(WorldPosition{x, y});
 				mSpawnedEnemyIds.push_back(agent.GetID());
 			}
