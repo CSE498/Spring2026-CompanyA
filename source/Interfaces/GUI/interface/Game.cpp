@@ -398,10 +398,11 @@ namespace cse498
 
         mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
 
-        // add a player to the world (based on discord discussion)
-        auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
-        player.SetLocation(WorldPosition{1, 1});
-        mDungeonPlayer = &player;
+        // KAREN: DungeonWorld already creates a player in its constructor
+        // auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
+        // player.SetLocation(WorldPosition{1, 1});
+        // mDungeonPlayer = &player;
+        mDungeonPlayer = mDungeonWorld->GetPlayer();
 
         std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
 
@@ -438,6 +439,8 @@ namespace cse498
             }
         };
 
+        // KAREN: DungeonWorld works with Enemy, but not EnemyAgent, so this should have
+        // been placed as a Group 15 hook instead. 
         /// @internal Group 17 AI hook: drop a @ref SmartEnemyAgent into the dungeon.
         ///
         /// The current @c DungeonWorld API does not expose a "first room center"
@@ -445,19 +448,19 @@ namespace cse498
         /// name starts with "floor" (all dungeon floor tiles use that convention)
         /// and is distinct from the player's spawn at {1,1}. This keeps the goblin
         /// on a walkable tile without assuming anything about the dungeon layout.
-        auto& goblin = mDungeonWorld->AddAgent<SmartEnemyAgent>("Goblin");
-        PlaceOnNextFloor(goblin);
+        // auto& goblin = mDungeonWorld->AddAgent<SmartEnemyAgent>("Goblin");
+        // PlaceOnNextFloor(goblin);
 
-        auto& enemy = mDungeonWorld->AddAgent<EnemyAgent>("EnemyAgent");
-        PlaceOnNextFloor(enemy);
+        // auto& enemy = mDungeonWorld->AddAgent<EnemyAgent>("EnemyAgent");
+        // PlaceOnNextFloor(enemy);
 
-        auto& smartEnemy = mDungeonWorld->AddAgent<SmartEnemyAgent>("SmartEnemy");
-        PlaceOnNextFloor(smartEnemy);
+        // auto& smartEnemy = mDungeonWorld->AddAgent<SmartEnemyAgent>("SmartEnemy");
+        // PlaceOnNextFloor(smartEnemy);
 
-        auto& trailblazer = mDungeonWorld->AddAgent<TrailblazerAgent>("Trailblazer");
-        PlaceOnNextFloor(trailblazer);
-        std::cout << "Trailblazer at: " << trailblazer.GetLocation().AsWorldPosition().CellX()
-          << "," << trailblazer.GetLocation().AsWorldPosition().CellY() << std::endl;
+        // auto& trailblazer = mDungeonWorld->AddAgent<TrailblazerAgent>("Trailblazer");
+        // PlaceOnNextFloor(trailblazer);
+        // std::cout << "Trailblazer at: " << trailblazer.GetLocation().AsWorldPosition().CellX()
+        //   << "," << trailblazer.GetLocation().AsWorldPosition().CellY() << std::endl;
 
         mDungeonWorld->SetAnalyticsManager(mAnalyticsManager);
     }
@@ -837,6 +840,11 @@ namespace cse498
                             }
                         }
                     }
+                    else if (mState == GameState::DUNGEON) {
+                        mDungeonWorld->DoAction(*mDungeonPlayer, DungeonActions::INTERACT);
+                        mTurnTaken = true;
+                    }
+
                     break; // end case e (finally)
 
                     // Just used for crown Easter Egg really, shortens the selling menu time.
@@ -1001,12 +1009,20 @@ void Game::UpdateOverworld()
         // skip the player in the world agent list, they should choose their own move when needed to.
         if (mTurnTaken) {
             for (size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i) {
-                AgentBase& agent = mDungeonWorld->GetAgent(i);
+                // KAREN: I believe this should be GetAgentByIndex
+                // AgentBase& agent = mDungeonWorld->GetAgent(i);
+                AgentBase& agent = mDungeonWorld->GetAgentByIndex(i);
+
                 if (&agent == mDungeonPlayer) continue;
+                // KAREN: I added the following:
+                if (!agent.IsAlive()) continue;
+                if (agent.IsPlayerAgent()) continue;
 
                 size_t action = agent.SelectAction(mDungeonWorld->GetGrid());
                 mDungeonWorld->DoAction(agent, action);
             }
+
+            mDungeonWorld->RemoveDeadAgents(); // KAREN: just in case...
             mTurnTaken = false;
         }
     }
@@ -1104,7 +1120,7 @@ void Game::UpdateOverworld()
 
         for (size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i)
         {
-            const AgentBase &agent = mDungeonWorld->GetAgent(i);
+            const AgentBase &agent = mDungeonWorld->GetAgentByIndex(i);
             const WorldPosition &pos = agent.GetLocation().AsWorldPosition();
 
             int screen_x = (static_cast<int>(pos.CellX()) - mDungeonCamX) * tw;
@@ -1541,9 +1557,9 @@ void Game::UpdateOverworld()
             int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
             int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
 
-        mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
-        mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
-    }
+            mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
+            mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
+        }
 
         else if (mState == GameState::DUNGEON) {
             // Snapshot inventory count before move

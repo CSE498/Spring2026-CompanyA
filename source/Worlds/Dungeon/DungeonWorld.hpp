@@ -10,6 +10,7 @@
 #include <array>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include "../../Interfaces/TrashInterface.hpp"
 #include "../../core/WorldBase.hpp"
@@ -324,14 +325,14 @@ namespace cse498 {
 
 			int goblin_num = 1;
 			for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
-				auto &agent = AddAgent<PacingAgent>("Goblin " + std::to_string(goblin_num++));
+				auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
 				agent.SetLocation(WorldPosition{x, y});
 				mSpawnedEnemyIds.push_back(agent.GetID());
 			}
 
 			int skeleton_num = 1;
 			for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
-				auto &agent = AddAgent<PacingAgent>("Skeleton " + std::to_string(skeleton_num++));
+				auto &agent = AddAgent<Enemy>("Skeleton " + std::to_string(skeleton_num++));
 				agent.SetLocation(WorldPosition{x, y});
 				mSpawnedEnemyIds.push_back(agent.GetID());
 			}
@@ -432,6 +433,14 @@ namespace cse498 {
             }
         }
 
+        // KAREN: Added helper function to clean up dead enemies in mSpawnedEnemyIds
+        void CleanupSpawnedEnemyIds() {
+            std::erase_if(mSpawnedEnemyIds, [this](size_t id) {
+                AgentBase* agent = TryGetAgent(id);
+                return agent == nullptr || !agent->IsAlive();
+            });
+        }
+
         /*
         * @breif Allow the agents to move around the maze.
         * @param agent - the agent performing an action
@@ -459,49 +468,91 @@ namespace cse498 {
                 // The following code inside this if statement was adapted from the combat system in Group 2's demo code
                 bool interacted = false;
                 
-                for (size_t i = 0; i < GetNumAgents(); ++i) {
-                    mEnemyId = mSpawnedEnemyIds[i];
-                    AgentBase& other = GetAgentByIndex(i);
-                    if (&other == &agent) {
+                // KAREN: I think there is some range mismatch here (GetNumAgents exceeds mSpawnedEnemyIds size?) 
+                // so I commented out the original for loop and added a new loop
+                // for (size_t i = 0; i < GetNumAgents(); ++i) {
+                //     mEnemyId = mSpawnedEnemyIds[i];
+                //     AgentBase& other = GetAgentByIndex(i);
+
+                //     if (&other == &agent) {
+                //         continue;
+                //     }
+                //     if (!other.IsAlive()) {
+                //         continue;
+                //     }
+                //     const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
+                //     const double dx = std::abs(cur_position.X() - other_pos.X());
+                //     const double dy = std::abs(cur_position.Y() - other_pos.Y());
+
+                //     if (dx <= 1.0 && dy <= 1.0) {
+                //         interacted = true;
+                //         if (other.GetID() == mEnemyId) {
+                //             const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
+                //             other.TakeDamage(dealt);
+                //             std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
+                //             if (!other.IsAlive()) {
+                //                 auto& enemy = dynamic_cast<Enemy&>(other);
+                //                 auto& player = dynamic_cast<PlayerAgent&>(agent);
+                //                 HandleEnemyDefeat(enemy, player);
+                //                 return 1;
+                //             }
+                //             const double retaliate = DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
+                //             agent.TakeDamage(retaliate);
+                //             std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
+                //             if (!agent.IsAlive()) {
+                //                 std::cout << agent.GetName() << " has fallen.\n";
+                //                 mRunOver = true;
+                //                 return 1;
+                //             }
+                //         }
+                //     }
+                // }
+                
+                for (size_t mEnemyId : mSpawnedEnemyIds) {
+                    AgentBase * other = TryGetAgent(mEnemyId);
+                    if (!other) continue;
+                    if (other == &agent) {
                         continue;
                     }
-                    if (!other.IsAlive()) {
+                    if (!other->IsAlive()) {
                         continue;
                     }
-                    const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
+                    const WorldPosition other_pos = other->GetLocation().AsWorldPosition();
                     const double dx = std::abs(cur_position.X() - other_pos.X());
                     const double dy = std::abs(cur_position.Y() - other_pos.Y());
 
                     if (dx <= 1.0 && dy <= 1.0) {
                         interacted = true;
-                        if (other.GetID() == mEnemyId) {
-                            const double dealt = DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
-                            other.TakeDamage(dealt);
-                            std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
-                            if (!other.IsAlive()) {
-                                auto& enemy = dynamic_cast<Enemy&>(other);
-                                auto& player = dynamic_cast<PlayerAgent&>(agent);
-                                HandleEnemyDefeat(enemy, player);
-                                return 1;
-                            }
-                            const double retaliate = DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
-                            agent.TakeDamage(retaliate);
-                            std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
-                            if (!agent.IsAlive()) {
-                                std::cout << agent.GetName() << " has fallen.\n";
-                                mRunOver = true;
-                                return 1;
-                            }
+                        const double dealt = DamageCalculator::Calculate(agent.GetStats(), other->GetStats());
+                        other->TakeDamage(dealt);
+                        std::cout << agent.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
+                        if (!other->IsAlive()) {
+                            auto* enemy = dynamic_cast<Enemy*>(other);
+                            auto& player = dynamic_cast<PlayerAgent&>(agent);
+                            HandleEnemyDefeat(*enemy, player);
+                            CleanupSpawnedEnemyIds();
+                            RemoveDeadAgents();
+                            return 1;
+                        }
+                        const double retaliate = DamageCalculator::Calculate(other->GetStats(), agent.GetStats());
+                        agent.TakeDamage(retaliate);
+                        std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
+                        if (!agent.IsAlive()) {
+                            std::cout << agent.GetName() << " has fallen.\n";
+                            mRunOver = true;
+                            return 1;
                         }
                     }
                 }
+
                 if (!interacted) {
                     std::cout << "No one nearby to interact with.\n";
                 }
                 return interacted ? 1 : 0;
                 /// The above code inside this if statement was adapted from the combat system in Group 2's demo code
                 /////////////////////////////////////////////////////
-                }
+            }
+                
 
             WorldPosition new_position;
             switch (action_id) {
