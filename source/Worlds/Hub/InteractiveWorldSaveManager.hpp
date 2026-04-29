@@ -133,10 +133,9 @@ public:
 
                 if (manager->GetName() == managerName) {
                     manager->SetGold(gold);
-                    
-                    if (j["resource_manager"].contains("lanes") &&
-                        j["resource_manager"]["lanes"].is_array()) {
-                        for (const auto& savedLane : j["resource_manager"]["lanes"]) {
+
+                    if (j["resource_manager"].contains("lanes") && j["resource_manager"]["lanes"].is_array()) {
+                        for (const auto& savedLane: j["resource_manager"]["lanes"]) {
                             const std::string label = savedLane.value("label", "");
                             const bool unlocked = savedLane.value("unlocked", false);
 
@@ -148,7 +147,7 @@ public:
                             }
                         }
                     }
-                    
+
                     break;
                 }
             }

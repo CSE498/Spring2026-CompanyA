@@ -53,11 +53,11 @@ ResourceManagementAgent& ResourceManagementAgent::SetInventory(std::shared_ptr<I
     return *this;
 }
 
-ResourceManagementAgent& ResourceManagementAgent::SetManagedBuildings(
-    const std::vector<Building*>& buildings, bool unlocked) {
+ResourceManagementAgent& ResourceManagementAgent::SetManagedBuildings(const std::vector<Building*>& buildings,
+                                                                      bool unlocked) {
     m_managedBuildings.clear();
 
-    for (Building* building : buildings) {
+    for (Building* building: buildings) {
         if (building != nullptr) {
             m_managedBuildings.push_back({*building, unlocked});
         }
@@ -145,15 +145,14 @@ void ResourceManagementAgent::PrintBuildingList() const {
             continue;
         }
 
-        std::cout << " | unlocked | level " << building.GetCurrentLevel()
-                  << "/" << building.GetMaxLevel() << " | next: ";
+        std::cout << " | unlocked | level " << building.GetCurrentLevel() << "/" << building.GetMaxLevel()
+                  << " | next: ";
 
         const auto nextUpgrade = building.GetNextUpgradeInfo();
         if (!nextUpgrade.has_value()) {
             std::cout << "max level\n";
         } else {
-            std::cout << nextUpgrade->quantity << " "
-                      << ItemTypeToString(nextUpgrade->item) << '\n';
+            std::cout << nextUpgrade->quantity << " " << ItemTypeToString(nextUpgrade->item) << '\n';
         }
     }
 }
@@ -380,13 +379,9 @@ bool ResourceManagementAgent::Interact() {
 }
 
 
-ResourceManagementAgent& ResourceManagementAgent::AddHireableLane(
-    const std::string& label,
-    FetchAgent& firstHauler,
-    FetchAgent& secondHauler,
-    Building& building,
-    GoldAmount cost,
-    std::function<void()> onHire) {
+ResourceManagementAgent& ResourceManagementAgent::AddHireableLane(const std::string& label, FetchAgent& firstHauler,
+                                                                  FetchAgent& secondHauler, Building& building,
+                                                                  GoldAmount cost, std::function<void()> onHire) {
     m_hireableLanes.push_back({label, firstHauler, secondHauler, cost, building, std::move(onHire), false});
     return *this;
 }
@@ -423,11 +418,11 @@ bool ResourceManagementAgent::HireLane(std::size_t laneIndex, std::string* messa
     lane.firstHauler.get().Activate();
     lane.secondHauler.get().Activate();
 
-    for (auto& entry : m_managedBuildings) {
+    for (auto& entry: m_managedBuildings) {
         if (&entry.building.get() == &lane.building.get()) {
             entry.unlocked = true;
             break;
-        }   
+        }
     }
 
     if (message != nullptr) {
@@ -443,12 +438,9 @@ void ResourceManagementAgent::PrintHireableLaneList() const {
     for (std::size_t i = 0; i < m_hireableLanes.size(); ++i) {
         const auto& lane = m_hireableLanes[i];
 
-        const bool active =
-            lane.firstHauler.get().IsActive() &&
-            lane.secondHauler.get().IsActive();
+        const bool active = lane.firstHauler.get().IsActive() && lane.secondHauler.get().IsActive();
 
-        std::cout << " " << (i + 1) << ". " << lane.label
-                  << " | cost " << lane.cost << " gold"
+        std::cout << " " << (i + 1) << ". " << lane.label << " | cost " << lane.cost << " gold"
                   << " | status: " << (active ? "active" : "locked") << '\n';
     }
 }
@@ -503,8 +495,7 @@ bool ResourceManagementAgent::IsLaneUnlocked(std::size_t laneIndex) const {
     }
 
     const auto& lane = m_hireableLanes[laneIndex];
-    return lane.firstHauler.get().IsActive() &&
-           lane.secondHauler.get().IsActive();
+    return lane.firstHauler.get().IsActive() && lane.secondHauler.get().IsActive();
 }
 
 bool ResourceManagementAgent::SetLaneUnlocked(std::size_t laneIndex, bool unlocked, std::string* message) {
@@ -523,11 +514,11 @@ bool ResourceManagementAgent::SetLaneUnlocked(std::size_t laneIndex, bool unlock
     lane.firstHauler.get().SetActive(unlocked);
     lane.secondHauler.get().SetActive(unlocked);
 
-    for (auto& entry : m_managedBuildings) {
+    for (auto& entry: m_managedBuildings) {
         if (&entry.building.get() == &lane.building.get()) {
             entry.unlocked = unlocked;
             break;
-            }
+        }
     }
 
     if (message != nullptr) {

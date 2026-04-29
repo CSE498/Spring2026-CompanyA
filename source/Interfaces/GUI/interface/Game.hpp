@@ -21,233 +21,230 @@
 #include "../Menu.hpp"
 #include "../Text.hpp"
 #include "../source/Worlds/Dungeon/DungeonWorld.hpp"
-//#include "OverWorld.hpp"
+// #include "OverWorld.hpp"
+#include "../../../Agents/Classic/FarmingAgent.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
 #include "../../../source/Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../../source/Worlds/Hub/Building.hpp"
 #include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../../source/Worlds/Hub/ResourceProducer.hpp"
 #include "../../../source/Worlds/Hub/ResourceSpawn.hpp"
-#include "../../../Agents/Classic/FarmingAgent.hpp"
 
-namespace cse498
-{
+namespace cse498 {
+
+/**
+ * @enum GameState
+ * @brief Represents the current state of the game.
+ */
+enum class GameState {
+    MAIN_MENU, /// Main menu screen
+    OVERWORLD, /// Flat interactive world with dungeon entrance
+    DUNGEON, /// Procedurally generated dungeon world
+    PAUSED, /// Paused state (reachable from OVERWORLD or DUNGEON)
+    SETTINGS, /// Settings screen (placeholder)
+    STATS, /// Contains information captured in gameplay
+    TRADING, /// Trading with a merchant
+    RESOURCE_MANAGEMENT, /// Managing interactive-world resources
+    QUIT /// Exit state
+};
+
+/**
+ * @class Game
+ * @brief Core class that manages game state, rendering, input, and world systems.
+ *
+ * The Game class is responsible for:
+ * - Initializing the rendering system and UI
+ * - Managing game state transitions
+ * - Updating world logic and agents
+ * - Rendering different game states (menu, overworld, dungeon, etc.)
+ */
+class Game {
+private:
+    std::shared_ptr<GameView> mGameView; /// Main rendering and window system
+
+    GameState mState = GameState::MAIN_MENU; /// Current game state
+    GameState mPreviousState = GameState::MAIN_MENU; /// Used to resume after pause
+
+    // -------------------------
+    // Constants
+    // -------------------------
+    static constexpr int kDefaultWindowWidth = 800;
+    static constexpr int kDefaultWindowHeight = 600;
+
+    static constexpr int kInitialPlayerX = 1;
+    static constexpr int kInitialPlayerY = 1;
+
+    // -------------------------
+    // Main menu UI
+    // -------------------------
+    Menu mMainMenu; /// Main menu options
+    Text mTitleText; /// Title text displayed on main menu
+
+    // -------------------------
+    // Pause menu UI
+    // -------------------------
+    Menu mPauseMenu; /// Pause menu options
+    Text mPauseText; /// Pause screen title text
+
+    // -------------------------
+    // Backpack/Inventory
+    // -------------------------
+    int mBackpackCursorRow = 0; /// Current backpack cursor row
+    int mBackpackCursorCol = 0; /// Current backpack cursor column
+    std::string mPickupMessage; /// Message on pickup
+    Text mPickupText; /// Pickup notification text
+    Uint32 mPickupMessageTime = 0; /// When the message was set
+
+    // -------------------------
+    // Overworld state
+    // -------------------------
+    std::unique_ptr<ImageManager> mImageManager; /// Handles image loading and rendering
+    std::unique_ptr<ImageGrid> mOverworldGrid; /// Renderable grid for overworld tiles
+    std::shared_ptr<InteractiveWorld> mOverWorld; /// Overworld game logic
+    std::unique_ptr<DungeonWorld> mDungeonWorld; /// Dungeon world game logic
+
+    int mCamX = 0; /// Camera X position in tile coordinates
+    int mCamY = 0; /// Camera Y position in tile coordinates
+
+    int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
+    int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
+
+    // Player agent pointers — worlds own the agents, Game holds raw pointers for access
+    PlayerAgent* mOverworldPlayer = nullptr;
+    PlayerAgent* mDungeonPlayer = nullptr;
+
+    // -------------------------
+    // Dungeon state
+    // -------------------------
+    std::unique_ptr<ImageGrid> mDungeonGrid; /// Renderable grid for dungeon tiles
+
+    int mDungeonCamX = 0; /// Dungeon camera X position in tile coordinates
+    int mDungeonCamY = 0; /// Dungeon camera Y position in tile coordinates
+
+    int mDungeonPlayerX = kInitialPlayerX; /// Player X position in dungeon tile coordinates
+    int mDungeonPlayerY = kInitialPlayerY; /// Player Y position in dungeon tile coordinates
+
+    // -------------------------
+    // Stats state
+    // -------------------------
+    std::shared_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
+    std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
+    DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
+    Text mStatsText; /// Text object used for stats screen
+
+
+    // -------------------------
+    // Merchant system state
+    // -------------------------
+    MerchantAgent* mActiveMerchant = nullptr; /// Currently interacting merchant
+    int mTradeMenuSelection = 0; /// Selected offer index in trade menu
+    bool mTradeBuyMode = true; /// true = buying, false = selling resources
+    ResourceManagementAgent* mActiveResourceManager = nullptr; /// Currently interacting resource manager
+    int mResourceMenuSelection = 0; /// Selected resource manager row
+    int mResourceMenuTab = 0; /// 0 = upgrades, 1 = lanes, 2 = sell resources
+
+    // -------------------------
+    // Runtime flags
+    // -------------------------
+    bool mRunning = false; /// Controls main game loop execution
+    bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
+    bool mShowBackpack = false; /// Toggle backpack overlay
+    Uint32 mLastOverworldAgentTick = 0; /// Last autonomous overworld agent update
+
+    // -------------------------
+    // Core loop methods
+    // -------------------------
 
     /**
-     * @enum GameState
-     * @brief Represents the current state of the game.
+     * @brief Handle all SDL input events.
      */
-    enum class GameState
-    {
-        MAIN_MENU, /// Main menu screen
-        OVERWORLD, /// Flat interactive world with dungeon entrance
-        DUNGEON,   /// Procedurally generated dungeon world
-        PAUSED,    /// Paused state (reachable from OVERWORLD or DUNGEON)
-        SETTINGS,  /// Settings screen (placeholder)
-        STATS,     /// Contains information captured in gameplay
-        TRADING,   /// Trading with a merchant
-        RESOURCE_MANAGEMENT, /// Managing interactive-world resources
-        QUIT       /// Exit state
-    };
+    void HandleEvents();
 
     /**
-     * @class Game
-     * @brief Core class that manages game state, rendering, input, and world systems.
-     *
-     * The Game class is responsible for:
-     * - Initializing the rendering system and UI
-     * - Managing game state transitions
-     * - Updating world logic and agents
-     * - Rendering different game states (menu, overworld, dungeon, etc.)
+     * @brief Update logic for each game state.
      */
-    class Game
-    {
-    private:
-        std::shared_ptr<GameView> mGameView; /// Main rendering and window system
+    void UpdateMainMenu();
+    void UpdateOverworld();
+    void UpdateDungeon();
+    void UpdatePaused();
+    void UpdateSettings();
+    void UpdateStats();
 
-        GameState mState = GameState::MAIN_MENU; /// Current game state
-        GameState mPreviousState = GameState::MAIN_MENU; /// Used to resume after pause
+    /**
+     * @brief Render functions for each game state.
+     */
+    void RenderMainMenu();
+    void RenderOverworld();
+    void RenderDungeon();
+    void RenderPaused();
+    void RenderSettings();
+    void RenderStats();
+    void RenderHotbar(const Inventory& inventory);
+    void RenderBackpack(const Inventory& inventory);
+    void RenderWorldInventory();
+    void RenderPickupMessage();
+    void UpdateTrading();
+    void RenderTrading();
+    void UpdateResourceManagement();
+    void RenderResourceManagement();
 
-        // -------------------------
-        // Constants
-        // -------------------------
-        static constexpr int kDefaultWindowWidth = 800;
-        static constexpr int kDefaultWindowHeight = 600;
+    /**
+     * @brief Convert SDL keycode to world action ID.
+     * @param key SDL keycode (SDLK_w, SDLK_a, SDLK_s, SDLK_d)
+     * @return Action ID matching WorldBase action conventions, 0 = remain still
+     */
+    size_t KeyToAction(SDL_Keycode key);
 
-        static constexpr int kInitialPlayerX = 1;
-        static constexpr int kInitialPlayerY = 1;
+    /**
+     * @brief Process player movement input.
+     * @param key SDL keycode representing movement input
+     */
+    void ProcessPlayerMove(SDL_Keycode key);
 
-        // -------------------------
-        // Main menu UI
-        // -------------------------
-        Menu mMainMenu; /// Main menu options
-        Text mTitleText; /// Title text displayed on main menu
+    /**
+     * @brief Update camera position for a given grid.
+     * @param grid Reference to the grid
+     * @param camX Camera X position (modified)
+     * @param camY Camera Y position (modified)
+     */
+    [[deprecated]] void UpdateWorld(ImageGrid& grid, int& camX, int& camY);
 
-        // -------------------------
-        // Pause menu UI
-        // -------------------------
-        Menu mPauseMenu; /// Pause menu options
-        Text mPauseText; /// Pause screen title text
+    /**
+     * @brief Render a world grid within the current viewport.
+     * @param grid Reference to the grid (read-only)
+     * @param camX Camera X position
+     * @param camY Camera Y position
+     */
+    void RenderWorld(const ImageGrid& grid, int camX, int camY);
 
-        // -------------------------
-        // Backpack/Inventory
-        // -------------------------
-        int mBackpackCursorRow = 0;    /// Current backpack cursor row
-        int mBackpackCursorCol = 0;    /// Current backpack cursor column
-        std::string mPickupMessage;    /// Message on pickup
-        Text mPickupText;              /// Pickup notification text
-        Uint32 mPickupMessageTime = 0; /// When the message was set
+    // -------------------------
+    // Setup and state helpers
+    // -------------------------
 
-        // -------------------------
-        // Overworld state
-        // -------------------------
-        std::unique_ptr<ImageManager> mImageManager; /// Handles image loading and rendering
-        std::unique_ptr<ImageGrid> mOverworldGrid; /// Renderable grid for overworld tiles
-        std::shared_ptr<InteractiveWorld> mOverWorld; /// Overworld game logic
-        std::unique_ptr<DungeonWorld> mDungeonWorld; /// Dungeon world game logic
+    /**
+     * @brief Initialize main menu options.
+     */
+    void SetupMainMenu();
 
-        int mCamX = 0; /// Camera X position in tile coordinates
-        int mCamY = 0; /// Camera Y position in tile coordinates
+    /**
+     * @brief Initialize pause menu options.
+     */
+    void SetupPauseMenu();
 
-        int mPlayerX = kInitialPlayerX; /// Player X position in overworld tile coordinates
-        int mPlayerY = kInitialPlayerY; /// Player Y position in overworld tile coordinates
+    /**
+     * @brief Initialize overworld systems and grid.
+     */
+    void SetupOverworld();
 
-        // Player agent pointers — worlds own the agents, Game holds raw pointers for access
-        PlayerAgent* mOverworldPlayer = nullptr;
-        PlayerAgent* mDungeonPlayer = nullptr;
+    /**
+     * @brief Initialize dungeon systems and grid.
+     */
+    void SetupDungeon();
 
-        // -------------------------
-        // Dungeon state
-        // -------------------------
-        std::unique_ptr<ImageGrid> mDungeonGrid; /// Renderable grid for dungeon tiles
-
-        int mDungeonCamX = 0; /// Dungeon camera X position in tile coordinates
-        int mDungeonCamY = 0; /// Dungeon camera Y position in tile coordinates
-
-        int mDungeonPlayerX = kInitialPlayerX; /// Player X position in dungeon tile coordinates
-        int mDungeonPlayerY = kInitialPlayerY; /// Player Y position in dungeon tile coordinates
-
-        // -------------------------
-        // Stats state
-        // -------------------------
-        std::shared_ptr<AnalyticsManager> mAnalyticsManager; /// Manages gameplay stats and logs
-        std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
-        DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
-        Text mStatsText; /// Text object used for stats screen
-
-
-        // -------------------------
-        // Merchant system state
-        // -------------------------
-        MerchantAgent* mActiveMerchant = nullptr; /// Currently interacting merchant
-        int mTradeMenuSelection = 0;              /// Selected offer index in trade menu
-        bool mTradeBuyMode = true;                /// true = buying, false = selling resources
-        ResourceManagementAgent* mActiveResourceManager = nullptr; /// Currently interacting resource manager
-        int mResourceMenuSelection = 0; /// Selected resource manager row
-        int mResourceMenuTab = 0; /// 0 = upgrades, 1 = lanes, 2 = sell resources
-
-        // -------------------------
-        // Runtime flags
-        // -------------------------
-        bool mRunning = false; /// Controls main game loop execution
-        bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
-        bool mShowBackpack = false; /// Toggle backpack overlay
-        Uint32 mLastOverworldAgentTick = 0; /// Last autonomous overworld agent update
-
-        // -------------------------
-        // Core loop methods
-        // -------------------------
-
-        /**
-         * @brief Handle all SDL input events.
-         */
-        void HandleEvents();
-
-        /**
-         * @brief Update logic for each game state.
-         */
-        void UpdateMainMenu();
-        void UpdateOverworld();
-        void UpdateDungeon();
-        void UpdatePaused();
-        void UpdateSettings();
-        void UpdateStats();
-
-        /**
-         * @brief Render functions for each game state.
-         */
-        void RenderMainMenu();
-        void RenderOverworld();
-        void RenderDungeon();
-        void RenderPaused();
-        void RenderSettings();
-        void RenderStats();
-        void RenderHotbar(const Inventory& inventory);
-        void RenderBackpack(const Inventory& inventory);
-        void RenderWorldInventory();
-        void RenderPickupMessage();
-        void UpdateTrading();
-        void RenderTrading();
-        void UpdateResourceManagement();
-        void RenderResourceManagement();
-
-        /**
-         * @brief Convert SDL keycode to world action ID.
-         * @param key SDL keycode (SDLK_w, SDLK_a, SDLK_s, SDLK_d)
-         * @return Action ID matching WorldBase action conventions, 0 = remain still
-         */
-        size_t KeyToAction(SDL_Keycode key);
-
-        /**
-         * @brief Process player movement input.
-         * @param key SDL keycode representing movement input
-         */
-        void ProcessPlayerMove(SDL_Keycode key);
-
-        /**
-         * @brief Update camera position for a given grid.
-         * @param grid Reference to the grid
-         * @param camX Camera X position (modified)
-         * @param camY Camera Y position (modified)
-         */
-        [[deprecated]] void UpdateWorld(ImageGrid &grid, int &camX, int &camY);
-
-        /**
-         * @brief Render a world grid within the current viewport.
-         * @param grid Reference to the grid (read-only)
-         * @param camX Camera X position
-         * @param camY Camera Y position
-         */
-        void RenderWorld(const ImageGrid &grid, int camX, int camY);
-
-        // -------------------------
-        // Setup and state helpers
-        // -------------------------
-
-        /**
-         * @brief Initialize main menu options.
-         */
-        void SetupMainMenu();
-
-        /**
-         * @brief Initialize pause menu options.
-         */
-        void SetupPauseMenu();
-
-        /**
-         * @brief Initialize overworld systems and grid.
-         */
-        void SetupOverworld();
-
-        /**
-         * @brief Initialize dungeon systems and grid.
-         */
-        void SetupDungeon();
-
-        /**
-         * @brief Rebuild the dungeon ImageGrid after a level change.
-         */
-        void RebuildDungeonGrid();
+    /**
+     * @brief Rebuild the dungeon ImageGrid after a level change.
+     */
+    void RebuildDungeonGrid();
 
     /**
      * @brief Transition to a new game state.
@@ -265,19 +262,17 @@ namespace cse498
      */
     void Resume();
 
-    public:
-        /**
-         * @brief Construct a new Game instance.
-         * @param title Window title
-         * @param width Window width in pixels
-         * @param height Window height in pixels
-         */
-        Game(const std::string &title = "Slay the Dungeon", int width = kDefaultWindowWidth,
-             int height = kDefaultWindowHeight) :
-            mGameView(std::make_shared<GameView>(title, width, height)), mTitleText(nullptr), mPauseText(nullptr),
-            mPickupText(nullptr), mStatsText(nullptr)
-        {
-        }
+public:
+    /**
+     * @brief Construct a new Game instance.
+     * @param title Window title
+     * @param width Window width in pixels
+     * @param height Window height in pixels
+     */
+    Game(const std::string& title = "Slay the Dungeon", int width = kDefaultWindowWidth,
+         int height = kDefaultWindowHeight) :
+        mGameView(std::make_shared<GameView>(title, width, height)), mTitleText(nullptr), mPauseText(nullptr),
+        mPickupText(nullptr), mStatsText(nullptr) {}
 
     /**
      * @brief Default destructor.
@@ -316,11 +311,11 @@ namespace cse498
      */
     [[nodiscard]] std::shared_ptr<GameView> GetGameView() const { return mGameView; }
 
-        /**
-         * @brief Get the current game state.
-         * @return Current GameState
-         */
-        [[nodiscard]] GameState GetState() const { return mState; }
-    };
+    /**
+     * @brief Get the current game state.
+     * @return Current GameState
+     */
+    [[nodiscard]] GameState GetState() const { return mState; }
+};
 
 } // namespace cse498

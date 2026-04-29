@@ -52,9 +52,7 @@ public:
     /**
      * @brief Recalculate the display/analytics rate from the current burst size.
      */
-    void CalculateRate() {
-        m_rate = static_cast<float>(GetBurstQuantity()) / GetBurstIntervalSeconds();
-    }
+    void CalculateRate() { m_rate = static_cast<float>(GetBurstQuantity()) / GetBurstIntervalSeconds(); }
 
     /**
      * @brief Add burst resources to the spawn if one or more intervals elapsed.

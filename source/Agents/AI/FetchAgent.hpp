@@ -13,13 +13,13 @@
 #include <unordered_map>
 #include <utility>
 
-#include "../../core/AgentBase.hpp"
-#include "../../core/WorldGrid.hpp"
-#include "../../core/WorldPosition.hpp"
 #include "../../Worlds/Hub/ItemType.hpp"
 #include "../../Worlds/Hub/ResourceBank.hpp"
 #include "../../Worlds/Hub/ResourceSpawn.hpp"
 #include "../../Worlds/Hub/TownHall.hpp"
+#include "../../core/AgentBase.hpp"
+#include "../../core/WorldGrid.hpp"
+#include "../../core/WorldPosition.hpp"
 
 namespace cse498 {
 
@@ -56,8 +56,7 @@ class FetchAgent : public AgentBase {
 public:
     using EndpointAction = std::function<void(FetchAgent&)>;
 
-    FetchAgent(size_t id, const std::string& name, const WorldBase& world) :
-        AgentBase(id, name, world) {}
+    FetchAgent(size_t id, const std::string& name, const WorldBase& world) : AgentBase(id, name, world) {}
 
     /// @brief Assign the endpoint this agent targets while empty.
     FetchAgent& SetOrigin(AgentBase& origin) {
@@ -191,8 +190,7 @@ public:
         }
 
         const WorldPosition myPos = GetLocation().AsWorldPosition();
-        const AgentBase* goalAgent =
-            (m_carryQuantity > 0) ? GetDepositPointPtr() : GetOriginPtr();
+        const AgentBase* goalAgent = (m_carryQuantity > 0) ? GetDepositPointPtr() : GetOriginPtr();
 
         if (goalAgent == nullptr || !goalAgent->GetLocation().IsPosition()) {
             return 0;
@@ -220,11 +218,7 @@ public:
         }
 
         return NextStepToward(grid, myPos, goalPos);
-
-        
     }
-
-    
 
 
 private:
@@ -237,13 +231,9 @@ private:
     int m_totalDelivered = 0;
     bool m_isActive = true;
 
-    [[nodiscard]] AgentBase* GetOriginPtr() {
-        return m_origin.has_value() ? &m_origin->get() : nullptr;
-    }
+    [[nodiscard]] AgentBase* GetOriginPtr() { return m_origin.has_value() ? &m_origin->get() : nullptr; }
 
-    [[nodiscard]] const AgentBase* GetOriginPtr() const {
-        return m_origin.has_value() ? &m_origin->get() : nullptr;
-    }
+    [[nodiscard]] const AgentBase* GetOriginPtr() const { return m_origin.has_value() ? &m_origin->get() : nullptr; }
 
     [[nodiscard]] AgentBase* GetDepositPointPtr() {
         return m_depositPoint.has_value() ? &m_depositPoint->get() : nullptr;
@@ -309,10 +299,8 @@ private:
     }
 
     [[nodiscard]] static bool IsAdjacent(const WorldPosition& a, const WorldPosition& b) {
-        const long long dx =
-            static_cast<long long>(a.CellX()) - static_cast<long long>(b.CellX());
-        const long long dy =
-            static_cast<long long>(a.CellY()) - static_cast<long long>(b.CellY());
+        const long long dx = static_cast<long long>(a.CellX()) - static_cast<long long>(b.CellX());
+        const long long dy = static_cast<long long>(a.CellY()) - static_cast<long long>(b.CellY());
         return std::llabs(dx) + std::llabs(dy) == 1;
     }
 
@@ -320,8 +308,7 @@ private:
     ///        `from` closer to a tile adjacent to `goal`. The goal tile itself
     ///        is treated as reachable even though it is non-walkable, so the
     ///        expansion terminates on the tile adjacent to the endpoint.
-    [[nodiscard]] size_t NextStepToward(const WorldGrid& grid, WorldPosition from,
-                                        WorldPosition goal) const {
+    [[nodiscard]] size_t NextStepToward(const WorldGrid& grid, WorldPosition from, WorldPosition goal) const {
         if (from == goal) {
             return 0;
         }
@@ -339,7 +326,7 @@ private:
             frontier.pop();
 
             const WorldPosition neighbors[4] = {cur.Up(), cur.Down(), cur.Left(), cur.Right()};
-            for (const WorldPosition& n : neighbors) {
+            for (const WorldPosition& n: neighbors) {
                 if (parent.find(n) != parent.end()) {
                     continue;
                 }

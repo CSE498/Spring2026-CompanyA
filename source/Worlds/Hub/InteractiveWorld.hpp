@@ -14,7 +14,9 @@
 #include <unordered_map>
 #include <vector>
 #include "../../../third-party/json/json.hpp"
+#include "../../Agents/AI/LearningExplorerAgent.hpp"
 #include "../../Agents/Classic/ResourceManagementAgent.hpp"
+#include "../../Agents/PacingAgent.hpp"
 #include "../../core/WorldBase.hpp"
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
@@ -22,8 +24,6 @@
 #include "ResourceProducer.hpp"
 #include "ResourceSpawn.hpp"
 #include "TownHall.hpp"
-#include "../../Agents/PacingAgent.hpp"
-#include "../../Agents/AI/LearningExplorerAgent.hpp"
 
 namespace cse498 {
 /**
@@ -71,8 +71,7 @@ private:
      * @param ignoredAgent Agent to omit from the map, typically the initiator.
      * @return Map of occupied world positions to agents.
      */
-    [[nodiscard]] std::unordered_map<WorldPosition, AgentBase*> BuildAgentPositionMap(
-        const AgentBase* ignoredAgent) {
+    [[nodiscard]] std::unordered_map<WorldPosition, AgentBase*> BuildAgentPositionMap(const AgentBase* ignoredAgent) {
         std::unordered_map<WorldPosition, AgentBase*> agentsByPosition;
         for (size_t i = 0; i < GetNumAgents(); ++i) {
             AgentBase& candidate = GetAgentByIndex(i);
@@ -249,20 +248,9 @@ public:
         building_id = main_grid.AddCellType("ow_building", "An impassable building.", 'X');
 
         main_grid.Load(std::vector<std::string>{
-            "CUUUUUUUUUUUUUUUC",
-            "L...f.f.m....f..R",
-            "L...f...m....f..R",
-            "L.......m...ff..R",
-            "L.f...f.m.......R",
-            "L...f...m.f.....R",
-            "LmmmmmmmmmmmmmmmR",
-            "L.......m..ff...R",
-            "L..f..f.m.......R",
-            "L....f..m.......R",
-            "L.f.....m.....f.R",
-            "L....f..m.......R",
-            "CBBBBBBBBBBBBBBBC"
-        });
+                "CUUUUUUUUUUUUUUUC", "L...f.f.m....f..R", "L...f...m....f..R", "L.......m...ff..R", "L.f...f.m.......R",
+                "L...f...m.f.....R", "LmmmmmmmmmmmmmmmR", "L.......m..ff...R", "L..f..f.m.......R", "L....f..m.......R",
+                "L.f.....m.....f.R", "L....f..m.......R", "CBBBBBBBBBBBBBBBC"});
 
         auto& player = AddAgent<PlayerAgent>("Player");
         player.SetSymbol('Z').SetLocation(WorldPosition{1, 1});
@@ -357,13 +345,10 @@ public:
             return false;
         }
         size_t cell = main_grid[new_position];
-        if (cell == wall_id || cell == building_id
-            || cell == ow_wall_left_id
-            || cell == ow_wall_right_id
-            || cell == ow_wall_top_id
-            || cell == ow_wall_bottom_id) {
+        if (cell == wall_id || cell == building_id || cell == ow_wall_left_id || cell == ow_wall_right_id ||
+            cell == ow_wall_top_id || cell == ow_wall_bottom_id) {
             return false;
-            }
+        }
 
         // Open NPC UI for interface-controlled agents only.
         if (agent.IsInterface()) {
@@ -387,36 +372,28 @@ public:
      * @param building Building to place.
      * @param position Grid position to occupy.
      */
-    void AddBuilding(Building& building, WorldPosition position) {
-        PlaceWorldObject(building, position);
-    }
+    void AddBuilding(Building& building, WorldPosition position) { PlaceWorldObject(building, position); }
 
     /**
      * @brief Place a resource spawn in the world.
      * @param spawn Resource spawn to place.
      * @param position Grid position to occupy.
      */
-    void AddResourceSpawn(ResourceSpawn& spawn, WorldPosition position) {
-        PlaceWorldObject(spawn, position);
-    }
+    void AddResourceSpawn(ResourceSpawn& spawn, WorldPosition position) { PlaceWorldObject(spawn, position); }
 
     /**
      * @brief Place a resource bank in the world.
      * @param bank Resource bank to place.
      * @param position Grid position to occupy.
      */
-    void AddResourceBank(ResourceBank& bank, WorldPosition position) {
-        PlaceWorldObject(bank, position);
-    }
+    void AddResourceBank(ResourceBank& bank, WorldPosition position) { PlaceWorldObject(bank, position); }
 
     /**
      * @brief Place the town hall in the world.
      * @param th Town hall to place.
      * @param position Grid position to occupy.
      */
-    void AddTownHall(TownHall& th, WorldPosition position) {
-        PlaceWorldObject(th, position);
-    }
+    void AddTownHall(TownHall& th, WorldPosition position) { PlaceWorldObject(th, position); }
 
     /**
      * @brief Remove a building's blocking tile from the grid.
@@ -428,7 +405,7 @@ public:
         }
     }
 
-    
+
     /**
      * @brief Spawn a Group 17 @ref LearningExplorerAgent into the overworld.
      *
@@ -442,8 +419,8 @@ public:
      * @param y Grid-cell Y coordinate of the spawn tile.
      * @return Reference to the newly registered agent, for chained configuration.
      */
-    LearningExplorerAgent & AddLearningExplorerAgent(size_t x, size_t y) {
-        LearningExplorerAgent & agent = AddAgent<LearningExplorerAgent>("Explorer");
+    LearningExplorerAgent& AddLearningExplorerAgent(size_t x, size_t y) {
+        LearningExplorerAgent& agent = AddAgent<LearningExplorerAgent>("Explorer");
         agent.SetLocation(WorldPosition(x, y));
         return agent;
     }
@@ -455,19 +432,18 @@ public:
      * @param y Grid-cell Y coordinate.
      * @param horizontal true for horizontal pacing, false for vertical pacing.
      */
-    void AddPacingAgent(const std::string & sprite_name, size_t x, size_t y, bool horizontal = true) {
+    void AddPacingAgent(const std::string& sprite_name, size_t x, size_t y, bool horizontal = true) {
         mAgentSpriteName = sprite_name;
-        PacingAgent & agent = AddAgent<PacingAgent>("Skeleton");
+        PacingAgent& agent = AddAgent<PacingAgent>("Skeleton");
         if (horizontal) {
-        agent.SetHorizontal();
-        }
-        else {
-        agent.SetVertical();
+            agent.SetHorizontal();
+        } else {
+            agent.SetVertical();
         }
         agent.SetLocation(WorldPosition(x, y));
     }
 
     /// @return Sprite key assigned by AddPacingAgent().
-    [[nodiscard]] const std::string & GetAgentSpriteName() const { return mAgentSpriteName; }
+    [[nodiscard]] const std::string& GetAgentSpriteName() const { return mAgentSpriteName; }
 };
 }; // namespace cse498

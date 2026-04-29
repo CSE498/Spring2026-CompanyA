@@ -78,7 +78,8 @@ private:
      * @return void if the upgrade is successful, UpgradeRejectionType describing
      * why it failed
      */
-    [[nodiscard]] std::expected<void, UpgradeRejectionType> ValidateUpgrade(const ItemType& itemType, int quantity) const {
+    [[nodiscard]] std::expected<void, UpgradeRejectionType> ValidateUpgrade(const ItemType& itemType,
+                                                                            int quantity) const {
         if (m_level >= GetMaxLevel())
             return std::unexpected(UpgradeRejectionType::AlreadyMaxLevel);
 

@@ -85,12 +85,9 @@ public:
      * @param onHire Callback to place objects and perform one-time setup.
      * @return This manager for chaining.
      */
-    ResourceManagementAgent& AddHireableLane(const std::string& label,
-                                         FetchAgent& firstHauler,
-                                         FetchAgent& secondHauler,
-                                         Building& building,
-                                         GoldAmount cost,
-                                         std::function<void()> onHire = {});
+    ResourceManagementAgent& AddHireableLane(const std::string& label, FetchAgent& firstHauler,
+                                             FetchAgent& secondHauler, Building& building, GoldAmount cost,
+                                             std::function<void()> onHire = {});
 
     /// @brief Spend gold and activate the selected hauling lane.
     bool HireLane(std::size_t laneIndex, std::string* message = nullptr);
@@ -146,7 +143,6 @@ private:
     };
 
     std::vector<HireableLaneEntry> m_hireableLanes;
-
 };
 
 } // namespace cse498

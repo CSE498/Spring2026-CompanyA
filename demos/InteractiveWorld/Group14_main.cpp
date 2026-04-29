@@ -83,8 +83,8 @@ int main() {
     std::shared_ptr<ResourceProducer> stoneProducer =
             std::make_shared<ResourceProducer>(quarry, stoneSpawn, ItemType::Stone, 0.5f, std::chrono::seconds(10));
 
-    std::shared_ptr<ResourceProducer> metalProducer =
-            std::make_shared<ResourceProducer>(mine, metalSpawn, ItemType::Metal, 1.0f / 3.0f, std::chrono::seconds(15));
+    std::shared_ptr<ResourceProducer> metalProducer = std::make_shared<ResourceProducer>(
+            mine, metalSpawn, ItemType::Metal, 1.0f / 3.0f, std::chrono::seconds(15));
 
     world->AddProducer(woodProducer);
     world->AddProducer(stoneProducer);
