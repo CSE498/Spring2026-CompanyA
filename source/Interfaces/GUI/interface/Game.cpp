@@ -30,6 +30,8 @@ namespace cse498
     constexpr int TILE_SIZE = 64;
     constexpr int ICON_SIZE = 48;
     constexpr int PICKUP_MESSAGE_DURATION_MS = 1000;
+    constexpr int DUNGEON_SPAWN_X = 1;
+    constexpr int DUNGEON_SPAWN_Y = 1;
 
     // -----------------------------------------------------------------------
     //  Initialization
@@ -1724,7 +1726,8 @@ void Game::UpdateOverworld()
             mDungeonPlayerY = static_cast<int>(pos.CellY());
 
             // Detect level change — player was moved to (1,1) and grid was regenerated
-            if (pos.CellX() == 1 && pos.CellY() == 1 && pos_before.CellX() != 1 && pos_before.CellY() != 1) {
+            if (pos.CellX() == DUNGEON_SPAWN_X && pos.CellY() == DUNGEON_SPAWN_Y && pos_before.CellX()
+            != DUNGEON_SPAWN_X && pos_before.CellY() != DUNGEON_SPAWN_Y) {
                 RebuildDungeonGrid();
                 mPickupMessage = "Entering next level...";
                 mPickupMessageTime = SDL_GetTicks();
