@@ -308,7 +308,7 @@ namespace cse498
         // Player
         auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
         player.SetLocation(WorldPosition{1, 1});
-        player.AddGold(10000); // starting gold for trading demo
+        player.AddGold(25); // starting gold for trading demo
         mOverworldPlayer = &player;
 
         // Farming merchant NPC
@@ -1036,6 +1036,12 @@ void Game::UpdateOverworld()
 
             mDungeonWorld->RemoveDeadAgents(); // KAREN: just in case...
             mTurnTaken = false;
+        }
+
+        // Transfer dungeon gold earnings to Interactive World Inventory
+        size_t gold = mDungeonWorld->DrainAccumulatedGold();
+        if (gold > 0) {
+            mOverworldPlayer->AddGold(gold);
         }
     }
 

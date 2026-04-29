@@ -75,6 +75,8 @@ namespace cse498 {
 
 		//Track level change to prevent an extra enemy turn
 		bool mLevelJustAdvanced = false;
+
+        size_t mAccumulatedGold = 0; /// Used to transfer gold to the InteractiveWorld Inventory
         
         /**
          * @brief Builds the room pool for the current level.
@@ -310,6 +312,15 @@ namespace cse498 {
         }
 
         /*
+        * @brief Returns and resets gold earned from killing enemies
+        */
+        size_t DrainAccumulatedGold() {
+            size_t gold = mAccumulatedGold;
+            mAccumulatedGold = 0;
+            return gold;
+        }
+
+        /*
         * @brief Getter for the current level
         * @return An int representing the current level number
         */
@@ -463,6 +474,7 @@ namespace cse498 {
             std::cout << "DEBUG::DungeonWorld:: Enemy defeated.\n";
             if (goldReward > 0) {
                 player.AddGold(goldReward);
+                mAccumulatedGold += goldReward;
                 std::cout <<"DEBUG::DungeonWorld:: " << player.GetName() << " gains " << goldReward << " gold.\n";
             }
         }
