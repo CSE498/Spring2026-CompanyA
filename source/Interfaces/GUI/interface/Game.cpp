@@ -428,6 +428,8 @@ namespace cse498
         // player.SetLocation(WorldPosition{1, 1});
         // mDungeonPlayer = &player;
         mDungeonPlayer = mDungeonWorld->GetPlayer();
+        mDungeonPlayer->SetMaxHealth(10);
+        mDungeonPlayer->SetHealth(10);
 
         std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
 
@@ -1165,6 +1167,20 @@ void Game::UpdateOverworld()
                 sprite = "dun_monster";
             }
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
+        }
+
+        // Player health display
+        {
+            double currentHP = mDungeonPlayer->GetCurrentHealth();
+            double maxHP = mDungeonPlayer->GetMaxHealth();
+
+            std::string healthText = "HP: " + std::to_string(static_cast<int>(currentHP))
+                                   + " / " + std::to_string(static_cast<int>(maxHP));
+
+            mPickupText.SetSize(18);
+            mPickupText.SetBold(true);
+            mPickupText.SetContent(healthText);
+            mPickupText.Draw(80, mGameView->GetHeight() - 100);
         }
 
         RenderHotbar(mDungeonPlayer->GetInventory());
