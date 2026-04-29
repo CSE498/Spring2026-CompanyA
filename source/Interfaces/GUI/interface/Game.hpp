@@ -188,7 +188,7 @@ namespace cse498
          * @param key SDL keycode (SDLK_w, SDLK_a, SDLK_s, SDLK_d)
          * @return Action ID matching WorldBase action conventions, 0 = remain still
          */
-        size_t KeyToAction(SDL_Keycode key);
+        size_t KeyToAction(SDL_Keycode key) const;
 
         /**
          * @brief Process player movement input.

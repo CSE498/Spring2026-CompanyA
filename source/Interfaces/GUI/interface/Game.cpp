@@ -27,6 +27,9 @@ namespace cse498
 {
 
     constexpr int TURN_DELAY = 100;
+    constexpr int TILE_SIZE = 64;
+    constexpr int ICON_SIZE = 48;
+    constexpr int PICKUP_MESSAGE_DURATION_MS = 1000;
 
     // -----------------------------------------------------------------------
     //  Initialization
@@ -35,7 +38,10 @@ namespace cse498
     bool Game::Initialize()
     {
         if (!mGameView->Initialize())
+        {
+            std::cerr << "GameView initialization failed." << std::endl;
             return false;
+        }
 
         std::cout << "Working directory: " << std::filesystem::current_path() << std::endl;
         std::cout << "Asset Dir: " << std::string(ASSETS_DIR) << std::endl;
@@ -45,13 +51,13 @@ namespace cse498
         // Title text
         mTitleText.SetRenderer(renderer);
         mTitleText.SetContent("Slay the Dungeon");
-        mTitleText.SetSize(48);
+        mTitleText.SetSize(ICON_SIZE);
         mTitleText.SetBold(true);
 
         // Pause text
         mPauseText.SetRenderer(renderer);
         mPauseText.SetContent("Paused");
-        mPauseText.SetSize(48);
+        mPauseText.SetSize(ICON_SIZE);
         mPauseText.SetBold(true);
 
         // Item pickup notifications
@@ -233,6 +239,22 @@ namespace cse498
         return true;
     }
 
+    void BuildImageGridFromWorldGrid(const WorldGrid& worldGrid, ImageGrid& imageGrid)
+    {
+    const size_t world_w = worldGrid.GetWidth();
+    const size_t world_h = worldGrid.GetHeight();
+
+    for (size_t y = 0; y < world_h; ++y)
+    {
+        for (size_t x = 0; x < world_w; ++x)
+        {
+            WorldPosition pos(x, y);
+            const std::string& cell_name = worldGrid.GetCellTypeName(worldGrid[pos]);
+            imageGrid.SetCell(x, y, cell_name);
+        }
+    }
+    }
+
     void Game::SetupOverworld()
     {
         mOverWorld = std::make_shared<InteractiveWorld>();
@@ -383,17 +405,9 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mOverworldGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mOverworldGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
-        for (size_t y = 0; y < world_h; ++y)
-        {
-            for (size_t x = 0; x < world_w; ++x)
-            {
-                WorldPosition pos(x, y);
-                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
-                mOverworldGrid->SetCell(x, y, cell_name);
-            }
-        }
+        BuildImageGridFromWorldGrid(grid, *mOverworldGrid);
 
         mOverWorld->SetAnalyticsManager(mAnalyticsManager);
     }
@@ -407,7 +421,7 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
         // KAREN: DungeonWorld already creates a player in its constructor
         // auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
@@ -428,7 +442,7 @@ namespace cse498
          * same tile.
          */
         std::unordered_set<std::string> usedPositions;
-
+        [[maybe_unused]]
         auto PlaceOnNextFloor = [&](AgentBase& agent) {
             for (size_t y = 0; y < world_h; ++y) {
                 for (size_t x = 0; x < world_w; ++x) {
@@ -482,15 +496,9 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
-        for (size_t y = 0; y < world_h; ++y) {
-            for (size_t x = 0; x < world_w; ++x) {
-                WorldPosition pos(x, y);
-                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
-                mDungeonGrid->SetCell(x, y, cell_name);
-            }
-        }
+        BuildImageGridFromWorldGrid(grid, *mDungeonGrid);
     }
 
     void Game::SetupMainMenu()
@@ -1289,11 +1297,11 @@ void Game::UpdateOverworld()
             const auto& slot = slots[i];
             if (!slot.IsEmpty()) {
                 const Item* item = slot.GetItem();
-                int item_x = bar_x + static_cast<int>(i) * slot_size + (slot_size - 48) / 2;
-                int item_y = bar_y + (bar_h - 48) / 2;
+                int item_x = bar_x + static_cast<int>(i) * slot_size + (slot_size - ICON_SIZE) / 2;
+                int item_y = bar_y + (bar_h - ICON_SIZE) / 2;
 
                 // Draw item icon if loaded — uses the item's image path as key
-                mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                mImageManager->DrawImage(item->GetName(), item_x, item_y, ICON_SIZE, ICON_SIZE);
             }
         }
 
@@ -1349,9 +1357,9 @@ void Game::UpdateOverworld()
                 // Draw item if present
                 if (!slots[index].IsEmpty()) {
                     const Item* item = slots[index].GetItem();
-                    int item_x = x + (slot_size - 48) / 2;
-                    int item_y = y + (slot_size - 48) / 2;
-                    mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                    int item_x = x + (slot_size - ICON_SIZE) / 2;
+                    int item_y = y + (slot_size - ICON_SIZE) / 2;
+                    mImageManager->DrawImage(item->GetName(), item_x, item_y, ICON_SIZE, ICON_SIZE);
                 }
 
                 // Cursor highlight
@@ -1393,7 +1401,7 @@ void Game::UpdateOverworld()
         if (mPickupMessage.empty()) return;
 
         Uint32 elapsed = SDL_GetTicks() - mPickupMessageTime;
-        if (elapsed > 1000) {
+        if (elapsed > PICKUP_MESSAGE_DURATION_MS) {
             mPickupMessage.clear();
             return;
         }
@@ -1541,7 +1549,7 @@ void Game::UpdateOverworld()
         mPickupText.Draw(text_x, y);
     }
 
-    size_t Game::KeyToAction(SDL_Keycode key) {
+    size_t Game::KeyToAction(SDL_Keycode key) const{
         switch (key) {
         case SDLK_w: return 1; // MOVE_UP
         case SDLK_s: return 2; // MOVE_DOWN
@@ -1564,13 +1572,13 @@ void Game::UpdateOverworld()
 
             int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
             int th = static_cast<int>(mOverworldGrid->GetTileHeight());
-            int Tiles_x = mGameView->GetWidth() / tw;
-            int Tiles_y = mGameView->GetHeight() / th;
-            int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
-            int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
+            int tiles_x = mGameView->GetWidth() / tw;
+            int tiles_y = mGameView->GetHeight() / th;
+            int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - tiles_x);
+            int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
 
-            mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
+            mCamX = std::clamp(mPlayerX - tiles_x / 2, 0, max_cam_x);
+            mCamY = std::clamp(mPlayerY - tiles_y / 2, 0, max_cam_y);
         }
 
         else if (mState == GameState::DUNGEON) {
@@ -1613,13 +1621,13 @@ void Game::UpdateOverworld()
             // Update camera
             int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
             int th = static_cast<int>(mDungeonGrid->GetTileHeight());
-            int Tiles_x = mGameView->GetWidth() / tw;
-            int Tiles_y = mGameView->GetHeight() / th;
-            int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - Tiles_x);
-            int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - Tiles_y);
+            int tiles_x = mGameView->GetWidth() / tw;
+            int tiles_y = mGameView->GetHeight() / th;
+            int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - tiles_x);
+            int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - tiles_y);
 
-            mDungeonCamX = std::clamp(mDungeonPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mDungeonCamY = std::clamp(mDungeonPlayerY - Tiles_y / 2, 0, max_cam_y);
+            mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
+            mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
         }
 
         mTurnTaken = true;
