@@ -224,6 +224,10 @@ private:
     void PerformDefaultPickup() {
         AgentBase* origin = GetOriginPtr();
         if (auto* spawn = dynamic_cast<ResourceSpawn*>(origin); spawn != nullptr) {
+            if (spawn->GetQuantity() < spawn->GetMaxCollectionQuantity() * 2) {
+                SetCarryQuantity(0);
+                return;
+            }
             SetItemType(spawn->GetItemType());
             SetCarryQuantity(spawn->Collect());
             return;

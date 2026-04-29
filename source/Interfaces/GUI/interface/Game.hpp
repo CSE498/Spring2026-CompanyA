@@ -152,6 +152,7 @@ namespace cse498
         bool mRunning = false; /// Controls main game loop execution
         bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
         bool mShowBackpack = false; /// Toggle backpack overlay
+        Uint32 mLastOverworldAgentTick = 0; /// Last autonomous overworld agent update
 
         // -------------------------
         // Core loop methods

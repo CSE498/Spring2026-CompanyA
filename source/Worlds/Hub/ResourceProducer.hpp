@@ -5,7 +5,9 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <functional>
 #include <memory>
 
@@ -26,11 +28,12 @@ public:
      * @param itemType    type of item being produced by this producer
      * @param startRate   base rate of production with no upgrades
      */
-    ResourceProducer(Building& building, ResourceSpawn& spawn, ItemType itemType, float startRate) :
-        m_resourceSpawn(spawn), m_building(building) {
+    ResourceProducer(Building& building, ResourceSpawn& spawn, ItemType itemType, float startRate,
+                     std::chrono::steady_clock::duration burstInterval = std::chrono::seconds(5)) :
+        m_resourceSpawn(spawn), m_building(building), m_burstInterval(burstInterval) {
         static_cast<void>(itemType);
         m_lastTime = std::chrono::steady_clock::now();
-        m_baseRate = startRate;
+        m_baseBurstQuantity = std::max(5, static_cast<int>(std::round(startRate * GetBurstIntervalSeconds())));
         CalculateRate();
     }
     /**
@@ -42,12 +45,7 @@ public:
      * Calculate the current rate of production
      */
     void CalculateRate() {
-        // multiplier = 1 + current level * rate modifier
-        // If rate modifier is 0.25 then it will add .25 per level
-        // A level 3 building with a rate modifier of 0.25 will be
-        // 1 + 3 * 0.25 = 1.75x production
-        float multiplier = 1.0f + (m_building.get().GetCurrentLevel() * m_building.get().GetRateModifier());
-        m_rate = m_baseRate * multiplier;
+        m_rate = static_cast<float>(GetBurstQuantity()) / GetBurstIntervalSeconds();
     }
 
     /**
@@ -59,27 +57,31 @@ public:
 
         // Get current time
         auto now = std::chrono::steady_clock::now();
-        // Get delta time since last update
-        std::chrono::duration<float> dt = now - m_lastTime;
-        m_lastTime = now;
-        // add the amount of resources produced since last update as a float
-        m_accumulator += m_rate * dt.count();
-        // If the amount added is greater than or equal to 1 then add the whole
-        // integer to the world inventory and subtract the amount added from the
-        // accumulator
-        int whole = static_cast<int>(m_accumulator);
-        if (whole > 0) {
-            m_resourceSpawn.get().AddResource(whole);
-            m_accumulator -= whole;
+        auto elapsed = now - m_lastTime;
+        if (elapsed < m_burstInterval) {
+            return;
         }
+
+        const auto bursts = elapsed / m_burstInterval;
+        m_lastTime += m_burstInterval * bursts;
+        m_resourceSpawn.get().AddResource(GetBurstQuantity() * static_cast<int>(bursts));
     }
 
 private:
+    [[nodiscard]] float GetBurstIntervalSeconds() const {
+        return std::chrono::duration<float>(m_burstInterval).count();
+    }
+
+    [[nodiscard]] int GetBurstQuantity() const {
+        float multiplier = 1.0f + (m_building.get().GetCurrentLevel() * m_building.get().GetRateModifier());
+        return std::max(1, static_cast<int>(std::round(static_cast<float>(m_baseBurstQuantity) * multiplier)));
+    }
+
     std::reference_wrapper<ResourceSpawn> m_resourceSpawn;
     std::reference_wrapper<Building> m_building; // Building modifying the output rate
-    float m_baseRate{}; // Base production rate
-    float m_rate{}; // Current Production Rate
-    float m_accumulator{0.0f}; // Accumulated fraction of a resource over time
+    int m_baseBurstQuantity{}; // Base resources created per interval
+    float m_rate{}; // Display rate as resources per second
+    std::chrono::steady_clock::duration m_burstInterval;
     std::chrono::steady_clock::time_point m_lastTime; // Last time checked for delta time
 };
 } // namespace cse498
