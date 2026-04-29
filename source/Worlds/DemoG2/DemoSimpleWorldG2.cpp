@@ -459,7 +459,7 @@ void DemoSimpleWorldG2::CreateEnemies(int option)
 {
     if (option == 0) // new setup
     {
-        auto skel = AgentFactory::CreateEnemySkeleton({"Enemy", 10, {9,3}}, *this);
+        auto skel = AgentFactory::CreateEnemySkeleton({"Enemy", 0, {9,3}}, *this);
         auto& enemy = AddAgent(std::move(skel));
         mEnemyId = enemy.GetID();
         assert(mEnemyId == 2);
