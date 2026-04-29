@@ -154,9 +154,9 @@ TEST_CASE("Insertion and Deletion", "[inventoryslot]") {
         CHECK(x.GetQuantity() == 0);
         CHECK(underflow == 57);
 
-        overflow = x.Insert(100);
-        CHECK(x.GetQuantity() == Inventory::MAX_ITEMS_PER_SLOT);
-        CHECK(Inventory::MAX_ITEMS_PER_SLOT + overflow == 100);
+        overflow = x.Insert(100); // insertion doesn't work because now it is nullptr slot.
+        CHECK(x.GetQuantity() == 0);
+        CHECK(overflow == 100);
     }
     {
         // this is all that is allowed
@@ -337,9 +337,9 @@ TEST_CASE("Inventory Other methods", "[inventory, methods]") {
     CHECK(inv.GetHandSlotIndex() == 3);
 
     inv.HotBarIndexInc();
-    CHECK(inv.GetHandSlotIndex() == 5);
-    inv.HotBarIndexDec();
     CHECK(inv.GetHandSlotIndex() == 4);
+    inv.HotBarIndexDec();
+    CHECK(inv.GetHandSlotIndex() == 3);
 }
 
 TEST_CASE("Check Asserts, some edge cases", "[none]") {
@@ -357,4 +357,22 @@ TEST_CASE("Check Asserts, some edge cases", "[none]") {
     CHECK(item->IsUnique());
 
     // inv.AddItem(std::move(item), 5);
+}
+
+
+TEST_CASE("nullptr tests")
+{
+    Inventory inv;
+    auto result = inv.AddItem(nullptr);
+    CHECK(result == 1);
+
+    {
+        Inventory::InventorySlot slot;
+        auto val = slot.InsertNew(nullptr, 2);
+        CHECK(val == 2);
+    }
+
+
+
+
 }

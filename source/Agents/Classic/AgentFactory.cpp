@@ -117,7 +117,7 @@ std::unique_ptr<Node> AgentFactory::RangeChasePlayer(const Enemy& enemy, const W
             return Failure;
         // We are either Far away or too close or In range but no line of sight
         // if we are far away
-        if (PathGenerator::EuclideanDistance(enemy.GetPosition(), player->GetPosition()) > static_cast<double>(enemy.GetAtkRange())) {
+        if (PathGenerator::EuclideanDistance(enemy.GetPosition(), player->GetPosition()) > enemy.GetAtkRange()) {
             // then move closer
             ctx.mBlackboard.Set<size_t>("step_count", 0);
             auto path = PathGenerator::FindShortestPath(enemy.GetPosition(), player->GetPosition(),

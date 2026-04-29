@@ -205,7 +205,7 @@ public:
             return Insert(quantity);
         }
         size_t Insert(size_t quantity) {
-            if (mItem && mItem->IsUnique())
+            if (!mItem || mItem->IsUnique())
                 return quantity;
             mQuantity += quantity;
             if (mQuantity > MAX_ITEMS_PER_SLOT) {
