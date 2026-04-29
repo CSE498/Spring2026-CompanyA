@@ -211,7 +211,8 @@ constexpr const char* kQuitToMainMenuButtonText = "Quit to Main Menu";
 constexpr const char* kBackButtonText = "Back";
 constexpr const char* kCloseButtonText = "Close";
 
-constexpr const char* kDungeonHudText = "DUNGEON\n[E] Interact\n[I] Backpack\n[1-0] Hotbar\n[Esc] Pause";
+constexpr const char* kDungeonHudText =
+        "DUNGEON\n[E] Interact\n[I] Backpack\n[1-0] Hotbar\n[Esc] Pause\n--------------\n";
 
 void SetLayoutVisible(WebLayout* layout, bool visible) {
     if (!layout)
@@ -1090,7 +1091,9 @@ void WebInterface::RenderHUD() {
             leftOffset += itemDrawSize;
         }
 
-        mHUDTextbox->SetText(kDungeonHudText);
+        std::string dungeonHudText = std::format("{}Gold: {}", kDungeonHudText, GetCurrentPlayer()->GetGold());
+
+        mHUDTextbox->SetText(dungeonHudText);
     }
 }
 
@@ -1251,6 +1254,11 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
             int agentLeft = CellXToScreenLeft(agentCellX);
             int agentTop = CellYToScreenTop(agentCellY);
             mCanvas->DrawTexture(agentTexture.as_handle(), agentLeft, agentTop, scale);
+
+            int healthTop = agentTop - agentTexture["height"].as<int>() * scale;
+            int healthLeft = agentLeft - agentTexture["width"].as<int>() * scale / 2;
+            mCanvas->DrawText(healthLeft, healthTop, std::format("Health: {:.0f}", agent.GetCurrentHealth()), "red",
+                              kCompactMenuBodyFontSizePx, kMenuFontFamily);
             continue;
         }
 
