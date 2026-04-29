@@ -1035,6 +1035,7 @@ void Game::UpdateOverworld()
             }
 
             mDungeonWorld->RemoveDeadAgents(); // KAREN: just in case...
+            mDungeonWorld->CleanupSpawnedEnemyIds(); // mark, moved out of inner in dungeon world to here
             mTurnTaken = false;
         }
 

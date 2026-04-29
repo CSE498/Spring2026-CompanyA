@@ -347,25 +347,40 @@ namespace cse498 {
         /*
         * @brief Spawns all the agents when entering a new world
         */
-		void SpawnDungeonAgents() {
-			if (!mGeneration) return;
+        void SpawnDungeonAgents() {
+            if (!mGeneration) return;
 
-			mSpawnedEnemyIds.clear();
+            mSpawnedEnemyIds.clear();
 
-			int goblin_num = 1;
-			for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
-				auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
-				agent.SetLocation(WorldPosition{x, y});
-				mSpawnedEnemyIds.push_back(agent.GetID());
-			}
+            // Pick the right floor tile for the current level
+            size_t floorTile;
+            switch (mLevelNum) {
+                case 1:  floorTile = mFloorIdL1V1; break;
+                case 2:  floorTile = mFloorIdL2V1; break;
+                case 3:  floorTile = mFloorIdL3V1; break;
+                default: floorTile = mFloorIdL1V1; break;
+            }
 
-			int skeleton_num = 1;
-			for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
-				auto &agent = AddAgent<EnemyAgent>("Skeleton " + std::to_string(skeleton_num++));
-				agent.SetLocation(WorldPosition{x, y});
-				mSpawnedEnemyIds.push_back(agent.GetID());
-			}
-		}
+            int goblin_num = 1;
+            for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
+                auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
+                agent.SetLocation(WorldPosition{x, y});
+                mSpawnedEnemyIds.push_back(agent.GetID());
+
+                // Replace the monster marker tile with a walkable floor
+                main_grid[WorldPosition{x, y}] = floorTile;
+            }
+
+            int skeleton_num = 1;
+            for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
+                auto &agent = AddAgent<EnemyAgent>("Skeleton " + std::to_string(skeleton_num++));
+                agent.SetLocation(WorldPosition{x, y});
+                mSpawnedEnemyIds.push_back(agent.GetID());
+
+                // Replace the monster marker tile with a walkable floor
+                main_grid[WorldPosition{x, y}] = floorTile;
+            }
+        }
 
         /*
         * @brief Deletes all agents when moving to a new level
@@ -585,9 +600,9 @@ namespace cse498 {
                         if (!other->IsAlive()) {
                             auto* enemy = dynamic_cast<Enemy*>(other);
                             auto& player = dynamic_cast<PlayerAgent&>(agent);
-                            HandleEnemyDefeat(*enemy, player);
-                            CleanupSpawnedEnemyIds();
-                            RemoveDeadAgents();
+                            if (enemy) { HandleEnemyDefeat(*enemy, player); }
+                            // CleanupSpawnedEnemyIds();  malloc error
+                            // RemoveDeadAgents();
                             return 1;
                         }
                         const double retaliate = DamageCalculator::Calculate(other->GetStats(), agent.GetStats());
