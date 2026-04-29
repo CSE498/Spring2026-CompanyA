@@ -21,6 +21,7 @@
 #include "LevelBase.hpp"
 #include "WorldGeneration.hpp"
 
+#include "../../Agents/AI/EnemyAgent.hpp"
 #include "../../Agents/Classic/Enemy.hpp"
 #include "../../Worlds/DemoG2/WorldActions.hpp"
 #include "../../core/item/ItemConsumableDefense.hpp"
@@ -33,6 +34,10 @@
 #include "../../core/item/ItemWeaponToolShovel.hpp"
 namespace cse498 {
 
+    /*
+    * DungeonActions is a renamed version of WorldActions, moved here to resolve issues with other class having access
+    * to it, and to allow us to customize the actions to our world if needed.
+    */
     struct DungeonActions // just so they aren't globals
     {
         // Note 0 should ALWAYS Be stay based on AgentBase GetActionID implementation
@@ -44,13 +49,13 @@ namespace cse498 {
         static constexpr std::size_t INTERACT = 5; // "e"
         static constexpr std::size_t QUIT = 6; // "q"
 
-        static constexpr std::string REMAIN_STILL_STRING = "stay";
-        static constexpr std::string MOVE_UP_STRING = "w";
-        static constexpr std::string MOVE_DOWN_STRING = "s";
-        static constexpr std::string MOVE_LEFT_STRING = "a";
-        static constexpr std::string MOVE_RIGHT_STRING = "d";
-        static constexpr std::string INTERACT_STRING = "e";
-        static constexpr std::string QUIT_STRING = "q";
+        static constexpr std::string_view REMAIN_STILL_STRING = "stay";
+        static constexpr std::string_view MOVE_UP_STRING = "w";
+        static constexpr std::string_view MOVE_DOWN_STRING = "s";
+        static constexpr std::string_view MOVE_LEFT_STRING = "a";
+        static constexpr std::string_view MOVE_RIGHT_STRING = "d";
+        static constexpr std::string_view INTERACT_STRING = "e";
+        static constexpr std::string_view QUIT_STRING = "q";
     };
     
     class DungeonWorld : public WorldBase {
@@ -68,17 +73,16 @@ namespace cse498 {
         //The currently pointed to level that the player agent is on
 		std::vector<size_t> mSpawnedEnemyIds;
 
-        size_t mPlayerId;
-        size_t mEnemyId;
-
 		//Track level change to prevent an extra enemy turn
 		bool mLevelJustAdvanced = false;
+
+        size_t mAccumulatedGold = 0; /// Used to transfer gold to the InteractiveWorld Inventory
+        
         /**
          * @brief Builds the room pool for the current level.
-         * @return WeightedSet of room file paths and weights.
          */
         void LoadLevelData() {
-            std::cout << "Currently on level: " << mLevelNum << std::endl;
+            std::cout << "DEBUG::DungeonWorld:: Currently on level: " << mLevelNum << std::endl;
             switch (mLevelNum) {
                 case 1:
                     mLevel = std::make_unique<ForestLevel>();
@@ -174,14 +178,16 @@ namespace cse498 {
 
         cse498::WeightedSet<std::string> mItemPool; // A pool of possible items to generate
 
+        size_t mNextItemId = 0; // Item id tracker
+
         /// Provide the agent with movement actions.
         void ConfigAgent(AgentBase &agent) override {
-            agent.AddAction("up", DungeonActions::MOVE_UP);
-            agent.AddAction("down", DungeonActions::MOVE_DOWN);
-            agent.AddAction("left", DungeonActions::MOVE_LEFT);
-            agent.AddAction("right", DungeonActions::MOVE_RIGHT);
-            agent.AddAction(DungeonActions::INTERACT_STRING, DungeonActions::INTERACT);
-            agent.AddAction(DungeonActions::REMAIN_STILL_STRING, DungeonActions::REMAIN_STILL);
+            agent.AddAction("w", DungeonActions::MOVE_UP);
+            agent.AddAction("s", DungeonActions::MOVE_DOWN);
+            agent.AddAction("a", DungeonActions::MOVE_LEFT);
+            agent.AddAction("d", DungeonActions::MOVE_RIGHT);
+            agent.AddAction(std::string(DungeonActions::INTERACT_STRING), DungeonActions::INTERACT);
+            agent.AddAction(std::string(DungeonActions::REMAIN_STILL_STRING), DungeonActions::REMAIN_STILL);
         }
 
     public:
@@ -280,7 +286,6 @@ namespace cse498 {
 			auto& player = AddAgent<PlayerAgent>("Player");
 			player.SetSymbol('Z').SetLocation(WorldPosition{1,1});
 			mPlayer = &player;
-            mPlayerId = player.GetID();
 
             // auto& ui = AddAgent<TrashInterface>("Interface");
             // ui.SetSymbol(' ').SetLocation(WorldPosition{1,1});
@@ -288,9 +293,14 @@ namespace cse498 {
             GenerateLevel();
         }
 
+        /*
+        * @breif Deconstructor for DungeonWorld
+        */
         ~DungeonWorld() = default;
 
-        /// @brief Generates the DungeonWorld based on the currently selected level from mLevel
+        /*
+        * @brief Generates the DungeonWorld based on the currently selected level from mLevel
+        */
         void GenerateLevel() {
             LoadLevelData();
 
@@ -301,10 +311,26 @@ namespace cse498 {
 			SpawnDungeonAgents();
         }
 
+        /*
+        * @brief Returns and resets gold earned from killing enemies
+        */
+        size_t DrainAccumulatedGold() {
+            size_t gold = mAccumulatedGold;
+            mAccumulatedGold = 0;
+            return gold;
+        }
+
+        /*
+        * @brief Getter for the current level
+        * @return An int representing the current level number
+        */
         int GetLevel() {
             return mLevelNum;
         }
 
+        /*
+        * @brief Moves the game to the next level
+        */
 		void AdvanceLevel() {
 			DespawnDungeonAgents();
 
@@ -318,26 +344,47 @@ namespace cse498 {
 			mLevelJustAdvanced = true;
         }
 
-		void SpawnDungeonAgents() {
-			if (!mGeneration) return;
+        /*
+        * @brief Spawns all the agents when entering a new world
+        */
+        void SpawnDungeonAgents() {
+            if (!mGeneration) return;
 
-			mSpawnedEnemyIds.clear();
+            mSpawnedEnemyIds.clear();
 
-			int goblin_num = 1;
-			for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
-				auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
-				agent.SetLocation(WorldPosition{x, y});
-				mSpawnedEnemyIds.push_back(agent.GetID());
-			}
+            // Pick the right floor tile for the current level
+            size_t floorTile;
+            switch (mLevelNum) {
+                case 1:  floorTile = mFloorIdL1V1; break;
+                case 2:  floorTile = mFloorIdL2V1; break;
+                case 3:  floorTile = mFloorIdL3V1; break;
+                default: floorTile = mFloorIdL1V1; break;
+            }
 
-			int skeleton_num = 1;
-			for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
-				auto &agent = AddAgent<Enemy>("Skeleton " + std::to_string(skeleton_num++));
-				agent.SetLocation(WorldPosition{x, y});
-				mSpawnedEnemyIds.push_back(agent.GetID());
-			}
-		}
+            int goblin_num = 1;
+            for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
+                auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
+                agent.SetLocation(WorldPosition{x, y});
+                mSpawnedEnemyIds.push_back(agent.GetID());
 
+                // Replace the monster marker tile with a walkable floor
+                main_grid[WorldPosition{x, y}] = floorTile;
+            }
+
+            int skeleton_num = 1;
+            for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
+                auto &agent = AddAgent<EnemyAgent>("Skeleton " + std::to_string(skeleton_num++));
+                agent.SetLocation(WorldPosition{x, y});
+                mSpawnedEnemyIds.push_back(agent.GetID());
+
+                // Replace the monster marker tile with a walkable floor
+                main_grid[WorldPosition{x, y}] = floorTile;
+            }
+        }
+
+        /*
+        * @brief Deletes all agents when moving to a new level
+        */
 		void DespawnDungeonAgents() {
 			for (size_t id : mSpawnedEnemyIds) {
 				if (AgentBase *agent = TryGetAgent(id)) {
@@ -351,12 +398,21 @@ namespace cse498 {
 			mSpawnedEnemyIds.clear();
 		}
 
+        /*
+        * @brief UpdateWorld() is run after every agent has a turn.
+        */
         void UpdateWorld() override {
         	if (mLevelNum == 5) {
         		mRunOver = true;
         		return;
         	}
 		}
+
+        /*
+        * @brief Getting for mNextItemId
+        * @returns a size_t representing the next item id
+        */
+        size_t GetNextItemId () {return mNextItemId;}
 
 
         /// @brief Grabs user input to determine whether or not to move to the next level.
@@ -380,6 +436,10 @@ namespace cse498 {
         //     return;
         // }
 
+
+        /*
+        * @brief Runs all of the agents and lets them take actions
+        */
 		void RunAgents() override {
             // TrashInterface* ui = nullptr;
 
@@ -426,10 +486,11 @@ namespace cse498 {
         void HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player) {
             const std::size_t goldReward = enemy.ClaimGoldDrop();
 
-            std::cout << "Enemy defeated.\n";
+            std::cout << "DEBUG::DungeonWorld:: Enemy defeated.\n";
             if (goldReward > 0) {
                 player.AddGold(goldReward);
-                std::cout << player.GetName() << " gains " << goldReward << " gold.\n";
+                mAccumulatedGold += goldReward;
+                std::cout <<"DEBUG::DungeonWorld:: " << player.GetName() << " gains " << goldReward << " gold.\n";
             }
         }
 
@@ -450,6 +511,11 @@ namespace cse498 {
         int DoAction(AgentBase &agent, size_t action_id) override {
             // Determine where the agent is trying to move.
             WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
+
+            // Currently unused based on current agent implementation. Can be uncommented to expand combat system
+            //bool agentIsEnemy = std::find(mSpawnedEnemyIds.begin(), mSpawnedEnemyIds.end(), agent.GetID())
+            //            != mSpawnedEnemyIds.end();
+            //auto agentId = agent.GetID();
 
             if (action_id == DungeonActions::INTERACT) {
                 // Legacy method of handling interactions. Kept here in case below code does not work with both agent groups.
@@ -517,6 +583,11 @@ namespace cse498 {
                     if (!other->IsAlive()) {
                         continue;
                     }
+
+                    bool otherIsEnemy = std::find(mSpawnedEnemyIds.begin(), mSpawnedEnemyIds.end(), other->GetID())
+                        != mSpawnedEnemyIds.end();
+                    auto otherId = other->GetID();
+
                     const WorldPosition other_pos = other->GetLocation().AsWorldPosition();
                     const double dx = std::abs(cur_position.X() - other_pos.X());
                     const double dy = std::abs(cur_position.Y() - other_pos.Y());
@@ -529,9 +600,9 @@ namespace cse498 {
                         if (!other->IsAlive()) {
                             auto* enemy = dynamic_cast<Enemy*>(other);
                             auto& player = dynamic_cast<PlayerAgent&>(agent);
-                            HandleEnemyDefeat(*enemy, player);
-                            CleanupSpawnedEnemyIds();
-                            RemoveDeadAgents();
+                            if (enemy) { HandleEnemyDefeat(*enemy, player); }
+                            // CleanupSpawnedEnemyIds();  malloc error
+                            // RemoveDeadAgents();
                             return 1;
                         }
                         const double retaliate = DamageCalculator::Calculate(other->GetStats(), agent.GetStats());
@@ -546,7 +617,7 @@ namespace cse498 {
                 }
 
                 if (!interacted) {
-                    std::cout << "No one nearby to interact with.\n";
+                    std::cout << "DEBUG::DungeonWorld:: No one nearby to interact with.\n";
                 }
                 return interacted ? 1 : 0;
                 /// The above code inside this if statement was adapted from the combat system in Group 2's demo code
@@ -607,12 +678,16 @@ namespace cse498 {
                 if (agent.IsPlayerAgent()) {
                     Inventory &inventory = agent.GetInventory();
                     std::string item_str = GetRandomItem();
-                    Random rng;
-                    size_t item_id = rng.GetValue(MIN_ID, MAX_ID).value();
+                    mNextItemId++;
 
                     if (item_str == "Sword") {
                         std::unique_ptr<ItemWeaponSword> sword = std::make_unique<ItemWeaponSword>(
-                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 1, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_sword_1.png",
+                            BASE_GOLD + 1,
+                            *this
+                        );
                         sword->SetRange(BASE_RANGE);
                         sword->SetDamage(BASE_DAMAGE + 0.5);
                         sword->SetHitBonus(BASE_BONUS);
@@ -620,7 +695,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword));
                     } else if (item_str == "Sword +1") {
                         std::unique_ptr<ItemWeaponSword> sword1 = std::make_unique<ItemWeaponSword>(
-                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 2, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_sword_1.png",
+                            BASE_GOLD + 2,
+                            *this
+                        );
                         sword1->SetRange(BASE_RANGE);
                         sword1->SetDamage(BASE_DAMAGE + 1.0);
                         sword1->SetHitBonus(BASE_BONUS + 1);
@@ -628,7 +708,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword1));
                     } else if (item_str == "Sword +2") {
                         std::unique_ptr<ItemWeaponSword> sword2 = std::make_unique<ItemWeaponSword>(
-                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 3, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_sword_1.png",
+                            BASE_GOLD + 3,
+                            *this
+                        );
                         sword2->SetRange(BASE_RANGE);
                         sword2->SetDamage(BASE_DAMAGE + 1.5);
                         sword2->SetHitBonus(BASE_BONUS + 2);
@@ -636,7 +721,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword2));
                     } else if (item_str == "Sword +3") {
                         std::unique_ptr<ItemWeaponSword> sword3 = std::make_unique<ItemWeaponSword>(
-                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 4, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_sword_1.png",
+                            BASE_GOLD + 4,
+                            *this
+                        );
                         sword3->SetRange(BASE_RANGE);
                         sword3->SetDamage(BASE_DAMAGE + 2.0);
                         sword3->SetHitBonus(BASE_BONUS + 3);
@@ -644,7 +734,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword3));
                     } else if (item_str == "Sword +4") {
                         std::unique_ptr<ItemWeaponSword> sword4 = std::make_unique<ItemWeaponSword>(
-                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 5, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_sword_1.png",
+                            BASE_GOLD + 5,
+                            *this
+                        );
                         sword4->SetRange(BASE_RANGE);
                         sword4->SetDamage(BASE_DAMAGE + 2.5);
                         sword4->SetHitBonus(BASE_BONUS + 4);
@@ -652,7 +747,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(sword4));
                     } else if (item_str == "Sword +5") {
                         std::unique_ptr<ItemWeaponSword> sword5 = std::make_unique<ItemWeaponSword>(
-                                item_id, item_str, "/assets/items/item_sword_1.png", BASE_GOLD + 6, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_sword_1.png",
+                            BASE_GOLD + 6,
+                            *this
+                        );
                         sword5->SetRange(BASE_RANGE);
                         sword5->SetDamage(BASE_DAMAGE + 3.0);
                         sword5->SetHitBonus(BASE_BONUS + 5);
@@ -662,7 +762,12 @@ namespace cse498 {
 
                     if (item_str == "Bow") {
                         std::unique_ptr<ItemWeaponBow> bow = std::make_unique<ItemWeaponBow>(
-                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 1, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_bow_1.png",
+                            BASE_GOLD + 1,
+                            *this
+                        );
                         bow->SetRange(BASE_RANGE + 3);
                         bow->SetDamage(BASE_DAMAGE + 0.5);
                         bow->SetHitBonus(BASE_BONUS);
@@ -670,7 +775,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow));
                     } else if (item_str == "Bow +1") {
                         std::unique_ptr<ItemWeaponBow> bow1 = std::make_unique<ItemWeaponBow>(
-                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 2, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_bow_1.png",
+                            BASE_GOLD + 2,
+                            *this
+                        );
                         bow1->SetRange(BASE_RANGE + 3);
                         bow1->SetDamage(BASE_DAMAGE + 1.0);
                         bow1->SetHitBonus(BASE_BONUS + 1);
@@ -678,7 +788,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow1));
                     } else if (item_str == "Bow +2") {
                         std::unique_ptr<ItemWeaponBow> bow2 = std::make_unique<ItemWeaponBow>(
-                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 3, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_bow_1.png",
+                            BASE_GOLD + 3,
+                            *this
+                        );
                         bow2->SetRange(BASE_RANGE + 3);
                         bow2->SetDamage(BASE_DAMAGE + 1.5);
                         bow2->SetHitBonus(BASE_BONUS + 2);
@@ -686,7 +801,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow2));
                     } else if (item_str == "Bow +3") {
                         std::unique_ptr<ItemWeaponBow> bow3 = std::make_unique<ItemWeaponBow>(
-                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 4, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_bow_1.png",
+                            BASE_GOLD + 4,
+                            *this
+                        );
                         bow3->SetRange(BASE_RANGE + 3);
                         bow3->SetDamage(BASE_DAMAGE + 2.0);
                         bow3->SetHitBonus(BASE_BONUS + 3);
@@ -694,7 +814,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow3));
                     } else if (item_str == "Bow +4") {
                         std::unique_ptr<ItemWeaponBow> bow4 = std::make_unique<ItemWeaponBow>(
-                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 5, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_bow_1.png",
+                            BASE_GOLD + 5,
+                            *this
+                        );
                         bow4->SetRange(BASE_RANGE + 3);
                         bow4->SetDamage(BASE_DAMAGE + 2.5);
                         bow4->SetHitBonus(BASE_BONUS + 4);
@@ -702,7 +827,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow4));
                     } else if (item_str == "Bow +5") {
                         std::unique_ptr<ItemWeaponBow> bow5 = std::make_unique<ItemWeaponBow>(
-                                item_id, item_str, "/assets/items/item_bow_1.png", BASE_GOLD + 6, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_bow_1.png",
+                            BASE_GOLD + 6,
+                            *this
+                        );
                         bow5->SetRange(BASE_RANGE + 4);
                         bow5->SetDamage(BASE_DAMAGE + 3.0);
                         bow5->SetHitBonus(BASE_BONUS + 5);
@@ -710,28 +840,48 @@ namespace cse498 {
                         inventory.AddItem(std::move(bow5));
                     } else if (item_str == "Healing Potion") {
                         std::unique_ptr<ItemConsumableHealing> healing = std::make_unique<ItemConsumableHealing>(
-                                item_id, item_str, "/assets/items/item_potion_healing.png", BASE_GOLD, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/potion_healing.png",
+                            BASE_GOLD,
+                            *this
+                        );
                         healing->SetCharges(1);
                         healing->SetDuration(0);
 
                         inventory.AddItem(std::move(healing));
                     } else if (item_str == "Defense Potion") {
                         std::unique_ptr<ItemConsumableDefense> defense = std::make_unique<ItemConsumableDefense>(
-                                item_id, item_str, "/assets/items/item_potion_defense.png", BASE_GOLD, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/potion_defense.png",
+                            BASE_GOLD,
+                            *this
+                        );
                         defense->SetCharges(1);
                         defense->SetDuration(3);
 
                         inventory.AddItem(std::move(defense));
                     } else if (item_str == "Speed Potion") {
                         std::unique_ptr<ItemConsumableSpeed> speed = std::make_unique<ItemConsumableSpeed>(
-                                item_id, item_str, "/assets/items/item_potion_speed.png", BASE_GOLD, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/potion_speed.png",
+                            BASE_GOLD,
+                            *this
+                        );
                         speed->SetCharges(1);
                         speed->SetDuration(3);
 
                         inventory.AddItem(std::move(speed));
                     } else if (item_str == "Axe") {
                         std::unique_ptr<ItemWeaponToolAxe> axe = std::make_unique<ItemWeaponToolAxe>(
-                                item_id, item_str, "/assets/items/item_axe.png", BASE_GOLD, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_axe.png",
+                            BASE_GOLD,
+                            *this
+                        );
                         axe->SetRange(BASE_RANGE);
                         axe->SetDamage(BASE_DAMAGE);
                         axe->SetHitBonus(BASE_BONUS);
@@ -741,7 +891,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(axe));
                     } else if (item_str == "Pickaxe") {
                         std::unique_ptr<ItemWeaponToolPickaxe> pickaxe = std::make_unique<ItemWeaponToolPickaxe>(
-                                item_id, item_str, "/assets/items/item_pickaxe.png", BASE_GOLD, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_pickaxe.png",
+                            BASE_GOLD,
+                            *this
+                        );
                         pickaxe->SetRange(BASE_RANGE);
                         pickaxe->SetDamage(BASE_DAMAGE);
                         pickaxe->SetHitBonus(BASE_BONUS);
@@ -751,7 +906,12 @@ namespace cse498 {
                         inventory.AddItem(std::move(pickaxe));
                     } else if (item_str == "Shovel") {
                         std::unique_ptr<ItemWeaponToolShovel> shovel = std::make_unique<ItemWeaponToolShovel>(
-                                item_id, item_str, "/assets/items/item_shovel.png", BASE_GOLD, *this);
+                            mNextItemId,
+                            item_str,
+                            "/assets/item/item_shovel.png",
+                            BASE_GOLD,
+                            *this
+                        );
                         shovel->SetRange(BASE_RANGE);
                         shovel->SetDamage(BASE_DAMAGE);
                         shovel->SetHitBonus(BASE_BONUS);
@@ -785,8 +945,14 @@ namespace cse498 {
         */
         std::string GetRandomItem() {
             cse498::Random rng;
-            double item = rng.GetValue(1.0, mItemPool.GetTotalWeight()).value();
-            return mItemPool.Sample(item).value();
+
+            auto rngItem = rng.GetValue(1.0, mItemPool.GetTotalWeight());
+            assert(rngItem.has_value());
+            double item = rngItem.value();
+
+            auto retItem = mItemPool.Sample(item);
+            assert(retItem.has_value());
+            return retItem.value();
         }
     };
 } // End of namespace cse498
