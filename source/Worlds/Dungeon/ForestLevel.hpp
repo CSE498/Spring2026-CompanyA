@@ -90,15 +90,13 @@ public:
      */
     ForestLevel() : m_room_pool(MakeRoomPool()) {}
 
-    /**
-     * @brief Default destructor.
-     */
-    ~ForestLevel() = default;
-
-    /**
-     *
-     */
-    [[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override { return m_room_pool; }
+	/*
+	* @brief Public getter for m_room_pool
+	* @return Returns a weighted set of possible rooms
+	*/
+	[[nodiscard]] const cse498::WeightedSet<int>& GetRoomPool() const override {
+    	return m_room_pool;
+	}
 
     [[nodiscard]] const std::string& GetRoomDir() const override { return m_room_dir; }
 };

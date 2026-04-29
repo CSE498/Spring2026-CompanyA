@@ -42,7 +42,7 @@ namespace cse498
         OVERWORLD, /// Flat interactive world with dungeon entrance
         DUNGEON,   /// Procedurally generated dungeon world
         PAUSED,    /// Paused state (reachable from OVERWORLD or DUNGEON)
-        SETTINGS,  /// Settings screen (placeholder)
+        CONTROLS,  /// Controls Screen
         STATS,     /// Contains information captured in gameplay
         TRADING,   /// Trading with a merchant
         QUIT       /// Exit state
@@ -132,6 +132,8 @@ namespace cse498
         std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
         DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
         Text mStatsText; /// Text object used for stats screen
+        size_t mLastSyncedActionCount = 0;
+        bool mCombatStatsFlushed = false;
 
 
         // -------------------------
@@ -164,7 +166,7 @@ namespace cse498
         void UpdateOverworld();
         void UpdateDungeon();
         void UpdatePaused();
-        void UpdateSettings();
+        void UpdateControls();
         void UpdateStats();
 
         /**
@@ -174,7 +176,7 @@ namespace cse498
         void RenderOverworld();
         void RenderDungeon();
         void RenderPaused();
-        void RenderSettings();
+        void RenderControls();
         void RenderStats();
         void RenderHotbar(const Inventory& inventory);
         void RenderBackpack(const Inventory& inventory);
@@ -188,7 +190,7 @@ namespace cse498
          * @param key SDL keycode (SDLK_w, SDLK_a, SDLK_s, SDLK_d)
          * @return Action ID matching WorldBase action conventions, 0 = remain still
          */
-        size_t KeyToAction(SDL_Keycode key);
+        size_t KeyToAction(SDL_Keycode key) const;
 
         /**
          * @brief Process player movement input.
