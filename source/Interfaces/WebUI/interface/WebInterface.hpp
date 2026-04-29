@@ -27,6 +27,7 @@ class WebButton;
 class WebImage;
 class InteractiveWorld;
 class DungeonWorld;
+class ResourceManagementAgent;
 class Item;
 class Inventory;
 
@@ -78,7 +79,17 @@ public:
     void OnInventorySlotClick(size_t slotIndex);
 
     /// @brief Current WebUI state (exposed for testing).
-    enum class WebState { MAIN_MENU, OVERWORLD, DUNGEON, PAUSED, SETTINGS, INVENTORY, STATS, QUIT };
+    enum class WebState {
+        MAIN_MENU,
+        OVERWORLD,
+        DUNGEON,
+        PAUSED,
+        SETTINGS,
+        INVENTORY,
+        STATS,
+        RESOURCE_MANAGEMENT,
+        QUIT
+    };
 
     /// @brief Get the current player from the active world.
     /// @return Pointer to the current player, or nullptr if no world is active.
@@ -152,6 +163,12 @@ private:
     /// @brief Stats menu layout.
     WebLayout* mStatsMenu = nullptr;
 
+    /// @brief Resource management menu layout.
+    WebLayout* mResourceMenu = nullptr;
+
+    /// @brief Resource management menu options layout.
+    WebLayout* mResourceMenuOptionsLayout = nullptr;
+
     /// @brief Tracks analytics data for the stats dashboard.
     std::shared_ptr<AnalyticsManager> mAnalyticsManager;
 
@@ -169,6 +186,24 @@ private:
 
     /// @brief Textbox displaying stats menu details.
     WebTextbox* mStatsMenuText = nullptr;
+
+    /// @brief Textbox displaying resource manager summary details.
+    WebTextbox* mResourceMenuSummaryText = nullptr;
+
+    /// @brief Textbox displaying resource manager action feedback.
+    WebTextbox* mResourceMenuStatusText = nullptr;
+
+    /// @brief Currently active resource manager for the WebUI menu.
+    ResourceManagementAgent* mActiveResourceManager = nullptr;
+
+    /// @brief Currently active resource manager tab. 0 = upgrades, 1 = lanes, 2 = sell.
+    int mResourceMenuTab = 0;
+
+    /// @brief Tab buttons used by the resource management menu.
+    std::vector<WebButton*> mResourceTabButtons{};
+
+    /// @brief Option buttons reused for the resource management action list.
+    std::vector<WebButton*> mResourceMenuOptionButtons{};
 
     /// @brief Map of symbols to file paths for the overworld.
     std::unordered_map<char, std::string> mSymbolPathOverworld{};
@@ -204,7 +239,14 @@ private:
     /// @brief Initialize inventory menu layout and item display.
     void SetupInventoryMenu();
 
+    /// @brief Initialize stats menu layout and back button.
     void SetupStatsMenu();
+
+    /// @brief Initialize resource management menu layout and button callbacks.
+    void SetupResourceMenu();
+
+    /// @brief Initialize overworld agents and buildings.
+    void SetupOverworld();
 
     /// @brief Transition to a new WebUI state.
     /// @param newState Target state.
@@ -224,6 +266,28 @@ private:
 
     /// @brief Render HUD elements like player inventory.
     void RenderHUD();
+
+    /// @brief Attempt to open the resource management menu for an adjacent manager.
+    /// @return True if a manager menu was opened.
+    bool TryOpenResourceManagerMenu();
+
+    /// @brief Open the resource management menu for a specific manager.
+    /// @param manager Resource manager to interact with.
+    void OpenResourceMenu(ResourceManagementAgent& manager);
+
+    /// @brief Close the resource management menu and resume gameplay.
+    void CloseResourceMenu();
+
+    /// @brief Refresh the resource management menu contents from the active manager.
+    void PopulateResourceMenu();
+
+    /// @brief Switch the active resource management tab and refresh its options.
+    /// @param tabIndex Target tab index.
+    void SetResourceMenuTab(int tabIndex);
+
+    /// @brief Grow the reusable button pool for resource management options.
+    /// @param count Number of option buttons required.
+    void EnsureResourceMenuOptionButtons(std::size_t count);
 
     /// @brief Draws the world grid on the canvas.
     /// @param grid The world grid to draw.
