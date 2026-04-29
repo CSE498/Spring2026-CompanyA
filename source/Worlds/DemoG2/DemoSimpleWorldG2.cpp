@@ -61,6 +61,8 @@ void DemoSimpleWorldG2::PrintWorldState() const {
     const AgentBase* enemy = TryGetAgent(mEnemyId);
     std::cout << "Player HP: " << (player ? static_cast<int>(player->GetCurrentHealth()) : 0)
               << " | Player Gold: " << (player ? player->GetGold() : 0);
+    std::cout << GetPlayer()->GetInventory().GetHand(); // (GetPlayer() ? GetPlayer()->GetInventory().GetHand() : "");
+
     if (enemy != nullptr && enemy->IsAlive()) {
         std::cout << " | Enemy HP: " << static_cast<int>(enemy->GetCurrentHealth());
     } else {
@@ -89,94 +91,99 @@ bool DemoSimpleWorldG2::MoveAgentBy(AgentBase& agent, double dx, double dy) {
 }
 
 int DemoSimpleWorldG2::HandleInteraction(AgentBase& actor) {
+
+    /*
+     * PLEASE READ
+     * NOTE NOTE NOTE
+     *
+     * This function was only ever supposed to do output of text on what was happening in the interaction
+     * -- A Wrapper for the interaction
+     *
+     * But it instead makes up for the lack of implementation with interacting with the farmer -
+     * We never built a system for doing "b" to buy from trader and UI interface part of trading so
+     * That is instead for this as this file is an integrated world + interface
+     *
+     * but it has to because it makes up for the lack of implementation
+     * structure elsewhere. It was just hard to get everyone on board with timing and all to know
+     *
+     *
+     * NOTE NOTE NOTE
+     */
+
+
     const WorldPosition actor_pos = actor.GetLocation().AsWorldPosition();
     bool interacted = false;
+    // Assume actor is player
+    if (actor.GetID() != GetPlayer()->GetID())
+        return 0;
 
     for (size_t i = 0; i < GetNumAgents(); ++i) {
         AgentBase& other = GetAgentByIndex(i);
+
+
         if (&other == &actor) {
             continue;
         }
         if (!other.IsAlive()) {
             continue;
         }
+
+
         const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
         const double dx = std::abs(actor_pos.X() - other_pos.X());
         const double dy = std::abs(actor_pos.Y() - other_pos.Y());
         // Interaction should commence between the two parties
         // To move this into the behavior tree of agents we need a way to find enemies in radius R
         // In practice this will be moved and handled by us, not the world.
-        if (dx <= 1.0 && dy <= 1.0) {
-            // if farmer <-> enemy ignore.
-            if (other.GetID() == mFarmerId && HasAgent(mEnemyId) && actor.GetID() == GetAgent(mEnemyId).GetID()) {
-                continue;
-            }
-            // Otherwise interaction happens
+        if (dx <= 1.0 && dy <= 1.0 && other.GetID() == mFarmerId)
+        {
+            auto& farmer = dynamic_cast<FarmingAgent&>(other);
             interacted = true;
-            if (other.GetID() == mFarmerId) { // If farmer then do -->
-                auto& farmer = dynamic_cast<FarmingAgent&>(other);
-                if (&actor == GetPlayer()) {
-                    return HandleMerchantTrade(farmer);
-                }
-
-                std::cout << "Farmer: ";
-                if (farmer.IsAvailableForTrade()) {
-                    std::cout << farmer.GetTradeGreeting() << '\n';
-                } else {
-                    std::cout << farmer.GetTradeClosedMessage() << '\n';
-                }
-                // If player and Enemy -->
-            } else if (other.GetID() == mPlayerId && HasAgent(mEnemyId) &&
-                       actor.GetID() == GetAgent(mEnemyId).GetID()) {
-                auto& player = dynamic_cast<PlayerAgent&>(other);
-                auto& enemy = dynamic_cast<Enemy&>(actor);
-
-                const double dealt =
-                        DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
-                player.TakeDamage(dealt);
-                std::cout << enemy.GetName() << " hits " << player.GetName() << " for " << static_cast<int>(dealt)
-                          << " damage.\n";
-                if (!player.IsAlive()) {
-                    std::cout << player.GetName() << " has fallen.\n";
-                    mRunOver = true;
-                    return 1;
-                }
-                const double retaliate =
-                        DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
-                enemy.TakeDamage(retaliate);
-                std::cout << player.GetName() << " strikes back for " << static_cast<int>(retaliate) << " damage.\n";
-                if (!enemy.IsAlive()) {
-                    HandleEnemyDefeat(enemy, player);
-                    return 1;
-                }
-                //
-            } else if (other.GetID() == mEnemyId) {
-                const double dealt =
-                        DamageCalculator::Calculate(GetPlayer()->GetStats(), GetAgent(mEnemyId).GetStats());
-                other.TakeDamage(dealt);
-                std::cout << actor.GetName() << " hits enemy for " << static_cast<int>(dealt) << " damage.\n";
-                if (!other.IsAlive()) {
-                    auto& enemy = dynamic_cast<Enemy&>(other);
-                    auto& player = dynamic_cast<PlayerAgent&>(actor);
-                    HandleEnemyDefeat(enemy, player);
-                    return 1;
-                }
-                const double retaliate =
-                        DamageCalculator::Calculate(GetAgent(mEnemyId).GetStats(), GetPlayer()->GetStats());
-                actor.TakeDamage(retaliate);
-                std::cout << "Enemy strikes back for " << static_cast<int>(retaliate) << " damage.\n";
-                if (!actor.IsAlive()) {
-                    std::cout << actor.GetName() << " has fallen.\n";
-                    mRunOver = true;
-                    return 1;
-                }
+            if (&actor == GetPlayer()) {
+                return HandleMerchantTrade(farmer);
             }
+            std::cout << "Farmer: ";
+            if (farmer.IsAvailableForTrade()) {
+                std::cout << farmer.GetTradeGreeting() << '\n';
+            } else {
+                std::cout << farmer.GetTradeClosedMessage() << '\n';
+            }
+            return interacted;
         }
+        // otherwise just act as if it is an enemy
+        // This is ELSE case:
+
+        auto& player = dynamic_cast<PlayerAgent&>(actor); // we know this is true from start of func
+        if (!other.IsEnemy())
+            continue;
+        auto& enemy = dynamic_cast<Enemy&>(other); // true
+
+        interacted = Interact(); // this will handle the interaction finding the enemy nearby. We TERMINATE ASAP now
+
+        /*
+         * This is just ouputting information now based on the interaction
+         */
+
+        std::cout << enemy.GetName() << " hits " << player.GetName() << " for " << player.GetLastDamageDealt()
+          << " damage.\n";
+
+        if (!player.IsAlive()) {
+            std::cout << player.GetName() << " has fallen.\n";
+            mRunOver = true;
+            return 1;
+        }
+        if (!enemy.IsAlive()) {
+            HandleEnemyDefeat(enemy, player);
+            return 1;
+        }
+
+        if (interacted)
+            return true;
     }
-    if (!interacted) {
-        std::cout << "No one nearby to interact with.\n";
-    }
-    return interacted ? 1 : 0;
+
+    // No interaction
+    std::cout << "No one nearby to interact with.\n";
+    return false;
 }
 
 int DemoSimpleWorldG2::HandleMerchantTrade(MerchantAgent& merchant) const {
@@ -280,7 +287,7 @@ void DemoSimpleWorldG2::ConfigAgent(AgentBase& agent) {
 
 DemoSimpleWorldG2::DemoSimpleWorldG2() {
     // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
-    auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
+    auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this); // ID = 0
     AddAgent(std::move(p));
     mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
     assert(mPlayer);
@@ -308,7 +315,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
 
     // Creating agents by using the template this way
     auto& farmer = AddAgent<FarmingAgent>("Farmer");
-    mFarmerId = farmer.GetID();
+    mFarmerId = farmer.GetID(); // ID = 1
     farmer.SetSymbol('F');
     farmer.SetLocation(Location(WorldPosition{4, 2}));
     farmer.ClearInitialOffers();
@@ -318,7 +325,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     farmer.AddGold(200);
 
     // just for demonstration of another method for creation of an agent
-    mEnemyId = GetNextAgentId(); // this is just for demonstration. ids should be organized by world
+    mEnemyId = GetNextAgentId(); // this is just for demonstration. ids should be organized by world ID = 2
     auto& enemy = AddAgent(std::make_unique<Enemy>(mEnemyId, "Enemy", *this));
     enemy.SetSymbol('S');
     enemy.SetLocation(Location(WorldPosition{8, 3}));
@@ -361,9 +368,17 @@ void DemoSimpleWorldG2::Run() {
             break;
         }
 
-        std::cout << "WASD move, E interact with NPC/enemy, Q quit.\n> ";
+        std::cout << "WASD move, E interact with NPC/enemy, Q quit. ---- _- Inv Scroll, += Inv scroll \n> ";
         char input;
         std::cin >> input;
+        auto scrollTest = IsScroll(input);
+        if (scrollTest) // just handle the scroll
+        {
+            (scrollTest.value()) ? mPlayer->GetInventory().HotBarIndexInc() : mPlayer->GetInventory().HotBarIndexDec();
+            continue;
+        }
+
+
         const size_t action_id = player->SelectPlayerAction(input);
         const int result = DoAction(*player, action_id);
         player->SetActionResult(result);
@@ -384,5 +399,22 @@ void DemoSimpleWorldG2::Run() {
     PrintWorldState();
     std::cout << "Demo complete.\n";
 }
+
+
+std::optional<bool> DemoSimpleWorldG2::IsScroll(char s)
+{
+    switch (s)
+    {
+        case '-':
+        case '_':
+            return false;
+        case '+':
+        case '=':
+            return true;
+        default: return {};
+    }
+}
+
+
 
 } // namespace cse498

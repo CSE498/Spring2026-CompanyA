@@ -82,10 +82,18 @@ public:
      * Recomputes effective attack and range from base stats plus the weapon in the selected hotbar hand slot.
      */
     void RefreshCombatFromHand();
+    /**
+     * Sets last damage dealt - could be replaced to log it, just for information to pull into UI
+     * @param dmg - damage dealt
+     */
+    void SetLastDamageDealt(double dmg) { mLastDamageDealt = dmg; }
+
+    double GetLastDamageDealt() const { return mLastDamageDealt; }
 
 private:
     /// Unmodified stats from the world (before hand weapon bonuses).
     AgentStats mBaseCombatStats{};
+    double mLastDamageDealt{};
 };
 
 } // namespace cse498

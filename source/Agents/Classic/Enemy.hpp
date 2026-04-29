@@ -79,7 +79,9 @@ public:
     void OnDeath() override;
 
     bool Interact() override {
-        TakeDamage(DamageCalculator::Calculate(world.GetPlayer()->GetStats(), mStats));
+        double damage = DamageCalculator::Calculate(world.GetPlayer()->GetStats(), mStats);
+        TakeDamage(damage);
+        world.GetPlayer()->SetLastDamageDealt(damage);
         return true;
     }
 };

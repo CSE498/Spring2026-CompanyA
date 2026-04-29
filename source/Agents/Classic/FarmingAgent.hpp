@@ -180,5 +180,7 @@ public:
      * Called by the world when the farmer successfully works at the assigned building.
      */
     void OnWorkedAtBuilding();
+
+    bool Interact() override;
 };
 } // namespace cse498

@@ -148,6 +148,10 @@ void FarmingAgent::OnWorkedAtBuilding() {
     mTicksSinceWork = 0;
     mState = FarmerState::ReturningHome;
 }
+bool FarmingAgent::Interact()
+{
+    return true;
+}
 
 std::size_t FarmingAgent::SelectAction(const WorldGrid& grid) {
     ++mTicksSinceWork;
