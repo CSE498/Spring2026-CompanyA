@@ -29,8 +29,7 @@ struct AgentStats {
      * @param level Agent level.
      */
     AgentStats(double hp, double atk, double def, double range, size_t level) :
-        mMaxHp(hp), mHp(hp), mAtk(atk), mDef(def), mRange(range), mLevel(level)
-    {
+        mMaxHp(hp), mHp(hp), mAtk(atk), mDef(def), mRange(range), mLevel(level) {
         assert(range >= 0 && "Range is positive double");
     }
     AgentStats() = default;

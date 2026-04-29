@@ -75,6 +75,8 @@ namespace cse498 {
 
 		//Track level change to prevent an extra enemy turn
 		bool mLevelJustAdvanced = false;
+
+        size_t mAccumulatedGold = 0; /// Used to transfer gold to the InteractiveWorld Inventory
         
         /**
          * @brief Builds the room pool for the current level.
@@ -184,6 +186,11 @@ namespace cse498 {
             agent.AddAction("s", DungeonActions::MOVE_DOWN);
             agent.AddAction("a", DungeonActions::MOVE_LEFT);
             agent.AddAction("d", DungeonActions::MOVE_RIGHT);
+            // Aliases for EnemyAgent which looks up by "up"/"down"/"left"/"right"
+            agent.AddAction("up", DungeonActions::MOVE_UP);
+            agent.AddAction("down", DungeonActions::MOVE_DOWN);
+            agent.AddAction("left", DungeonActions::MOVE_LEFT);
+            agent.AddAction("right", DungeonActions::MOVE_RIGHT);
             agent.AddAction(std::string(DungeonActions::INTERACT_STRING), DungeonActions::INTERACT);
             agent.AddAction(std::string(DungeonActions::REMAIN_STILL_STRING), DungeonActions::REMAIN_STILL);
         }
@@ -310,6 +317,15 @@ namespace cse498 {
         }
 
         /*
+        * @brief Returns and resets gold earned from killing enemies
+        */
+        size_t DrainAccumulatedGold() {
+            size_t gold = mAccumulatedGold;
+            mAccumulatedGold = 0;
+            return gold;
+        }
+
+        /*
         * @brief Getter for the current level
         * @return An int representing the current level number
         */
@@ -336,25 +352,40 @@ namespace cse498 {
         /*
         * @brief Spawns all the agents when entering a new world
         */
-		void SpawnDungeonAgents() {
-			if (!mGeneration) return;
+        void SpawnDungeonAgents() {
+            if (!mGeneration) return;
 
-			mSpawnedEnemyIds.clear();
+            mSpawnedEnemyIds.clear();
 
-			int goblin_num = 1;
-			for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
-				auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
-				agent.SetLocation(WorldPosition{x, y});
-				mSpawnedEnemyIds.push_back(agent.GetID());
-			}
+            // Pick the right floor tile for the current level
+            size_t floorTile;
+            switch (mLevelNum) {
+                case 1:  floorTile = mFloorIdL1V1; break;
+                case 2:  floorTile = mFloorIdL2V1; break;
+                case 3:  floorTile = mFloorIdL3V1; break;
+                default: floorTile = mFloorIdL1V1; break;
+            }
 
-			int skeleton_num = 1;
-			for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
-				auto &agent = AddAgent<EnemyAgent>("Skeleton " + std::to_string(skeleton_num++));
-				agent.SetLocation(WorldPosition{x, y});
-				mSpawnedEnemyIds.push_back(agent.GetID());
-			}
-		}
+            int goblin_num = 1;
+            for (const auto &[x, y] : mGeneration->GetGoblinSpawns()) {
+                auto &agent = AddAgent<Enemy>("Goblin " + std::to_string(goblin_num++));
+                agent.SetLocation(WorldPosition{x, y});
+                mSpawnedEnemyIds.push_back(agent.GetID());
+
+                // Replace the monster marker tile with a walkable floor
+                main_grid[WorldPosition{x, y}] = floorTile;
+            }
+
+            int skeleton_num = 1;
+            for (const auto &[x, y] : mGeneration->GetSkeletonSpawns()) {
+                auto &agent = AddAgent<EnemyAgent>("Skeleton " + std::to_string(skeleton_num++));
+                agent.SetLocation(WorldPosition{x, y});
+                mSpawnedEnemyIds.push_back(agent.GetID());
+
+                // Replace the monster marker tile with a walkable floor
+                main_grid[WorldPosition{x, y}] = floorTile;
+            }
+        }
 
         /*
         * @brief Deletes all agents when moving to a new level
@@ -460,9 +491,10 @@ namespace cse498 {
         void HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player) {
             const std::size_t goldReward = enemy.ClaimGoldDrop();
 
-            std::cout << "DEBUG::DungeonWorld:: Enemy defeated.\n";
+            std::cout << "DEBUG::DungeonWorld:: " + enemy.GetName() + ".\n";
             if (goldReward > 0) {
                 player.AddGold(goldReward);
+                mAccumulatedGold += goldReward;
                 std::cout <<"DEBUG::DungeonWorld:: " << player.GetName() << " gains " << goldReward << " gold.\n";
             }
         }
@@ -557,6 +589,11 @@ namespace cse498 {
                         continue;
                     }
 
+                    [[maybe_unused]] bool otherIsEnemy = std::find(mSpawnedEnemyIds.begin(), mSpawnedEnemyIds.end(), other->GetID())
+                    != mSpawnedEnemyIds.end();
+
+                    [[maybe_unused]] auto otherId = other->GetID();
+
                     const WorldPosition other_pos = other->GetLocation().AsWorldPosition();
                     const double dx = std::abs(cur_position.X() - other_pos.X());
                     const double dy = std::abs(cur_position.Y() - other_pos.Y());
@@ -569,9 +606,9 @@ namespace cse498 {
                         if (!other->IsAlive()) {
                             auto* enemy = dynamic_cast<Enemy*>(other);
                             auto& player = dynamic_cast<PlayerAgent&>(agent);
-                            HandleEnemyDefeat(*enemy, player);
-                            CleanupSpawnedEnemyIds();
-                            RemoveDeadAgents();
+                            if (enemy) { HandleEnemyDefeat(*enemy, player); }
+                            // CleanupSpawnedEnemyIds();  malloc error
+                            // RemoveDeadAgents();
                             return 1;
                         }
                         const double retaliate = DamageCalculator::Calculate(other->GetStats(), agent.GetStats());

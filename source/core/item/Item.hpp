@@ -9,6 +9,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 
 namespace cse498 {
 class WorldBase;
@@ -51,4 +52,12 @@ public:
 
     virtual ~Item() = default;
 };
+
+
+inline std::ostream& operator<<(std::ostream& os, const Item& item) {
+    os << "(ID:" << item.GetId() << ", " << item.GetName() << ")";
+    return os;
+}
+
+
 } // namespace cse498

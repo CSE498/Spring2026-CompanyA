@@ -27,6 +27,11 @@ namespace cse498
 {
 
     constexpr int TURN_DELAY = 100;
+    constexpr int TILE_SIZE = 64;
+    constexpr int ICON_SIZE = 48;
+    constexpr int PICKUP_MESSAGE_DURATION_MS = 1000;
+    constexpr int DUNGEON_SPAWN_X = 1;
+    constexpr int DUNGEON_SPAWN_Y = 1;
 
     // -----------------------------------------------------------------------
     //  Initialization
@@ -35,7 +40,10 @@ namespace cse498
     bool Game::Initialize()
     {
         if (!mGameView->Initialize())
+        {
+            std::cerr << "GameView initialization failed." << std::endl;
             return false;
+        }
 
         std::cout << "Working directory: " << std::filesystem::current_path() << std::endl;
         std::cout << "Asset Dir: " << std::string(ASSETS_DIR) << std::endl;
@@ -45,13 +53,13 @@ namespace cse498
         // Title text
         mTitleText.SetRenderer(renderer);
         mTitleText.SetContent("Slay the Dungeon");
-        mTitleText.SetSize(48);
+        mTitleText.SetSize(ICON_SIZE);
         mTitleText.SetBold(true);
 
         // Pause text
         mPauseText.SetRenderer(renderer);
         mPauseText.SetContent("Paused");
-        mPauseText.SetSize(48);
+        mPauseText.SetSize(ICON_SIZE);
         mPauseText.SetBold(true);
 
         // Item pickup notifications
@@ -167,7 +175,7 @@ namespace cse498
 
         // --- Shared special tiles ---
         if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "items/item_potion_defense.png")) return false;
+        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "tiles/item_spawn.png")) return false;
         if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png")) return false;
         if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_goblin.png")) return false;
         // KAREN: Changes to match DungeonWorld
@@ -231,6 +239,22 @@ namespace cse498
         SetupMainMenu();
         SetupPauseMenu();
         return true;
+    }
+
+    void BuildImageGridFromWorldGrid(const WorldGrid& worldGrid, ImageGrid& imageGrid)
+    {
+    const size_t world_w = worldGrid.GetWidth();
+    const size_t world_h = worldGrid.GetHeight();
+
+    for (size_t y = 0; y < world_h; ++y)
+    {
+        for (size_t x = 0; x < world_w; ++x)
+        {
+            WorldPosition pos(x, y);
+            const std::string& cell_name = worldGrid.GetCellTypeName(worldGrid[pos]);
+            imageGrid.SetCell(x, y, cell_name);
+        }
+    }
     }
 
     void Game::SetupOverworld()
@@ -308,7 +332,7 @@ namespace cse498
         // Player
         auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
         player.SetLocation(WorldPosition{1, 1});
-        player.AddGold(10000); // starting gold for trading demo
+        player.AddGold(25); // starting gold for trading demo
         mOverworldPlayer = &player;
 
         // Farming merchant NPC
@@ -383,17 +407,9 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mOverworldGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mOverworldGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
-        for (size_t y = 0; y < world_h; ++y)
-        {
-            for (size_t x = 0; x < world_w; ++x)
-            {
-                WorldPosition pos(x, y);
-                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
-                mOverworldGrid->SetCell(x, y, cell_name);
-            }
-        }
+        BuildImageGridFromWorldGrid(grid, *mOverworldGrid);
 
         mOverWorld->SetAnalyticsManager(mAnalyticsManager);
     }
@@ -407,13 +423,15 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
         // KAREN: DungeonWorld already creates a player in its constructor
         // auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
         // player.SetLocation(WorldPosition{1, 1});
         // mDungeonPlayer = &player;
         mDungeonPlayer = mDungeonWorld->GetPlayer();
+        mDungeonPlayer->SetMaxHealth(10);
+        mDungeonPlayer->SetHealth(10);
 
         std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
 
@@ -428,9 +446,8 @@ namespace cse498
          * same tile.
          */
         std::unordered_set<std::string> usedPositions;
-
-        // Commented out to avoid unused variable warning
-        /*auto PlaceOnNextFloor = [&](AgentBase& agent) {
+        [[maybe_unused]]
+        auto PlaceOnNextFloor = [&](AgentBase& agent) {
             for (size_t y = 0; y < world_h; ++y) {
                 for (size_t x = 0; x < world_w; ++x) {
                     if (x == 1 && y == 1) continue;
@@ -449,7 +466,7 @@ namespace cse498
                     }
                 }
             }
-        };*/
+        };
 
         // KAREN: DungeonWorld works with Enemy, but not EnemyAgent, so this should have
         // been placed as a Group 15 hook instead. 
@@ -483,24 +500,18 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
-        for (size_t y = 0; y < world_h; ++y) {
-            for (size_t x = 0; x < world_w; ++x) {
-                WorldPosition pos(x, y);
-                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
-                mDungeonGrid->SetCell(x, y, cell_name);
-            }
-        }
+        BuildImageGridFromWorldGrid(grid, *mDungeonGrid);
     }
 
     void Game::SetupMainMenu()
     {
         mMainMenu.Clear();
 
-        mMainMenu.AddOption("New Game", [this]() { TransitionTo(GameState::OVERWORLD); });
+        mMainMenu.AddOption("Enter Game", [this]() { TransitionTo(GameState::OVERWORLD); });
 
-        mMainMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
+        mMainMenu.AddOption("Controls", [this]() { TransitionTo(GameState::CONTROLS); });
 
         mMainMenu.AddOption("Quit", [this]() { Quit(); });
     }
@@ -525,9 +536,31 @@ namespace cse498
                                  mPreviousState = GameState::OVERWORLD;
                              });
 
-        mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
+        mPauseMenu.AddOption("Stats", [this]() {
+            if (mAnalyticsManager) {
+                // Sync action logs then clear so they don't re-count next visit
+                mOverWorld->SyncAgentLogsToAnalytics();
+                mDungeonWorld->SyncAgentLogsToAnalytics();
 
-        mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
+                for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i)
+                    mOverWorld->GetAgentByIndex(i).GetActionLog().Clear();
+                for (size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i)
+                    mDungeonWorld->GetAgentByIndex(i).GetActionLog().Clear();
+
+                // Flush combat stats
+                const auto& runStats = mAnalyticsManager->GetCurrentRunStats();
+                if (runStats.damageDealt > 0 || runStats.enemiesKilled > 0) {
+                    mAnalyticsManager->LogDamageDealt(runStats.damageDealt);
+                    mAnalyticsManager->LogEnemiesKilled(runStats.enemiesKilled);
+                    mAnalyticsManager->ResetCurrentRunStats();
+                }
+
+                mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+            }
+            TransitionTo(GameState::STATS);
+        });
+
+        mPauseMenu.AddOption("Controls", [this]() { TransitionTo(GameState::CONTROLS); });
 
         mPauseMenu.AddOption("Quit to Main Menu", [this]() { TransitionTo(GameState::MAIN_MENU); });
     }
@@ -560,8 +593,8 @@ namespace cse498
             case GameState::STATS:
                 UpdateStats();
                 break;
-            case GameState::SETTINGS:
-                UpdateSettings();
+            case GameState::CONTROLS:
+                UpdateControls();
                 break;
             case GameState::TRADING:
                 UpdateTrading();
@@ -588,8 +621,8 @@ namespace cse498
             case GameState::STATS:
                 RenderStats();
                 break;
-            case GameState::SETTINGS:
-                RenderSettings();
+            case GameState::CONTROLS:
+                RenderControls();
                 break;
             case GameState::TRADING:
                 RenderTrading();
@@ -946,7 +979,7 @@ namespace cse498
                     {
                         Resume();
                     }
-                    else if (mState == GameState::SETTINGS || mState == GameState::STATS)
+                    else if (mState == GameState::CONTROLS || mState == GameState::STATS)
                     {
                         Resume();
                     }
@@ -975,8 +1008,12 @@ namespace cse498
             mAnalyticsManager->LogDamageDealt(mAnalyticsManager->GetCurrentRunStats().damageDealt);
             mAnalyticsManager->LogEnemiesKilled(mAnalyticsManager->GetCurrentRunStats().enemiesKilled);
             mAnalyticsManager->ResetCurrentRunStats();
+            }
+
+        // Don't overwrite mPreviousState when leaving PAUSED for a sub-screen
+        if (mState != GameState::PAUSED && mState != GameState::STATS && mState != GameState::CONTROLS) {
+            mPreviousState = mState;
         }
-        mPreviousState = mState;
         mState = new_state;
     }
 
@@ -1036,19 +1073,24 @@ void Game::UpdateOverworld()
             }
 
             mDungeonWorld->RemoveDeadAgents(); // KAREN: just in case...
+            mDungeonWorld->CleanupSpawnedEnemyIds(); // mark, moved out of inner in dungeon world to here
             mTurnTaken = false;
+        }
+
+        // Transfer dungeon gold earnings to Interactive World Inventory
+        size_t gold = mDungeonWorld->DrainAccumulatedGold();
+        if (gold > 0) {
+            mOverworldPlayer->AddGold(gold);
+            mPickupMessage = "Gained " + std::to_string(gold) + " gold from defeated enemy!";
+            mPickupMessageTime = SDL_GetTicks();
         }
     }
 
     void Game::UpdatePaused() {}
-    void Game::UpdateSettings() {}
+    void Game::UpdateControls() {}
 
     void Game::UpdateStats() {
-        if (mAnalyticsManager) {
-            mOverWorld->SyncAgentLogsToAnalytics();
-            mDungeonWorld->SyncAgentLogsToAnalytics();
-            mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
-        }
+        // do nothing, should only sync on entry
     }
 
     // -----------------------------------------------------------------------
@@ -1095,6 +1137,8 @@ void Game::UpdateOverworld()
                 sprite = "player";
             } else if (agent.GetName() == "Explorer") {
                 sprite = "goblin";
+            } else if (agent.GetName().rfind("Goblin", 0) == 0) {
+                sprite = "goblin";
             } else if (dynamic_cast<Building*>(&agent)) {
                 const std::string& name = agent.GetName();
                 if (name == "Lumber Yard") {
@@ -1128,6 +1172,32 @@ void Game::UpdateOverworld()
     {
         RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY);
 
+        // Draw floor underneath loot chest tiles so they don't have a black background
+        {
+            int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+            int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+            const WorldGrid& grid = mDungeonWorld->GetGrid();
+            std::string floorName;
+            switch (mDungeonWorld->GetLevel()) {
+                case 1:  floorName = "floor_l1v1"; break;
+                case 2:  floorName = "floor_l2v1"; break;
+                case 3:  floorName = "floor_l3v1"; break;
+                default: floorName = "floor_l1v1"; break;
+            }
+
+            for (size_t y = 0; y < grid.GetHeight(); ++y) {
+                for (size_t x = 0; x < grid.GetWidth(); ++x) {
+                    WorldPosition pos(x, y);
+                    if (grid.GetCellTypeName(grid[pos]) == "wall_loot") {
+                        int screen_x = (static_cast<int>(x) - mDungeonCamX) * tw;
+                        int screen_y = (static_cast<int>(y) - mDungeonCamY) * th;
+                        mImageManager->DrawImage(floorName, screen_x, screen_y, tw, th);
+                        mImageManager->DrawImage("wall_loot", screen_x, screen_y, tw, th);
+                    }
+                }
+            }
+        }
+
         int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
         int th = static_cast<int>(mDungeonGrid->GetTileHeight());
 
@@ -1143,12 +1213,26 @@ void Game::UpdateOverworld()
             std::string sprite;
             if (&agent == mDungeonPlayer) {
                 sprite = "player";
-            } else if (agent.GetName() == "Goblin") {
+            } else if (agent.GetName().rfind("Goblin", 0) == 0) {
                 sprite = "goblin";
             } else {
                 sprite = "dun_monster";
             }
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
+        }
+
+        // Player health display
+        {
+            double currentHP = mDungeonPlayer->GetCurrentHealth();
+            double maxHP = mDungeonPlayer->GetMaxHealth();
+
+            std::string healthText = "HP: " + std::to_string(static_cast<int>(currentHP))
+                                   + " / " + std::to_string(static_cast<int>(maxHP));
+
+            mPickupText.SetSize(18);
+            mPickupText.SetBold(true);
+            mPickupText.SetContent(healthText);
+            mPickupText.Draw(80, mGameView->GetHeight() - 100);
         }
 
         RenderHotbar(mDungeonPlayer->GetInventory());
@@ -1186,9 +1270,59 @@ void Game::UpdateOverworld()
         mPauseMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
     }
 
-    void Game::RenderSettings()
+    void Game::RenderControls()
     {
-        // TODO: render settings screen
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+        SDL_Rect bg = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &bg);
+
+        int y = 30;
+        const int LINE_H = 24;
+
+        mStatsText.SetContent("Controls");
+        mStatsText.SetSize(28);
+        mStatsText.SetBold(true);
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
+        y += LINE_H * 2;
+
+        mStatsText.SetSize(14);
+        mStatsText.SetBold(false);
+
+        auto drawLine = [&](const std::string& text) {
+            mStatsText.SetContent(text);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+        };
+
+        auto drawHeader = [&](const std::string& text) {
+            y += LINE_H / 2;
+            mStatsText.SetBold(true);
+            mStatsText.SetContent(text);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+            mStatsText.SetBold(false);
+        };
+
+        drawHeader("Movement & General");
+        drawLine("W/A/S/D - Move    E - Interact/Attack    TAB - Backpack    1-0 - Equip item");
+        drawLine("ESC - Pause    Arrows - Navigate menus    Enter - Confirm");
+
+        drawHeader("Overworld");
+        drawLine("E - Collect resources / Upgrade buildings / Open trade menu");
+        drawLine("Left/Right - Buy/Sell tabs    Up/Down - Browse    Enter - Confirm    R - Sell all");
+
+        drawHeader("Dungeon");
+        drawLine("E - Attack adjacent enemy / Interact with exit door");
+        drawLine("Walk into exit door to advance to next level");
+
+        y = h - 40;
+        mStatsText.SetSize(12);
+        mStatsText.SetContent("Press ESC to return");
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
     }
 
     void Game::RenderStats() {
@@ -1290,11 +1424,11 @@ void Game::UpdateOverworld()
             const auto& slot = slots[i];
             if (!slot.IsEmpty()) {
                 const Item* item = slot.GetItem();
-                int item_x = bar_x + static_cast<int>(i) * slot_size + (slot_size - 48) / 2;
-                int item_y = bar_y + (bar_h - 48) / 2;
+                int item_x = bar_x + static_cast<int>(i) * slot_size + (slot_size - ICON_SIZE) / 2;
+                int item_y = bar_y + (bar_h - ICON_SIZE) / 2;
 
                 // Draw item icon if loaded — uses the item's image path as key
-                mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                mImageManager->DrawImage(item->GetName(), item_x, item_y, ICON_SIZE, ICON_SIZE);
             }
         }
 
@@ -1350,9 +1484,9 @@ void Game::UpdateOverworld()
                 // Draw item if present
                 if (!slots[index].IsEmpty()) {
                     const Item* item = slots[index].GetItem();
-                    int item_x = x + (slot_size - 48) / 2;
-                    int item_y = y + (slot_size - 48) / 2;
-                    mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                    int item_x = x + (slot_size - ICON_SIZE) / 2;
+                    int item_y = y + (slot_size - ICON_SIZE) / 2;
+                    mImageManager->DrawImage(item->GetName(), item_x, item_y, ICON_SIZE, ICON_SIZE);
                 }
 
                 // Cursor highlight
@@ -1379,9 +1513,10 @@ void Game::UpdateOverworld()
 
             const auto& inv = mOverWorld->GetInventory();
 
-            std::string text = "Wood: " + std::to_string(inv.GetAmount(ItemType::Wood))
-                             + "   Stone: " + std::to_string(inv.GetAmount(ItemType::Stone))
-                             + "   Metal: " + std::to_string(inv.GetAmount(ItemType::Metal));
+            std::string text = "Gold: " + std::to_string(mOverworldPlayer->GetGold())
+                 + "   Wood: " + std::to_string(inv.GetAmount(ItemType::Wood))
+                 + "   Stone: " + std::to_string(inv.GetAmount(ItemType::Stone))
+                 + "   Metal: " + std::to_string(inv.GetAmount(ItemType::Metal));
 
             mPickupText.SetContent(text);
             mPickupText.SetSize(18);
@@ -1394,7 +1529,7 @@ void Game::UpdateOverworld()
         if (mPickupMessage.empty()) return;
 
         Uint32 elapsed = SDL_GetTicks() - mPickupMessageTime;
-        if (elapsed > 1000) {
+        if (elapsed > PICKUP_MESSAGE_DURATION_MS) {
             mPickupMessage.clear();
             return;
         }
@@ -1542,7 +1677,7 @@ void Game::UpdateOverworld()
         mPickupText.Draw(text_x, y);
     }
 
-    size_t Game::KeyToAction(SDL_Keycode key) {
+    size_t Game::KeyToAction(SDL_Keycode key) const{
         switch (key) {
         case SDLK_w: return 1; // MOVE_UP
         case SDLK_s: return 2; // MOVE_DOWN
@@ -1565,13 +1700,13 @@ void Game::UpdateOverworld()
 
             int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
             int th = static_cast<int>(mOverworldGrid->GetTileHeight());
-            int Tiles_x = mGameView->GetWidth() / tw;
-            int Tiles_y = mGameView->GetHeight() / th;
-            int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
-            int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
+            int tiles_x = mGameView->GetWidth() / tw;
+            int tiles_y = mGameView->GetHeight() / th;
+            int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - tiles_x);
+            int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
 
-            mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
+            mCamX = std::clamp(mPlayerX - tiles_x / 2, 0, max_cam_x);
+            mCamY = std::clamp(mPlayerY - tiles_y / 2, 0, max_cam_y);
         }
 
         else if (mState == GameState::DUNGEON) {
@@ -1591,7 +1726,8 @@ void Game::UpdateOverworld()
             mDungeonPlayerY = static_cast<int>(pos.CellY());
 
             // Detect level change — player was moved to (1,1) and grid was regenerated
-            if (pos.CellX() == 1 && pos.CellY() == 1 && pos_before.CellX() != 1 && pos_before.CellY() != 1) {
+            if (pos.CellX() == DUNGEON_SPAWN_X && pos.CellY() == DUNGEON_SPAWN_Y && pos_before.CellX()
+            != DUNGEON_SPAWN_X && pos_before.CellY() != DUNGEON_SPAWN_Y) {
                 RebuildDungeonGrid();
                 mPickupMessage = "Entering next level...";
                 mPickupMessageTime = SDL_GetTicks();
@@ -1614,13 +1750,13 @@ void Game::UpdateOverworld()
             // Update camera
             int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
             int th = static_cast<int>(mDungeonGrid->GetTileHeight());
-            int Tiles_x = mGameView->GetWidth() / tw;
-            int Tiles_y = mGameView->GetHeight() / th;
-            int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - Tiles_x);
-            int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - Tiles_y);
+            int tiles_x = mGameView->GetWidth() / tw;
+            int tiles_y = mGameView->GetHeight() / th;
+            int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - tiles_x);
+            int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - tiles_y);
 
-            mDungeonCamX = std::clamp(mDungeonPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mDungeonCamY = std::clamp(mDungeonPlayerY - Tiles_y / 2, 0, max_cam_y);
+            mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
+            mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
         }
 
         mTurnTaken = true;
