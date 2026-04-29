@@ -45,7 +45,8 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInRange(const Enemy& enemy, const Wo
 }
 
 // KAREN: Modified AttackPlayer to take in a non-const 'world' object
-// This lets us call the non-const overload of TryGetAgent
+// This lets us call the non-const overload of TryGetAgent.. not sure if this is needed anymore. I
+// don't remember when this happened....
 std::unique_ptr<Node> AgentFactory::AttackPlayer(const Enemy& enemy, WorldBase& world) {
     return TreeBuilder::Act("Attack Player", [&world, &enemy](ExecutionContext&) {
         auto* player = world.GetPlayer();
@@ -244,10 +245,9 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, World
 }
 
 std::unique_ptr<Node> AgentFactory::CreateGoblinTree(const Enemy& enemy, WorldBase& world) {
+
     auto root = TreeBuilder::Repeat("Goblin Root");
-
     auto selector = TreeBuilder::Sel("Goblin Behavior");
-
     auto attackSeq = TreeBuilder::Seq("Goblin Attack Seq");
     attackSeq->AddChild(IsPlayerInRange(enemy, world));
     attackSeq->AddChild(AttackPlayer(enemy, world));

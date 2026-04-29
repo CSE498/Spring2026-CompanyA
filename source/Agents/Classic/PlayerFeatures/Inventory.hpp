@@ -240,7 +240,7 @@ private:
      * the hotbar
      */
     struct CircularCompare {
-        size_t Transform(size_t x) const {
+        static size_t Transform(size_t x) {
             if (x >= HOTBAR_SIZE)
                 return (x - HOTBAR_SIZE);
             return x + (INVENTORY_SIZE - HOTBAR_SIZE + 1);
@@ -254,7 +254,7 @@ private:
     std::array<InventorySlot, INVENTORY_SIZE> mInventory{};
 
     /// This is for constant speed lookup -- a little overkill but nice
-    /// key: size_t item_id --> Value: index locations in array
+    /// key: name --> Value: index locations in array
     /// Ordered for consistency in removal
     std::unordered_map<std::string, std::set<size_t, CircularCompare>> mItemMap;
 
