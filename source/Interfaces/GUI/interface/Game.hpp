@@ -42,7 +42,7 @@ namespace cse498
         OVERWORLD, /// Flat interactive world with dungeon entrance
         DUNGEON,   /// Procedurally generated dungeon world
         PAUSED,    /// Paused state (reachable from OVERWORLD or DUNGEON)
-        SETTINGS,  /// Settings screen (placeholder)
+        CONTROLS,  /// Controls Screen
         STATS,     /// Contains information captured in gameplay
         TRADING,   /// Trading with a merchant
         QUIT       /// Exit state
@@ -166,7 +166,7 @@ namespace cse498
         void UpdateOverworld();
         void UpdateDungeon();
         void UpdatePaused();
-        void UpdateSettings();
+        void UpdateControls();
         void UpdateStats();
 
         /**
@@ -176,7 +176,7 @@ namespace cse498
         void RenderOverworld();
         void RenderDungeon();
         void RenderPaused();
-        void RenderSettings();
+        void RenderControls();
         void RenderStats();
         void RenderHotbar(const Inventory& inventory);
         void RenderBackpack(const Inventory& inventory);

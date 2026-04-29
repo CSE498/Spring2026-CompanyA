@@ -507,9 +507,9 @@ namespace cse498
     {
         mMainMenu.Clear();
 
-        mMainMenu.AddOption("New Game", [this]() { TransitionTo(GameState::OVERWORLD); });
+        mMainMenu.AddOption("Enter Game", [this]() { TransitionTo(GameState::OVERWORLD); });
 
-        mMainMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
+        mMainMenu.AddOption("Controls", [this]() { TransitionTo(GameState::CONTROLS); });
 
         mMainMenu.AddOption("Quit", [this]() { Quit(); });
     }
@@ -558,7 +558,7 @@ namespace cse498
             TransitionTo(GameState::STATS);
         });
 
-        mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
+        mPauseMenu.AddOption("Controls", [this]() { TransitionTo(GameState::CONTROLS); });
 
         mPauseMenu.AddOption("Quit to Main Menu", [this]() { TransitionTo(GameState::MAIN_MENU); });
     }
@@ -591,8 +591,8 @@ namespace cse498
             case GameState::STATS:
                 UpdateStats();
                 break;
-            case GameState::SETTINGS:
-                UpdateSettings();
+            case GameState::CONTROLS:
+                UpdateControls();
                 break;
             case GameState::TRADING:
                 UpdateTrading();
@@ -619,8 +619,8 @@ namespace cse498
             case GameState::STATS:
                 RenderStats();
                 break;
-            case GameState::SETTINGS:
-                RenderSettings();
+            case GameState::CONTROLS:
+                RenderControls();
                 break;
             case GameState::TRADING:
                 RenderTrading();
@@ -977,7 +977,7 @@ namespace cse498
                     {
                         Resume();
                     }
-                    else if (mState == GameState::SETTINGS || mState == GameState::STATS)
+                    else if (mState == GameState::CONTROLS || mState == GameState::STATS)
                     {
                         Resume();
                     }
@@ -1006,8 +1006,12 @@ namespace cse498
             mAnalyticsManager->LogDamageDealt(mAnalyticsManager->GetCurrentRunStats().damageDealt);
             mAnalyticsManager->LogEnemiesKilled(mAnalyticsManager->GetCurrentRunStats().enemiesKilled);
             mAnalyticsManager->ResetCurrentRunStats();
+            }
+
+        // Don't overwrite mPreviousState when leaving PAUSED for a sub-screen
+        if (mState != GameState::PAUSED && mState != GameState::STATS && mState != GameState::CONTROLS) {
+            mPreviousState = mState;
         }
-        mPreviousState = mState;
         mState = new_state;
     }
 
@@ -1081,7 +1085,7 @@ void Game::UpdateOverworld()
     }
 
     void Game::UpdatePaused() {}
-    void Game::UpdateSettings() {}
+    void Game::UpdateControls() {}
 
     void Game::UpdateStats() {
         // do nothing, should only sync on entry
@@ -1238,9 +1242,59 @@ void Game::UpdateOverworld()
         mPauseMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
     }
 
-    void Game::RenderSettings()
+    void Game::RenderControls()
     {
-        // TODO: render settings screen
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+        SDL_Rect bg = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &bg);
+
+        int y = 30;
+        const int LINE_H = 24;
+
+        mStatsText.SetContent("Controls");
+        mStatsText.SetSize(28);
+        mStatsText.SetBold(true);
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
+        y += LINE_H * 2;
+
+        mStatsText.SetSize(14);
+        mStatsText.SetBold(false);
+
+        auto drawLine = [&](const std::string& text) {
+            mStatsText.SetContent(text);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+        };
+
+        auto drawHeader = [&](const std::string& text) {
+            y += LINE_H / 2;
+            mStatsText.SetBold(true);
+            mStatsText.SetContent(text);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+            mStatsText.SetBold(false);
+        };
+
+        drawHeader("Movement & General");
+        drawLine("W/A/S/D - Move    E - Interact/Attack    TAB - Backpack    1-0 - Equip item");
+        drawLine("ESC - Pause    Arrows - Navigate menus    Enter - Confirm");
+
+        drawHeader("Overworld");
+        drawLine("E - Collect resources / Upgrade buildings / Open trade menu");
+        drawLine("Left/Right - Buy/Sell tabs    Up/Down - Browse    Enter - Confirm    R - Sell all");
+
+        drawHeader("Dungeon");
+        drawLine("E - Attack adjacent enemy / Interact with exit door");
+        drawLine("Walk into exit door to advance to next level");
+
+        y = h - 40;
+        mStatsText.SetSize(12);
+        mStatsText.SetContent("Press ESC to return");
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
     }
 
     void Game::RenderStats() {
