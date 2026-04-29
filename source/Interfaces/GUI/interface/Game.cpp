@@ -534,7 +534,29 @@ namespace cse498
                                  mPreviousState = GameState::OVERWORLD;
                              });
 
-        mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
+        mPauseMenu.AddOption("Stats", [this]() {
+            if (mAnalyticsManager) {
+                // Sync action logs then clear so they don't re-count next visit
+                mOverWorld->SyncAgentLogsToAnalytics();
+                mDungeonWorld->SyncAgentLogsToAnalytics();
+
+                for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i)
+                    mOverWorld->GetAgentByIndex(i).GetActionLog().Clear();
+                for (size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i)
+                    mDungeonWorld->GetAgentByIndex(i).GetActionLog().Clear();
+
+                // Flush combat stats
+                const auto& runStats = mAnalyticsManager->GetCurrentRunStats();
+                if (runStats.damageDealt > 0 || runStats.enemiesKilled > 0) {
+                    mAnalyticsManager->LogDamageDealt(runStats.damageDealt);
+                    mAnalyticsManager->LogEnemiesKilled(runStats.enemiesKilled);
+                    mAnalyticsManager->ResetCurrentRunStats();
+                }
+
+                mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+            }
+            TransitionTo(GameState::STATS);
+        });
 
         mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
 
@@ -1062,11 +1084,7 @@ void Game::UpdateOverworld()
     void Game::UpdateSettings() {}
 
     void Game::UpdateStats() {
-        if (mAnalyticsManager) {
-            mOverWorld->SyncAgentLogsToAnalytics();
-            mDungeonWorld->SyncAgentLogsToAnalytics();
-            mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
-        }
+        // do nothing, should only sync on entry
     }
 
     // -----------------------------------------------------------------------

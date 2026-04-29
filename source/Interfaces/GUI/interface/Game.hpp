@@ -132,6 +132,8 @@ namespace cse498
         std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
         DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
         Text mStatsText; /// Text object used for stats screen
+        size_t mLastSyncedActionCount = 0;
+        bool mCombatStatsFlushed = false;
 
 
         // -------------------------
