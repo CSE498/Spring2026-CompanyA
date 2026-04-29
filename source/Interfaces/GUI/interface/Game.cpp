@@ -639,11 +639,11 @@ void Game::SetupDungeon() {
      */
     std::unordered_set<std::string> usedPositions;
 
-    [[maybe_unused]] auto PlaceOnNextFloor = [&](AgentBase& agent) {
-        for (size_t y = 0; y < world_h; ++y) {
-            for (size_t x = 0; x < world_w; ++x) {
-                if (x == 1 && y == 1)
-                    continue;
+        // Commented out to avoid unused variable warning
+        /*auto PlaceOnNextFloor = [&](AgentBase& agent) {
+            for (size_t y = 0; y < world_h; ++y) {
+                for (size_t x = 0; x < world_w; ++x) {
+                    if (x == 1 && y == 1) continue;
 
                 WorldPosition pos(x, y);
                 std::string key = std::to_string(x) + "," + std::to_string(y);
@@ -653,14 +653,14 @@ void Game::SetupDungeon() {
 
                 const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
 
-                if (cell_name.rfind("floor", 0) == 0) {
-                    agent.SetLocation(pos);
-                    usedPositions.insert(key);
-                    return;
+                    if (cell_name.rfind("floor", 0) == 0) {
+                        agent.SetLocation(pos);
+                        usedPositions.insert(key);
+                        return;
+                    }
                 }
             }
-        }
-    };
+        };*/
 
     // KAREN: DungeonWorld works with Enemy, but not EnemyAgent, so this should have
     // been placed as a Group 15 hook instead.

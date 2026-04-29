@@ -12,14 +12,9 @@
 
 #include <vector>
 #include <iostream>
-#include <fstream>
-#include <unordered_map>
-#include <random>
-#include <string>
 #include <optional>
 #include <concepts>
 #include <cassert>
-#include <print>
 #include "RoomHolder.hpp"
 #include "../../tools/Random.hpp"
 #include "LevelBase.hpp"
@@ -35,10 +30,12 @@ namespace cse498 {
     struct BSPNode {
         int left_child = -1; // Left node of the tree
         int right_child = -1; // right node of the tree
-        int x, y, width, height; // (x,y) - (origin point of the grid (top-left corner))
+        int x = 0; // x-coordinate of the grid, default set to origin point (top-left corner)
+        int y = 0; // y-coordinate of the grid, default set to origin point (top-left corner)
+        int width = 0; //width of the room
+        int height = 0; //height of the room 
         // (width, height) - dimension of the grid cut (lxw)
-        std::string name; //Name of the node for debugging purposes
-        std::string file_name; //placeholder just in case we're loading in images directly from BSPNodes
+        std::string name = ""; //Name of the node for debugging purposes
         std::vector<std::string> vector_room{}; //Stores a certain dungeon room
 
         /// @brief Default constructor
@@ -55,7 +52,7 @@ namespace cse498 {
          * @param name Debug name for the node
          */
         BSPNode(int l, int r, int x, int y, int width, int height, std::string name)
-            : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(name) {
+            : left_child(l), right_child(r), x(x), y(y), width(width), height(height), name(std::move(name)) {
         }
     };
 
@@ -148,7 +145,7 @@ namespace cse498 {
           * @brief Clears the BSP tree state for regeneration.
           * @details Resets tree, leaf nodes, and exit door flag.
           */
-        void ClearState() {
+        void Empty() {
             m_BSP_tree.clear();
             m_leaf_nodes.clear();
             m_exit_door = false;
@@ -166,7 +163,8 @@ namespace cse498 {
 
             if (!m_exit_door) {
                 auto val_one = m_rng.GetValue(0.0, 1.0);
-                if ((val_one.value() < lower_threshold && !m_exit_door)) {
+                assert(val_one.has_value());
+                if (val_one.value() < lower_threshold) {
                     m_exit_door = true;
                     m_room_holder.SetCurrentRoom(m_room_holder.LoadRoom(m_exit_door));
                     return;
@@ -228,7 +226,7 @@ namespace cse498 {
                 }
             }
 
-            for (auto i: grid) {
+            for (const auto& i: grid) {
                 std::cout << i << std::endl;
             }
         }
@@ -254,7 +252,7 @@ namespace cse498 {
 
         /// @brief Clears and rebuilds the BSP tree with current parameters
         void RegenerateObjectState() {
-            ClearState();
+            Empty();
             CreateBSPTree();
         }
  
@@ -275,13 +273,13 @@ namespace cse498 {
 
         /// @brief grabs height of the grid map
         /// @return HEIGHT value
-        [[nodiscard]] int GetHeight() {
+        [[nodiscard]] int GetHeight() const {
             return m_height;
         }
 
         /// @brief grabs width of the rid map
         /// @return WIDTH value
-        [[nodiscard]] int GetWidth() {
+        [[nodiscard]] int GetWidth() const {
             return m_width;
         }
 
@@ -374,7 +372,9 @@ namespace cse498 {
             bool directional_split;
 
             if (split_width && split_height) {
-                directional_split = (m_rng.GetValue(0, 1).value() == 0);
+                auto left_side = m_rng.GetValue(0, 1);
+                assert(left_side.has_value());
+                directional_split = (left_side.value() == 0);
             } else {
                 directional_split = split_width;
             }
@@ -402,8 +402,10 @@ namespace cse498 {
                     std::to_string(iter) //tree-depth (descending from iter) name
                 };
             } else {
-                auto height_distributor = m_rng.GetValue(m_threshold_height_value,
-                                                         node.height - m_threshold_height_value).value();
+                auto rng_h_distributor = m_rng.GetValue(m_threshold_height_value,
+                                                         node.height - m_threshold_height_value);
+                assert(rng_h_distributor.has_value());
+                auto height_distributor = rng_h_distributor.value();
                 const int stored_height = height_distributor;
 
                 ///top split
