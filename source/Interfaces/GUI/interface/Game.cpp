@@ -1109,6 +1109,8 @@ void Game::UpdateOverworld()
                 sprite = "player";
             } else if (agent.GetName() == "Explorer") {
                 sprite = "goblin";
+            } else if (agent.GetName().rfind("Goblin", 0) == 0) {
+                sprite = "goblin";
             } else if (dynamic_cast<Building*>(&agent)) {
                 const std::string& name = agent.GetName();
                 if (name == "Lumber Yard") {
@@ -1157,7 +1159,7 @@ void Game::UpdateOverworld()
             std::string sprite;
             if (&agent == mDungeonPlayer) {
                 sprite = "player";
-            } else if (agent.GetName() == "Goblin") {
+            } else if (agent.GetName().rfind("Goblin", 0) == 0) {
                 sprite = "goblin";
             } else {
                 sprite = "dun_monster";
