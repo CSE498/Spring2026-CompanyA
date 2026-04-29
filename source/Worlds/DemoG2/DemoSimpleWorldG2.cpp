@@ -67,7 +67,7 @@ void DemoSimpleWorldG2::PrintWorldState() const {
 
     const AgentBase* enemy = TryGetAgent(mEnemyId);
     std::cout << "Player HP: " << player->GetCurrentHealth()
-              << " | Player Gold: " << player->GetGold() << " | Atk: " << player->GetAtk();
+              << " | Player Gold: " << player->GetGold() << " | Atk: " << player->GetAtk() << " | Range: " << player->GetAtkRange();
     if (enemy != nullptr && enemy->IsAlive()) {
         std::cout << " | Enemy HP: " << static_cast<int>(enemy->GetCurrentHealth());
     } else {
