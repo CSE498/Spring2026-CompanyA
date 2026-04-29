@@ -1411,9 +1411,10 @@ void Game::UpdateOverworld()
 
             const auto& inv = mOverWorld->GetInventory();
 
-            std::string text = "Wood: " + std::to_string(inv.GetAmount(ItemType::Wood))
-                             + "   Stone: " + std::to_string(inv.GetAmount(ItemType::Stone))
-                             + "   Metal: " + std::to_string(inv.GetAmount(ItemType::Metal));
+            std::string text = "Gold: " + std::to_string(mOverworldPlayer->GetGold())
+                 + "   Wood: " + std::to_string(inv.GetAmount(ItemType::Wood))
+                 + "   Stone: " + std::to_string(inv.GetAmount(ItemType::Stone))
+                 + "   Metal: " + std::to_string(inv.GetAmount(ItemType::Metal));
 
             mPickupText.SetContent(text);
             mPickupText.SetSize(18);
