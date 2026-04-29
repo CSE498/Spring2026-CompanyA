@@ -25,11 +25,11 @@ public:
     ItemWeapon(size_t id, const std::string& name, const std::string& image_path, int gold, const WorldBase& world) :
         Item(id, name, image_path, gold, world), m_range(0.0), m_damage(0.0), m_hit_bonus(0.0) {}
 
-    bool IsWeapon() const override { return true; }
+    [[nodiscard]] bool IsWeapon() const override { return true; }
 
-    virtual bool IsTool() const { return false; }
-    virtual bool IsSword() const { return false; }
-    virtual bool IsBow() const { return false; }
+    [[nodiscard]] virtual bool IsTool() const { return false; }
+    [[nodiscard]] virtual bool IsSword() const { return false; }
+    [[nodiscard]] virtual bool IsBow() const { return false; }
 
     /// @return Effective attack range bonus/override for this weapon.
     [[nodiscard]] double GetRange() const { return m_range; }

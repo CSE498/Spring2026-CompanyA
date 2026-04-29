@@ -18,7 +18,7 @@ namespace cse498 {
 
         size_t mPlayerId;
         size_t mFarmerId;
-        size_t mEnemyId;
+        size_t mEnemyId{};
 
         [[nodiscard]] bool IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const;
 
