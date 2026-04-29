@@ -37,7 +37,7 @@ int main() {
             std::make_unique<TownHall>(world->GetNextAgentId(), "Town Hall", *world, world->GetInventoryPtr());
     townHallPtr->SetSymbol('T');
     TownHall& townHall = world->AddAgent(std::move(townHallPtr));
-    world->AddTownHall(townHall, WorldPosition{11, 5});
+    world->AddTownHall(townHall, WorldPosition{8, 6});
 
     // Buildings now act as both upgrade points and intermediate storage.
     Building& lumberYard = world->AddAgent<Building>("Lumber Yard");
@@ -60,7 +60,7 @@ int main() {
     auto woodSpawnPtr = std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Wood Spawn", *world, ItemType::Wood);
     woodSpawnPtr->SetSymbol('l');
     ResourceSpawn& woodSpawn = world->AddAgent(std::move(woodSpawnPtr));
-    world->AddResourceSpawn(woodSpawn, WorldPosition{21, 1});
+    world->AddResourceSpawn(woodSpawn, WorldPosition{15, 1});
 
     auto stoneSpawnPtr =
             std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Stone Spawn", *world, ItemType::Stone);
@@ -87,7 +87,7 @@ int main() {
     world->AddProducer(stoneProducer);
     world->AddProducer(metalProducer);
 
-    world->AddBuilding(lumberYard, WorldPosition{15, 3});
+    world->AddBuilding(lumberYard, WorldPosition{12, 3});
 
     lumberYard.SetSymbol('L');
     quarry.SetSymbol('Q');
@@ -102,10 +102,10 @@ int main() {
     // Two-stage hauling pipeline for each resource:
     // ResourceSpawn -> producer building -> TownHall.
     FetchAgent& woodToLumberYard = world->AddAgent<FetchAgent>("Wood To Lumber Yard");
-    configureFetcher(woodToLumberYard, woodSpawn, lumberYard, ItemType::Wood, '1', WorldPosition{20, 2});
+    configureFetcher(woodToLumberYard, woodSpawn, lumberYard, ItemType::Wood, '1', WorldPosition{14, 2});
 
     FetchAgent& woodToTownHall = world->AddAgent<FetchAgent>("Lumber Yard To Town Hall");
-    configureFetcher(woodToTownHall, lumberYard, townHall, ItemType::Wood, '2', WorldPosition{15, 4});
+    configureFetcher(woodToTownHall, lumberYard, townHall, ItemType::Wood, '2', WorldPosition{12, 4});
 
     FetchAgent& stoneToQuarry = world->AddAgent<FetchAgent>("Stone To Quarry");
     stoneToQuarry.SetOrigin(stoneSpawn).SetDepositPoint(quarry).SetItemType(ItemType::Stone).SetSymbol('3');
@@ -140,16 +140,16 @@ int main() {
     metalToTownHall.SetActive(false);
 
     resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarry, 10, [&]() {
-        world->AddResourceSpawn(stoneSpawn, WorldPosition{1, 9});
-        world->AddBuilding(quarry, WorldPosition{5, 7});
-        stoneToQuarry.SetLocation(WorldPosition{2, 8});
-        stoneToTownHall.SetLocation(WorldPosition{7, 6});
+        world->AddResourceSpawn(stoneSpawn, WorldPosition{1, 11});
+        world->AddBuilding(quarry, WorldPosition{4, 9});
+        stoneToQuarry.SetLocation(WorldPosition{2, 10});
+        stoneToTownHall.SetLocation(WorldPosition{5, 8});
     });
     resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mine, 20, [&]() {
-        world->AddResourceSpawn(metalSpawn, WorldPosition{21, 9});
-        world->AddBuilding(mine, WorldPosition{15, 7});
-        metalToMine.SetLocation(WorldPosition{20, 8});
-        metalToTownHall.SetLocation(WorldPosition{15, 6});
+        world->AddResourceSpawn(metalSpawn, WorldPosition{15, 11});
+        world->AddBuilding(mine, WorldPosition{12, 9});
+        metalToMine.SetLocation(WorldPosition{14, 10});
+        metalToTownHall.SetLocation(WorldPosition{12, 8});
     });
 
 

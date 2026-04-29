@@ -79,6 +79,7 @@ public:
 
     [[nodiscard]] std::size_t GetHireableLaneCount() const { return m_hireableLanes.size(); }
     [[nodiscard]] const std::string& GetHireableLaneLabel(std::size_t laneIndex) const;
+    [[nodiscard]] GoldAmount GetHireableLaneCost(std::size_t laneIndex) const;
     [[nodiscard]] bool IsLaneUnlocked(std::size_t laneIndex) const;
     bool SetLaneUnlocked(std::size_t laneIndex, bool unlocked, std::string* message = nullptr);
 

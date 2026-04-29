@@ -216,31 +216,19 @@ public:
         building_id = main_grid.AddCellType("ow_building", "An impassable building.", 'X');
 
         main_grid.Load(std::vector<std::string>{
-            "CUUUUUUUUUUUUUUUUUUUUUUUC",
-            "LrrrrrrrrrrrrrrrrrrrrrrrR",
-            "LrrrrrrrrrrrrrrrrrrrrrrrR",
-            "Lrr...................rrR",
-            "Lrr.fffffffffffffff..rrrR",
-            "Lrr.f...............frrrR",
-            "Lrr.f...r.......r...frrrR",
-            "Lrr.f...............frrrR",
-            "Lrr.fffffffffffffff..rrrR",
-            "Lrr...................rrR",
-            "Lrr...................rrR",
-            "Lrr...................rrR",
-            "Lrr.......bbb.........rrR",
-            "Lrr......bbfbb........rrR",
-            "Lrr.......bbb.........rrR",
-            "Lrr...................rrR",
-            "LmmmmmmmmmmmmmmmmmmmmmmrR",
-            "LmmmmmmmmmmmmmmmmmmmmmmrR",
-            "Lmm...................mmR",
-            "Lmm...................mmR",
-            "Lmm....f.......f......mmR",
-            "Lmm...................mmR",
-            "LmmmmmmmmmmmmmmmmmmmmmmrR",
-            "LmmmmmmmmmmmmmmmmmmmmmmrR",
-            "CBBBBBBBBBBBBBBBBBBBBBBBC"
+            "CUUUUUUUUUUUUUUUC",
+            "L...f.f.m....f..R",
+            "L...f...m....f..R",
+            "L.......m...ff..R",
+            "L.f...f.m.......R",
+            "L...f...m.f.....R",
+            "LmmmmmmmmmmmmmmmR",
+            "L.......m..ff...R",
+            "L..f..f.m.......R",
+            "L....f..m.......R",
+            "L.f.....m.....f.R",
+            "L....f..m.......R",
+            "CBBBBBBBBBBBBBBBC"
         });
 
         auto& player = AddAgent<PlayerAgent>("Player");

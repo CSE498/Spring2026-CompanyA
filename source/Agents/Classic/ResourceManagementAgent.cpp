@@ -493,6 +493,10 @@ const std::string& ResourceManagementAgent::GetHireableLaneLabel(std::size_t lan
     return m_hireableLanes.at(laneIndex).label;
 }
 
+ResourceManagementAgent::GoldAmount ResourceManagementAgent::GetHireableLaneCost(std::size_t laneIndex) const {
+    return m_hireableLanes.at(laneIndex).cost;
+}
+
 bool ResourceManagementAgent::IsLaneUnlocked(std::size_t laneIndex) const {
     if (laneIndex >= m_hireableLanes.size()) {
         return false;
