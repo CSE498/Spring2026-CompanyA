@@ -1053,6 +1053,8 @@ void Game::UpdateOverworld()
         size_t gold = mDungeonWorld->DrainAccumulatedGold();
         if (gold > 0) {
             mOverworldPlayer->AddGold(gold);
+            mPickupMessage = "Gained " + std::to_string(gold) + " gold from defeated enemy!";
+            mPickupMessageTime = SDL_GetTicks();
         }
     }
 
