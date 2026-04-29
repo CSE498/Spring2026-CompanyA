@@ -14,8 +14,8 @@
 #include "../../Agents/Classic/PlayerAgent.hpp"
 #include "../../tools/DamageCalculator.hpp"
 #include "WorldActions.hpp"
-#include "core/item/ItemWeaponSword.hpp"
-#include "core/item/Item.hpp"
+#include "../../core/item/ItemWeaponSword.hpp"
+#include "../../core/item/Item.hpp"
 
 namespace cse498 {
 
@@ -313,18 +313,18 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     mFloorId = main_grid.AddCellType("floor", "Walkable floor", '.');
     mWallId = main_grid.AddCellType("wall", "Solid wall", '#');
     main_grid.Load({
-            "############", // 10x10 grid --> I know it looks vertical but 10x10
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "#..........#",
-            "############",
+            "CUUUUUUUUUUC", // 10x10 grid --> I know it looks vertical but 10x10
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "L..........R",
+            "CBBBBBBBBBBC",
     });
 
 
@@ -332,7 +332,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     mPlayerId = player->GetID();
     // Need to call this function to ensure player is set up for this world.
     // DemoSimpleWorldG2::ConfigAgent(*player);
-    player->SetSymbol('@');
+    player->SetSymbol('T');
     player->SetStats(AgentStats(100, 14, 5, 3, 0));
     player->SetLocation(Location(WorldPosition{3, 4}));
     player->SetGold(30);
@@ -340,7 +340,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     // Creating agents by using the template this way
     auto& farmer = AddAgent<FarmingAgent>("Farmer");
     mFarmerId = farmer.GetID(); // ID = 1
-    farmer.SetSymbol('F');
+    farmer.SetSymbol('1');
     farmer.SetLocation(Location(WorldPosition{3, 1}));
     farmer.ClearInitialOffers();
     farmer.AddInitialOffer({"apple", 4, 2, 1, TradeStockMode::Unlimited, 0});
@@ -348,7 +348,7 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     farmer.AddInitialOffer({"potion", 10, 5, 1, TradeStockMode::Limited, 10});
     farmer.AddGold(200);
 
-    CreateEnemies(1);
+    CreateEnemies(0);
     // just for demonstration of another method for creation of an agent
 
 }
@@ -449,7 +449,7 @@ void DemoSimpleWorldG2::CreateEnemies(int option)
         auto& enemy = AddAgent(std::move(skel));
         mEnemyId = enemy.GetID();
         assert(mEnemyId == 2);
-        enemy.SetSymbol('S');
+        enemy.SetSymbol('7');
 
     }
     else if (option == 1) // old setup

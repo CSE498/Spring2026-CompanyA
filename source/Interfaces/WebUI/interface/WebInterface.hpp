@@ -19,6 +19,7 @@
 #include <vector>
 
 namespace cse498 {
+class DemoSimpleWorldG2;
 
 class WebLayout;
 class WebTextbox;
@@ -39,7 +40,7 @@ public:
     /// @brief Constructs a WebInterface application shell.
     /// @param overworld Unique pointer to the owned InteractiveWorld instance.
     /// @param dungeonWorld Unique pointer to the owned dungeon world instance.
-    explicit WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::unique_ptr<DungeonWorld> dungeonWorld);
+    explicit WebInterface(std::unique_ptr<DemoSimpleWorldG2> overworld, std::unique_ptr<DungeonWorld> dungeonWorld);
     ~WebInterface() = default;
 
     /// @brief Selects an action based on user input.
@@ -116,7 +117,7 @@ private:
     double mAgentTimer = 0.0;
 
     /// @brief Owned interactive world instance used by this app.
-    std::unique_ptr<InteractiveWorld> mInteractiveWorld;
+    std::unique_ptr<DemoSimpleWorldG2> mInteractiveWorld;
 
     /// @brief Owned dungeon world instance used by this app (kept for compatibility).
     std::unique_ptr<DungeonWorld> mDungeon;

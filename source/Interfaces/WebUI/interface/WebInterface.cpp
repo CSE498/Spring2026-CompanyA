@@ -29,6 +29,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "../../../Worlds/DemoG2/DemoSimpleWorldG2.hpp"
+
 using namespace cse498;
 
 namespace {
@@ -262,22 +264,18 @@ void StyleMenuButton(WebButton* button, const std::string& backgroundColor) {
     button->SetTextColor(kButtonTextWhite.ToHex());
 }
 
-std::string BuildOverworldHudText(const InteractiveWorld& overworld) {
+std::string BuildOverworldHudText(const DemoSimpleWorldG2& overworld) {
     std::ostringstream out;
-    const auto& items = overworld.GetInventory().GetItems();
+    // const auto& items = overworld.GetInventory().GetItems();
+    // TODO current slot
 
-    auto readAmount = [&items](ItemType itemType) {
-        auto it = items.find(itemType);
-        return it == items.end() ? 0 : it->second;
-    };
 
     out << "OVERWORLD\n";
     out << "[I] Backpack\n";
     out << "[Esc] Pause\n";
     out << "--------------\n";
-    out << std::left << std::setw(6) << "Wood" << " " << readAmount(ItemType::Wood) << "\n";
-    out << std::left << std::setw(6) << "Stone" << " " << readAmount(ItemType::Stone) << "\n";
-    out << std::left << std::setw(6) << "Metal" << " " << readAmount(ItemType::Metal);
+    out << std::left << std::setw(6) << "Player HP: " << " " << overworld.GetPlayer()->GetCurrentHealth() << "/" << overworld.GetPlayer()->GetMaxHealth() << "\n";
+    out << std::left << std::setw(6) << "Player Damage: " << " " << overworld.GetPlayer()->GetStats().mAtk << "\n";
     return out.str();
 }
 } // namespace
@@ -328,7 +326,7 @@ val loadImage(const std::string& path) {
     return val::take_ownership(handle);
 }
 
-WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::unique_ptr<DungeonWorld> dungeonWorld) :
+WebInterface::WebInterface(std::unique_ptr<DemoSimpleWorldG2> overworld, std::unique_ptr<DungeonWorld> dungeonWorld) :
     mInteractiveWorld(std::move(overworld)), mDungeon(std::move(dungeonWorld)), mInputManager(*this) {
 
     assert(mInteractiveWorld && "InteractiveWorld instance is required");
@@ -1023,6 +1021,7 @@ void WebInterface::RenderHUD() {
 
     if (mGameState == WebState::OVERWORLD) {
         mHUDTextbox->SetText(BuildOverworldHudText(*mInteractiveWorld));
+
     } else {
         int canvasWidth;
         int canvasHeight;
