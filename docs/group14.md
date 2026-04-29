@@ -1,97 +1,96 @@
-The interactive world functions as a resource logistics and building-management demo. The Group 14 demo contains a central town hall, one resource spawn per resource type, and one upgradeable production building per resource type. Each production building also serves as the intermediate storage point for its lane.
+The interactive world is now a GUI-first resource logistics and building-management demo. It contains a central town hall, resource spawns, upgradeable production buildings, autonomous fetch agents, and a resource-management NPC used for upgrades, selling resources, and unlocking later resource lanes.
 
-The main gameplay loop currently visible in the demo is:
-
-- Resources are generated into a `ResourceSpawn` by a `ResourceProducer`.
-- A fetch agent moves from that spawn to the matching production building.
-- A second fetch agent moves from that building to the `TownHall` for final deposit.
-- Each production building controls that lane's production rate through its upgrade level.
+All further game testing for InteractiveWorld should be run through the GUI demo, not the older text-only Group 14 demo. The current gameplay behavior, assets, autonomous movement timing, and resource visuals are all represented in the GUI path.
 
 ## Current Demo State
 
-The current Group 14 demo has:
+The GUI InteractiveWorld currently has:
 
 - `1` `TownHall`
-- `3` `ResourceSpawn`s
-- `3` upgradeable `Building`s that store lane resources
-- `6` `FetchAgent`s
+- `3` `ResourceSpawn`s: wood, stone, and metal
+- `3` upgradeable `Building`s: lumber yard, quarry, and mine
+- `6` `FetchAgent`s, two per resource lane
 - `1` `ResourceManagementAgent`
 
 The resource lanes are:
 
-- Wood: `l` spawn -> `L` lumber yard -> `T` town hall
-- Stone: `q` spawn -> `Q` quarry -> `T` town hall
-- Metal: `m` spawn -> `M` mine -> `T` town hall
+- Wood: wood spawn -> lumber yard -> town hall
+- Stone: stone spawn -> quarry -> town hall
+- Metal: metal spawn -> mine -> town hall
 
-The town hall is placed in the center of the map. The three resource spawns are placed in the corners farthest from the player start. Each production building is placed between its matching spawn and the town hall, and the two fetch agents assigned to that lane shuttle resources across the two hauling legs.
+The wood lane starts active. The quarry and mine lanes start locked and are hidden in the GUI until purchased from the resource-management menu. Their producers are also deferred until unlock, so locked lanes do not accumulate resources before the player buys them.
 
-## Demo Layout
+## Resource Production
 
-Example layout of the current demo:
+Resources are produced in bursts instead of continuously. Nothing is added between burst intervals.
 
-```text
-Wood | Stone | Metal totals are printed above the map each turn
-+-----------------------+
-|#######################|
-|#@                   l#|
-|#                   1 #|
-|#              L      #|
-|#             72      #|
-|#          T          #|
-|#      4       6      #|
-|#    Q         M      #|
-|# 3                 5 #|
-|#q                   m#|
-|#######################|
-+-----------------------+
-```
+Current base production timing:
 
-Legend:
+- Wood: `10` every `5` seconds
+- Stone: `5` every `10` seconds
+- Metal: `5` every `15` seconds
 
-- `T` is the town hall
-- `L` is the lumber yard building and `l` is the wood spawn
-- `Q` is the quarry building and `q` is the stone spawn
-- `M` is the mine building and `m` is the metal spawn
-- `1` and `2` are the wood-lane fetch agents
-- `3` and `4` are the stone-lane fetch agents
-- `5` and `6` are the metal-lane fetch agents
-- `7` is the resource-management agent
+Building upgrades still modify production through the existing building rate modifier. Upgraded buildings use different generated sprites so upgrade state is visible in the world.
+
+## Resource Visual States
+
+Resource nodes use generated three-state assets:
+
+- Empty: no collectible resources
+- Partial: resources are present but not ready to collect
+- Full: resources are ready for fetch agents or manual collection
+
+Fetch agents do not collect from a spawn until the spawn reaches the full visual state. This makes resource growth/presence visible before the node is harvested.
+
+## Autonomous Agents
+
+Overworld non-player agents move on their own timed update. They no longer wait for player turns. The dungeon remains turn-driven by the existing dungeon update path.
+
+Fetch agents are active only for unlocked lanes. Inactive lane fetchers are skipped by the renderer until their lane is purchased.
+
+## GUI Controls
+
+- `WASD`: move the player
+- `E`: interact with nearby NPCs/buildings/resource systems
+- `X`: debug-fill the InteractiveWorld inventory with wood, stone, and metal for upgrade testing
+- Resource-management menu:
+  - left/right: change tabs
+  - up/down: move selection
+  - enter: confirm
+  - `E`: close
+
+The overworld inventory hotbar/backpack overlay is intentionally hidden in InteractiveWorld. The world resource totals remain visible through the InteractiveWorld resource UI, and the dungeon inventory UI is unchanged.
 
 ## Classes In Use
 
 - **InteractiveWorld:** Main overworld class. Owns the map, agents, buildings, world inventory, and producer list.
-- **InteractiveWorldInventory:** Stores the town hall's resource totals by `ItemType`.
-- **TownHall:** Final deposit point for delivered resources. Writes into the world inventory.
-- **ResourceSpawn:** Holds raw resources for one item type. This is where the first hauling leg picks up from.
+- **InteractiveWorldInventory:** Stores town hall/world resource totals by `ItemType`.
+- **TownHall:** Final deposit point for delivered resources.
+- **ResourceSpawn:** Holds raw resources for one item type and exposes generated visual state through quantity thresholds.
 - **Building:** Upgradeable production structure. Each building also stores lane resources.
-- **FetchAgent:** Moves between an origin point and a deposit point. Fetch agents are assigned fixed routes for each hauling leg.
-- **ResourceManagementAgent:** Central interaction point for upgrading buildings and selling stored resources for gold.
-- **ResourceProducer:** Generates one resource type over time into its matching spawn. The paired building level modifies the output rate.
-- **InteractiveWorldSaveManager:** Saves and loads world state used by the interactive world demo.
-
-## Next Steps
-
-The likely next step is to extend that resource-management interaction point so it can:
-
-- spend wood, stone, and metal on building upgrades
-- support richer upgrade rules than the current one-resource-per-upgrade model
-- optionally handle selling from building-local storage if the design keeps building banks player-facing
-- centralize future town hall upgrade logic
-
-On that note, TownHall will be extended to have an upgrade path, changing/affecting game state in some way
+- **FetchAgent:** Autonomous hauling agent assigned to a fixed origin/deposit route. Spawn pickup waits until the spawn reaches full state.
+- **ResourceManagementAgent:** GUI menu target for building upgrades, resource selling, and lane unlocks.
+- **ResourceProducer:** Adds burst resources into a matching spawn at resource-specific intervals.
+- **InteractiveWorldSaveManager:** Saves and loads InteractiveWorld inventory, building levels, resource-manager gold, and lane unlock state.
 
 ## Manual Testing
 
-The current demo entry point is:
+Use the GUI demo for InteractiveWorld testing:
 
-- `demos/InteractiveWorld/Group14_main.cpp`
+```bash
+cmake --build build --target group17_demo
+./demos/group17_demo
+```
 
-What to watch for in the current demo:
+What to verify:
 
-1. The map should load with the player/interface agent in the top-left corner, the town hall in the center, and three resource lanes around it.
-2. Each resource lane should have a spawn in a corner, a production building between the spawn and the town hall, and two fetch agents moving along the lane.
-3. Agents `1` through `6` should continuously move resources along the two hauling legs for wood, stone, and metal.
-4. The resource totals printed above the map should rise over time as resources are produced and delivered to the town hall.
-5. Agent `7` should open the resource-management menu when the player stands next to it and presses `E`.
-6. The resource-management menu should allow selling stored wood, stone, and metal for gold.
-7. The resource-management menu should allow upgrading any registered building independently when enough resources are available.
+1. The overworld loads with the town hall, lumber yard, wood spawn, wood fetchers, player, and resource manager visible.
+2. Quarry and mine lane objects are not visible until their lanes are purchased.
+3. Wood resources appear over time in burst states: empty, partial, then full.
+4. Fetch agents collect only after a resource reaches the full visual state.
+5. Non-player overworld agents move without requiring player turns.
+6. Resource totals increase after fetchers deliver resources to the town hall.
+7. The resource-management menu can unlock quarry and mine lanes.
+8. Unlocked quarry and mine lanes appear and start producing on their configured burst timers.
+9. Building upgrades spend resources, change building level, change building sprite, and increase production output.
+10. Pressing `X` in InteractiveWorld fills resources for upgrade testing.

@@ -1,5 +1,5 @@
-#include "../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../source/Worlds/Hub/ResourceSpawn.hpp"
+#include "../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "catch2/catch.hpp"
 
 using namespace cse498;
@@ -28,4 +28,3 @@ TEST_CASE("ResourceSpawn rejects invalid resource and collection limits", "[core
     CHECK(spawn.Collect() == 4);
     CHECK(spawn.GetQuantity() == 8);
 }
-

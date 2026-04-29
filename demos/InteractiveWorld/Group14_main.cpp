@@ -60,17 +60,20 @@ int main() {
     auto woodSpawnPtr = std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Wood Spawn", *world, ItemType::Wood);
     woodSpawnPtr->SetSymbol('l');
     ResourceSpawn& woodSpawn = world->AddAgent(std::move(woodSpawnPtr));
+    woodSpawn.SetMaxCollectionQuantity(10);
     world->AddResourceSpawn(woodSpawn, WorldPosition{15, 1});
 
     auto stoneSpawnPtr =
             std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Stone Spawn", *world, ItemType::Stone);
     stoneSpawnPtr->SetSymbol('q');
     ResourceSpawn& stoneSpawn = world->AddAgent(std::move(stoneSpawnPtr));
+    stoneSpawn.SetMaxCollectionQuantity(5);
 
     auto metalSpawnPtr =
             std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Metal Spawn", *world, ItemType::Metal);
     metalSpawnPtr->SetSymbol('m');
     ResourceSpawn& metalSpawn = world->AddAgent(std::move(metalSpawnPtr));
+    metalSpawn.SetMaxCollectionQuantity(5);
 
 
     // Resource Producers
@@ -78,10 +81,10 @@ int main() {
             std::make_shared<ResourceProducer>(lumberYard, woodSpawn, ItemType::Wood, 2);
 
     std::shared_ptr<ResourceProducer> stoneProducer =
-            std::make_shared<ResourceProducer>(quarry, stoneSpawn, ItemType::Stone, 1);
+            std::make_shared<ResourceProducer>(quarry, stoneSpawn, ItemType::Stone, 0.5f, std::chrono::seconds(10));
 
-    std::shared_ptr<ResourceProducer> metalProducer =
-            std::make_shared<ResourceProducer>(mine, metalSpawn, ItemType::Metal, 0.5);
+    std::shared_ptr<ResourceProducer> metalProducer = std::make_shared<ResourceProducer>(
+            mine, metalSpawn, ItemType::Metal, 1.0f / 3.0f, std::chrono::seconds(15));
 
     world->AddProducer(woodProducer);
     world->AddProducer(stoneProducer);

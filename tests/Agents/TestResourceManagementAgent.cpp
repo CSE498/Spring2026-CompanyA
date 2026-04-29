@@ -97,7 +97,8 @@ TEST_CASE("ResourceManagementAgent rejects upgrades without enough resources", "
     CHECK(world.GetInventory().GetAmount(ItemType::Metal) == 10);
 }
 
-TEST_CASE("ResourceManagementAgent handles locked buildings and basic configuration", "[ResourceManagementAgent][config]") {
+TEST_CASE("ResourceManagementAgent handles locked buildings and basic configuration",
+          "[ResourceManagementAgent][config]") {
     InteractiveWorld world;
 
     Building& quarry = world.AddAgent<Building>("Quarry");
@@ -142,9 +143,8 @@ TEST_CASE("ResourceManagementAgent unlocks and locks hireable lanes", "[Resource
     secondHauler.SetOrigin(origin).SetDepositPoint(deposit).Deactivate();
 
     int placementCount = 0;
-    manager.AddHireableLane("Quarry Lane", firstHauler, secondHauler, quarry, 10, [&placementCount]() {
-        ++placementCount;
-    });
+    manager.AddHireableLane("Quarry Lane", firstHauler, secondHauler, quarry, 10,
+                            [&placementCount]() { ++placementCount; });
 
     CHECK(manager.GetHireableLaneCount() == 1);
     CHECK(manager.GetHireableLaneLabel(0) == "Quarry Lane");
