@@ -345,6 +345,58 @@ std::string GetResourceTabStatusText(int tabIndex) {
             return kResourceMenuDefaultStatusText;
     }
 }
+
+std::string GetOverworldBuildingImagePath(const Building& building) {
+    const std::string& name = building.GetName();
+    const bool upgraded = building.GetCurrentLevel() > 0;
+
+    if (name == "Lumber Yard") {
+        return upgraded ? "/assets/interactive_world/buildings/lumber_yard_upgraded.png"
+                        : "/assets/interactive_world/buildings/lumber_yard.png";
+    }
+
+    if (name == "Quarry") {
+        return upgraded ? "/assets/interactive_world/buildings/quarry_upgraded.png"
+                        : "/assets/interactive_world/buildings/quarry.png";
+    }
+
+    if (name == "Mine" || name == "Ore Mine") {
+        return upgraded ? "/assets/interactive_world/buildings/mine_upgraded.png"
+                        : "/assets/interactive_world/buildings/mine.png";
+    }
+
+    return "/assets/interactive_world/buildings/lumber_yard.png";
+}
+
+std::string GetOverworldResourceSpawnImagePath(const ResourceSpawn& spawn) {
+    const int fullThreshold = spawn.GetMaxCollectionQuantity() * 2;
+    const std::string stateSuffix = spawn.GetQuantity() == 0               ? "_empty"
+                                    : spawn.GetQuantity() >= fullThreshold ? "_full"
+                                                                           : "";
+
+    switch (spawn.GetItemType()) {
+        case ItemType::Wood:
+            return "/assets/interactive_world/resources/wood_spawn" + stateSuffix + ".png";
+        case ItemType::Stone:
+            return "/assets/interactive_world/resources/stone_spawn" + stateSuffix + ".png";
+        case ItemType::Metal:
+            return "/assets/interactive_world/resources/metal_spawn" + stateSuffix + ".png";
+    }
+
+    return "/assets/interactive_world/resources/wood_spawn.png";
+}
+
+std::string GetOverworldAgentImagePath(const AgentBase& agent) {
+    if (const auto* building = dynamic_cast<const Building*>(&agent)) {
+        return GetOverworldBuildingImagePath(*building);
+    }
+
+    if (const auto* spawn = dynamic_cast<const ResourceSpawn*>(&agent)) {
+        return GetOverworldResourceSpawnImagePath(*spawn);
+    }
+
+    return "";
+}
 } // namespace
 
 // handler for inventory slot clicks
@@ -1390,6 +1442,12 @@ void WebInterface::PopulateResourceMenu() {
 
                 std::string message;
                 mActiveResourceManager->UpgradeBuilding(index, &message);
+                auto buildings = mInteractiveWorld->GetBuildings();
+                if (index < buildings.size() && buildings[index] != nullptr &&
+                    buildings[index]->GetCurrentLevel() > 0) {
+                    mSymbolPathOverworld[buildings[index]->GetSymbol()] =
+                            GetOverworldBuildingImagePath(*buildings[index]);
+                }
                 if (mResourceMenuStatusText != nullptr) {
                     mResourceMenuStatusText->SetText(message);
                 }
@@ -1747,7 +1805,10 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
         }
 
         char agentSymbol = agent.GetSymbol();
-        imagePath = GetImagePath(agentSymbol);
+        imagePath = GetOverworldAgentImagePath(agent);
+        if (imagePath.empty()) {
+            imagePath = GetImagePath(agentSymbol);
+        }
 
         if (symbolPathMap.contains(agentSymbol)) {
             if (symbolPathMap.at(agentSymbol) != imagePath) {
