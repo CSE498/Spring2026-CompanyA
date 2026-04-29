@@ -1,7 +1,6 @@
 /**
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief A simplistic main file to demonstrate a system.
- * @note Status: PROPOSAL
  **/
 
 // Include the modules that we will be using.
@@ -120,6 +119,8 @@ int main() {
     FetchAgent& metalToTownHall = world->AddAgent<FetchAgent>("Mine To Town Hall");
     metalToTownHall.SetOrigin(mine).SetDepositPoint(townHall).SetItemType(ItemType::Metal).SetSymbol('6');
 
+    // The resource manager is the player's economy terminal: it upgrades known
+    // buildings, sells inventory resources, and unlocks later hauling lanes.
     ResourceManagementAgent& resourceManager = world->AddAgent<ResourceManagementAgent>("Resource Manager");
     resourceManager.SetInventory(world->GetInventoryPtr()).SetSymbol('7');
     resourceManager.AddManagedBuilding(lumberYard, true);
@@ -130,6 +131,8 @@ int main() {
     woodToLumberYard.SetActive(true);
     woodToTownHall.SetActive(true);
 
+    // Stone and metal lanes start disabled. Hiring a lane places the related
+    // spawn/building endpoints and activates both haulers for that resource.
     stoneToQuarry.SetActive(false);
     stoneToTownHall.SetActive(false);
 

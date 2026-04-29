@@ -1,16 +1,20 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
  * @brief Represents the Interactive World module
- * @note Status: PROPOSAL
  **/
 
 #pragma once
 #include <algorithm>
 #include <array>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <string>
+#include <unordered_map>
 #include <vector>
+#include "../../../third-party/json/json.hpp"
+#include "../../Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../core/WorldBase.hpp"
 #include "Building.hpp"
 #include "InteractiveWorldInventory.hpp"
@@ -30,7 +34,7 @@ protected:
     // World Inventory
     std::shared_ptr<InteractiveWorldInventory> m_inventory = std::make_shared<InteractiveWorldInventory>();
 
-    enum ActionType { REMAIN_STILL = 0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT };
+    enum ActionType { REMAIN_STILL = 0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, INTERACT, QUIT };
 
     size_t floor_id; ///< Easy access to floor CellType ID.
     size_t wall_id; ///< Easy access to wall CellType ID.
@@ -51,11 +55,26 @@ protected:
         agent.AddAction("left", MOVE_LEFT);
         agent.AddAction("right", MOVE_RIGHT);
         agent.AddAction("interact", INTERACT);
+        agent.AddAction("quit", QUIT);
     }
 
 private:
     // ResourceProducers in the scene
     std::vector<std::shared_ptr<ResourceProducer>> m_producers{};
+
+    [[nodiscard]] std::unordered_map<WorldPosition, AgentBase*> BuildAgentPositionMap(
+        const AgentBase* ignoredAgent) {
+        std::unordered_map<WorldPosition, AgentBase*> agentsByPosition;
+        for (size_t i = 0; i < GetNumAgents(); ++i) {
+            AgentBase& candidate = GetAgentByIndex(i);
+            if (&candidate == ignoredAgent || !candidate.GetLocation().IsPosition()) {
+                continue;
+            }
+
+            agentsByPosition.emplace(candidate.GetLocation().AsWorldPosition(), &candidate);
+        }
+        return agentsByPosition;
+    }
 
     bool TryInteractAdjacent(const WorldPosition& position, const AgentBase* initiator) {
         const std::array<WorldPosition, 4> priorities = {
@@ -65,24 +84,69 @@ private:
                 position.Left(),
         };
 
+        const auto agentsByPosition = BuildAgentPositionMap(initiator);
         for (const WorldPosition& target: priorities) {
-            for (size_t i = 0; i < GetNumAgents(); ++i) {
-                AgentBase& candidate = GetAgentByIndex(i);
-                if (&candidate == initiator || !candidate.GetLocation().IsPosition()) {
-                    continue;
-                }
-
-                if (candidate.GetLocation().AsWorldPosition() != target) {
-                    continue;
-                }
-
-                if (candidate.Interact()) {
-                    return true;
-                }
+            const auto it = agentsByPosition.find(target);
+            if (it != agentsByPosition.end() && it->second->Interact()) {
+                return true;
             }
         }
 
         return false;
+    }
+
+    template<typename T>
+    void PlaceWorldObject(T& object, WorldPosition position) {
+        object.SetLocation(Location(position));
+        main_grid[position] = building_id;
+    }
+
+    bool SaveToFile(const std::string& filename) const {
+        nlohmann::json j;
+
+        const auto& inv = GetInventory();
+        j["inventory"]["wood"] = inv.GetAmount(ItemType::Wood);
+        j["inventory"]["stone"] = inv.GetAmount(ItemType::Stone);
+        j["inventory"]["metal"] = inv.GetAmount(ItemType::Metal);
+
+        j["buildings"] = nlohmann::json::array();
+        for (const auto& buildingPtr: GetBuildings()) {
+            if (buildingPtr == nullptr) {
+                continue;
+            }
+
+            nlohmann::json buildingJson;
+            buildingJson["name"] = buildingPtr->GetName();
+            buildingJson["level"] = buildingPtr->GetCurrentLevel();
+            j["buildings"].push_back(buildingJson);
+        }
+
+        for (size_t i = 0; i < GetNumAgents(); ++i) {
+            const auto* manager = dynamic_cast<const ResourceManagementAgent*>(&GetAgentByIndex(i));
+            if (manager == nullptr) {
+                continue;
+            }
+
+            j["resource_manager"]["name"] = manager->GetName();
+            j["resource_manager"]["gold"] = manager->GetGold();
+            j["resource_manager"]["lanes"] = nlohmann::json::array();
+            for (std::size_t laneIndex = 0; laneIndex < manager->GetHireableLaneCount(); ++laneIndex) {
+                nlohmann::json laneJson;
+                laneJson["label"] = manager->GetHireableLaneLabel(laneIndex);
+                laneJson["unlocked"] = manager->IsLaneUnlocked(laneIndex);
+                j["resource_manager"]["lanes"].push_back(laneJson);
+            }
+
+            break;
+        }
+
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+            return false;
+        }
+
+        file << j.dump(4);
+        return true;
     }
 
     /**
@@ -251,6 +315,14 @@ public:
                     return TryInteractAdjacent(cur_position, &agent);
                 }
                 return true;
+            case QUIT:
+                if (SaveToFile("interactive_world_save.json")) {
+                    std::cout << "\nGame saved to interactive_world_save.json\n";
+                } else {
+                    std::cout << "\nFailed to save game.\n";
+                }
+                mRunOver = true;
+                return true;
         }
 
         // Don't let the agent move off the world or into a non-walkable tile.
@@ -289,8 +361,7 @@ public:
      * @param position where to add in world
      */
     void AddBuilding(Building& building, WorldPosition position) {
-        building.SetLocation(Location(position));
-        main_grid[position] = building_id;
+        PlaceWorldObject(building, position);
     }
 
     /**
@@ -299,8 +370,7 @@ public:
      * @param position where to add spawn
      */
     void AddResourceSpawn(ResourceSpawn& spawn, WorldPosition position) {
-        spawn.SetLocation(Location(position));
-        main_grid[position] = building_id;
+        PlaceWorldObject(spawn, position);
     }
 
     /**
@@ -309,8 +379,7 @@ public:
      * @param position where to add bank
      */
     void AddResourceBank(ResourceBank& bank, WorldPosition position) {
-        bank.SetLocation(Location(position));
-        main_grid[position] = building_id;
+        PlaceWorldObject(bank, position);
     }
 
     /**
@@ -319,8 +388,7 @@ public:
      * @param position where to add spawn
      */
     void AddTownHall(TownHall& th, WorldPosition position) {
-        th.SetLocation(Location(position));
-        main_grid[position] = building_id;
+        PlaceWorldObject(th, position);
     }
 
     void RemoveBuilding(Building& building) {
