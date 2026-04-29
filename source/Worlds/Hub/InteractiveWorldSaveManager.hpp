@@ -11,9 +11,22 @@ namespace cse498 {
 
 using json = nlohmann::json;
 
+/**
+ * @class InteractiveWorldSaveManager
+ * @brief Saves and loads persistent InteractiveWorld economy state.
+ *
+ * The save file stores shared resource totals, building levels,
+ * ResourceManagementAgent gold, and lane unlock state. Runtime-only objects
+ * such as producers and fetch-agent positions are rebuilt by the demo setup.
+ */
 class InteractiveWorldSaveManager {
 public:
-    // Save World to file
+    /**
+     * @brief Save an InteractiveWorld to a JSON file.
+     * @param world World to serialize.
+     * @param filename Destination JSON path.
+     * @return true if the file was written.
+     */
     bool Save(const InteractiveWorld& world, const std::string& filename) {
         json j;
 
@@ -63,6 +76,17 @@ public:
         return true;
     }
 
+    /**
+     * @brief Load InteractiveWorld state from a JSON file.
+     *
+     * Loading applies values onto an already-constructed world. Lane unlocks
+     * are restored through ResourceManagementAgent so placement callbacks run
+     * when needed.
+     *
+     * @param world World to update.
+     * @param filename Source JSON path.
+     * @return true if a file was read and applied successfully.
+     */
     bool Load(InteractiveWorld& world, const std::string& filename) {
         std::ifstream file(filename);
         if (!file.is_open())

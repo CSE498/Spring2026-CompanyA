@@ -27,6 +27,7 @@ namespace cse498
 {
 
     constexpr int TURN_DELAY = 100;
+    /// Autonomous overworld agent step delay. Dungeon agents remain turn-driven.
     constexpr Uint32 OVERWORLD_AGENT_STEP_DELAY = 900;
 
     // -----------------------------------------------------------------------
@@ -300,6 +301,7 @@ namespace cse498
         metalSpawnRef.SetMaxCollectionQuantity(5);
         metalSpawnRef.SetLocation(WorldPosition{15, 11});
 
+        // Wood starts unlocked and produces 10 wood every 5 seconds.
         mOverWorld->AddProducer(
             std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2));
 
@@ -364,6 +366,9 @@ namespace cse498
         metalToMine.SetActive(false);
         metalToTownHall.SetActive(false);
 
+        // Locked lanes keep valid future positions for AI compatibility but
+        // are hidden/inactive until their hire callback places blockers and
+        // starts their producers.
         resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarryRef, 10, [this,
             stoneSpawn = &stoneSpawnRef,
             quarry = &quarryRef,
@@ -371,6 +376,7 @@ namespace cse498
             secondHauler = &stoneToTownHall]() {
             mOverWorld->AddResourceSpawn(*stoneSpawn, WorldPosition{1, 11});
             mOverWorld->AddBuilding(*quarry, WorldPosition{4, 9});
+            // Stone produces 5 stone every 10 seconds after the lane unlocks.
             mOverWorld->AddProducer(
                 std::make_shared<ResourceProducer>(*quarry, *stoneSpawn, ItemType::Stone, 0.5f,
                                                    std::chrono::seconds(10)));
@@ -384,6 +390,7 @@ namespace cse498
             secondHauler = &metalToTownHall]() {
             mOverWorld->AddResourceSpawn(*metalSpawn, WorldPosition{15, 11});
             mOverWorld->AddBuilding(*mine, WorldPosition{12, 9});
+            // Metal produces 5 metal every 15 seconds after the lane unlocks.
             mOverWorld->AddProducer(
                 std::make_shared<ResourceProducer>(*mine, *metalSpawn, ItemType::Metal, 1.0f / 3.0f,
                                                    std::chrono::seconds(15)));
@@ -909,6 +916,7 @@ namespace cse498
 
                 case SDLK_x:
                     if (mState == GameState::OVERWORLD) {
+                        // InteractiveWorld-only debug shortcut for upgrade testing.
                         auto& inventory = mOverWorld->GetInventory();
                         inventory.AddItem(ItemType::Wood, 1000);
                         inventory.AddItem(ItemType::Stone, 1000);
@@ -1206,8 +1214,8 @@ namespace cse498
 
 void Game::UpdateOverworld()
     {
-        // Tick resource producers every frame regardless of turn
-        // Producers are private, and UpdateWorld function is also private so needed a getter
+        // Producers use their own burst intervals, so ticking every frame does
+        // not create resources until an interval has elapsed.
         for (const auto& producer : mOverWorld->GetProducers()) {
             producer->Update();
         }
@@ -1283,7 +1291,8 @@ void Game::UpdateOverworld()
         mMainMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
     }
 
-    // Z-layer ordering. Put here for future reference of probable Game draw logic
+    // Draw base terrain first, then InteractiveWorld agents/objects. Locked
+    // lane objects retain world positions but are skipped until purchased.
     void Game::RenderOverworld()
     {
         RenderWorld(*mOverworldGrid, mCamX, mCamY);
@@ -1337,6 +1346,8 @@ void Game::UpdateOverworld()
                     sprite = "ow_building_lumberyard";
                 }
             } else if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
+                // Resource asset states are generated as empty, partial, full.
+                // The middle state uses the base resource_*_spawn sprite.
                 const int fullThreshold = spawn->GetMaxCollectionQuantity() * 2;
                 const std::string stateSuffix =
                     spawn->GetQuantity() == 0 ? "_empty" :

@@ -24,7 +24,8 @@ class FetchAgent;
  * ResourceManagementAgent does not own the buildings or haulers it manages.
  * Those agents are owned by the WorldBase agent list and must outlive this
  * manager entry. The manager stores references internally after public setup
- * methods validate any nullable pointer inputs.
+ * methods validate any nullable pointer inputs. In the GUI, this agent backs
+ * the upgrade, resource-sale, and lane-unlock menu.
  */
 class ResourceManagementAgent : public AgentBase {
 public:
@@ -51,8 +52,11 @@ public:
     /// @brief Return whether the managed building can currently be upgraded.
     [[nodiscard]] bool IsManagedBuildingUnlocked(std::size_t buildingIndex) const;
 
+    /// @return Gold currently held by the resource manager for lane unlocks.
     [[nodiscard]] GoldAmount GetGold() const { return m_gold; }
+    /// @brief Replace the current gold amount.
     void SetGold(GoldAmount amount) { m_gold = amount; }
+    /// @brief Add gold to the current amount.
     void AddGold(GoldAmount amount) { m_gold += amount; }
 
     /// @brief Configure how much gold one item sells for.
@@ -66,7 +70,21 @@ public:
     /// @brief Sell stored resources for gold at the configured item price.
     bool SellResource(ItemType itemType, ItemCount amount, std::string* message = nullptr);
 
-    /// @brief Register an unlockable hauling lane controlled by two fetch agents.
+    /**
+     * @brief Register an unlockable hauling lane controlled by two fetch agents.
+     *
+     * The optional onHire callback is where GUI setup places hidden lane
+     * objects and starts lane-specific producers. It is applied once, even if
+     * load/save later restores the lane as unlocked.
+     *
+     * @param label Display label for the lane.
+     * @param firstHauler Fetcher for spawn-to-building hauling.
+     * @param secondHauler Fetcher for building-to-town-hall hauling.
+     * @param building Building unlocked by this lane.
+     * @param cost Gold cost to unlock.
+     * @param onHire Callback to place objects and perform one-time setup.
+     * @return This manager for chaining.
+     */
     ResourceManagementAgent& AddHireableLane(const std::string& label,
                                          FetchAgent& firstHauler,
                                          FetchAgent& secondHauler,
@@ -77,10 +95,21 @@ public:
     /// @brief Spend gold and activate the selected hauling lane.
     bool HireLane(std::size_t laneIndex, std::string* message = nullptr);
 
+    /// @return Number of registered unlockable lanes.
     [[nodiscard]] std::size_t GetHireableLaneCount() const { return m_hireableLanes.size(); }
+    /// @return Display label for a lane.
     [[nodiscard]] const std::string& GetHireableLaneLabel(std::size_t laneIndex) const;
+    /// @return Gold cost for a lane.
     [[nodiscard]] GoldAmount GetHireableLaneCost(std::size_t laneIndex) const;
+    /// @return true if both lane fetchers are active.
     [[nodiscard]] bool IsLaneUnlocked(std::size_t laneIndex) const;
+    /**
+     * @brief Force a lane lock state, used by save/load restoration.
+     * @param laneIndex Lane index to update.
+     * @param unlocked Desired unlock state.
+     * @param message Optional status message output.
+     * @return true if the lane existed and was updated.
+     */
     bool SetLaneUnlocked(std::size_t laneIndex, bool unlocked, std::string* message = nullptr);
 
 private:
@@ -107,13 +136,13 @@ private:
     void HandleHireInteraction();
 
     struct HireableLaneEntry {
-        std::string label;
-        std::reference_wrapper<FetchAgent> firstHauler;
-        std::reference_wrapper<FetchAgent> secondHauler;
-        GoldAmount cost = 0;
-        std::reference_wrapper<Building> building;
-        std::function<void()> onHire;
-        bool placementApplied = false;
+        std::string label; ///< Display label.
+        std::reference_wrapper<FetchAgent> firstHauler; ///< Spawn-to-building hauler.
+        std::reference_wrapper<FetchAgent> secondHauler; ///< Building-to-town-hall hauler.
+        GoldAmount cost = 0; ///< Unlock cost in gold.
+        std::reference_wrapper<Building> building; ///< Building made available by the lane.
+        std::function<void()> onHire; ///< One-time placement/setup callback.
+        bool placementApplied = false; ///< Prevents applying onHire more than once.
     };
 
     std::vector<HireableLaneEntry> m_hireableLanes;

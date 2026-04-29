@@ -33,14 +33,17 @@ namespace cse498 {
  *   - optional callbacks define what happens at each endpoint
  *
  * By default, reaching the origin will:
- *   - collect from a ResourceSpawn
+ *   - collect from a ResourceSpawn only after it reaches its full visual state
  *   - withdraw from a ResourceBank
  *   - otherwise fall back to a synthetic carry quantity of 1
  *
- * If a resource source is empty, the agent waits adjacent to it and retries on
- * later turns. Reaching the deposit point unloads everything. Convenience
- * wrappers keep the original ResourceSpawn -> TownHall flow available for the
- * Group 14 demo.
+ * A ResourceSpawn is considered ready when it holds at least twice its maximum
+ * collection quantity. This matches the InteractiveWorld GUI's generated
+ * empty/partial/full resource visuals, so resources are visible before fetchers
+ * harvest them. If a resource source is not ready, the agent waits adjacent to
+ * it and retries on a later autonomous tick. Reaching the deposit point unloads
+ * everything. Convenience wrappers keep the original ResourceSpawn -> TownHall
+ * setup available for demos.
  *
  * ResourceSpawn and building-like endpoints typically live on non-walkable
  * tiles, so the agent paths toward a tile adjacent to its current goal.
@@ -80,7 +83,11 @@ public:
         return *this;
     }
 
-    /// @brief Convenience wrapper for the original spawn-based setup.
+    /// @brief Convenience wrapper for immediate spawn pickup behavior.
+    ///
+    /// This custom callback bypasses the default full-state pickup threshold.
+    /// InteractiveWorld routes that should respect visual readiness use
+    /// SetOrigin() instead and rely on PerformDefaultPickup().
     FetchAgent& SetSpawn(ResourceSpawn& spawn) {
         SetOrigin(spawn);
         SetItemType(spawn.GetItemType());
@@ -106,40 +113,54 @@ public:
         });
     }
 
+    /// @return Origin endpoint targeted while this agent is empty, or nullptr.
     [[nodiscard]] const AgentBase* GetOrigin() const { return GetOriginPtr(); }
+    /// @return Deposit endpoint targeted while this agent is carrying cargo, or nullptr.
     [[nodiscard]] const AgentBase* GetDepositPoint() const { return GetDepositPointPtr(); }
+    /// @return Origin endpoint as a ResourceSpawn when applicable, otherwise nullptr.
     [[nodiscard]] const ResourceSpawn* GetSpawn() const { return dynamic_cast<const ResourceSpawn*>(GetOriginPtr()); }
+    /// @return Deposit endpoint as a TownHall when applicable, otherwise nullptr.
     [[nodiscard]] const TownHall* GetTownHall() const { return dynamic_cast<const TownHall*>(GetDepositPointPtr()); }
+    /// @return Resource type currently being hauled or targeted.
     [[nodiscard]] ItemType GetItemType() const { return m_itemType; }
+    /// @return Amount of resource currently carried.
     [[nodiscard]] int GetCarryQuantity() const { return m_carryQuantity; }
+    /// @return Total amount delivered by this fetcher.
     [[nodiscard]] int GetTotalDelivered() const { return m_totalDelivered; }
+    /// @return Whether this fetcher participates in autonomous movement.
     [[nodiscard]] bool IsActive() const { return m_isActive; }
 
+    /// @brief Enable or disable this fetcher.
     FetchAgent& SetActive(bool active) {
         m_isActive = active;
         return *this;
     }
 
+    /// @brief Enable this fetcher.
     FetchAgent& Activate() {
         m_isActive = true;
         return *this;
     }
 
+    /// @brief Disable this fetcher.
     FetchAgent& Deactivate() {
         m_isActive = false;
         return *this;
     }
 
+    /// @brief Set the resource type this fetcher hauls.
     FetchAgent& SetItemType(ItemType itemType) {
         m_itemType = itemType;
         return *this;
     }
 
+    /// @brief Set carried quantity, clamping negative values to zero.
     FetchAgent& SetCarryQuantity(int quantity) {
         m_carryQuantity = (quantity < 0) ? 0 : quantity;
         return *this;
     }
 
+    /// @brief Add a positive amount to the delivered counter.
     FetchAgent& AddDelivered(int amount) {
         if (amount > 0) {
             m_totalDelivered += amount;
@@ -147,6 +168,17 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Choose the next hauling action.
+     *
+     * The agent moves toward the endpoint matching its current load state:
+     * origin while empty, deposit point while carrying cargo. When adjacent to
+     * the endpoint it performs the configured callback or the default
+     * pickup/deposit behavior.
+     *
+     * @param grid Grid used for pathfinding.
+     * @return Action id for the next move, or remain-still when waiting.
+     */
     [[nodiscard]] size_t SelectAction(const WorldGrid& grid) override {
         if (!m_isActive) {
             return 0;
@@ -224,6 +256,7 @@ private:
     void PerformDefaultPickup() {
         AgentBase* origin = GetOriginPtr();
         if (auto* spawn = dynamic_cast<ResourceSpawn*>(origin); spawn != nullptr) {
+            // Wait until the GUI's full resource state is reached.
             if (spawn->GetQuantity() < spawn->GetMaxCollectionQuantity() * 2) {
                 SetCarryQuantity(0);
                 return;
