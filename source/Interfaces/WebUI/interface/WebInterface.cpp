@@ -275,7 +275,8 @@ std::string BuildOverworldHudText(const DemoSimpleWorldG2& overworld) {
     out << "[Esc] Pause\n";
     out << "--------------\n";
     out << std::left << std::setw(6) << "Player HP: " << " " << overworld.GetPlayer()->GetCurrentHealth() << "/" << overworld.GetPlayer()->GetMaxHealth() << "\n";
-    out << std::left << std::setw(6) << "Player Damage: " << " " << overworld.GetPlayer()->GetStats().mAtk << "\n";
+    out << std::left << std::setw(6) << "Player Damage: " << " " << overworld.GetPlayer()->GetAtk() << "\n";
+    out << std::left << std::setw(6) << "Player Range: " << " " << overworld.GetPlayer()->GetAtkRange() << "\n";
     return out.str();
 }
 } // namespace
