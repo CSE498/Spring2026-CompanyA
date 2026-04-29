@@ -167,6 +167,9 @@ private:
     /// @brief Textbox displaying points.
     WebTextbox* mHUDTextbox = nullptr;
 
+    /// @brief Textbox displaying stats menu details.
+    WebTextbox* mStatsMenuText = nullptr;
+
     /// @brief Map of symbols to file paths for the overworld.
     std::unordered_map<char, std::string> mSymbolPathOverworld{};
 

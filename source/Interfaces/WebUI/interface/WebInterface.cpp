@@ -36,18 +36,19 @@ namespace {
 // Asset path constants
 // -----------------------------------------------------------------------------
 constexpr const char* kPlayerImagePath = "/assets/agents/playerCharacter/agent_player.png";
-constexpr const char* kMonsterImagePath = "/assets/agents/monsters/agent_monster_goblin.png";
+constexpr const char* kGoblinImagePath = "/assets/agents/monsters/agent_monster_goblin.png";
+constexpr const char* kSkeletonImagePath = "/assets/agents/monsters/agent_monster_skeleton.png";
 constexpr const char* kInventoryBarImagePath = "/assets/gui/inventory_bar.png";
 constexpr const char* kEmptySlotImagePath = "/assets/gui/placeholder.png";
 
-constexpr const char* kOverworldGrassTile1Path = "assets/world/forest/floor_tiles/tile_grass_1.png";
-constexpr const char* kOverworldBorderTopForestPath = "assets/world/forest/walls/external/border_top_forest.png";
-constexpr const char* kOverworldLumberYardPath = "assets/tiles/lumber_yard.png";
-constexpr const char* kOverworldQuarryPath = "assets/tiles/quarry.png";
-constexpr const char* kOverworldOreMinePath = "assets/tiles/ore_mine.png";
-constexpr const char* kOverworldWoodSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_2.png";
-constexpr const char* kOverworldStoneSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_5.png";
-constexpr const char* kOverworldMetalSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_3.png";
+constexpr const char* kOverworldGrassTile1Path = "/assets/world/forest/floor_tiles/tile_grass_1.png";
+constexpr const char* kOverworldBorderTopForestPath = "/assets/world/forest/walls/external/border_top_forest.png";
+constexpr const char* kOverworldLumberYardPath = "/assets/tiles/lumber_yard.png";
+constexpr const char* kOverworldQuarryPath = "/assets/tiles/quarry.png";
+constexpr const char* kOverworldOreMinePath = "/assets/tiles/ore_mine.png";
+constexpr const char* kOverworldWoodSpawnTilePath = "/assets/world/forest/floor_tiles/tile_grass_2.png";
+constexpr const char* kOverworldStoneSpawnTilePath = "/assets/world/forest/floor_tiles/tile_grass_5.png";
+constexpr const char* kOverworldMetalSpawnTilePath = "/assets/world/forest/floor_tiles/tile_grass_3.png";
 
 constexpr const char kDungeonTrap = 't';
 constexpr const char kDungeonLoot = 'l';
@@ -363,12 +364,12 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
 
     mSymbolPathOverworld['X'] = basePath + forest + floor + "tile_grass_1.png";
 
-    mSymbolPathOverworld['1'] = kMonsterImagePath;
-    mSymbolPathOverworld['2'] = kMonsterImagePath;
-    mSymbolPathOverworld['3'] = kMonsterImagePath;
-    mSymbolPathOverworld['4'] = kMonsterImagePath;
-    mSymbolPathOverworld['5'] = kMonsterImagePath;
-    mSymbolPathOverworld['6'] = kMonsterImagePath;
+    mSymbolPathOverworld['1'] = kGoblinImagePath;
+    mSymbolPathOverworld['2'] = kGoblinImagePath;
+    mSymbolPathOverworld['3'] = kGoblinImagePath;
+    mSymbolPathOverworld['4'] = kGoblinImagePath;
+    mSymbolPathOverworld['5'] = kGoblinImagePath;
+    mSymbolPathOverworld['6'] = kGoblinImagePath;
     mSymbolPathOverworld['7'] = "/assets/agents/monsters/agent_monster_skeleton.png";
 
     // Set up the symbol-to-path map for the dungeon world
@@ -462,6 +463,9 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
     SetupStatsMenu();
     mAnalyticsManager = std::make_shared<AnalyticsManager>();
     mStatsTracker = std::make_unique<StatsTracker>();
+
+    mInteractiveWorld->SetAnalyticsManager(mAnalyticsManager);
+    mDungeon->SetAnalyticsManager(mAnalyticsManager);
 
     UpdateLayoutVisibility();
 
@@ -610,7 +614,7 @@ std::string WebInterface::GetImagePath(char symbol) {
             return kPlayerImagePath;
         }
         if (symbol == '*') {
-            return kMonsterImagePath;
+            return kGoblinImagePath;
         }
 
         // Look up symbol in the pre-populated path map
@@ -757,7 +761,17 @@ void WebInterface::SetupPauseMenu() {
     addButton(kSettingsButtonText, [this]() { TransitionTo(WebState::SETTINGS); });
     addButton(kStatsButtonText, [this]() {
         if (mAnalyticsManager && mStatsTracker) {
+            GetCurrentWorld()->SyncAgentLogsToAnalytics();
             mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+            std::ostringstream oss{};
+            for (const auto& stat: mDashboardSnapshot.numericStats) {
+                oss << stat.label << ": " << stat.currentValue << "\n";
+            }
+            for (const auto& stat: mDashboardSnapshot.actionStats) {
+                oss << stat.label << ": " << stat.actionCount << "\n";
+            }
+            std::string snapshotText = oss.str();
+            mStatsMenuText->SetText(snapshotText.empty() ? kStatsMenuEmptyText : snapshotText);
         }
         TransitionTo(WebState::STATS);
     });
@@ -896,9 +910,9 @@ void WebInterface::SetupStatsMenu() {
     titlePtr->MountToLayout(*mStatsMenu);
 
     mElements.emplace_back(std::make_unique<WebTextbox>(kStatsMenuEmptyText));
-    WebTextbox* bodyPtr = static_cast<WebTextbox*>(mElements.back().get());
-    StyleMenuBody(bodyPtr, kCompactMenuBodyFontSizePx);
-    bodyPtr->MountToLayout(*mStatsMenu);
+    mStatsMenuText = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(mStatsMenuText, kCompactMenuBodyFontSizePx);
+    mStatsMenuText->MountToLayout(*mStatsMenu);
 
     auto backButton = std::make_unique<WebButton>(kBackButtonText);
     backButton->SetCallback([this]() { TransitionTo(mPreviousState); });
@@ -1221,8 +1235,27 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
             continue;
         }
 
+        std::string imagePath{};
+        if (mGameState == WebState::DUNGEON) {
+            if (agent.GetName().contains("Goblin")) {
+                imagePath = kGoblinImagePath;
+            } else if (agent.GetName().contains("Skeleton")) {
+                imagePath = kSkeletonImagePath;
+            } else if (agent.IsPlayerAgent()) {
+                imagePath = kPlayerImagePath;
+            } else {
+                imagePath = GetImagePath(agent.GetSymbol());
+            }
+
+            auto agentTexture = GetOrLoadBitmap(imagePath);
+            int agentLeft = CellXToScreenLeft(agentCellX);
+            int agentTop = CellYToScreenTop(agentCellY);
+            mCanvas->DrawTexture(agentTexture.as_handle(), agentLeft, agentTop, scale);
+            continue;
+        }
+
         char agentSymbol = agent.GetSymbol();
-        std::string imagePath = GetImagePath(agentSymbol);
+        imagePath = GetImagePath(agentSymbol);
 
         if (symbolPathMap.contains(agentSymbol)) {
             if (symbolPathMap.at(agentSymbol) != imagePath) {
