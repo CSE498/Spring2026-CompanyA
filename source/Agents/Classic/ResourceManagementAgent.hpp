@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -50,7 +51,8 @@ public:
                                          FetchAgent& firstHauler,
                                          FetchAgent& secondHauler,
                                          Building& building,
-                                         GoldAmount cost);
+                                         GoldAmount cost,
+                                         std::function<void()> onHire = {});
 
     bool HireLane(std::size_t laneIndex, std::string* message = nullptr);
 
@@ -88,6 +90,8 @@ private:
         FetchAgent* secondHauler = nullptr;
         GoldAmount cost = 0;
         Building* building = nullptr;
+        std::function<void()> onHire;
+        bool placementApplied = false;
     };
 
     std::vector<HireableLaneEntry> m_hireableLanes;

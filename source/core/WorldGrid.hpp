@@ -246,7 +246,7 @@ namespace cse498 {
                 return false;
             size_t cell_type_id{cells[ToIndex(pos)]};
             CellType type = cell_types[cell_type_id];
-            return type.name == "floor";
+            return type.name == "floor" || type.name.rfind("ow_grass", 0) == 0;
         }
     };
 } // End of namespace cse498

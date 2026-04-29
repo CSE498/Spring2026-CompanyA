@@ -67,13 +67,11 @@ int main() {
             std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Stone Spawn", *world, ItemType::Stone);
     stoneSpawnPtr->SetSymbol('q');
     ResourceSpawn& stoneSpawn = world->AddAgent(std::move(stoneSpawnPtr));
-    world->AddResourceSpawn(stoneSpawn, WorldPosition{1, 9});
 
     auto metalSpawnPtr =
             std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Metal Spawn", *world, ItemType::Metal);
     metalSpawnPtr->SetSymbol('m');
     ResourceSpawn& metalSpawn = world->AddAgent(std::move(metalSpawnPtr));
-    world->AddResourceSpawn(metalSpawn, WorldPosition{21, 9});
 
 
     // Resource Producers
@@ -91,8 +89,6 @@ int main() {
     world->AddProducer(metalProducer);
 
     world->AddBuilding(lumberYard, WorldPosition{15, 3});
-    world->AddBuilding(quarry, WorldPosition{5, 7});
-    world->AddBuilding(mine, WorldPosition{15, 7});
 
     lumberYard.SetSymbol('L');
     quarry.SetSymbol('Q');
@@ -113,16 +109,16 @@ int main() {
     configureFetcher(woodToTownHall, lumberYard, townHall, ItemType::Wood, '2', WorldPosition{15, 4});
 
     FetchAgent& stoneToQuarry = world->AddAgent<FetchAgent>("Stone To Quarry");
-    configureFetcher(stoneToQuarry, stoneSpawn, quarry, ItemType::Stone, '3', WorldPosition{2, 8});
+    stoneToQuarry.SetOrigin(stoneSpawn).SetDepositPoint(quarry).SetItemType(ItemType::Stone).SetSymbol('3');
 
     FetchAgent& stoneToTownHall = world->AddAgent<FetchAgent>("Quarry To Town Hall");
-    configureFetcher(stoneToTownHall, quarry, townHall, ItemType::Stone, '4', WorldPosition{7, 6});
+    stoneToTownHall.SetOrigin(quarry).SetDepositPoint(townHall).SetItemType(ItemType::Stone).SetSymbol('4');
 
     FetchAgent& metalToMine = world->AddAgent<FetchAgent>("Metal To Mine");
-    configureFetcher(metalToMine, metalSpawn, mine, ItemType::Metal, '5', WorldPosition{20, 8});
+    metalToMine.SetOrigin(metalSpawn).SetDepositPoint(mine).SetItemType(ItemType::Metal).SetSymbol('5');
 
     FetchAgent& metalToTownHall = world->AddAgent<FetchAgent>("Mine To Town Hall");
-    configureFetcher(metalToTownHall, mine, townHall, ItemType::Metal, '6', WorldPosition{15, 6});
+    metalToTownHall.SetOrigin(mine).SetDepositPoint(townHall).SetItemType(ItemType::Metal).SetSymbol('6');
 
     ResourceManagementAgent& resourceManager = world->AddAgent<ResourceManagementAgent>("Resource Manager");
     resourceManager.SetInventory(world->GetInventoryPtr()).SetSymbol('7');
@@ -140,8 +136,18 @@ int main() {
     metalToMine.SetActive(false);
     metalToTownHall.SetActive(false);
 
-    resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarry, 10);
-    resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mine, 20);
+    resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarry, 10, [&]() {
+        world->AddResourceSpawn(stoneSpawn, WorldPosition{1, 9});
+        world->AddBuilding(quarry, WorldPosition{5, 7});
+        stoneToQuarry.SetLocation(WorldPosition{2, 8});
+        stoneToTownHall.SetLocation(WorldPosition{7, 6});
+    });
+    resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mine, 20, [&]() {
+        world->AddResourceSpawn(metalSpawn, WorldPosition{21, 9});
+        world->AddBuilding(mine, WorldPosition{15, 7});
+        metalToMine.SetLocation(WorldPosition{20, 8});
+        metalToTownHall.SetLocation(WorldPosition{15, 6});
+    });
 
 
     InteractiveWorldSaveManager saveManager;

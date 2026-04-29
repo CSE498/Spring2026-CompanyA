@@ -43,6 +43,9 @@ protected:
         // Substitute in agents.
         for (const auto& agent_id: agent_ids) {
             const AgentBase& agent = world.GetAgent(agent_id);
+            if (!agent.GetLocation().IsPosition()) {
+                continue;
+            }
             WorldPosition pos = agent.GetLocation().AsWorldPosition();
             symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
         }

@@ -387,8 +387,9 @@ ResourceManagementAgent& ResourceManagementAgent::AddHireableLane(
     FetchAgent& firstHauler,
     FetchAgent& secondHauler,
     Building& building,
-    GoldAmount cost) {
-    m_hireableLanes.push_back({label, &firstHauler, &secondHauler, cost, &building});
+    GoldAmount cost,
+    std::function<void()> onHire) {
+    m_hireableLanes.push_back({label, &firstHauler, &secondHauler, cost, &building, std::move(onHire), false});
     return *this;
 }
 
@@ -424,6 +425,10 @@ bool ResourceManagementAgent::HireLane(std::size_t laneIndex, std::string* messa
     }
 
     m_gold -= lane.cost;
+    if (lane.onHire && !lane.placementApplied) {
+        lane.onHire();
+        lane.placementApplied = true;
+    }
     lane.firstHauler->Activate();
     lane.secondHauler->Activate();
 
@@ -527,6 +532,10 @@ bool ResourceManagementAgent::SetLaneUnlocked(std::size_t laneIndex, bool unlock
         return false;
     }
 
+    if (unlocked && lane.onHire && !lane.placementApplied) {
+        lane.onHire();
+        lane.placementApplied = true;
+    }
     lane.firstHauler->SetActive(unlocked);
     lane.secondHauler->SetActive(unlocked);
 
