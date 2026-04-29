@@ -51,5 +51,6 @@ namespace cse498 {
          *  false if -_
          */
         static std::optional<bool> IsScroll(char s);
+        void CreateEnemies(int option);
     };
 } // namespace cse498

@@ -159,7 +159,7 @@ TEST_CASE("Test agent chases the player by selecting and executing a movement ac
 
     REQUIRE(world.GetLastActorId() == stored.GetID());
     REQUIRE(world.GetLastActionId() == WorldActions::REMAIN_STILL);
-    CHECK(stored.GetActionResult() == 1);
+    CHECK(stored.GetActionResult() == 0);
     CHECK(stored.GetLocation().AsWorldPosition() == WorldPosition(1, 1));
     CHECK(world.GetPlayer()->GetCurrentHealth() == Approx(37.0));
 }

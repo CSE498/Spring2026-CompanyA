@@ -14,6 +14,8 @@
 #include "../../Agents/Classic/PlayerAgent.hpp"
 #include "../../tools/DamageCalculator.hpp"
 #include "WorldActions.hpp"
+#include "core/item/ItemWeaponSword.hpp"
+#include "core/item/Item.hpp"
 
 namespace cse498 {
 
@@ -291,11 +293,33 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     AddAgent(std::move(p));
     mPlayer = dynamic_cast<PlayerAgent*>(agent_set[0].get());
     assert(mPlayer);
+    mPlayer->GetInventory().AddItem(
+    std::make_unique<ItemWeaponSword>(
+        0,
+        "sword",
+        "/assets/items/item_sword_1.png",
+        3,
+        *this
+    ));
+    // Just a quick test to make sure it is there -- Adding an item to 2nd slot of hotbar - get there with inc.
+    mPlayer->GetInventory().SwapSlots(Inventory::HOTBAR_SIZE, 1);
+    mPlayer->GetInventory().HotBarIndexInc();
+    [[maybe_unused]] auto x = mPlayer->GetInventory().GetHand();
+    assert(x->GetName() == "sword" && "Sword is not correct");
+    mPlayer->GetInventory().HotBarIndexDec();
+
+
 
     mFloorId = main_grid.AddCellType("floor", "Walkable floor", '.');
     mWallId = main_grid.AddCellType("wall", "Solid wall", '#');
     main_grid.Load({
-            "############",
+            "############", // 10x10 grid --> I know it looks vertical but 10x10
+            "#..........#",
+            "#..........#",
+            "#..........#",
+            "#..........#",
+            "#..........#",
+            "#..........#",
             "#..........#",
             "#..........#",
             "#..........#",
@@ -310,27 +334,23 @@ DemoSimpleWorldG2::DemoSimpleWorldG2() {
     // DemoSimpleWorldG2::ConfigAgent(*player);
     player->SetSymbol('@');
     player->SetStats(AgentStats(100, 14, 5, 3, 0));
-    player->SetLocation(Location(WorldPosition{2, 2}));
+    player->SetLocation(Location(WorldPosition{3, 4}));
     player->SetGold(30);
 
     // Creating agents by using the template this way
     auto& farmer = AddAgent<FarmingAgent>("Farmer");
     mFarmerId = farmer.GetID(); // ID = 1
     farmer.SetSymbol('F');
-    farmer.SetLocation(Location(WorldPosition{4, 2}));
+    farmer.SetLocation(Location(WorldPosition{3, 1}));
     farmer.ClearInitialOffers();
     farmer.AddInitialOffer({"apple", 4, 2, 1, TradeStockMode::Unlimited, 0});
     farmer.AddInitialOffer({"bread", 6, 3, 1, TradeStockMode::Limited, 18});
     farmer.AddInitialOffer({"potion", 10, 5, 1, TradeStockMode::Limited, 10});
     farmer.AddGold(200);
 
+    CreateEnemies(1);
     // just for demonstration of another method for creation of an agent
-    mEnemyId = GetNextAgentId(); // this is just for demonstration. ids should be organized by world ID = 2
-    auto& enemy = AddAgent(std::make_unique<Enemy>(mEnemyId, "Enemy", *this));
-    enemy.SetSymbol('S');
-    enemy.SetLocation(Location(WorldPosition{8, 3}));
-    enemy.SetStats(AgentStats(45, 9, 2, 3, 0));
-    enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, mPlayerId));
+
 }
 
 int DemoSimpleWorldG2::DoAction(AgentBase& agent, size_t action_id) {
@@ -369,8 +389,13 @@ void DemoSimpleWorldG2::Run() {
         }
 
         std::cout << "WASD move, E interact with NPC/enemy, Q quit. ---- _- Inv Scroll, += Inv scroll \n> ";
-        char input;
-        std::cin >> input;
+
+        // Just read the whole line and take the first char in case there were other garbage values.
+        // One turn at a time is more consistent to test
+        std::string line;
+        std::getline(std::cin, line);
+        char input = line.empty() ? '\0' : line[0];
+
         auto scrollTest = IsScroll(input);
         if (scrollTest) // just handle the scroll
         {
@@ -416,5 +441,33 @@ std::optional<bool> DemoSimpleWorldG2::IsScroll(char s)
 }
 
 
+void DemoSimpleWorldG2::CreateEnemies(int option)
+{
+    if (option == 0) // new setup
+    {
+        auto skel = AgentFactory::CreateEnemySkeleton({"Enemy", 0, {9,3}}, *this);
+        auto& enemy = AddAgent(std::move(skel));
+        mEnemyId = enemy.GetID();
+        assert(mEnemyId == 2);
+        enemy.SetSymbol('S');
+
+    }
+    else if (option == 1) // old setup
+    {
+        GetPlayer()->SetPosition({2,2});
+        // index != id in general but here for initialization it is fine.
+        // Should have a GetAgentById function but wouldn't be really useful aside from right here.
+        GetAgentByIndex(mFarmerId).SetPosition({4,2});
+
+        mEnemyId = GetNextAgentId(); // this is just for demonstration. ids should be organized by world ID = 2
+        auto& enemy = AddAgent(std::make_unique<Enemy>(mEnemyId, "Enemy", *this));
+        enemy.SetLocation(Location(WorldPosition{8, 3}));
+        enemy.SetStats(AgentStats(45, 9, 2, 3, 0));
+        enemy.SetBehaviorTree(AgentFactory::CreateEnemyFollowPlayerTree(&enemy, *this, mPlayerId));
+        enemy.SetSymbol('S');
+
+    }
+
+}
 
 } // namespace cse498
