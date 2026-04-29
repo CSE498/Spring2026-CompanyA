@@ -181,6 +181,5 @@ public:
      */
     void OnWorkedAtBuilding();
 
-    bool Interact() override;
 };
 } // namespace cse498
