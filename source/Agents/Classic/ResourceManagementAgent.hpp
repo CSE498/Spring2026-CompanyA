@@ -46,11 +46,8 @@ public:
     bool UpgradeBuilding(Building& building, std::string* message = nullptr);
     bool SellResource(ItemType itemType, ItemCount amount, std::string* message = nullptr);
 
-    ResourceManagementAgent& AddHireableLane(const std::string& label,
-                                         FetchAgent& firstHauler,
-                                         FetchAgent& secondHauler,
-                                         Building& building,
-                                         GoldAmount cost);
+    ResourceManagementAgent& AddHireableLane(const std::string& label, FetchAgent& firstHauler,
+                                             FetchAgent& secondHauler, Building& building, GoldAmount cost);
 
     bool HireLane(std::size_t laneIndex, std::string* message = nullptr);
 
@@ -91,7 +88,6 @@ private:
     };
 
     std::vector<HireableLaneEntry> m_hireableLanes;
-
 };
 
 } // namespace cse498

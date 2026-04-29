@@ -41,5 +41,15 @@ namespace cse498 {
         int DoAction(AgentBase &agent, size_t action_id) override;
 
         void Run() override;
+
+        /**
+         * Checks if the input is a scroll input
+         * @param s - scroll is + - or _ = (all the same key)
+         * @return tricky: optional false if bad input
+         *  optional true if += or -_
+         *  true if +=
+         *  false if -_
+         */
+        static std::optional<bool> IsScroll(char s);
     };
 } // namespace cse498

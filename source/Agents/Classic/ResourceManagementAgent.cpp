@@ -53,11 +53,11 @@ ResourceManagementAgent& ResourceManagementAgent::SetInventory(std::shared_ptr<I
     return *this;
 }
 
-ResourceManagementAgent& ResourceManagementAgent::SetManagedBuildings(
-    const std::vector<Building*>& buildings, bool unlocked) {
+ResourceManagementAgent& ResourceManagementAgent::SetManagedBuildings(const std::vector<Building*>& buildings,
+                                                                      bool unlocked) {
     m_managedBuildings.clear();
 
-    for (Building* building : buildings) {
+    for (Building* building: buildings) {
         if (building != nullptr) {
             m_managedBuildings.push_back({building, unlocked});
         }
@@ -147,15 +147,14 @@ void ResourceManagementAgent::PrintBuildingList() const {
             continue;
         }
 
-        std::cout << " | unlocked | level " << entry.building->GetCurrentLevel()
-                  << "/" << entry.building->GetMaxLevel() << " | next: ";
+        std::cout << " | unlocked | level " << entry.building->GetCurrentLevel() << "/" << entry.building->GetMaxLevel()
+                  << " | next: ";
 
         const auto nextUpgrade = entry.building->GetNextUpgradeInfo();
         if (!nextUpgrade.has_value()) {
             std::cout << "max level\n";
         } else {
-            std::cout << nextUpgrade->quantity << " "
-                      << ItemTypeToString(nextUpgrade->item) << '\n';
+            std::cout << nextUpgrade->quantity << " " << ItemTypeToString(nextUpgrade->item) << '\n';
         }
     }
 }
@@ -293,10 +292,9 @@ void ResourceManagementAgent::HandleUpgradeInteraction() {
 }
 
 void ResourceManagementAgent::HandleSellInteraction() {
-    std::cout << "\nSell resource: [w] wood (" << GetSellPrice(ItemType::Wood) << " gold each)"
-              << "  [s] stone (" << GetSellPrice(ItemType::Stone) << " gold each)"
-              << "  [m] metal (" << GetSellPrice(ItemType::Metal) << " gold each)"
-              << "  [q] cancel\n> ";
+    std::cout << "\nSell resource: [w] wood (" << GetSellPrice(ItemType::Wood) << " gold each)" << "  [s] stone ("
+              << GetSellPrice(ItemType::Stone) << " gold each)" << "  [m] metal (" << GetSellPrice(ItemType::Metal)
+              << " gold each)" << "  [q] cancel\n> ";
 
     char choice = '\0';
     if (!(std::cin >> choice)) {
@@ -382,12 +380,9 @@ bool ResourceManagementAgent::Interact() {
 }
 
 
-ResourceManagementAgent& ResourceManagementAgent::AddHireableLane(
-    const std::string& label,
-    FetchAgent& firstHauler,
-    FetchAgent& secondHauler,
-    Building& building,
-    GoldAmount cost) {
+ResourceManagementAgent& ResourceManagementAgent::AddHireableLane(const std::string& label, FetchAgent& firstHauler,
+                                                                  FetchAgent& secondHauler, Building& building,
+                                                                  GoldAmount cost) {
     m_hireableLanes.push_back({label, &firstHauler, &secondHauler, cost, &building});
     return *this;
 }
@@ -427,11 +422,11 @@ bool ResourceManagementAgent::HireLane(std::size_t laneIndex, std::string* messa
     lane.firstHauler->Activate();
     lane.secondHauler->Activate();
 
-    for (auto& entry : m_managedBuildings) {
+    for (auto& entry: m_managedBuildings) {
         if (entry.building == lane.building) {
             entry.unlocked = true;
             break;
-        }   
+        }
     }
 
     if (message != nullptr) {
@@ -447,14 +442,10 @@ void ResourceManagementAgent::PrintHireableLaneList() const {
     for (std::size_t i = 0; i < m_hireableLanes.size(); ++i) {
         const auto& lane = m_hireableLanes[i];
 
-        const bool active =
-            lane.firstHauler != nullptr &&
-            lane.secondHauler != nullptr &&
-            lane.firstHauler->IsActive() &&
-            lane.secondHauler->IsActive();
+        const bool active = lane.firstHauler != nullptr && lane.secondHauler != nullptr &&
+                            lane.firstHauler->IsActive() && lane.secondHauler->IsActive();
 
-        std::cout << " " << (i + 1) << ". " << lane.label
-                  << " | cost " << lane.cost << " gold"
+        std::cout << " " << (i + 1) << ". " << lane.label << " | cost " << lane.cost << " gold"
                   << " | status: " << (active ? "active" : "locked") << '\n';
     }
 }
@@ -505,9 +496,7 @@ bool ResourceManagementAgent::IsLaneUnlocked(std::size_t laneIndex) const {
     }
 
     const auto& lane = m_hireableLanes[laneIndex];
-    return lane.firstHauler != nullptr &&
-           lane.secondHauler != nullptr &&
-           lane.firstHauler->IsActive() &&
+    return lane.firstHauler != nullptr && lane.secondHauler != nullptr && lane.firstHauler->IsActive() &&
            lane.secondHauler->IsActive();
 }
 
@@ -530,11 +519,11 @@ bool ResourceManagementAgent::SetLaneUnlocked(std::size_t laneIndex, bool unlock
     lane.firstHauler->SetActive(unlocked);
     lane.secondHauler->SetActive(unlocked);
 
-    for (auto& entry : m_managedBuildings) {
+    for (auto& entry: m_managedBuildings) {
         if (entry.building == lane.building) {
             entry.unlocked = unlocked;
             break;
-            }
+        }
     }
 
     if (message != nullptr) {
