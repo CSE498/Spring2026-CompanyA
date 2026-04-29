@@ -23,6 +23,7 @@
 #include "../source/Worlds/Dungeon/DungeonWorld.hpp"
 //#include "OverWorld.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
+#include "../../../source/Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../../source/Worlds/Hub/Building.hpp"
 #include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../../source/Worlds/Hub/ResourceProducer.hpp"
@@ -45,6 +46,7 @@ namespace cse498
         SETTINGS,  /// Settings screen (placeholder)
         STATS,     /// Contains information captured in gameplay
         TRADING,   /// Trading with a merchant
+        RESOURCE_MANAGEMENT, /// Managing interactive-world resources
         QUIT       /// Exit state
     };
 
@@ -140,6 +142,9 @@ namespace cse498
         MerchantAgent* mActiveMerchant = nullptr; /// Currently interacting merchant
         int mTradeMenuSelection = 0;              /// Selected offer index in trade menu
         bool mTradeBuyMode = true;                /// true = buying, false = selling resources
+        ResourceManagementAgent* mActiveResourceManager = nullptr; /// Currently interacting resource manager
+        int mResourceMenuSelection = 0; /// Selected resource manager row
+        int mResourceMenuTab = 0; /// 0 = upgrades, 1 = lanes, 2 = sell resources
 
         // -------------------------
         // Runtime flags
@@ -182,6 +187,8 @@ namespace cse498
         void RenderPickupMessage();
         void UpdateTrading();
         void RenderTrading();
+        void UpdateResourceManagement();
+        void RenderResourceManagement();
 
         /**
          * @brief Convert SDL keycode to world action ID.

@@ -1,7 +1,6 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
  * @brief Represents an upgradable building in the interactive game world.
- * @note Status: PROPOSAL
  **/
 
 #pragma once
@@ -23,6 +22,8 @@ namespace cse498 {
 ///        hauled resources for its production lane.
 class Building : public ResourceBank {
 public:
+    static constexpr float DEFAULT_RATE_MODIFIER = 0.25f;
+
     // The quantity and type of items needed for an upgrade
     struct BuildingUpgrade {
         ItemType item; // What item the upgrade requires
@@ -47,7 +48,7 @@ public:
 
 private:
     int m_level{}; // The current level of the building
-    float m_rateModifier = 0.25; // Percent increase as decimal ex: 0.25->25%
+    float m_rateModifier = DEFAULT_RATE_MODIFIER; // Percent increase as decimal ex: 0.25->25%
     std::vector<BuildingUpgrade> m_upgrades{}; // The upgrade cost per level
 
     /**
@@ -68,7 +69,7 @@ private:
      * @return void if the upgrade is successful, UpgradeRejectionType describing
      * why it failed
      */
-    std::expected<void, UpgradeRejectionType> ValidateUpgrade(const ItemType& itemType, int quantity) const {
+    [[nodiscard]] std::expected<void, UpgradeRejectionType> ValidateUpgrade(const ItemType& itemType, int quantity) const {
         if (m_level >= GetMaxLevel())
             return std::unexpected(UpgradeRejectionType::AlreadyMaxLevel);
 
@@ -97,18 +98,18 @@ public:
      * Get Max level for this building
      * @return max level as an int
      */
-    int GetMaxLevel() const { return m_upgrades.size(); }
+    [[nodiscard]] int GetMaxLevel() const { return m_upgrades.size(); }
     /**
      * Get current building level
      * @return current level as int
      */
-    int GetCurrentLevel() const { return m_level; }
+    [[nodiscard]] int GetCurrentLevel() const { return m_level; }
     /**
      * Set the current building level
      * @param level level to set building to
      * @return bool if setting level was successful
      */
-    [[maybe_unused]] bool SetCurrentLevel(int level) {
+    [[nodiscard]] bool SetCurrentLevel(int level) {
         if (level < 0 || level > GetMaxLevel())
             return false;
         m_level = level;
@@ -121,7 +122,7 @@ public:
      * already max level, returns the current level.
      * @return next upgrade level as an int
      */
-    int GetNextUpgradeLevel() const {
+    [[nodiscard]] int GetNextUpgradeLevel() const {
         if (m_level >= GetMaxLevel())
             return m_level;
         return m_level + 1;
@@ -130,7 +131,7 @@ public:
      * Check if the current level is the max level
      * @return bool if the building is max level or not
      */
-    bool IsMaxLevel() const { return m_level >= GetMaxLevel(); }
+    [[nodiscard]] bool IsMaxLevel() const { return m_level >= GetMaxLevel(); }
     /**
      * Set the rate modifier
      * @param rate rate to set to
@@ -140,7 +141,7 @@ public:
      * Get the rate modifier
      * @return rate modifier
      */
-    float GetRateModifier() const { return m_rateModifier; }
+    [[nodiscard]] float GetRateModifier() const { return m_rateModifier; }
     /**
      * Add an upgrade level to the building
      * @param item type of item needed for the upgrade
@@ -157,7 +158,7 @@ public:
      * @return void if the upgrade is successful, UpgradeRejectionType if not
      * successful
      */
-    std::expected<void, UpgradeRejectionType> Upgrade(const ItemType& itemType, int quantity) {
+    [[nodiscard]] std::expected<void, UpgradeRejectionType> Upgrade(const ItemType& itemType, int quantity) {
         auto result = ValidateUpgrade(itemType, quantity);
 
         if (!result)
@@ -174,13 +175,13 @@ public:
      * Get all BuildingUpgrade structs for the building. For UI.
      * @return vector of all of the Upgrades
      */
-    const std::vector<BuildingUpgrade>& GetAllUpgrades() const { return m_upgrades; }
+    [[nodiscard]] const std::vector<BuildingUpgrade>& GetAllUpgrades() const { return m_upgrades; }
     /**
      * Get the BuildingUpgrade struct for the next upgrade. Safe accessor for UI
      * and other callers that may query a max-level building.
      * @return the next BuildingUpgrade struct if it exists
      */
-    std::optional<BuildingUpgrade> GetNextUpgradeInfo() const {
+    [[nodiscard]] std::optional<BuildingUpgrade> GetNextUpgradeInfo() const {
         if (m_level >= GetMaxLevel())
             return std::nullopt;
         return GetNextUpgradeUnchecked();

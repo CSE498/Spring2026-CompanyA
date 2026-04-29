@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <functional>
+#include <optional>
 #include <queue>
 #include <string>
 #include <unordered_map>
@@ -43,6 +44,10 @@ namespace cse498 {
  *
  * ResourceSpawn and building-like endpoints typically live on non-walkable
  * tiles, so the agent paths toward a tile adjacent to its current goal.
+ *
+ * FetchAgent does not own its endpoints. SetOrigin() and SetDepositPoint()
+ * store references to world-owned agents, and those endpoints must outlive the
+ * fetcher.
  */
 class FetchAgent : public AgentBase {
 public:
@@ -53,13 +58,13 @@ public:
 
     /// @brief Assign the endpoint this agent targets while empty.
     FetchAgent& SetOrigin(AgentBase& origin) {
-        m_origin = &origin;
+        m_origin = origin;
         return *this;
     }
 
     /// @brief Assign the endpoint this agent targets while carrying cargo.
     FetchAgent& SetDepositPoint(AgentBase& depositPoint) {
-        m_depositPoint = &depositPoint;
+        m_depositPoint = depositPoint;
         return *this;
     }
 
@@ -94,16 +99,17 @@ public:
                 return;
             }
 
-            townHall.DepositResource(agent.GetItemType(), quantity);
-            agent.AddDelivered(quantity);
-            agent.SetCarryQuantity(0);
+            if (townHall.DepositResource(agent.GetItemType(), quantity)) {
+                agent.AddDelivered(quantity);
+                agent.SetCarryQuantity(0);
+            }
         });
     }
 
-    [[nodiscard]] const AgentBase* GetOrigin() const { return m_origin; }
-    [[nodiscard]] const AgentBase* GetDepositPoint() const { return m_depositPoint; }
-    [[nodiscard]] const ResourceSpawn* GetSpawn() const { return dynamic_cast<const ResourceSpawn*>(m_origin); }
-    [[nodiscard]] const TownHall* GetTownHall() const { return dynamic_cast<const TownHall*>(m_depositPoint); }
+    [[nodiscard]] const AgentBase* GetOrigin() const { return GetOriginPtr(); }
+    [[nodiscard]] const AgentBase* GetDepositPoint() const { return GetDepositPointPtr(); }
+    [[nodiscard]] const ResourceSpawn* GetSpawn() const { return dynamic_cast<const ResourceSpawn*>(GetOriginPtr()); }
+    [[nodiscard]] const TownHall* GetTownHall() const { return dynamic_cast<const TownHall*>(GetDepositPointPtr()); }
     [[nodiscard]] ItemType GetItemType() const { return m_itemType; }
     [[nodiscard]] int GetCarryQuantity() const { return m_carryQuantity; }
     [[nodiscard]] int GetTotalDelivered() const { return m_totalDelivered; }
@@ -145,7 +151,7 @@ public:
         if (!m_isActive) {
             return 0;
         }
-        if (m_origin == nullptr || m_depositPoint == nullptr) {
+        if (!m_origin.has_value() || !m_depositPoint.has_value()) {
             return 0;
         }
         if (!GetLocation().IsPosition()) {
@@ -154,10 +160,9 @@ public:
 
         const WorldPosition myPos = GetLocation().AsWorldPosition();
         const AgentBase* goalAgent =
-            (m_carryQuantity > 0) ? static_cast<const AgentBase*>(m_depositPoint)
-                                  : static_cast<const AgentBase*>(m_origin);
+            (m_carryQuantity > 0) ? GetDepositPointPtr() : GetOriginPtr();
 
-        if (!goalAgent->GetLocation().IsPosition()) {
+        if (goalAgent == nullptr || !goalAgent->GetLocation().IsPosition()) {
             return 0;
         }
 
@@ -191,8 +196,8 @@ public:
 
 
 private:
-    AgentBase* m_origin = nullptr;
-    AgentBase* m_depositPoint = nullptr;
+    std::optional<std::reference_wrapper<AgentBase>> m_origin;
+    std::optional<std::reference_wrapper<AgentBase>> m_depositPoint;
     EndpointAction m_onOriginReached;
     EndpointAction m_onDepositReached;
     ItemType m_itemType = ItemType::Wood;
@@ -200,14 +205,31 @@ private:
     int m_totalDelivered = 0;
     bool m_isActive = true;
 
+    [[nodiscard]] AgentBase* GetOriginPtr() {
+        return m_origin.has_value() ? &m_origin->get() : nullptr;
+    }
+
+    [[nodiscard]] const AgentBase* GetOriginPtr() const {
+        return m_origin.has_value() ? &m_origin->get() : nullptr;
+    }
+
+    [[nodiscard]] AgentBase* GetDepositPointPtr() {
+        return m_depositPoint.has_value() ? &m_depositPoint->get() : nullptr;
+    }
+
+    [[nodiscard]] const AgentBase* GetDepositPointPtr() const {
+        return m_depositPoint.has_value() ? &m_depositPoint->get() : nullptr;
+    }
+
     void PerformDefaultPickup() {
-        if (auto* spawn = dynamic_cast<ResourceSpawn*>(m_origin); spawn != nullptr) {
+        AgentBase* origin = GetOriginPtr();
+        if (auto* spawn = dynamic_cast<ResourceSpawn*>(origin); spawn != nullptr) {
             SetItemType(spawn->GetItemType());
             SetCarryQuantity(spawn->Collect());
             return;
         }
 
-        if (auto* bank = dynamic_cast<ResourceBank*>(m_origin); bank != nullptr) {
+        if (auto* bank = dynamic_cast<ResourceBank*>(origin); bank != nullptr) {
             const int available = static_cast<int>(bank->GetStoredAmount(m_itemType));
             if (available <= 0) {
                 SetCarryQuantity(0);
@@ -228,14 +250,16 @@ private:
             return;
         }
 
-        if (auto* townHall = dynamic_cast<TownHall*>(m_depositPoint); townHall != nullptr) {
-            townHall->DepositResource(m_itemType, m_carryQuantity);
-            AddDelivered(m_carryQuantity);
-            SetCarryQuantity(0);
+        AgentBase* depositPoint = GetDepositPointPtr();
+        if (auto* townHall = dynamic_cast<TownHall*>(depositPoint); townHall != nullptr) {
+            if (townHall->DepositResource(m_itemType, m_carryQuantity)) {
+                AddDelivered(m_carryQuantity);
+                SetCarryQuantity(0);
+            }
             return;
         }
 
-        if (auto* bank = dynamic_cast<ResourceBank*>(m_depositPoint); bank != nullptr) {
+        if (auto* bank = dynamic_cast<ResourceBank*>(depositPoint); bank != nullptr) {
             if (bank->DepositResource(m_itemType, m_carryQuantity)) {
                 AddDelivered(m_carryQuantity);
                 SetCarryQuantity(0);

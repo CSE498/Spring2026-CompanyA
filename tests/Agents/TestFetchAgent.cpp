@@ -85,9 +85,10 @@ TEST_CASE("FetchAgent supports resource hauling through endpoint callbacks", "[F
                     return;
                 }
 
-                townHall.DepositResource(fetcher.GetItemType(), quantity);
-                fetcher.AddDelivered(quantity);
-                fetcher.SetCarryQuantity(0);
+                if (townHall.DepositResource(fetcher.GetItemType(), quantity)) {
+                    fetcher.AddDelivered(quantity);
+                    fetcher.SetCarryQuantity(0);
+                }
             });
 
     agent.SetPosition(WorldPosition{3, 4});

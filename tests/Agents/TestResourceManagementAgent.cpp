@@ -7,6 +7,7 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
+#include "../../source/Agents/AI/FetchAgent.hpp"
 #include "../../source/Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../source/Interfaces/TrashInterface.hpp"
 #include "../../source/Worlds/Hub/InteractiveWorld.hpp"
@@ -94,6 +95,83 @@ TEST_CASE("ResourceManagementAgent rejects upgrades without enough resources", "
     CHECK(message == "Not enough Metal to upgrade Mine.");
     CHECK(mine.GetCurrentLevel() == 0);
     CHECK(world.GetInventory().GetAmount(ItemType::Metal) == 10);
+}
+
+TEST_CASE("ResourceManagementAgent handles locked buildings and basic configuration", "[ResourceManagementAgent][config]") {
+    InteractiveWorld world;
+
+    Building& quarry = world.AddAgent<Building>("Quarry");
+    quarry.AddUpgrade(ItemType::Stone, 10);
+    world.AddBuilding(quarry, WorldPosition{6, 4});
+
+    ResourceManagementAgent& manager = world.AddAgent<ResourceManagementAgent>("Manager");
+    manager.SetInventory(world.GetInventoryPtr()).AddManagedBuilding(quarry, false);
+    manager.SetSellPrice(ItemType::Stone, 7);
+    manager.SetGold(3);
+    manager.AddGold(4);
+
+    CHECK(manager.GetInventoryPtr() == world.GetInventoryPtr());
+    CHECK(manager.GetSellPrice(ItemType::Stone) == 7);
+    CHECK(manager.GetGold() == 7);
+    CHECK_FALSE(manager.IsManagedBuildingUnlocked(0));
+
+    std::string message;
+    CHECK_FALSE(manager.UpgradeBuilding(0, &message));
+    CHECK(message == "That building is locked.");
+
+    manager.ClearManagedBuildings();
+    CHECK_FALSE(manager.IsManagedBuildingUnlocked(0));
+}
+
+TEST_CASE("ResourceManagementAgent unlocks and locks hireable lanes", "[ResourceManagementAgent][lanes]") {
+    InteractiveWorld world;
+
+    Building& quarry = world.AddAgent<Building>("Quarry");
+    world.AddBuilding(quarry, WorldPosition{6, 4});
+
+    ResourceManagementAgent& manager = world.AddAgent<ResourceManagementAgent>("Manager");
+    manager.AddManagedBuilding(quarry, false);
+    manager.SetGold(15);
+
+    DummyInteractable& origin = world.AddAgent<DummyInteractable>("Origin");
+    DummyInteractable& deposit = world.AddAgent<DummyInteractable>("Deposit");
+
+    FetchAgent& firstHauler = world.AddAgent<FetchAgent>("First Hauler");
+    FetchAgent& secondHauler = world.AddAgent<FetchAgent>("Second Hauler");
+    firstHauler.SetOrigin(origin).SetDepositPoint(deposit).Deactivate();
+    secondHauler.SetOrigin(origin).SetDepositPoint(deposit).Deactivate();
+
+    int placementCount = 0;
+    manager.AddHireableLane("Quarry Lane", firstHauler, secondHauler, quarry, 10, [&placementCount]() {
+        ++placementCount;
+    });
+
+    CHECK(manager.GetHireableLaneCount() == 1);
+    CHECK(manager.GetHireableLaneLabel(0) == "Quarry Lane");
+    CHECK_FALSE(manager.IsLaneUnlocked(0));
+    CHECK_FALSE(manager.IsManagedBuildingUnlocked(0));
+
+    std::string message;
+    REQUIRE(manager.HireLane(0, &message));
+    CHECK(message == "Unlocked Quarry Lane for 10 gold.");
+    CHECK(manager.GetGold() == 5);
+    CHECK(manager.IsLaneUnlocked(0));
+    CHECK(manager.IsManagedBuildingUnlocked(0));
+    CHECK(placementCount == 1);
+
+    CHECK_FALSE(manager.HireLane(0, &message));
+    CHECK(message == "Quarry Lane is already unlocked.");
+
+    REQUIRE(manager.SetLaneUnlocked(0, false, &message));
+    CHECK(message == "Lane locked.");
+    CHECK_FALSE(manager.IsLaneUnlocked(0));
+    CHECK_FALSE(manager.IsManagedBuildingUnlocked(0));
+
+    REQUIRE(manager.SetLaneUnlocked(0, true, &message));
+    CHECK(message == "Lane unlocked.");
+    CHECK(manager.IsLaneUnlocked(0));
+    CHECK(manager.IsManagedBuildingUnlocked(0));
+    CHECK(placementCount == 1);
 }
 
 TEST_CASE("InteractiveWorld dispatches interface interact actions to adjacent agents", "[InteractiveWorld][interact]") {

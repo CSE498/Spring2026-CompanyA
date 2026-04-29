@@ -1,7 +1,6 @@
 /**
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief A simplistic main file to demonstrate a system.
- * @note Status: PROPOSAL
  **/
 
 // Include the modules that we will be using.
@@ -38,7 +37,7 @@ int main() {
             std::make_unique<TownHall>(world->GetNextAgentId(), "Town Hall", *world, world->GetInventoryPtr());
     townHallPtr->SetSymbol('T');
     TownHall& townHall = world->AddAgent(std::move(townHallPtr));
-    world->AddTownHall(townHall, WorldPosition{11, 5});
+    world->AddTownHall(townHall, WorldPosition{8, 6});
 
     // Buildings now act as both upgrade points and intermediate storage.
     Building& lumberYard = world->AddAgent<Building>("Lumber Yard");
@@ -61,19 +60,17 @@ int main() {
     auto woodSpawnPtr = std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Wood Spawn", *world, ItemType::Wood);
     woodSpawnPtr->SetSymbol('l');
     ResourceSpawn& woodSpawn = world->AddAgent(std::move(woodSpawnPtr));
-    world->AddResourceSpawn(woodSpawn, WorldPosition{21, 1});
+    world->AddResourceSpawn(woodSpawn, WorldPosition{15, 1});
 
     auto stoneSpawnPtr =
             std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Stone Spawn", *world, ItemType::Stone);
     stoneSpawnPtr->SetSymbol('q');
     ResourceSpawn& stoneSpawn = world->AddAgent(std::move(stoneSpawnPtr));
-    world->AddResourceSpawn(stoneSpawn, WorldPosition{1, 9});
 
     auto metalSpawnPtr =
             std::make_unique<ResourceSpawn>(world->GetNextAgentId(), "Metal Spawn", *world, ItemType::Metal);
     metalSpawnPtr->SetSymbol('m');
     ResourceSpawn& metalSpawn = world->AddAgent(std::move(metalSpawnPtr));
-    world->AddResourceSpawn(metalSpawn, WorldPosition{21, 9});
 
 
     // Resource Producers
@@ -90,9 +87,7 @@ int main() {
     world->AddProducer(stoneProducer);
     world->AddProducer(metalProducer);
 
-    world->AddBuilding(lumberYard, WorldPosition{15, 3});
-    world->AddBuilding(quarry, WorldPosition{5, 7});
-    world->AddBuilding(mine, WorldPosition{15, 7});
+    world->AddBuilding(lumberYard, WorldPosition{12, 3});
 
     lumberYard.SetSymbol('L');
     quarry.SetSymbol('Q');
@@ -107,23 +102,25 @@ int main() {
     // Two-stage hauling pipeline for each resource:
     // ResourceSpawn -> producer building -> TownHall.
     FetchAgent& woodToLumberYard = world->AddAgent<FetchAgent>("Wood To Lumber Yard");
-    configureFetcher(woodToLumberYard, woodSpawn, lumberYard, ItemType::Wood, '1', WorldPosition{20, 2});
+    configureFetcher(woodToLumberYard, woodSpawn, lumberYard, ItemType::Wood, '1', WorldPosition{14, 2});
 
     FetchAgent& woodToTownHall = world->AddAgent<FetchAgent>("Lumber Yard To Town Hall");
-    configureFetcher(woodToTownHall, lumberYard, townHall, ItemType::Wood, '2', WorldPosition{15, 4});
+    configureFetcher(woodToTownHall, lumberYard, townHall, ItemType::Wood, '2', WorldPosition{12, 4});
 
     FetchAgent& stoneToQuarry = world->AddAgent<FetchAgent>("Stone To Quarry");
-    configureFetcher(stoneToQuarry, stoneSpawn, quarry, ItemType::Stone, '3', WorldPosition{2, 8});
+    stoneToQuarry.SetOrigin(stoneSpawn).SetDepositPoint(quarry).SetItemType(ItemType::Stone).SetSymbol('3');
 
     FetchAgent& stoneToTownHall = world->AddAgent<FetchAgent>("Quarry To Town Hall");
-    configureFetcher(stoneToTownHall, quarry, townHall, ItemType::Stone, '4', WorldPosition{7, 6});
+    stoneToTownHall.SetOrigin(quarry).SetDepositPoint(townHall).SetItemType(ItemType::Stone).SetSymbol('4');
 
     FetchAgent& metalToMine = world->AddAgent<FetchAgent>("Metal To Mine");
-    configureFetcher(metalToMine, metalSpawn, mine, ItemType::Metal, '5', WorldPosition{20, 8});
+    metalToMine.SetOrigin(metalSpawn).SetDepositPoint(mine).SetItemType(ItemType::Metal).SetSymbol('5');
 
     FetchAgent& metalToTownHall = world->AddAgent<FetchAgent>("Mine To Town Hall");
-    configureFetcher(metalToTownHall, mine, townHall, ItemType::Metal, '6', WorldPosition{15, 6});
+    metalToTownHall.SetOrigin(mine).SetDepositPoint(townHall).SetItemType(ItemType::Metal).SetSymbol('6');
 
+    // The resource manager is the player's economy terminal: it upgrades known
+    // buildings, sells inventory resources, and unlocks later hauling lanes.
     ResourceManagementAgent& resourceManager = world->AddAgent<ResourceManagementAgent>("Resource Manager");
     resourceManager.SetInventory(world->GetInventoryPtr()).SetSymbol('7');
     resourceManager.AddManagedBuilding(lumberYard, true);
@@ -134,14 +131,26 @@ int main() {
     woodToLumberYard.SetActive(true);
     woodToTownHall.SetActive(true);
 
+    // Stone and metal lanes start disabled. Hiring a lane places the related
+    // spawn/building endpoints and activates both haulers for that resource.
     stoneToQuarry.SetActive(false);
     stoneToTownHall.SetActive(false);
 
     metalToMine.SetActive(false);
     metalToTownHall.SetActive(false);
 
-    resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarry, 10);
-    resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mine, 20);
+    resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarry, 10, [&]() {
+        world->AddResourceSpawn(stoneSpawn, WorldPosition{1, 11});
+        world->AddBuilding(quarry, WorldPosition{4, 9});
+        stoneToQuarry.SetLocation(WorldPosition{2, 10});
+        stoneToTownHall.SetLocation(WorldPosition{5, 8});
+    });
+    resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mine, 20, [&]() {
+        world->AddResourceSpawn(metalSpawn, WorldPosition{15, 11});
+        world->AddBuilding(mine, WorldPosition{12, 9});
+        metalToMine.SetLocation(WorldPosition{14, 10});
+        metalToTownHall.SetLocation(WorldPosition{12, 8});
+    });
 
 
     InteractiveWorldSaveManager saveManager;

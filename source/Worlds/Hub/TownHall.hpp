@@ -1,7 +1,6 @@
 /**
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
- * @brief Class representing the town hall for interactive world
- * @note Status: PROPOSAL
+ * @brief Class representing the town hall for interactive world.
  **/
 
 #pragma once
@@ -16,7 +15,7 @@
 #include <vector>
 
 namespace cse498 {
-/// @class Building
+/// @class TownHall
 /// @brief Town hall building. Stores the world inventory and responsible for managing fetch agents
 class TownHall : public AgentBase {
 public:
@@ -24,14 +23,16 @@ public:
              std::shared_ptr<InteractiveWorldInventory> inv) :
         AgentBase(id, name, world), m_inventory(std::move(inv)) {}
     TownHall(size_t id, const std::string& name, const WorldBase& world) :
-        AgentBase(id, name, world), m_inventory(nullptr) {}
+        AgentBase(id, name, world), m_inventory(std::make_shared<InteractiveWorldInventory>()) {}
 
     void AddResourceSpawn(const ItemType& itemType, std::shared_ptr<ResourceSpawn> spawn) {
         assert(m_resourceSpawns.find(itemType) == m_resourceSpawns.end() && "Spawn already registered");
         m_resourceSpawns.insert({itemType, spawn});
     }
 
-    void DepositResource(const ItemType& itemType, int amount) { m_inventory->AddItem(itemType, amount); }
+    [[nodiscard]] bool DepositResource(const ItemType& itemType, int amount) {
+        return m_inventory != nullptr && m_inventory->AddItem(itemType, amount);
+    }
 
     // TODO: Create fetch agents and add them to world
     // void BuyFetchAgent(const ItemType& itemType)

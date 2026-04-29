@@ -1,7 +1,6 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
- * @brief Represents a spawn point for resources that the Agents will grab from
- * @note Status: PROPOSAL
+ * @brief Represents a spawn point for resources that the Agents will grab from.
  **/
 #pragma once
 #include <limits>
@@ -13,10 +12,12 @@ namespace cse498 {
 /// @brief In world spawn point
 class ResourceSpawn : public AgentBase {
 private:
+    static constexpr int DEFAULT_MAX_COLLECTION_QUANTITY = 10;
+
     ItemType m_itemType = ItemType::Wood;
     int m_quantity = 0;
     // Maximum amount an agent is allowed to collect at once
-    int m_maxCollectionQuantity = 10;
+    int m_maxCollectionQuantity = DEFAULT_MAX_COLLECTION_QUANTITY;
 
 public:
     /**
@@ -48,6 +49,9 @@ public:
      * @param quantity quantity to add
      */
     void AddResource(const int& quantity) {
+        if (quantity <= 0) {
+            return;
+        }
         // Check for integer overflow
         if (quantity > std::numeric_limits<int>::max() - m_quantity)
             return;
@@ -57,7 +61,11 @@ public:
      * Set the max quantity an agent can collect at once
      * @param maxQuant new max
      */
-    void SetMaxCollectionQuantity(int maxQuant) { m_maxCollectionQuantity = maxQuant; }
+    void SetMaxCollectionQuantity(int maxQuant) {
+        if (maxQuant > 0) {
+            m_maxCollectionQuantity = maxQuant;
+        }
+    }
     /**
      * Get the max quantity an agent can collect at once
      * @return Current max quantity an agent can collect at once

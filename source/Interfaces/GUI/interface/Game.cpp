@@ -77,21 +77,28 @@ namespace cse498
         };
 
         // Overworld tiles
-        if (!LoadCheck("ow_grass", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_1.png")) return false;
-        if (!LoadCheck("ow_grass_flowers", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_5.png")) return false;
-        if (!LoadCheck("ow_grass_bones", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_4.png")) return false;
-        if (!LoadCheck("ow_grass_mud", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_3.png")) return false;
-        if (!LoadCheck("ow_grass_rock", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_2.png")) return false;
-        if (!LoadCheck("ow_entrance", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/door_left_forest.png")) return false;
-        if (!LoadCheck("ow_wall_left", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_left_forest.png")) return false;
-        if (!LoadCheck("ow_wall_right", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_right_forest.png")) return false;
-        if (!LoadCheck("ow_wall_top", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("ow_wall_bottom", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_bottom_forest.png")) return false;
-        if (!LoadCheck("ow_wall_corner", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("ow_building", std::string(ASSETS_DIR) + "/" + "tiles/lumber_yard.png")) return false;
-        if (!LoadCheck("ow_building_lumberyard", std::string(ASSETS_DIR) + "/" + "tiles/lumber_yard.png")) return false;
-        if (!LoadCheck("ow_building_quarry", std::string(ASSETS_DIR) + "/" + "tiles/quarry.png")) return false;
-        if (!LoadCheck("ow_building_mine", std::string(ASSETS_DIR) + "/" + "tiles/ore_mine.png")) return false;
+        if (!LoadCheck("ow_grass", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass.png")) return false;
+        if (!LoadCheck("ow_grass_flowers", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass_detail.png")) return false;
+        if (!LoadCheck("ow_grass_bones", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass_detail.png")) return false;
+        if (!LoadCheck("ow_grass_mud", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/path.png")) return false;
+        if (!LoadCheck("ow_grass_rock", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass.png")) return false;
+        if (!LoadCheck("ow_entrance", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/entrance.png")) return false;
+        if (!LoadCheck("ow_wall_left", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png")) return false;
+        if (!LoadCheck("ow_wall_right", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png")) return false;
+        if (!LoadCheck("ow_wall_top", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png")) return false;
+        if (!LoadCheck("ow_wall_bottom", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png")) return false;
+        if (!LoadCheck("ow_wall_corner", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png")) return false;
+        if (!LoadCheck("ow_building", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/lumber_yard.png")) return false;
+        if (!LoadCheck("ow_building_lumberyard", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/lumber_yard.png")) return false;
+        if (!LoadCheck("ow_building_quarry", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/quarry.png")) return false;
+        if (!LoadCheck("ow_building_mine", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/mine.png")) return false;
+        if (!LoadCheck("ow_town_hall", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/town_hall.png")) return false;
+        if (!LoadCheck("resource_wood_spawn", std::string(ASSETS_DIR) + "/" + "interactive_world/resources/wood_spawn.png")) return false;
+        if (!LoadCheck("resource_stone_spawn", std::string(ASSETS_DIR) + "/" + "interactive_world/resources/stone_spawn.png")) return false;
+        if (!LoadCheck("resource_metal_spawn", std::string(ASSETS_DIR) + "/" + "interactive_world/resources/metal_spawn.png")) return false;
+        if (!LoadCheck("resource_manager", std::string(ASSETS_DIR) + "/" + "interactive_world/agents/resource_manager.png")) return false;
+        if (!LoadCheck("fetch_agent", std::string(ASSETS_DIR) + "/" + "interactive_world/agents/fetch_agent.png")) return false;
+        if (!LoadCheck("interactive_player", std::string(ASSETS_DIR) + "/" + "interactive_world/agents/player.png")) return false;
 
 
         // Mobs
@@ -237,146 +244,185 @@ namespace cse498
     {
         mOverWorld = std::make_shared<InteractiveWorld>();
 
-        mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
-        /// @internal Group 17 AI hook: drops a @ref LearningExplorerAgent into the
-        /// overworld so the user sees an AI-driven NPC wandering alongside the
-        /// scripted @ref PacingAgent. Rendered as a goblin in RenderOverworld().
-        /// group 1 code is used to generate the agent
-        mOverWorld->AddLearningExplorerAgent(5, 5);
-
-        // Starting resources
         mOverWorld->GetInventory().AddItem(ItemType::Wood, 10);
         mOverWorld->GetInventory().AddItem(ItemType::Stone, 5);
 
-        // Buildings — world owns them via AddAgent
-        auto lumberYard = std::make_unique<Building>(1, "Lumber Yard", *mOverWorld);
-        lumberYard->SetSymbol('L');
-        lumberYard->AddUpgrade(ItemType::Wood, 15);
-        lumberYard->AddUpgrade(ItemType::Wood, 50);
-        lumberYard->AddUpgrade(ItemType::Stone, 50);
-        auto& lumberYardRef = mOverWorld->AddAgent<Building>(std::move(lumberYard));
-        mOverWorld->AddBuilding(lumberYardRef, WorldPosition{2, 1});
+        auto townHallPtr = std::make_unique<TownHall>(
+            mOverWorld->GetNextAgentId(), "Town Hall", *mOverWorld, mOverWorld->GetInventoryPtr());
+        townHallPtr->SetSymbol('T');
+        TownHall& townHall = mOverWorld->AddAgent(std::move(townHallPtr));
+        mOverWorld->AddTownHall(townHall, WorldPosition{8, 6});
 
-        auto quarry = std::make_unique<Building>(2, "Quarry", *mOverWorld);
-        quarry->SetSymbol('Q');
-        quarry->AddUpgrade(ItemType::Wood, 50);
-        quarry->AddUpgrade(ItemType::Stone, 50);
-        quarry->AddUpgrade(ItemType::Metal, 35);
-        auto& quarryRef = mOverWorld->AddAgent<Building>(std::move(quarry));
-        mOverWorld->AddBuilding(quarryRef, WorldPosition{5, 3});
+        Building& lumberYardRef = mOverWorld->AddAgent<Building>("Lumber Yard");
+        lumberYardRef.SetSymbol('L');
+        lumberYardRef.AddUpgrade(ItemType::Wood, 15);
 
-        auto mine = std::make_unique<Building>(3, "Ore Mine", *mOverWorld);
-        mine->SetSymbol('M');
-        mine->AddUpgrade(ItemType::Stone, 100);
-        mine->AddUpgrade(ItemType::Metal, 50);
-        mine->AddUpgrade(ItemType::Metal, 100);
-        auto& mineRef = mOverWorld->AddAgent<Building>(std::move(mine));
-        mOverWorld->AddBuilding(mineRef, WorldPosition{8, 5});
+        Building& quarryRef = mOverWorld->AddAgent<Building>("Quarry");
+        quarryRef.SetSymbol('Q');
+        quarryRef.AddUpgrade(ItemType::Wood, 50);
+        quarryRef.AddUpgrade(ItemType::Stone, 50);
+        quarryRef.AddUpgrade(ItemType::Metal, 35);
 
-        // Resource spawns — placed adjacent to their buildings
-        auto woodSpawn = std::make_unique<ResourceSpawn>(100, "Wood Spawn", *mOverWorld, ItemType::Wood);
-        woodSpawn->SetLocation(WorldPosition{3, 1});  // next to Lumber Yard at {2,1}
-        auto& woodSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(woodSpawn));
+        Building& mineRef = mOverWorld->AddAgent<Building>("Mine");
+        mineRef.SetSymbol('M');
+        mineRef.AddUpgrade(ItemType::Stone, 100);
+        mineRef.AddUpgrade(ItemType::Metal, 50);
+        mineRef.AddUpgrade(ItemType::Metal, 100);
 
-        auto stoneSpawn = std::make_unique<ResourceSpawn>(101, "Stone Spawn", *mOverWorld, ItemType::Stone);
-        stoneSpawn->SetLocation(WorldPosition{5, 4});  // below Quarry at {5,3}
-        auto& stoneSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(stoneSpawn));
+        auto woodSpawnPtr =
+            std::make_unique<ResourceSpawn>(mOverWorld->GetNextAgentId(), "Wood Spawn", *mOverWorld, ItemType::Wood);
+        woodSpawnPtr->SetSymbol('l');
+        ResourceSpawn& woodSpawnRef = mOverWorld->AddAgent(std::move(woodSpawnPtr));
+        mOverWorld->AddResourceSpawn(woodSpawnRef, WorldPosition{15, 1});
 
-        auto metalSpawn = std::make_unique<ResourceSpawn>(102, "Metal Spawn", *mOverWorld, ItemType::Metal);
-        metalSpawn->SetLocation(WorldPosition{8, 6});  // below Ore Mine at {8,5}
-        auto& metalSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(metalSpawn));
+        auto stoneSpawnPtr =
+            std::make_unique<ResourceSpawn>(mOverWorld->GetNextAgentId(), "Stone Spawn", *mOverWorld, ItemType::Stone);
+        stoneSpawnPtr->SetSymbol('q');
+        ResourceSpawn& stoneSpawnRef = mOverWorld->AddAgent(std::move(stoneSpawnPtr));
 
-        // Fetch Agent (Group 1 AI)
-        auto& fetcher = mOverWorld->AddAgent<FetchAgent>("Fetcher");
-        fetcher.SetLocation(WorldPosition{3, 2});
-        fetcher.SetOrigin(woodSpawnRef);        // where it collects from
-        fetcher.SetDepositPoint(lumberYardRef); // where it delivers to
+        auto metalSpawnPtr =
+            std::make_unique<ResourceSpawn>(mOverWorld->GetNextAgentId(), "Metal Spawn", *mOverWorld, ItemType::Metal);
+        metalSpawnPtr->SetSymbol('m');
+        ResourceSpawn& metalSpawnRef = mOverWorld->AddAgent(std::move(metalSpawnPtr));
 
-        auto& stoneFetcher = mOverWorld->AddAgent<FetchAgent>("StoneFetcher");
-        stoneFetcher.SetLocation(WorldPosition{5, 5});
-        stoneFetcher.SetOrigin(stoneSpawnRef);
-        stoneFetcher.SetDepositPoint(quarryRef);
+        mOverWorld->AddProducer(std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2));
+        mOverWorld->AddProducer(std::make_shared<ResourceProducer>(quarryRef, stoneSpawnRef, ItemType::Stone, 1));
+        mOverWorld->AddProducer(std::make_shared<ResourceProducer>(mineRef, metalSpawnRef, ItemType::Metal, 0.5));
 
-        // Resource producers
-        auto woodProducer = std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2.0f);
-        auto stoneProducer = std::make_shared<ResourceProducer>(quarryRef, stoneSpawnRef, ItemType::Stone, 1.0f);
-        auto metalProducer = std::make_shared<ResourceProducer>(mineRef, metalSpawnRef, ItemType::Metal, 0.5f);
-        mOverWorld->AddProducer(woodProducer);
-        mOverWorld->AddProducer(stoneProducer);
-        mOverWorld->AddProducer(metalProducer);
+        mOverWorld->AddBuilding(lumberYardRef, WorldPosition{12, 3});
 
-        // Player
-        auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
-        player.SetLocation(WorldPosition{1, 1});
+        auto configureFetcher = [](FetchAgent& fetcher, AgentBase& origin, AgentBase& deposit, ItemType itemType,
+                                   char symbol, WorldPosition position) {
+            fetcher.SetOrigin(origin)
+                .SetDepositPoint(deposit)
+                .SetItemType(itemType)
+                .SetSymbol(symbol)
+                .SetLocation(position);
+        };
+
+        FetchAgent& woodToLumberYard = mOverWorld->AddAgent<FetchAgent>("Wood To Lumber Yard");
+        configureFetcher(woodToLumberYard, woodSpawnRef, lumberYardRef, ItemType::Wood, '1', WorldPosition{14, 2});
+
+        FetchAgent& woodToTownHall = mOverWorld->AddAgent<FetchAgent>("Lumber Yard To Town Hall");
+        configureFetcher(woodToTownHall, lumberYardRef, townHall, ItemType::Wood, '2', WorldPosition{12, 4});
+
+        FetchAgent& stoneToQuarry = mOverWorld->AddAgent<FetchAgent>("Stone To Quarry");
+        stoneToQuarry.SetOrigin(stoneSpawnRef).SetDepositPoint(quarryRef).SetItemType(ItemType::Stone).SetSymbol('3');
+
+        FetchAgent& stoneToTownHall = mOverWorld->AddAgent<FetchAgent>("Quarry To Town Hall");
+        stoneToTownHall.SetOrigin(quarryRef).SetDepositPoint(townHall).SetItemType(ItemType::Stone).SetSymbol('4');
+
+        FetchAgent& metalToMine = mOverWorld->AddAgent<FetchAgent>("Metal To Mine");
+        metalToMine.SetOrigin(metalSpawnRef).SetDepositPoint(mineRef).SetItemType(ItemType::Metal).SetSymbol('5');
+
+        FetchAgent& metalToTownHall = mOverWorld->AddAgent<FetchAgent>("Mine To Town Hall");
+        metalToTownHall.SetOrigin(mineRef).SetDepositPoint(townHall).SetItemType(ItemType::Metal).SetSymbol('6');
+
+        ResourceManagementAgent& resourceManager = mOverWorld->AddAgent<ResourceManagementAgent>("Resource Manager");
+        resourceManager.SetInventory(mOverWorld->GetInventoryPtr()).SetSymbol('7');
+        resourceManager.AddManagedBuilding(lumberYardRef, true);
+        resourceManager.AddManagedBuilding(quarryRef, false);
+        resourceManager.AddManagedBuilding(mineRef, false);
+        resourceManager.SetLocation(WorldPosition{2, 3});
+
+        woodToLumberYard.SetActive(true);
+        woodToTownHall.SetActive(true);
+        stoneToQuarry.SetActive(false);
+        stoneToTownHall.SetActive(false);
+        metalToMine.SetActive(false);
+        metalToTownHall.SetActive(false);
+
+        resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarryRef, 10, [this,
+            stoneSpawn = &stoneSpawnRef,
+            quarry = &quarryRef,
+            firstHauler = &stoneToQuarry,
+            secondHauler = &stoneToTownHall]() {
+            mOverWorld->AddResourceSpawn(*stoneSpawn, WorldPosition{1, 11});
+            mOverWorld->AddBuilding(*quarry, WorldPosition{4, 9});
+            firstHauler->SetLocation(WorldPosition{2, 10});
+            secondHauler->SetLocation(WorldPosition{5, 8});
+        });
+        resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mineRef, 20, [this,
+            metalSpawn = &metalSpawnRef,
+            mine = &mineRef,
+            firstHauler = &metalToMine,
+            secondHauler = &metalToTownHall]() {
+            mOverWorld->AddResourceSpawn(*metalSpawn, WorldPosition{15, 11});
+            mOverWorld->AddBuilding(*mine, WorldPosition{12, 9});
+            firstHauler->SetLocation(WorldPosition{14, 10});
+            secondHauler->SetLocation(WorldPosition{12, 8});
+        });
+
+        PlayerAgent& player = *mOverWorld->GetPlayer();
         player.AddGold(10000); // starting gold for trading demo
         mOverworldPlayer = &player;
 
         // Farming merchant NPC
-        auto& farmer = mOverWorld->AddAgent<FarmingAgent>("Farmer");
-        farmer.SetLocation(WorldPosition{4, 5});
-        farmer.SetHomePosition(WorldPosition{4, 5});
-        farmer.SetAssignedBuilding(&lumberYardRef);
-        farmer.SetWorkInterval(20);
-        farmer.SetRestockAmount(3);
-        farmer.SetRestockItemName("wheat");
+        // auto& farmer = mOverWorld->AddAgent<FarmingAgent>("Farmer");
+        // farmer.SetLocation(WorldPosition{4, 6});
+        // farmer.SetHomePosition(WorldPosition{4, 6});
+        // farmer.SetAssignedBuilding(&lumberYardRef);
+        // farmer.SetWorkInterval(20);
+        // farmer.SetRestockAmount(3);
+        // farmer.SetRestockItemName("wheat");
 
-        // Set up the farmer's shop offers
-        farmer.AddInitialOffer(TradeOffer{
-            .mItemName = "wheat",
-            .mBuyPrice = 2,
-            .mSellPrice = 1,
-            .mItemValue = 2,
-            .mStockMode = TradeStockMode::Limited,
-            .mStock = 5
-        });
-        farmer.AddInitialOffer(TradeOffer{
-            .mItemName = "apple",
-            .mBuyPrice = 3,
-            .mSellPrice = 1,
-            .mItemValue = 3,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        farmer.SetGold(50);
+        // // Set up the farmer's shop offers
+        // farmer.AddInitialOffer(TradeOffer{
+        //     .mItemName = "wheat",
+        //     .mBuyPrice = 2,
+        //     .mSellPrice = 1,
+        //     .mItemValue = 2,
+        //     .mStockMode = TradeStockMode::Limited,
+        //     .mStock = 5
+        // });
+        // farmer.AddInitialOffer(TradeOffer{
+        //     .mItemName = "apple",
+        //     .mBuyPrice = 3,
+        //     .mSellPrice = 1,
+        //     .mItemValue = 3,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // farmer.SetGold(50);
 
-        // Resource trader — buys world resources for gold
-        auto& trader = mOverWorld->AddAgent<MerchantAgent>("Trader");
-        trader.SetLocation(WorldPosition{10, 5});
-        trader.SetTradeGreeting("I'll buy your resources.");
-        trader.SetGold(11000); // enough so that if anyone actually tries to buy the crown they can
+        // // Resource trader — buys world resources for gold
+        // auto& trader = mOverWorld->AddAgent<MerchantAgent>("Trader");
+        // trader.SetLocation(WorldPosition{10, 6});
+        // trader.SetTradeGreeting("I'll buy your resources.");
+        // trader.SetGold(11000); // enough so that if anyone actually tries to buy the crown they can
 
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Wood",
-            .mBuyPrice = 0,
-            .mSellPrice = 2,
-            .mItemValue = 2,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Stone",
-            .mBuyPrice = 0,
-            .mSellPrice = 3,
-            .mItemValue = 3,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Metal",
-            .mBuyPrice = 0,
-            .mSellPrice = 5,
-            .mItemValue = 5,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Crown",
-            .mBuyPrice = 10000,
-            .mSellPrice = 5000,
-            .mItemValue = 10000,
-            .mStockMode = TradeStockMode::Limited,
-            .mStock = 1
-        });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Wood",
+        //     .mBuyPrice = 0,
+        //     .mSellPrice = 2,
+        //     .mItemValue = 2,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Stone",
+        //     .mBuyPrice = 0,
+        //     .mSellPrice = 3,
+        //     .mItemValue = 3,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Metal",
+        //     .mBuyPrice = 0,
+        //     .mSellPrice = 5,
+        //     .mItemValue = 5,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Crown",
+        //     .mBuyPrice = 10000,
+        //     .mSellPrice = 5000,
+        //     .mItemValue = 10000,
+        //     .mStockMode = TradeStockMode::Limited,
+        //     .mStock = 1
+        // });
 
         // Build the image grid
         const WorldGrid& grid = mOverWorld->GetGrid();
@@ -429,7 +475,7 @@ namespace cse498
          */
         std::unordered_set<std::string> usedPositions;
 
-        auto PlaceOnNextFloor = [&](AgentBase& agent) {
+        [[maybe_unused]] auto PlaceOnNextFloor = [&](AgentBase& agent) {
             for (size_t y = 0; y < world_h; ++y) {
                 for (size_t x = 0; x < world_w; ++x) {
                     if (x == 1 && y == 1) continue;
@@ -565,6 +611,9 @@ namespace cse498
             case GameState::TRADING:
                 UpdateTrading();
                 break;
+            case GameState::RESOURCE_MANAGEMENT:
+                UpdateResourceManagement();
+                break;
             default:
                 break;
             }
@@ -592,6 +641,9 @@ namespace cse498
                 break;
             case GameState::TRADING:
                 RenderTrading();
+                break;
+            case GameState::RESOURCE_MANAGEMENT:
+                RenderResourceManagement();
                 break;
             default:
                 break;
@@ -638,6 +690,17 @@ namespace cse498
                             }
                             if (count > 0) mTradeMenuSelection = (mTradeMenuSelection - 1 + count) % count;
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager) {
+                            int count = 0;
+                            if (mResourceMenuTab == 0) {
+                                count = static_cast<int>(mOverWorld->GetBuildings().size());
+                            } else if (mResourceMenuTab == 1) {
+                                count = static_cast<int>(mActiveResourceManager->GetHireableLaneCount());
+                            } else {
+                                count = 3;
+                            }
+                            if (count > 0) mResourceMenuSelection = (mResourceMenuSelection - 1 + count) % count;
+                        }
                         break;
                     case SDLK_DOWN:
                         if (mState == GameState::MAIN_MENU)
@@ -655,6 +718,17 @@ namespace cse498
                             }
                             if (count > 0) mTradeMenuSelection = (mTradeMenuSelection + 1 + count) % count;
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager) {
+                            int count = 0;
+                            if (mResourceMenuTab == 0) {
+                                count = static_cast<int>(mOverWorld->GetBuildings().size());
+                            } else if (mResourceMenuTab == 1) {
+                                count = static_cast<int>(mActiveResourceManager->GetHireableLaneCount());
+                            } else {
+                                count = 3;
+                            }
+                            if (count > 0) mResourceMenuSelection = (mResourceMenuSelection + 1) % count;
+                        }
                         break;
 
                     case SDLK_LEFT:
@@ -662,6 +736,11 @@ namespace cse498
                         if (mState == GameState::TRADING) {
                             mTradeBuyMode = !mTradeBuyMode;
                             mTradeMenuSelection = 0;
+                        }
+                        if (mState == GameState::RESOURCE_MANAGEMENT) {
+                            const int direction = (event.key.keysym.sym == SDLK_RIGHT) ? 1 : 2;
+                            mResourceMenuTab = (mResourceMenuTab + direction) % 3;
+                            mResourceMenuSelection = 0;
                         }
                         break;
                     case SDLK_RETURN:
@@ -722,6 +801,29 @@ namespace cse498
                                 }
                             }
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager) {
+                            std::string message;
+                            if (mResourceMenuTab == 0) {
+                                mActiveResourceManager->UpgradeBuilding(
+                                    static_cast<std::size_t>(mResourceMenuSelection), &message);
+                            } else if (mResourceMenuTab == 1) {
+                                mActiveResourceManager->HireLane(
+                                    static_cast<std::size_t>(mResourceMenuSelection), &message);
+                                const WorldGrid& grid = mOverWorld->GetGrid();
+                                for (size_t y = 0; y < grid.GetHeight(); ++y) {
+                                    for (size_t x = 0; x < grid.GetWidth(); ++x) {
+                                        WorldPosition pos(x, y);
+                                        mOverworldGrid->SetCell(x, y, grid.GetCellTypeName(grid[pos]));
+                                    }
+                                }
+                            } else {
+                                const std::array<ItemType, 3> items = {ItemType::Wood, ItemType::Stone, ItemType::Metal};
+                                mActiveResourceManager->SellResource(
+                                    items[static_cast<std::size_t>(mResourceMenuSelection)], 1, &message);
+                            }
+                            mPickupMessage = message;
+                            mPickupMessageTime = SDL_GetTicks();
+                        }
                         break;
 
                 case SDLK_w:
@@ -766,6 +868,10 @@ namespace cse498
                         mActiveMerchant = nullptr;
                         mState = mPreviousState;
                     }
+                    else if (mState == GameState::RESOURCE_MANAGEMENT) {
+                        mActiveResourceManager = nullptr;
+                        mState = mPreviousState;
+                    }
                     else if ((mState == GameState::OVERWORLD) && !mShowBackpack)
                     {
                         // Check for adjacent merchant first
@@ -775,6 +881,7 @@ namespace cse498
                         };
 
                         bool openedTrade = false;
+                        bool openedResourceManager = false;
                         for (const auto& adjPos : adjacent) {
                             if (openedTrade) break;
                             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
@@ -794,8 +901,38 @@ namespace cse498
                             }
                         }
 
-                        // If no merchant found, collect resources and try upgrade
                         if (!openedTrade) {
+                            for (const auto& adjPos : adjacent) {
+                                if (openedResourceManager) break;
+                                for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                                    AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+                                    if (!agent.GetLocation().IsPosition()) continue;
+                                    if (agent.GetLocation().AsWorldPosition() != adjPos) continue;
+
+                                    if (auto* manager = dynamic_cast<ResourceManagementAgent*>(&agent)) {
+                                        mActiveResourceManager = manager;
+                                        mResourceMenuSelection = 0;
+                                        mResourceMenuTab = 0;
+                                        mPreviousState = mState;
+                                        mState = GameState::RESOURCE_MANAGEMENT;
+                                        openedResourceManager = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        // If no merchant found, use the InteractiveWorld interaction path.
+                        // This lets the GUI reach Group14 agents such as Resource Manager.
+                        if (!openedTrade && !openedResourceManager) {
+                            constexpr size_t interactAction = 5;
+                            if (mOverWorld->DoAction(*mOverworldPlayer, interactAction)) {
+                                mPickupMessage = "Interaction complete.";
+                                mPickupMessageTime = SDL_GetTicks();
+                                mTurnTaken = true;
+                                break;
+                            }
+
                             std::string combined;
                             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
                                 AgentBase& agent = mOverWorld->GetAgentByIndex(i);
@@ -904,6 +1041,14 @@ namespace cse498
                             }
                             mPickupMessageTime = SDL_GetTicks();
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager && mResourceMenuTab == 2) {
+                            const std::array<ItemType, 3> items = {ItemType::Wood, ItemType::Stone, ItemType::Metal};
+                            ItemType item = items[static_cast<std::size_t>(mResourceMenuSelection)];
+                            std::string message;
+                            mActiveResourceManager->SellResource(item, mOverWorld->GetInventory().GetAmount(item), &message);
+                            mPickupMessage = message;
+                            mPickupMessageTime = SDL_GetTicks();
+                        }
                     break;
 
                 // Number keys 0-9: move backpack item to hotbar slot
@@ -952,6 +1097,11 @@ namespace cse498
                     else if (mState == GameState::TRADING)
                     {
                         mActiveMerchant = nullptr;
+                        mState = mPreviousState;
+                    }
+                    else if (mState == GameState::RESOURCE_MANAGEMENT)
+                    {
+                        mActiveResourceManager = nullptr;
                         mState = mPreviousState;
                     }
                     break;
@@ -1091,22 +1241,38 @@ void Game::UpdateOverworld()
 
             std::string sprite = "ow_grass";
             if (&agent == mOverworldPlayer) {
-                sprite = "player";
+                sprite = "interactive_player";
             } else if (agent.GetName() == "Explorer") {
                 sprite = "goblin";
+            } else if (agent.GetName() == "Town Hall") {
+                sprite = "ow_town_hall";
             } else if (dynamic_cast<Building*>(&agent)) {
                 const std::string& name = agent.GetName();
                 if (name == "Lumber Yard") {
                     sprite = "ow_building_lumberyard";
                 } else if (name == "Quarry") {
                     sprite = "ow_building_quarry";
-                } else if (name == "Ore Mine") {
+                } else if (name == "Mine" || name == "Ore Mine") {
                     sprite = "ow_building_mine";
                 } else {
                     sprite = "ow_building_lumberyard";
                 }
-            } else if (dynamic_cast<ResourceSpawn*>(&agent)) {
-                continue;
+            } else if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
+                switch (spawn->GetItemType()) {
+                    case ItemType::Wood:
+                        sprite = "resource_wood_spawn";
+                        break;
+                    case ItemType::Stone:
+                        sprite = "resource_stone_spawn";
+                        break;
+                    case ItemType::Metal:
+                        sprite = "resource_metal_spawn";
+                        break;
+                }
+            } else if (dynamic_cast<ResourceManagementAgent*>(&agent)) {
+                sprite = "resource_manager";
+            } else if (dynamic_cast<FetchAgent*>(&agent)) {
+                sprite = "fetch_agent";
             } else if (agent.GetName() == "Trader" || agent.GetName() == "Farmer") {
                 sprite = "player"; // use player sprite as placeholder for trader and farmer
             } else {
@@ -1411,6 +1577,10 @@ void Game::UpdateOverworld()
         // Put here for consistency or possible stat logging.
     }
 
+    void Game::UpdateResourceManagement() {
+        // Resource management is event-driven.
+    }
+
     void Game::RenderTrading() {
         RenderOverworld();
 
@@ -1537,6 +1707,137 @@ void Game::UpdateOverworld()
         mPickupText.SetSize(12);
         mPickupText.SetBold(false);
         mPickupText.SetContent("LEFT/RIGHT:  buy/sell  UP/DOWN: browse  ENTER: confirm  R: sell all  E: close");
+        text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
+        mPickupText.Draw(text_x, y);
+    }
+
+    void Game::RenderResourceManagement() {
+        RenderOverworld();
+
+        if (!mActiveResourceManager) return;
+
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
+        SDL_Rect overlay = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &overlay);
+
+        int panel_w = 520;
+        int panel_h = 410;
+        int panel_x = (w - panel_w) / 2;
+        int panel_y = (h - panel_h) / 2;
+
+        SDL_SetRenderDrawColor(renderer, 30, 30, 40, 240);
+        SDL_Rect panel = {panel_x, panel_y, panel_w, panel_h};
+        SDL_RenderFillRect(renderer, &panel);
+        SDL_SetRenderDrawColor(renderer, 100, 100, 120, 255);
+        SDL_RenderDrawRect(renderer, &panel);
+
+        int y = panel_y + 15;
+
+        mPickupText.SetSize(20);
+        mPickupText.SetBold(true);
+        mPickupText.SetContent("Resource Management");
+        int text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
+        mPickupText.Draw(text_x, y);
+        y += 30;
+
+        const std::array<std::string, 3> tabs = {"UPGRADE", "LANES", "SELL"};
+        mPickupText.SetSize(18);
+        for (int i = 0; i < 3; ++i) {
+            mPickupText.SetBold(mResourceMenuTab == i);
+            mPickupText.SetContent(mResourceMenuTab == i ? "[ " + tabs[i] + " ]" : "  " + tabs[i] + "  ");
+            mPickupText.Draw(panel_x + (i + 1) * panel_w / 4 - mPickupText.GetWidth() / 2, y);
+        }
+        y += 34;
+
+        const auto& inv = mOverWorld->GetInventory();
+        mPickupText.SetSize(15);
+        mPickupText.SetBold(false);
+        mPickupText.SetContent("Stored: Wood " + std::to_string(inv.GetAmount(ItemType::Wood))
+            + "   Stone " + std::to_string(inv.GetAmount(ItemType::Stone))
+            + "   Metal " + std::to_string(inv.GetAmount(ItemType::Metal))
+            + "   Gold " + std::to_string(mActiveResourceManager->GetGold()));
+        mPickupText.Draw(panel_x + 20, y);
+        y += 28;
+
+        if (mResourceMenuTab == 0) {
+            auto buildings = mOverWorld->GetBuildings();
+            for (int i = 0; i < static_cast<int>(buildings.size()); ++i) {
+                Building* building = buildings[static_cast<std::size_t>(i)];
+                std::string line = building->GetName() + "  level "
+                    + std::to_string(building->GetCurrentLevel()) + "/"
+                    + std::to_string(building->GetMaxLevel());
+
+                if (!mActiveResourceManager->IsManagedBuildingUnlocked(static_cast<std::size_t>(i))) {
+                    line += "  locked";
+                } else if (auto upgrade = building->GetNextUpgradeInfo()) {
+                    line += "  next: " + std::to_string(upgrade->quantity) + " "
+                        + std::string(ItemTypeToString(upgrade->item));
+                } else {
+                    line += "  max level";
+                }
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(i == mResourceMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (i == mResourceMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 27;
+            }
+        } else if (mResourceMenuTab == 1) {
+            for (int i = 0; i < static_cast<int>(mActiveResourceManager->GetHireableLaneCount()); ++i) {
+                const bool unlocked = mActiveResourceManager->IsLaneUnlocked(static_cast<std::size_t>(i));
+                std::string line = mActiveResourceManager->GetHireableLaneLabel(static_cast<std::size_t>(i))
+                    + "  cost " + std::to_string(mActiveResourceManager->GetHireableLaneCost(static_cast<std::size_t>(i)))
+                    + " gold  " + (unlocked ? "active" : "locked");
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(i == mResourceMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (i == mResourceMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 27;
+            }
+        } else {
+            const std::array<ItemType, 3> items = {ItemType::Wood, ItemType::Stone, ItemType::Metal};
+            for (int i = 0; i < 3; ++i) {
+                ItemType item = items[static_cast<std::size_t>(i)];
+                std::string line = std::string(ItemTypeToString(item)) + "  "
+                    + std::to_string(mActiveResourceManager->GetSellPrice(item))
+                    + " gold each  (have " + std::to_string(inv.GetAmount(item)) + ")";
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(i == mResourceMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (i == mResourceMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 27;
+            }
+        }
+
+        y = panel_y + panel_h - 30;
+        mPickupText.SetSize(12);
+        mPickupText.SetBold(false);
+        mPickupText.SetContent("LEFT/RIGHT: tabs  UP/DOWN: browse  ENTER: confirm  R: sell all selected  E: close");
         text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
         mPickupText.Draw(text_x, y);
     }
