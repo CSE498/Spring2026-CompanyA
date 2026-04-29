@@ -57,8 +57,8 @@ public:
      */
     template<typename ITEM_T, typename... Args>
         requires std::derived_from<ITEM_T, Item>
-    size_t AddItem(size_t quantity = 1, Args&&... args) // it may be better to replace forwarding to 2 args: id, world
-    {
+    // it may be better to replace forwarding to 2 args: id, world
+    size_t AddItem(size_t quantity = 1, Args&&... args) {
         return AddItem(std::make_unique<ITEM_T>(std::forward<Args>(args)...), quantity);
     }
 

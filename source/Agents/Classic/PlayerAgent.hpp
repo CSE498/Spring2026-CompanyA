@@ -63,7 +63,7 @@ public:
      */
     void SetGold(std::size_t amount) { mGold = amount; }
 
-	bool IsPlayerAgent() const override {return true;}
+    bool IsPlayerAgent() const override { return true; }
 
     /**
      * Stores base combat stats and recomputes effective combat values from the

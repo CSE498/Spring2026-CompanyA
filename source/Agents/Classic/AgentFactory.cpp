@@ -174,8 +174,6 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInBoundedRange(const Enemy& enemy, c
 }
 
 
-
-
 //////////////////////////////////////////////////////////////////////////////////////////
 //
 // Real Agent Implementations

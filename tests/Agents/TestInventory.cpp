@@ -362,6 +362,7 @@ TEST_CASE("Check Asserts, some edge cases", "[none]") {
 
 TEST_CASE("nullptr tests")
 {
+    // there are only two areas that use unique pointer for this so both are tested
     Inventory inv;
     auto result = inv.AddItem(nullptr);
     CHECK(result == 1);

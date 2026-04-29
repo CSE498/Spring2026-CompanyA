@@ -8,9 +8,9 @@
 #include <optional>
 #include <string>
 
-#include "MerchantAgent.hpp"
 #include "../../Worlds/Hub/Building.hpp"
 #include "../../tools/WorldPath.hpp"
+#include "MerchantAgent.hpp"
 
 namespace cse498 {
 
@@ -19,12 +19,13 @@ class FarmingAgent : public MerchantAgent {
 public:
     /// States the farmer can be in
     enum class FarmerState { IdleAtHome, GoingToWork, Working, ReturningHome };
+
 private:
     /// Farmer assigned building
     Building* mAssignedBuilding = nullptr;
 
     /// Where farmer usually is
-    WorldPosition mHomePosition{0,0};
+    WorldPosition mHomePosition{0, 0};
 
     /// Current farmer state
     FarmerState mState = FarmerState::IdleAtHome;
