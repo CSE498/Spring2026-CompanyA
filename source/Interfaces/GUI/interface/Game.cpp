@@ -173,7 +173,7 @@ namespace cse498
 
         // --- Shared special tiles ---
         if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "items/item_potion_defense.png")) return false;
+        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "tiles/item_spawn.png")) return false;
         if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png")) return false;
         if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_goblin.png")) return false;
         // KAREN: Changes to match DungeonWorld
@@ -1169,6 +1169,32 @@ void Game::UpdateOverworld()
     void Game::RenderDungeon()
     {
         RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY);
+
+        // Draw floor underneath loot chest tiles so they don't have a black background
+        {
+            int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+            int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+            const WorldGrid& grid = mDungeonWorld->GetGrid();
+            std::string floorName;
+            switch (mDungeonWorld->GetLevel()) {
+                case 1:  floorName = "floor_l1v1"; break;
+                case 2:  floorName = "floor_l2v1"; break;
+                case 3:  floorName = "floor_l3v1"; break;
+                default: floorName = "floor_l1v1"; break;
+            }
+
+            for (size_t y = 0; y < grid.GetHeight(); ++y) {
+                for (size_t x = 0; x < grid.GetWidth(); ++x) {
+                    WorldPosition pos(x, y);
+                    if (grid.GetCellTypeName(grid[pos]) == "wall_loot") {
+                        int screen_x = (static_cast<int>(x) - mDungeonCamX) * tw;
+                        int screen_y = (static_cast<int>(y) - mDungeonCamY) * th;
+                        mImageManager->DrawImage(floorName, screen_x, screen_y, tw, th);
+                        mImageManager->DrawImage("wall_loot", screen_x, screen_y, tw, th);
+                    }
+                }
+            }
+        }
 
         int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
         int th = static_cast<int>(mDungeonGrid->GetTileHeight());
