@@ -429,7 +429,8 @@ namespace cse498
          */
         std::unordered_set<std::string> usedPositions;
 
-        auto PlaceOnNextFloor = [&](AgentBase& agent) {
+        // Commented out to avoid unused variable warning
+        /*auto PlaceOnNextFloor = [&](AgentBase& agent) {
             for (size_t y = 0; y < world_h; ++y) {
                 for (size_t x = 0; x < world_w; ++x) {
                     if (x == 1 && y == 1) continue;
@@ -448,7 +449,7 @@ namespace cse498
                     }
                 }
             }
-        };
+        };*/
 
         // KAREN: DungeonWorld works with Enemy, but not EnemyAgent, so this should have
         // been placed as a Group 15 hook instead. 

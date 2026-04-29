@@ -557,10 +557,6 @@ namespace cse498 {
                         continue;
                     }
 
-                    bool otherIsEnemy = std::find(mSpawnedEnemyIds.begin(), mSpawnedEnemyIds.end(), other->GetID())
-                        != mSpawnedEnemyIds.end();
-                    auto otherId = other->GetID();
-
                     const WorldPosition other_pos = other->GetLocation().AsWorldPosition();
                     const double dx = std::abs(cur_position.X() - other_pos.X());
                     const double dy = std::abs(cur_position.Y() - other_pos.Y());
