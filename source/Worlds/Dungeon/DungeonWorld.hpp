@@ -186,6 +186,11 @@ namespace cse498 {
             agent.AddAction("s", DungeonActions::MOVE_DOWN);
             agent.AddAction("a", DungeonActions::MOVE_LEFT);
             agent.AddAction("d", DungeonActions::MOVE_RIGHT);
+            // Aliases for EnemyAgent which looks up by "up"/"down"/"left"/"right"
+            agent.AddAction("up", DungeonActions::MOVE_UP);
+            agent.AddAction("down", DungeonActions::MOVE_DOWN);
+            agent.AddAction("left", DungeonActions::MOVE_LEFT);
+            agent.AddAction("right", DungeonActions::MOVE_RIGHT);
             agent.AddAction(std::string(DungeonActions::INTERACT_STRING), DungeonActions::INTERACT);
             agent.AddAction(std::string(DungeonActions::REMAIN_STILL_STRING), DungeonActions::REMAIN_STILL);
         }
@@ -486,7 +491,7 @@ namespace cse498 {
         void HandleEnemyDefeat(Enemy& enemy, PlayerAgent& player) {
             const std::size_t goldReward = enemy.ClaimGoldDrop();
 
-            std::cout << "DEBUG::DungeonWorld:: Enemy defeated.\n";
+            std::cout << "DEBUG::DungeonWorld:: " + enemy.GetName() + ".\n";
             if (goldReward > 0) {
                 player.AddGold(goldReward);
                 mAccumulatedGold += goldReward;
