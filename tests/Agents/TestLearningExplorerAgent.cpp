@@ -20,6 +20,15 @@ struct NoMovementActionWorld : WorldBase {
     void ConfigAgent(AgentBase&) override {}
     int DoAction(AgentBase&, size_t) override { return 0; }
 };
+
+struct InteractionWorld : MazeWorld {
+    void ConfigAgent(AgentBase& agent) override {
+        MazeWorld::ConfigAgent(agent);
+        agent.AddAction("e", 5);
+        agent.AddAction("interact", 5);
+    }
+};
+
 } // namespace
 
 // ============================================================
@@ -247,6 +256,34 @@ TEST_CASE("LearningExplorerAgent uses BFS guidance when neighboring cells are av
 
     // At this location, up is blocked and BFS guides the agent down first.
     CHECK(action == agent.GetActionID("down"));
+}
+
+TEST_CASE("LearningExplorerAgent returns interact action when enemy is adjacent", "[LearningExplorerAgent]") {
+    InteractionWorld world;
+
+    auto& explorer = world.AddAgent<LearningExplorerAgent>("Explorer");
+    explorer.SetLocation(WorldPosition{10, 7});
+
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
+    enemy.SetLocation(WorldPosition{11, 7});
+
+    size_t action = explorer.SelectAction(world.GetGrid());
+
+    CHECK(action == 5);
+}
+
+TEST_CASE("LearningExplorerAgent interacts with diagonal adjacent enemy", "[LearningExplorerAgent]") {
+    InteractionWorld world;
+
+    auto& explorer = world.AddAgent<LearningExplorerAgent>("Explorer");
+    explorer.SetLocation(WorldPosition{10, 7});
+
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
+    enemy.SetLocation(WorldPosition{11, 8});
+
+    size_t action = explorer.SelectAction(world.GetGrid());
+
+    CHECK(action == 5);
 }
 
 // ============================================================

@@ -6,6 +6,7 @@
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../source/Agents/AI/TrailblazerAgent.hpp"
+#include "../../source/Agents/AI/EnemyAgent.hpp"
 #include "../../source/Worlds/DemoG1/AIWorld.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 
@@ -16,6 +17,14 @@ struct AIWorldStateHarness : AIWorld {
 public:
     using AIWorld::mAgentState;
     using AIWorld::mEnemies;
+};
+
+struct InteractionWorld : MazeWorld {
+    void ConfigAgent(AgentBase& agent) override {
+        MazeWorld::ConfigAgent(agent);
+        agent.AddAction("e", 5);
+        agent.AddAction("interact", 5);
+    }
 };
 } // namespace
 
@@ -36,6 +45,20 @@ TEST_CASE("TrailblazerAgent attacks adjacent enemy to the east", "[TrailblazerAg
 
     size_t action = hero.SelectAction(world.GetGrid());
     CHECK(action == hero.GetActionID("attack_right"));
+}
+
+TEST_CASE("TrailblazerAgent returns interact action when enemy is adjacent outside AIWorld", "[TrailblazerAgent]") {
+    InteractionWorld world;
+
+    auto& trailblazer = world.AddAgent<TrailblazerAgent>("Trailblazer");
+    trailblazer.SetLocation(WorldPosition{10, 7});
+
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
+    enemy.SetLocation(WorldPosition{11, 7});
+
+    size_t action = trailblazer.SelectAction(world.GetGrid());
+
+    CHECK(action == 5);
 }
 
 TEST_CASE("TrailblazerAgent attacks adjacent enemy in all cardinal directions", "[TrailblazerAgent]") {
@@ -64,6 +87,20 @@ TEST_CASE("TrailblazerAgent attacks adjacent enemy in all cardinal directions", 
         size_t act = a.SelectAction(w.GetGrid());
         CHECK(act == a.GetActionID(c.expected_attack));
     }
+}
+
+TEST_CASE("LearningExplorerAgent interacts with diagonal adjacent enemy outside of AI World", "[LearningExplorerAgent]") {
+    InteractionWorld world;
+
+    auto& explorer = world.AddAgent<TrailblazerAgent>("Explorer");
+    explorer.SetLocation(WorldPosition{10, 7});
+
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
+    enemy.SetLocation(WorldPosition{11, 8});
+
+    size_t action = explorer.SelectAction(world.GetGrid());
+
+    CHECK(action == 5);
 }
 
 TEST_CASE("TrailblazerAgent picks up loot when standing on item tile", "[TrailblazerAgent]") {

@@ -147,25 +147,81 @@ std::optional<WorldPosition> TrailblazerAgent::NearestEnemyPosition() const {
 }
 
 /**
+ * @brief Gets the action ID for world interaction/combat.
+ *
+ * @details Checks common interaction action names used across worlds. DungeonWorld
+ * uses "e", while other worlds may expose "interact".
+ *
+ * @return The interaction action ID, or 0 if no interaction action exists.
+ */
+size_t TrailblazerAgent::GetInteractActionID() const {
+    size_t action = GetActionID("interact");
+    if (action != 0) {
+        return action;
+    }
+
+    return GetActionID("e");
+}
+
+/**
  * @brief Returns an attack action when an enemy is adjacent.
  * Checks the four neighboring cells for an enemy and returns the matching directional attack action.
  *
  * @return The attack action ID if an adjacent enemy exists, or std::nullopt if no path exists.
  */
 std::optional<size_t> TrailblazerAgent::AttackActionForAdjacentEnemy() const {
-    const auto* ai_world = dynamic_cast<const AIWorld*>(&world);
-    if (!ai_world || !GetLocation().IsPosition())
+    if (!GetLocation().IsPosition()) {
         return std::nullopt;
+    }
 
     const WorldPosition current = GetLocation().AsWorldPosition();
-    if (ai_world->IsEnemyAtPosition(current.Up()))
-        return GetActionID("attack_up");
-    if (ai_world->IsEnemyAtPosition(current.Down()))
-        return GetActionID("attack_down");
-    if (ai_world->IsEnemyAtPosition(current.Left()))
-        return GetActionID("attack_left");
-    if (ai_world->IsEnemyAtPosition(current.Right()))
-        return GetActionID("attack_right");
+
+    if (const auto* ai_world = dynamic_cast<const AIWorld*>(&world)) {
+        if (ai_world->IsEnemyAtPosition(current.Up())) {
+            const size_t attack = GetActionID("attack_up");
+            return attack != 0 ? attack : GetInteractActionID();
+        }
+        if (ai_world->IsEnemyAtPosition(current.Down())) {
+            const size_t attack = GetActionID("attack_down");
+            return attack != 0 ? attack : GetInteractActionID();
+        }
+        if (ai_world->IsEnemyAtPosition(current.Left())) {
+            const size_t attack = GetActionID("attack_left");
+            return attack != 0 ? attack : GetInteractActionID();
+        }
+        if (ai_world->IsEnemyAtPosition(current.Right())) {
+            const size_t attack = GetActionID("attack_right");
+            return attack != 0 ? attack : GetInteractActionID();
+        }
+
+        return std::nullopt;
+    }
+
+    const size_t interact = GetInteractActionID();
+    if (interact == 0) {
+        return std::nullopt;
+    }
+
+    for (size_t i = 0; i < world.GetNumAgents(); ++i) {
+        const AgentBase& other = world.GetAgentByIndex(i);
+
+        if (&other == this || !other.GetLocation().IsPosition() || !other.IsAlive()) {
+            continue;
+        }
+
+        if (!other.IsEnemy()) {
+            continue;
+        }
+
+        const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
+        const int dx = std::abs(static_cast<int>(current.CellX()) - static_cast<int>(other_pos.CellX()));
+        const int dy = std::abs(static_cast<int>(current.CellY()) - static_cast<int>(other_pos.CellY()));
+
+        if (dx <= 1 && dy <= 1) {
+            return interact;
+        }
+    }
+
     return std::nullopt;
 }
 
@@ -551,6 +607,10 @@ size_t TrailblazerAgent::SelectAction(const WorldGrid& grid) {
         mRecentPositions.push_back(current);
         if (mRecentPositions.size() > kRecentMemory) {
             mRecentPositions.pop_front();
+        }
+
+        if (const auto interact = AttackActionForAdjacentEnemy(); interact.has_value()) {
+            return *interact;
         }
 
         std::optional<WorldPosition> target_pos = world.GetTrackedPlayerPosition();

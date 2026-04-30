@@ -244,6 +244,11 @@ double LearningExplorerAgent::ScoreAction(const WorldGrid& grid, size_t action_i
  * @return The chosen action ID.
  */
 size_t LearningExplorerAgent::SelectAction(const WorldGrid& grid) {
+
+    if (const auto interact = InteractActionForAdjacentEnemy(); interact.has_value()) {
+        return *interact;
+    }
+
     // Record current cell as visited before choosing next move.
     UpdateMemory(grid);
 
@@ -275,6 +280,73 @@ size_t LearningExplorerAgent::SelectAction(const WorldGrid& grid) {
 
     mLastAction = best_action;
     return best_action;
+}
+
+/**
+ * @brief Gets the action ID for world interaction/combat.
+ *
+ * @details Checks common interaction action names used across worlds. DungeonWorld
+ * uses "e", while other worlds may expose "interact".
+ *
+ * @return The interaction action ID, or 0 if no interaction action exists.
+ */
+size_t LearningExplorerAgent::GetInteractActionID() const {
+    size_t action = GetActionID("interact");
+    if (action != 0) {
+        return action;
+    }
+
+    return GetActionID("e");
+}
+
+
+/**
+ * @brief Returns an interaction action when an enemy is adjacent.
+ *
+ * @details Checks all nearby agents to determine if any enemy is within
+ * interaction range (including diagonals). If an adjacent enemy is found,
+ * returns the appropriate interaction action (e.g., "interact" or "e"),
+ * enabling combat behavior in worlds such as DungeonWorld.
+ *
+ * This method is world-agnostic and does not rely on AIWorld-specific APIs,
+ * allowing compatibility across different environments.
+ *
+ * @return The interaction action ID if an adjacent enemy exists,
+ * or std::nullopt if no enemy is in range or no valid interaction action is available.
+ */
+std::optional<size_t> LearningExplorerAgent::InteractActionForAdjacentEnemy() const {
+    if (!GetLocation().IsPosition()) {
+        return std::nullopt;
+    }
+
+    const size_t interact = GetInteractActionID();
+    if (interact == 0) {
+        return std::nullopt;
+    }
+
+    const WorldPosition current = GetLocation().AsWorldPosition();
+
+    for (size_t i = 0; i < world.GetNumAgents(); ++i) {
+        const AgentBase& other = world.GetAgentByIndex(i);
+
+        if (&other == this || !other.GetLocation().IsPosition() || !other.IsAlive()) {
+            continue;
+        }
+
+        if (!other.IsEnemy()) {
+            continue;
+        }
+
+        const WorldPosition other_pos = other.GetLocation().AsWorldPosition();
+        const int dx = std::abs(static_cast<int>(current.CellX()) - static_cast<int>(other_pos.CellX()));
+        const int dy = std::abs(static_cast<int>(current.CellY()) - static_cast<int>(other_pos.CellY()));
+
+        if (dx <= 1 && dy <= 1) {
+            return interact;
+        }
+    }
+
+    return std::nullopt;
 }
 
 /**
