@@ -1,0 +1,9 @@
+Analytics Manager Functions:
+
+The logging functions record gameplay data. LogDamageDealt and LogEnemiesKilled take a number, ignore negatives, and add the value to their logs. LogRunDamage and LogRunEnemiesKilled instead update a RunStats struct, which tracks damage and kills for the current run.
+
+The action logging functions track player or entity actions. LogAction records an entity ID, action type, and before/after positions into the action log. UpdateActionTime updates the internal time so actions can be timestamped correctly.
+
+The getter functions provide read access to the data. GetDamageDealtLog, GetEnemiesKilledLog, and GetActionLog return const references to their logs.
+
+The reset functions clear stored data. Each log has its own reset function, and Reset clears all logs at once.
