@@ -18,7 +18,7 @@ namespace cse498 {
 
         size_t mPlayerId;
         size_t mFarmerId;
-        size_t mEnemyId;
+        size_t mEnemyId{};
 
         [[nodiscard]] bool IsOccupiedByAgent(WorldPosition pos, const AgentBase *skip) const;
 
@@ -51,5 +51,6 @@ namespace cse498 {
          *  false if -_
          */
         static std::optional<bool> IsScroll(char s);
+        void CreateEnemies(int option);
     };
 } // namespace cse498

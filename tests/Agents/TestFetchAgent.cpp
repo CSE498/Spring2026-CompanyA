@@ -94,9 +94,10 @@ TEST_CASE("FetchAgent supports resource hauling through endpoint callbacks", "[F
                     return;
                 }
 
-                townHall.DepositResource(fetcher.GetItemType(), quantity);
-                fetcher.AddDelivered(quantity);
-                fetcher.SetCarryQuantity(0);
+                if (townHall.DepositResource(fetcher.GetItemType(), quantity)) {
+                    fetcher.AddDelivered(quantity);
+                    fetcher.SetCarryQuantity(0);
+                }
             });
 
     agent.SetPosition(WorldPosition{3, 4});
@@ -133,12 +134,18 @@ TEST_CASE("FetchAgent waits at an empty ResourceSpawn until resources appear", "
     const std::size_t waitingAction = agent.SelectAction(world.GetGrid());
     REQUIRE(waitingAction == 0);
 
-    spawn.AddResource(4);
+    spawn.AddResource(spawn.GetMaxCollectionQuantity());
+    StepAgent(world, agent);
+
+    REQUIRE(agent.GetCarryQuantity() == 0);
+    REQUIRE(spawn.GetQuantity() == spawn.GetMaxCollectionQuantity());
+
+    spawn.AddResource(spawn.GetMaxCollectionQuantity());
     StepAgent(world, agent);
 
     REQUIRE(agent.GetItemType() == ItemType::Wood);
-    REQUIRE(agent.GetCarryQuantity() == 4);
-    REQUIRE(spawn.GetQuantity() == 0);
+    REQUIRE(agent.GetCarryQuantity() == spawn.GetMaxCollectionQuantity());
+    REQUIRE(spawn.GetQuantity() == spawn.GetMaxCollectionQuantity());
 }
 
 TEST_CASE("FetchAgent uses a producer building as bank storage", "[FetchAgent][resources]") {
@@ -150,7 +157,7 @@ TEST_CASE("FetchAgent uses a producer building as bank storage", "[FetchAgent][r
 
     auto spawnPtr = std::make_unique<ResourceSpawn>(world.GetNextAgentId(), "Wood Spawn", world, ItemType::Wood);
     ResourceSpawn& spawn = world.AddAgent(std::move(spawnPtr));
-    spawn.AddResource(6);
+    spawn.AddResource(spawn.GetMaxCollectionQuantity() * 2);
     world.AddResourceSpawn(spawn, WorldPosition{4, 4});
 
     Building& lumberYard = world.AddAgent<Building>("Lumber Yard");
@@ -160,13 +167,13 @@ TEST_CASE("FetchAgent uses a producer building as bank storage", "[FetchAgent][r
     toBuilding.SetOrigin(spawn).SetDepositPoint(lumberYard).SetPosition(WorldPosition{3, 4});
 
     StepAgent(world, toBuilding);
-    REQUIRE(toBuilding.GetCarryQuantity() == 6);
-    REQUIRE(spawn.GetQuantity() == 0);
+    REQUIRE(toBuilding.GetCarryQuantity() == spawn.GetMaxCollectionQuantity());
+    REQUIRE(spawn.GetQuantity() == spawn.GetMaxCollectionQuantity());
 
     toBuilding.SetPosition(WorldPosition{5, 4});
     StepAgent(world, toBuilding);
     REQUIRE(toBuilding.GetCarryQuantity() == 0);
-    REQUIRE(lumberYard.GetStoredAmount(ItemType::Wood) == 6);
+    REQUIRE(lumberYard.GetStoredAmount(ItemType::Wood) == 10);
 
     FetchAgent& toTownHall = world.AddAgent<FetchAgent>("To Town Hall");
     toTownHall.SetOrigin(lumberYard)
@@ -175,11 +182,11 @@ TEST_CASE("FetchAgent uses a producer building as bank storage", "[FetchAgent][r
             .SetPosition(WorldPosition{7, 4});
 
     StepAgent(world, toTownHall);
-    REQUIRE(toTownHall.GetCarryQuantity() == 6);
+    REQUIRE(toTownHall.GetCarryQuantity() == 10);
     REQUIRE(lumberYard.GetStoredAmount(ItemType::Wood) == 0);
 
     toTownHall.SetPosition(WorldPosition{7, 4});
     StepAgent(world, toTownHall);
     REQUIRE(toTownHall.GetCarryQuantity() == 0);
-    REQUIRE(world.GetInventory().GetAmount(ItemType::Wood) == 6);
+    REQUIRE(world.GetInventory().GetAmount(ItemType::Wood) == 10);
 }

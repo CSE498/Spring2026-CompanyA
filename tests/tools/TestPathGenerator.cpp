@@ -637,6 +637,26 @@ TEST_CASE("IsPathClear -- random double testing", "[utility]") {
 
         CHECK(PathGenerator::IsPathClear(start, path, request));
     }
+    {
+        WorldPosition start{4, 4};
+        PathVector path{1, 1};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+    {
+        WorldPosition start{4, 4};
+        PathVector path{-1, 1};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+    {
+        WorldPosition start{4, 4};
+        PathVector path{1, -1};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
+    {
+        WorldPosition start{4, 4};
+        PathVector path{-1,-1};
+        CHECK(PathGenerator::IsPathClear(start, path, request));
+    }
 
     // Long southwest ray from a different fractional start stays clear in open space
     {

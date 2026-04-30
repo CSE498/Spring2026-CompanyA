@@ -469,7 +469,7 @@ bool PathGenerator::IsPathClear(const WorldPosition& start, const PathVector& pa
                 tMaxY += tDeltaY;
                 // We basically just combined two operations into one checking both sides because of tie
             }
-            if (tMaxX < tMaxY)
+            else if (tMaxX < tMaxY)
             {
                 tileX += stepX;
                 tMaxX += tDeltaX; // increment the 't' value by 1 because 1 more step is now needed to reach next tiles

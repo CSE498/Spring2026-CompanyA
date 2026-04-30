@@ -252,7 +252,6 @@ namespace cse498 {
                     type.name == "ow_grass_flowers" ||
                     type.name == "ow_grass_bones" ||
                     type.name == "ow_grass_mud" ||
-                    type.name == "ow_grass_rock" ||
                     // DungeonWorld
                     type.name == "floor_l1v1" ||
                     type.name == "floor_l1v2" ||
