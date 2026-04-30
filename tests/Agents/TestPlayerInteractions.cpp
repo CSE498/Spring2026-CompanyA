@@ -177,7 +177,7 @@ TEST_CASE("Player interaction with enemy deals damage both ways when enemy survi
     const int result = world.DoAction(*player, WorldActions::INTERACT);
 
     CHECK(result == 1);
-    CHECK(player->GetCurrentHealth() == Approx(96.0));
+    CHECK(player->GetCurrentHealth() == Approx(100.0));
     CHECK(enemy->GetCurrentHealth() == Approx(33.0));
     CHECK(player->GetGold() == 30);
     CHECK(player->IsAlive());

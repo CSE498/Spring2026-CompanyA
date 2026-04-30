@@ -79,6 +79,7 @@ public:
                 next = next.GetOffset(1, 0);
                 break;
             case WorldActions::REMAIN_STILL:
+                return 1; // KAREN 
             case WorldActions::INTERACT:
                 return Interact();
             case WorldActions::QUIT:
