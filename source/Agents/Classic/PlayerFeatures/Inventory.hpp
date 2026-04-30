@@ -225,7 +225,7 @@ public:
             mQuantity -= quantity;
             return 0;
         }
-        [[nodiscard]] Item* GetItem() const { return mItem.get(); }
+        [[nodiscard]] Item* GetItem() const { return mItem.get(); } // safe
     };
 
     /**

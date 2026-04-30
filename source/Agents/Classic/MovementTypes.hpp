@@ -23,6 +23,13 @@ class MovementTypes {
 private:
     static constexpr double EPS = 1e-9;
     static constexpr bool Approx(double a, double b) { return std::abs(a - b) < EPS; }
+    /**
+     * Magnitude 1 or diagonal will return true sqrt(2) diagonal
+     * @param x x
+     * @param y y
+     * @return true if condition is true
+     */
+    static bool CheckAndFix(double x, double y);
 
 public:
     MovementTypes() = delete;
@@ -58,6 +65,7 @@ public:
      * @return name of the action "w" or "right" or "s" ..
      */
     [[nodiscard]] static std::string GetActionName(const PathVector& path);
+
 };
 
 } // namespace cse498

@@ -1,7 +1,6 @@
 /**
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief Simple resource storage building for the interactive world.
- * @note Status: PROPOSAL
  **/
 
 #pragma once
@@ -33,7 +32,7 @@ public:
      * @param amount Quantity to deposit
      * @return true if the deposit succeeded
      */
-    bool DepositResource(ItemType itemType, int amount) {
+    [[nodiscard]] bool DepositResource(ItemType itemType, int amount) {
         if (amount < 0) {
             return false;
         }
@@ -48,7 +47,7 @@ public:
      * @param amount Quantity to withdraw
      * @return true if the withdrawal succeeded
      */
-    bool WithdrawResource(ItemType itemType, int amount) {
+    [[nodiscard]] bool WithdrawResource(ItemType itemType, int amount) {
         if (amount < 0) {
             return false;
         }

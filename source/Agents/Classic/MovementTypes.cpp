@@ -13,7 +13,7 @@ namespace cse498 {
 
 std::size_t MovementTypes::GetActionID(double dx, double dy) {
     // CHeck for invalid including 0,0
-    if (std::abs(PathVector(dx, dy).GetMagnitude() - 1) > EPS)
+    if (!CheckAndFix(dx,dy))
         return WorldActions::REMAIN_STILL;
 
     // handle  (0,1), (0,-1)
@@ -29,11 +29,11 @@ std::size_t MovementTypes::GetActionID(double dx, double dy) {
     return WorldActions::MOVE_LEFT;
 }
 
-
 size_t MovementTypes::GetActionID(const PathVector& path) { return GetActionID(path.X(), path.Y()); }
+
 std::string MovementTypes::GetActionName(double dx, double dy) {
     // CHeck for invalid including 0,0
-    if (std::abs(PathVector(dx, dy).GetMagnitude() - 1) > EPS)
+    if (!CheckAndFix(dx,dy))
         return WorldActions::REMAIN_STILL_STRING;
 
     // handle (0,0), (0,1), (0,-1)
@@ -49,4 +49,14 @@ std::string MovementTypes::GetActionName(double dx, double dy) {
     return WorldActions::MOVE_LEFT_STRING;
 }
 std::string MovementTypes::GetActionName(const PathVector& path) { return GetActionName(path.X(), path.Y()); }
+
+
+bool MovementTypes::CheckAndFix(double x, double y)
+{
+    // checks if (1) or (-1) for both indicating it is diagonal movement or magnitude of vector is 1
+    return (std::abs(std::abs(x) - 1) < EPS && std::abs(std::abs(y) - 1) < EPS) || std::abs(PathVector(x, y).GetMagnitude() - 1) < EPS;
+
+}
+
 } // namespace cse498
+

@@ -399,7 +399,8 @@ function(companya_web_compile source_file out_obj_var)
         OUTPUT "${obj_file}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${obj_dir}"
         COMMAND "${COMPANYA_EMPP_EXECUTABLE}"
-        ${COMPANYA_WEB_DEMO_INCLUDE_ARGS}
+        # ${COMPANYA_WEB_DEMO_INCLUDE_ARGS}
+        ${COMPANYA_WEB_INCLUDE_ARGS}
         ${COMPANYA_WEB_COMPILE_FLAGS}
         -c "${source_file}"
         -o "${obj_file}"

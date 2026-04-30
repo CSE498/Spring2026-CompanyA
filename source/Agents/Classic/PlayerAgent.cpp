@@ -55,22 +55,19 @@ size_t PlayerAgent::SelectPlayerAction(const char input) {
     switch (input) {
         case 'a':
         case 'A':
-            return GetActionID("left");
+            return !HasAction("a") ? GetActionID("left") : GetActionID("a");
         case 'w':
         case 'W':
-            return GetActionID("up");
+            return !HasAction("w") ? GetActionID("up") : GetActionID("w");
         case 's':
         case 'S':
-            return GetActionID("down");
+            return !HasAction("s") ? GetActionID("down") : GetActionID("s");
         case 'd':
         case 'D':
-            return GetActionID("right");
+            return !HasAction("d") ? GetActionID("right") : GetActionID("d");
         case 'e':
         case 'E':
-            if (!HasAction("e")) {
-                return GetActionID("interact");
-            }
-            return GetActionID("e");
+            return !HasAction("e") ? GetActionID("interact") : GetActionID("e");
         case 'q':
         case 'Q':
             return GetActionID("q");
