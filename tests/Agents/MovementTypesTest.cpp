@@ -42,27 +42,27 @@ TEST_CASE("Movement  Types -- Getting Id of movement", "[ids]") {
 
 TEST_CASE("Movement  Types -- Getting String of movement", "[ids]") {
     {
-        CHECK(MovementTypes::GetActionName(0.0, -1.0) == "w");
-        CHECK(MovementTypes::GetActionName(cse498::PathVector(0.0, -1.0)) == "w");
+        CHECK(MovementTypes::GetActionName(0.0, -1.0) == WorldActions::MOVE_UP_STRING);
+        CHECK(MovementTypes::GetActionName(cse498::PathVector(0.0, -1.0)) == WorldActions::MOVE_UP_STRING);
     }
 
     {
-        CHECK(MovementTypes::GetActionName(0.0, 1.0) == "s");
-        CHECK(MovementTypes::GetActionName(cse498::PathVector(0.0, 1.0)) == "s");
+        CHECK(MovementTypes::GetActionName(0.0, 1.0) == WorldActions::MOVE_DOWN_STRING);
+        CHECK(MovementTypes::GetActionName(cse498::PathVector(0.0, 1.0)) == WorldActions::MOVE_DOWN_STRING);
     }
 
     {
-        CHECK(MovementTypes::GetActionName(-1.0, 0.0) == "a");
-        CHECK(MovementTypes::GetActionName(cse498::PathVector(-1.0, 0.0)) == "a");
+        CHECK(MovementTypes::GetActionName(-1.0, 0.0) == WorldActions::MOVE_LEFT_STRING);
+        CHECK(MovementTypes::GetActionName(cse498::PathVector(-1.0, 0.0)) == WorldActions::MOVE_LEFT_STRING);
     }
 
     {
-        CHECK(MovementTypes::GetActionName(1.0, 0.0) == "d");
-        CHECK(MovementTypes::GetActionName(cse498::PathVector(1.0, 0.0)) == "d");
+        CHECK(MovementTypes::GetActionName(1.0, 0.0) == WorldActions::MOVE_RIGHT_STRING);
+        CHECK(MovementTypes::GetActionName(cse498::PathVector(1.0, 0.0)) == WorldActions::MOVE_RIGHT_STRING);
     }
 
     {
-        CHECK(MovementTypes::GetActionName(0.0, 0.0) == "stay");
-        CHECK(MovementTypes::GetActionName(cse498::PathVector(0.0, 0.0)) == "stay");
+        CHECK(MovementTypes::GetActionName(0.0, 0.0) == WorldActions::REMAIN_STILL_STRING);
+        CHECK(MovementTypes::GetActionName(cse498::PathVector(0.0, 0.0)) == WorldActions::REMAIN_STILL_STRING);
     }
 }

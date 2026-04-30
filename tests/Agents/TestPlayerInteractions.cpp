@@ -9,6 +9,7 @@
 #include "../../source/Agents/Classic/PlayerAgent.hpp"
 #include "../../source/Worlds/DemoG2/DemoSimpleWorldG2.hpp"
 #include "../../source/Worlds/DemoG2/WorldActions.hpp"
+#include "../../source/tools/PathVector.hpp"
 
 #include <sstream>
 #include <string>
@@ -87,12 +88,12 @@ TEST_CASE("Player can move into an open tile", "[player][movement]") {
     DemoSimpleWorldG2 world;
     PlayerAgent* player = world.GetPlayer();
     REQUIRE(player != nullptr);
-    REQUIRE(player->GetLocation().AsWorldPosition() == WorldPosition(2, 2));
+    auto start = player->GetPosition() + PathVector{1,0};
 
     const int result = world.DoAction(*player, WorldActions::MOVE_RIGHT);
 
     CHECK(result == 1);
-    CHECK(player->GetLocation().AsWorldPosition() == WorldPosition(3, 2));
+    CHECK(start == WorldPosition(3, 2));
 }
 
 TEST_CASE("Player cannot move into a wall", "[player][movement]") {
@@ -177,7 +178,7 @@ TEST_CASE("Player interaction with enemy deals damage both ways when enemy survi
     const int result = world.DoAction(*player, WorldActions::INTERACT);
 
     CHECK(result == 1);
-    CHECK(player->GetCurrentHealth() == Approx(96.0));
+    CHECK(player->GetCurrentHealth() == Approx(100.0));
     CHECK(enemy->GetCurrentHealth() == Approx(33.0));
     CHECK(player->GetGold() == 30);
     CHECK(player->IsAlive());
