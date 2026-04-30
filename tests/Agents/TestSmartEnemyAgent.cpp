@@ -5,8 +5,8 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../source/Agents/AI/SmartEnemyAgent.hpp"
 #include "../../source/Agents/AI/LearningExplorerAgent.hpp"
+#include "../../source/Agents/AI/SmartEnemyAgent.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 #include "../../source/core/WorldBase.hpp"
 
@@ -73,7 +73,7 @@ TEST_CASE("SmartEnemyAgent SelectAction returns valid action", "[SmartEnemyAgent
     agent.SetLocation(WorldPosition{10, 7});
 
     size_t action = agent.SelectAction(world.GetGrid());
-    CHECK((action == 0 || action > 0)); // ensure no crash / valid return
+    CHECK(action != 0);
 }
 
 TEST_CASE("SmartEnemyAgent SelectAction does not crash without tracked player", "[SmartEnemyAgent]") {
@@ -82,7 +82,14 @@ TEST_CASE("SmartEnemyAgent SelectAction does not crash without tracked player", 
     agent.SetLocation(WorldPosition{10, 7});
 
     size_t action = agent.SelectAction(world.GetGrid());
-    CHECK((action == 0 || action > 0));
+    CHECK(action != 0);
+}
+
+TEST_CASE("SmartEnemyAgent returns 0 when it has no valid location", "[SmartEnemyAgent]") {
+    MazeWorld world;
+    SmartEnemyAgent agent(0, "SmartEnemy", world);
+
+    CHECK(agent.SelectAction(world.GetGrid()) == 0);
 }
 
 // ============================================================
@@ -104,6 +111,70 @@ TEST_CASE("SmartEnemyAgent moves to valid tile when action succeeds", "[SmartEne
     CHECK(world.GetGrid()[pos] != wall_id);
 }
 
+TEST_CASE("SmartEnemyAgent moves directly toward target in same column", "[SmartEnemyAgent]") {
+    MazeWorld world;
+
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
+    target.SetLocation(WorldPosition{19, 5});
+
+    auto& enemy = world.AddAgent<SmartEnemyAgent>("SmartEnemy");
+    enemy.SetLocation(WorldPosition{19, 8});
+
+    size_t action = enemy.SelectAction(world.GetGrid());
+
+    CHECK(action == enemy.GetActionID("up"));
+
+    world.DoAction(enemy, action);
+    WorldPosition after = enemy.GetLocation().AsWorldPosition();
+
+    CHECK(after.CellX() == 19);
+    CHECK(after.CellY() == 7);
+}
+
+TEST_CASE("SmartEnemyAgent does not use direct line-of-sight move when wall blocks path", "[SmartEnemyAgent]") {
+    MazeWorld world;
+
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
+    target.SetLocation(WorldPosition{1, 1});
+
+    auto& enemy = world.AddAgent<SmartEnemyAgent>("SmartEnemy");
+    enemy.SetLocation(WorldPosition{3, 1});
+
+    size_t wall_id = world.GetGrid().GetCellTypeID("wall");
+
+    // Verify the test setup: wall is between enemy and target.
+    REQUIRE(world.GetGrid()[WorldPosition{2, 1}] == wall_id);
+
+    size_t action = enemy.SelectAction(world.GetGrid());
+
+    // If line of sight were clear, enemy would move left.
+    // Since wall blocks the path, it should not choose left.
+    CHECK(action != enemy.GetActionID("left"));
+
+    world.DoAction(enemy, action);
+    WorldPosition after = enemy.GetLocation().AsWorldPosition();
+
+    CHECK(world.GetGrid().IsValid(after));
+    CHECK(world.GetGrid()[after] != wall_id);
+}
+
+TEST_CASE("SmartEnemyAgent explores when no target is available", "[SmartEnemyAgent]") {
+    MazeWorld world;
+
+    auto& enemy = world.AddAgent<SmartEnemyAgent>("SmartEnemy");
+    enemy.SetLocation(WorldPosition{10, 7});
+
+    size_t action = enemy.SelectAction(world.GetGrid());
+
+    CHECK(action != 0);
+
+    world.DoAction(enemy, action);
+    WorldPosition after = enemy.GetLocation().AsWorldPosition();
+
+    CHECK(world.GetGrid().IsValid(after));
+    CHECK(world.GetGrid()[after] != world.GetGrid().GetCellTypeID("wall"));
+}
+
 // ============================================================
 //  Stability tests
 // ============================================================
@@ -122,7 +193,7 @@ TEST_CASE("SmartEnemyAgent remains stable over multiple steps", "[SmartEnemyAgen
     }
 
     size_t action = agent.SelectAction(world.GetGrid());
-    CHECK((action == 0 || action > 0));
+    CHECK(action != 0);
 }
 
 // ============================================================
@@ -140,7 +211,7 @@ TEST_CASE("SmartEnemyAgent handles invalid action gracefully", "[SmartEnemyAgent
     CHECK(agent.GetLocation().AsWorldPosition() == before);
 
     size_t next_action = agent.SelectAction(world.GetGrid());
-    CHECK((next_action == 0 || next_action > 0));
+    CHECK(next_action != 0);
 }
 
 TEST_CASE("SmartEnemyAgent does not move into walls over time", "[SmartEnemyAgent]") {
@@ -159,4 +230,30 @@ TEST_CASE("SmartEnemyAgent does not move into walls over time", "[SmartEnemyAgen
         REQUIRE(world.GetGrid()[pos] != wall_id);
     }
 }
+
+TEST_CASE("SmartEnemyAgent does not move through wall when line of sight is blocked", "[SmartEnemyAgent]") {
+    MazeWorld world;
+
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
+    target.SetLocation(WorldPosition{1, 1});
+
+    auto& enemy = world.AddAgent<SmartEnemyAgent>("SmartEnemy");
+    enemy.SetLocation(WorldPosition{3, 1});
+
+    size_t wall_id = world.GetGrid().GetCellTypeID("wall");
+
+    // Wall at (2,1) blocks the direct path from enemy (3,1) to target (1,1).
+    REQUIRE(world.GetGrid()[WorldPosition{2, 1}] == wall_id);
+
+    size_t action = enemy.SelectAction(world.GetGrid());
+
+    // Direct line-of-sight movement would be left, but the wall blocks it.
+    CHECK(action != enemy.GetActionID("left"));
+
+    world.DoAction(enemy, action);
+    WorldPosition after = enemy.GetLocation().AsWorldPosition();
+
+    CHECK(world.GetGrid().IsValid(after));
+    CHECK(world.GetGrid()[after] != wall_id);
 }
+} // namespace cse498

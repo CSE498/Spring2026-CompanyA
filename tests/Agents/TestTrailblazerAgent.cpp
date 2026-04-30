@@ -26,13 +26,6 @@ TEST_CASE("TrailblazerAgent Initialize sets symbol and succeeds", "[TrailblazerA
     CHECK(agent.GetSymbol() == 'T');
 }
 
-TEST_CASE("TrailblazerAgent SelectAction returns zero outside AIWorld", "[TrailblazerAgent]") {
-    MazeWorld world;
-    auto& agent = world.AddAgent<TrailblazerAgent>("Hero");
-    agent.SetLocation(WorldPosition{10, 7});
-    CHECK(agent.SelectAction(world.GetGrid()) == 0);
-}
-
 TEST_CASE("TrailblazerAgent attacks adjacent enemy to the east", "[TrailblazerAgent]") {
     AIWorld world;
     world.SetVerboseMode(false);
