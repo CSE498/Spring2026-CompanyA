@@ -11,6 +11,12 @@
 #include "../../source/core/WorldBase.hpp"
 
 namespace cse498 {
+
+struct NoMovementActionWorld : WorldBase {
+    void ConfigAgent(AgentBase&) override {}
+    int DoAction(AgentBase&, size_t) override { return 0; }
+};
+
 // ============================================================
 //  Initialization
 // ============================================================
@@ -28,10 +34,10 @@ TEST_CASE("SmartEnemyAgent initializes with required actions", "[SmartEnemyAgent
 }
 
 TEST_CASE("SmartEnemyAgent Initialize fails without movement actions", "[SmartEnemyAgent]") {
-    MazeWorld world;
+    NoMovementActionWorld world;
     SmartEnemyAgent agent(0, "Enemy", world);
 
-    CHECK(agent.Initialize());
+    CHECK_FALSE(agent.Initialize());
 }
 
 TEST_CASE("SmartEnemyAgent has correct name and ID", "[SmartEnemyAgent]") {

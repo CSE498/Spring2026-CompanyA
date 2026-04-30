@@ -100,7 +100,9 @@ double EnemyAgent::ScoreAction(const WorldGrid& grid, size_t action_id) const {
     // Get all known agents
     const std::vector<size_t> agent_ids = world.GetKnownAgents(*this);
 
-    // Default to current position in case no other agent is found.
+    // Intentional fallback: if no target agent is known, score moves relative
+    // to the current position. This gives the enemy deterministic wandering
+    // behavior instead of stalling with action 0.
     WorldPosition player_pos = current_pos;
 
     // Find the first other agent and treat it as the player.
@@ -110,6 +112,9 @@ double EnemyAgent::ScoreAction(const WorldGrid& grid, size_t action_id) const {
         }
 
         const AgentBase& known_agent = world.GetAgent(id);
+        if (!known_agent.GetLocation().IsPosition()) {
+            continue;
+        }
         player_pos = known_agent.GetLocation().AsWorldPosition();
         break;
     }
