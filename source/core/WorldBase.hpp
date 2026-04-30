@@ -49,7 +49,7 @@ protected:
     agent_set_t agent_set; ///< Vector of pointers to agent entities (AgentBase)
     /// The main player stored separately from the agents and has id = 0
     PlayerAgent* mPlayer;
-
+    agent_set_t dead_agent_set; /// Stores the dead agents temporarily so they can be revived for the replay
     bool mRunOver = false; ///< Are we finished executing and now shutting down?
 
     /// Helper function that is run whenever a new agent is created.
@@ -297,6 +297,8 @@ public:
                     continue;
                 }
                 (*it)->OnDestroy();
+                //temporarily stores the dead agents in the dead agent set
+                dead_agent_set.push_back(std::move(*it));
                 it = agent_set.erase(it);
             } else {
                 ++it;
@@ -421,5 +423,15 @@ public:
             out_ids.push_back(ptr->GetID());
         return out_ids;
     }
+
+    // Restores dead agents by gathering them from the dead agent set and puts them back in the agent set
+    // Used for the replay of the world
+    void RestoreAllDeadAgents() {
+        while (!dead_agent_set.empty()) {
+        dead_agent_set.back()->ReviveForRestart();
+        agent_set.push_back(std::move(dead_agent_set.back()));
+        dead_agent_set.pop_back();
+    }
+}
 };
 } // End of namespace cse498

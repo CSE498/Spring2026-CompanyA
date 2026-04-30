@@ -42,9 +42,6 @@ protected:
     std::unique_ptr<BehaviorTrees::Node> mBehaviorRoot;
     mutable BehaviorTrees::Blackboard mBlackboard;
 
-    // An ActionLog class that tracks the actions made by the agent
-    AgentActionLog mActionLog;
-
     /**
      * Called each frame/turn: runs behavior tree tick and component updates.
      * Override in derived classes to add component updates.
@@ -55,7 +52,7 @@ protected:
             mBehaviorRoot->Tick(ctx);
         }
     }
-
+    
 public:
     AgentBase(size_t id, const std::string& name, const WorldBase& world) : Entity(id, name, world) {}
     ~AgentBase() override = default;
@@ -68,6 +65,7 @@ public:
 
     // Sets the agent's position and automatically logs a "move" action.
     void SetPosition(const WorldPosition& pos) {
+
         WorldPosition oldPos = GetPosition();
         SetLocation(Location(pos));
         mActionLog.LogAction(static_cast<int>(GetID()), "move", oldPos, pos);
@@ -92,6 +90,12 @@ public:
         } else {
             mActionLog.LogAction(static_cast<int>(GetID()), "take_damage", pos, pos);
         }
+    }
+
+    // marks the revived agents as alive and resets their health to max
+    void ReviveForRestart() {
+        mAlive = true;
+        SetHealth(GetMaxHealth());
     }
 
     // -- ActionLog interface --
@@ -210,6 +214,8 @@ public:
 
     /// Retrieve the result of the most recent action.
     [[nodiscard]] int GetActionResult() const { return mActionResult; }
+
+
 
     /**
      * Expected overrides if the agent is able to be interacted with

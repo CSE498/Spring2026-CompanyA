@@ -523,6 +523,12 @@ namespace cse498
                                  TransitionTo(GameState::OVERWORLD);
                                  mPreviousState = GameState::OVERWORLD;
                              });
+        mPauseMenu.AddOption("Replay Overworld", [this]() {
+            StartReplayOverworld();
+        });
+        mPauseMenu.AddOption("Replay Dungeon", [this]() {
+            StartReplayDungeon();
+        });
 
         mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
 
@@ -562,6 +568,12 @@ namespace cse498
             case GameState::SETTINGS:
                 UpdateSettings();
                 break;
+            case GameState::REPLAYOVERWORLD:
+                ReplayOverworld();
+                break;
+            case GameState::REPLAYDUNGEON:
+                ReplayDungeon();
+                break;
             case GameState::TRADING:
                 UpdateTrading();
                 break;
@@ -577,6 +589,12 @@ namespace cse498
                 break;
             case GameState::OVERWORLD:
                 RenderOverworld();
+                break;
+            case GameState::REPLAYOVERWORLD:
+                RenderOverworld();
+                break;
+            case GameState::REPLAYDUNGEON:
+                RenderDungeon();
                 break;
             case GameState::DUNGEON:
                 RenderDungeon();
@@ -1556,7 +1574,8 @@ void Game::UpdateOverworld()
         if (action == 0) return;
 
         if (mState == GameState::OVERWORLD) {
-            mOverWorld->DoAction(*mOverworldPlayer, action);
+            int result = mOverWorld->DoAction(*mOverworldPlayer, action);
+            mOverworldPlayer->SetActionResult(result);
 
             WorldPosition pos = mOverworldPlayer->GetLocation().AsWorldPosition();
             mPlayerX = static_cast<int>(pos.CellX());
@@ -1625,4 +1644,193 @@ void Game::UpdateOverworld()
         mTurnTaken = true;
     }
 
+    void Game::StartReplayOverworld() {
+        // Make sure the overworld exists before starting replay.
+        if (!mOverWorld) {
+            std::cout << "Replay failed: mOverWorld is null\n";
+            return;
+        }
+
+        // Reset dead agents so the replay starts from a valid world state.
+        mOverWorld->RestoreAllDeadAgents();
+
+        // Count how many actions were recorded across all overworld agents.
+        std::size_t total_actions = 0;
+
+        for (std::size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+            AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+            const auto count = agent.GetActionLog().GetActions().size();
+
+            // Print replay information for debugging.
+            std::cout << "Replay agent id=" << agent.GetID()
+                    << " name=" << agent.GetName()
+                    << " actions=" << count << '\n';
+
+            total_actions += count;
+        }
+
+        std::cout << "Replay total actions=" << total_actions << '\n';
+
+        // Do not enter replay mode if there are no recorded actions.
+        if (total_actions == 0) {
+            std::cout << "Replay not started: no logged actions exist.\n";
+            mState = GameState::OVERWORLD;
+            return;
+        }
+
+        // Set up and start the replay driver for the overworld.
+        mReplayDriver.SetWorld(mOverWorld.get());
+        mReplayDriver.Start();
+
+        // Make sure the camera starts centered on the player.
+        SyncOverworldCameraToPlayer();
+
+        // Reset replay timing and switch to overworld replay state.
+        mLastReplayStepTime = 0;
+        mPreviousState = GameState::OVERWORLD;
+        mState = GameState::REPLAYOVERWORLD;
+    }
+
+    void Game::StartReplayDungeon() {
+        // Make sure the dungeon world exists before starting replay.
+        if (!mDungeonWorld) {
+            std::cout << "Replay failed: mDungeonWorld is null\n";
+            return;
+        }
+
+        // Reset dungeon agents so they are ready for replay.
+        mDungeonWorld->RestoreDungeonAgentsForReplay();
+
+        // Count all recorded dungeon actions.
+        std::size_t total_actions = 0;
+
+        for (std::size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i) {
+            AgentBase& agent = mDungeonWorld->GetAgentByIndex(i);
+            const auto count = agent.GetActionLog().GetActions().size();
+
+            // Print replay information for debugging.
+            std::cout << "Dungeon replay agent id=" << agent.GetID()
+                    << " name=" << agent.GetName()
+                    << " actions=" << count << '\n';
+
+            total_actions += count;
+        }
+
+        std::cout << "Dungeon replay total actions=" << total_actions << '\n';
+
+        // Connect the replay driver to the dungeon world.
+        mReplayDriver.SetWorld(mDungeonWorld.get());
+
+        // Start replay only if actions exist.
+        if (total_actions > 0) {
+            mReplayDriver.Start();
+        } else {
+            std::cout << "Dungeon replay started with no logged actions.\n";
+        }
+
+        // Make sure the dungeon camera starts on the player.
+        SyncDungeonCameraToPlayer();
+
+        // Reset replay timing and switch to dungeon replay state.
+        mLastReplayStepTime = 0;
+        mPreviousState = GameState::DUNGEON;
+        mState = GameState::REPLAYDUNGEON;
+    }
+
+    void Game::ReplayOverworld() {
+        // Get current time so replay steps can be spaced out.
+        const uint32_t now = SDL_GetTicks();
+
+        // Run one replay step every 300 milliseconds.
+        if (mLastReplayStepTime == 0 || now - mLastReplayStepTime >= 300) {
+            mReplayDriver.Step();
+            mOverWorld->RemoveDeadAgents();
+            SyncOverworldCameraToPlayer();
+            mLastReplayStepTime = now;
+        }
+
+        // Pause the game once replay is finished.
+        if (!mReplayDriver.IsRunning()) {
+            mState = GameState::PAUSED;
+        }
+    }
+
+    void Game::ReplayDungeon() {
+        // Get current time so replay steps can be spaced out.
+        const uint32_t now = SDL_GetTicks();
+
+        // Run one replay step every 300 milliseconds.
+        if (mLastReplayStepTime == 0 || now - mLastReplayStepTime >= 300) {
+            mReplayDriver.Step();
+            mDungeonWorld->RemoveDeadAgents();
+            SyncDungeonCameraToPlayer();
+            mLastReplayStepTime = now;
+        }
+
+        // Pause the game once replay is finished.
+        if (!mReplayDriver.IsRunning()) {
+            mState = GameState::PAUSED;
+        }
+    }
+
+    void Game::SyncOverworldCameraToPlayer() {
+        // Only update the camera if the player and grid exist.
+        if (mOverworldPlayer == nullptr || !mOverworldGrid) {
+            return;
+        }
+
+        // Get the player's current tile position.
+        WorldPosition pos = mOverworldPlayer->GetLocation().AsWorldPosition();
+
+        mPlayerX = static_cast<int>(pos.CellX());
+        mPlayerY = static_cast<int>(pos.CellY());
+
+        // Calculate how many tiles fit on the screen.
+        int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
+        int th = static_cast<int>(mOverworldGrid->GetTileHeight());
+
+        int Tiles_x = mGameView->GetWidth() / tw;
+        int Tiles_y = mGameView->GetHeight() / th;
+
+        // Calculate the camera limits so it does not scroll outside the map.
+        int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
+        int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
+
+        // Center the camera on the player while staying inside the map bounds.
+        mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
+        mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
+    }
+
+    void Game::SyncDungeonCameraToPlayer() {
+        // Only update the camera if the player and grid exist.
+        if (mDungeonPlayer == nullptr || !mDungeonGrid) {
+            return;
+        }
+
+        // Make sure the player's location can be used as a world position.
+        if (!mDungeonPlayer->GetLocation().IsPosition()) {
+            return;
+        }
+
+        // Get the player's current tile position.
+        WorldPosition pos = mDungeonPlayer->GetLocation().AsWorldPosition();
+
+        mDungeonPlayerX = static_cast<int>(pos.CellX());
+        mDungeonPlayerY = static_cast<int>(pos.CellY());
+
+        // Calculate how many tiles fit on the screen.
+        int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+        int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+
+        int tiles_x = mGameView->GetWidth() / tw;
+        int tiles_y = mGameView->GetHeight() / th;
+
+        // Calculate the camera limits so it does not scroll outside the dungeon.
+        int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - tiles_x);
+        int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - tiles_y);
+
+        // Center the dungeon camera on the player while staying inside the map bounds.
+        mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
+        mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
+    }
 } // namespace cse498

@@ -12,7 +12,9 @@
 
 #include <memory>
 #include <string>
+#include <cstdint>
 
+#include "../../../Analyze/ReplayDriver.hpp"
 #include "../../../Analyze/AnalyticsManager.hpp"
 #include "../../../Analyze/StatsTracker.hpp"
 #include "../GameView.hpp"
@@ -40,6 +42,8 @@ namespace cse498
     {
         MAIN_MENU, /// Main menu screen
         OVERWORLD, /// Flat interactive world with dungeon entrance
+        REPLAYOVERWORLD, ////Replay for the over world
+        REPLAYDUNGEON,
         DUNGEON,   /// Procedurally generated dungeon world
         PAUSED,    /// Paused state (reachable from OVERWORLD or DUNGEON)
         SETTINGS,  /// Settings screen (placeholder)
@@ -66,6 +70,8 @@ namespace cse498
         GameState mState = GameState::MAIN_MENU; /// Current game state
         GameState mPreviousState = GameState::MAIN_MENU; /// Used to resume after pause
 
+        ReplayDriver mReplayDriver;
+        uint32_t mLastReplayStepTime = 0; //Adds timing for replayDriver
         // -------------------------
         // Constants
         // -------------------------
@@ -132,8 +138,8 @@ namespace cse498
         std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
         DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
         Text mStatsText; /// Text object used for stats screen
-
-
+        void SyncOverworldCameraToPlayer();
+        void SyncDungeonCameraToPlayer();
         // -------------------------
         // Merchant system state
         // -------------------------
@@ -165,6 +171,8 @@ namespace cse498
         void UpdateDungeon();
         void UpdatePaused();
         void UpdateSettings();
+        void ReplayOverworld();
+        void ReplayDungeon();
         void UpdateStats();
 
         /**
@@ -176,6 +184,9 @@ namespace cse498
         void RenderPaused();
         void RenderSettings();
         void RenderStats();
+
+        void StartReplayDungeon();
+        void StartReplayOverworld();
         void RenderHotbar(const Inventory& inventory);
         void RenderBackpack(const Inventory& inventory);
         void RenderWorldInventory();

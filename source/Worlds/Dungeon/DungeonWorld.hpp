@@ -452,6 +452,8 @@ namespace cse498 {
             WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
 
             if (action_id == DungeonActions::INTERACT) {
+                //Logs that a interact was attempted at the current spot
+                agent.GetActionLog().LogAction(agent.GetID(), "interact", WorldPosition(agent.GetPosition()), WorldPosition(agent.GetPosition()));
                 // Legacy method of handling interactions. Kept here in case below code does not work with both agent groups.
                 /*std::array<WorldPosition, 4> neighbors = {
                     cur_position.Up(), cur_position.Down(), cur_position.Left(), cur_position.Right()
@@ -788,5 +790,18 @@ namespace cse498 {
             double item = rng.GetValue(1.0, mItemPool.GetTotalWeight()).value();
             return mItemPool.Sample(item).value();
         }
+
+    void RestoreDungeonAgentsForReplay() {
+        RestoreAllDeadAgents();
+
+        mSpawnedEnemyIds.clear();
+
+        for (size_t i = 0; i < GetNumAgents(); ++i) {
+            AgentBase& agent = GetAgentByIndex(i);
+
+            if (agent.IsPlayerAgent() || agent.IsInterface() || !agent.IsAlive()) { continue; }
+            mSpawnedEnemyIds.push_back(agent.GetID());
+        }
+    }
     };
 } // End of namespace cse498

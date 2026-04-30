@@ -11,6 +11,7 @@
 #include <string>
 
 #include "Location.hpp"
+#include "../tools/ActionLog.hpp"
 
 namespace cse498 {
 
@@ -22,7 +23,8 @@ protected:
     std::string name; ///< Name for this entity (E.g., "Player 1" or "+2 Sword")
     Location location; ///< Where is this entity located?
     const WorldBase& world; ///< Which world does this entity belong to?
-
+    bool location_is_set = false;
+    AgentActionLog mActionLog;
     // NOTE: current assumption is all entities have hitbox size == size of tile.
 
     // @TODO: entities should probably have annotations or properties...
@@ -47,6 +49,8 @@ public:
         return *this;
     }
     Entity& SetLocation(Location in) {
+        ///Logs the action that
+        mActionLog.LogAction(GetID(), "move", WorldPosition(in.AsWorldPosition()),WorldPosition(in.AsWorldPosition()));
         location = in;
         return *this;
     }

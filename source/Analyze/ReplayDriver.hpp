@@ -1,53 +1,53 @@
-#ifndef REPLAYDRIVER_HPP
-#define REPLAYDRIVER_HPP
+#pragma once
 
-#include <fstream>
-#include <memory>
-#include <string>
 #include <vector>
 
-#include "../Interfaces/TrashInterface.hpp"
-#include "../Worlds/MazeWorld.hpp"
-#include "../tools/ActionLog.hpp"
+#include "../core/WorldBase.hpp"
+#include "../core/AgentBase.hpp"
 
 namespace cse498 {
 
 class ReplayDriver {
 private:
-    std::shared_ptr<const ActionLog> m_actionLog; // action log of all actions to be replayed
-    int m_delay; // delay for how long each move in the replay should take (in milliseconds)
-    void ReplayAction(const cse498::Action& action, cse498::TrashInterface& agent,
-                      MazeWorld& world); // helper function to replay a single action
+    // Stores the replay information for one agent.
+    // Each agent has its ID, its saved actions, and the index of the next action to replay.
+    struct AgentReplayState {
+        size_t agentID = 0;
+        std::vector<Action> actions;
+        size_t nextAction = 0;
+    };
+
+    // The world that the replay driver is currently controlling.
+    // This is a raw pointer because ReplayDriver does not own the world.
+    WorldBase* mWorld = nullptr;
+
+    // Replay state for every agent that has recorded actions.
+    std::vector<AgentReplayState> mAgentReplays;
+
+    // Tracks whether the replay is currently active.
+    bool mRunning = false;
+
+    // Returns true if at least one agent still has actions left to replay.
+    [[nodiscard]] bool HasRemainingActions() const;
+    
 public:
-    /**
-     * Constructs a ReplayDriver with an action log and optional replay delay.
-     *
-     * @param log Shared pointer to the ActionLog containing actions to replay.
-     * @param delay Delay between replayed actions in milliseconds.
-     *              Defaults to 500.
-     */
-    ReplayDriver(std::shared_ptr<const ActionLog> log, int delay = 500) : m_actionLog(std::move(log)), m_delay(delay) {}
+    // Sets the world that should be replayed and clears old replay data.
+    void SetWorld(WorldBase* world);
 
-    /**
-     * Replaces the current action log with a new one.
-     *
-     * @param log Shared pointer to the new ActionLog to use.
-     */
-    void SetActionLog(std::shared_ptr<const ActionLog> log) { m_actionLog = std::move(log); }
+    // Builds replay state from the agents' action logs and begins replaying.
+    void Start();
 
-    /**
-     * Replays actions whose timestamps fall within the given time range.
-     *
-     * @param start_time The beginning of the time range.
-     * @param end_time The end of the time range.
-     */
-    void ReplayByTimeRange(double start_time, double end_time);
+    // Stops the replay from continuing.
+    void Stop();
 
-    /**
-     * Replays the entire action log from start to finish.
-     */
-    void ReplayFullGame();
+    // Advances the replay by one step for each agent with remaining actions.
+    void Step();
+
+    // Returns whether the replay driver is currently running.
+    [[nodiscard]] bool IsRunning() const;
+
+    // Converts a recorded Action into the matching action ID for the given agent.
+    size_t GetReplayActionForAgent(const AgentBase& agent, const Action& action) const;
 };
 
 } // namespace cse498
-#endif
