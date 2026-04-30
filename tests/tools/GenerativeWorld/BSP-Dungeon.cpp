@@ -84,7 +84,7 @@ TEST_CASE("BSP-Dungeon Constructor", "[core]") {
         cse498::BSP BSP(level, SEED_VALUE_ONE);
         SetDefaultSetting(BSP);
 
-        BSP.ClearState();
+        BSP.Empty();
 
         CHECK(BSP.GetBSPTree().size() == 0);
         CHECK(BSP.GetLeafNodes().size() == 0);

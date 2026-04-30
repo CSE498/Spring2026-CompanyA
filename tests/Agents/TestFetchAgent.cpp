@@ -35,6 +35,15 @@ void StepAgent(InteractiveWorld& world, FetchAgent& agent) {
 TEST_CASE("FetchAgent routes between generic origin and deposit points", "[FetchAgent][generic]") {
     InteractiveWorld world;
 
+    // // KAREN: load a simple walkable grid
+    // world.GetGrid().Load(std::vector<std::string>{
+    //     "..........",
+    //     "..........",
+    //     "..........",
+    //     "..........",
+    //     ".........."
+    // });
+
     DummyEndpoint& origin = world.AddAgent<DummyEndpoint>("Origin");
     DummyEndpoint& deposit = world.AddAgent<DummyEndpoint>("Deposit");
     origin.SetPosition(WorldPosition{4, 2});

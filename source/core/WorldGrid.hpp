@@ -246,7 +246,28 @@ namespace cse498 {
                 return false;
             size_t cell_type_id{cells[ToIndex(pos)]};
             CellType type = cell_types[cell_type_id];
-            return type.name == "floor" || type.name.rfind("ow_grass", 0) == 0;
+            return (type.name == "floor" || 
+                    // InteractiveWorld
+                    type.name == "ow_grass" ||
+                    type.name == "ow_grass_flowers" ||
+                    type.name == "ow_grass_bones" ||
+                    type.name == "ow_grass_mud" ||
+                    // DungeonWorld
+                    type.name == "floor_l1v1" ||
+                    type.name == "floor_l1v2" ||
+                    type.name == "floor_l1v3" ||
+                    type.name == "floor_l1v4" ||
+                    type.name == "floor_l1v5" ||
+                    type.name == "floor_l2v1" ||
+                    type.name == "floor_l2v2" ||
+                    type.name == "floor_l2v3" ||
+                    type.name == "floor_l2v4" ||
+                    type.name == "floor_l2v5" ||
+                    type.name == "floor_l3v1" ||
+                    type.name == "floor_l3v2" ||
+                    type.name == "floor_l3v3" ||
+                    type.name == "floor_l3v4" ||
+                    type.name == "floor_l3v15");
         }
     };
 } // End of namespace cse498

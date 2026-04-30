@@ -110,30 +110,34 @@ std::unique_ptr<Node> AgentFactory::ChasePlayer(const Enemy& enemy, const WorldB
 
 
 std::unique_ptr<Node> AgentFactory::RangeChasePlayer(const Enemy& enemy, const WorldBase& world) {
+    /*
+     * On movement return Failure = termination
+     */
+
     //* If not within range of player chase + reset tile distance count
     return TreeBuilder::Act("(ranged) Chase Player", [&enemy, &world](ExecutionContext& ctx) {
         const auto* player = world.GetPlayer();
         if (player == nullptr || !player->IsAlive()) // can't chase dead players
-            return Failure;
+            return Failure; // terminate
         // We are either Far away or too close or In range but no line of sight
         // if we are far away
-        if (PathGenerator::EuclideanDistance(enemy.GetPosition(), player->GetPosition()) > static_cast<double>(enemy.GetAtkRange())) {
+        if (PathGenerator::EuclideanDistance(enemy.GetPosition(), player->GetPosition()) > enemy.GetAtkRange()) {
             // then move closer
             ctx.mBlackboard.Set<size_t>("step_count", 0);
             auto path = PathGenerator::FindShortestPath(enemy.GetPosition(), player->GetPosition(),
                                                         PathRequest(world.GetGrid()));
             if (path && path.value().Size() >= 2) {
                 ResolveMovement(enemy, path.value().At(1), ctx);
-                return Success;
+                return Failure; // movement terminate
             }
 
-            return Failure; // most likely trapped by walls. Can't do anything
+            return Success; // most likely trapped by walls. Can't do anything, no movemnet
         }
         // if we are too close (AKA < manhattan tiles away from player)
         if (PathGenerator::ManhattanDistance(enemy.GetPosition(), player->GetPosition()) < enemy.GetAtkRange()) {
             // Move further away
             if (ctx.mBlackboard.Get<size_t>("step_count", 0) >= SKELETON_MAX_STEP_AWAY_COUNT)
-                return Failure; // No movement should be tried just attack.
+                return Success; // No movement should be tried just attack.
 
             ctx.mBlackboard.Set<size_t>("step_count", ctx.mBlackboard.Get<size_t>("step_count", 0) + 1);
 
@@ -141,10 +145,10 @@ std::unique_ptr<Node> AgentFactory::RangeChasePlayer(const Enemy& enemy, const W
                                                      PathRequest(world.GetGrid()));
             // if empty then attack if possible
             if (path.Empty())
-                return Failure;
+                return Success;
             assert(path.Size() >= 2);
             ResolveMovement(enemy, path.At(1), ctx);
-            return Success;
+            return Failure; // movement terminate
         }
         // otherwise last case: We are in range but no line of sight
         // just stay still. Player may leave then we can start chasing again or get closer and we run again
@@ -172,8 +176,6 @@ std::unique_ptr<Node> AgentFactory::IsPlayerInBoundedRange(const Enemy& enemy, c
         return Failure;
     });
 }
-
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -230,9 +232,7 @@ std::unique_ptr<Node> AgentFactory::CreateSkeletonTree(const Enemy& enemy, World
     auto moveSeq = TreeBuilder::Seq("Skeleton Move");
     // We need failure on movement and success on needing to continue to attack which is backwards.
     // I did it the intuitive way so invert comes in handy here
-    auto temp = TreeBuilder::Inv("Inversion of range chase");
-    temp->SetChild(RangeChasePlayer(enemy, world));
-    moveSeq->AddChild(std::move(temp));
+    moveSeq->AddChild(RangeChasePlayer(enemy, world));
     // if failure then try to attack! because no movement could be done
     moveSeq->AddChild(IsPlayerInRange(enemy, world)); // UNBOUNDED -- We are close enough and can't move so attack
     moveSeq->AddChild(AttackPlayer(enemy, world));
