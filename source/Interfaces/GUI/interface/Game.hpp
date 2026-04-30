@@ -23,6 +23,7 @@
 #include "../source/Worlds/Dungeon/DungeonWorld.hpp"
 //#include "OverWorld.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
+#include "../../../source/Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../../source/Worlds/Hub/Building.hpp"
 #include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../../source/Worlds/Hub/ResourceProducer.hpp"
@@ -45,6 +46,7 @@ namespace cse498
         CONTROLS,  /// Controls Screen
         STATS,     /// Contains information captured in gameplay
         TRADING,   /// Trading with a merchant
+        RESOURCE_MANAGEMENT, /// Managing interactive-world resources
         QUIT       /// Exit state
     };
 
@@ -135,13 +137,15 @@ namespace cse498
         size_t mLastSyncedActionCount = 0;
         bool mCombatStatsFlushed = false;
 
-
         // -------------------------
         // Merchant system state
         // -------------------------
         MerchantAgent* mActiveMerchant = nullptr; /// Currently interacting merchant
-        int mTradeMenuSelection = 0;              /// Selected offer index in trade menu
-        bool mTradeBuyMode = true;                /// true = buying, false = selling resources
+        int mTradeMenuSelection = 0; /// Selected offer index in trade menu
+        bool mTradeBuyMode = true; /// true = buying, false = selling resources
+        ResourceManagementAgent* mActiveResourceManager = nullptr; /// Currently interacting resource manager
+        int mResourceMenuSelection = 0; /// Selected resource manager row
+        int mResourceMenuTab = 0; /// 0 = upgrades, 1 = lanes, 2 = sell resources
 
         // -------------------------
         // Runtime flags
@@ -149,6 +153,7 @@ namespace cse498
         bool mRunning = false; /// Controls main game loop execution
         bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
         bool mShowBackpack = false; /// Toggle backpack overlay
+        Uint32 mLastOverworldAgentTick = 0; /// Last autonomous overworld agent update
 
         // -------------------------
         // Core loop methods
@@ -184,6 +189,8 @@ namespace cse498
         void RenderPickupMessage();
         void UpdateTrading();
         void RenderTrading();
+        void UpdateResourceManagement();
+        void RenderResourceManagement();
 
         /**
          * @brief Convert SDL keycode to world action ID.
@@ -310,11 +317,11 @@ namespace cse498
      */
     [[nodiscard]] std::shared_ptr<GameView> GetGameView() const { return mGameView; }
 
-        /**
-         * @brief Get the current game state.
-         * @return Current GameState
-         */
-        [[nodiscard]] GameState GetState() const { return mState; }
+    /**
+     * @brief Get the current game state.
+     * @return Current GameState
+     */
+    [[nodiscard]] GameState GetState() const { return mState; }
     };
 
 } // namespace cse498

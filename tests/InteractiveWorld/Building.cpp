@@ -33,6 +33,22 @@ TEST_CASE("Test Building Setters and Getters", "[core][InteractiveWorld][Buildin
     CHECK(blacksmith.GetName() == "Blacksmith2");
 }
 
+TEST_CASE("Building validates level and rate setters", "[core][InteractiveWorld][Building]") {
+    cse498::Building farm(1, "Farm", world);
+    farm.AddUpgrade(cse498::ItemType::Wood, 25);
+    farm.AddUpgrade(cse498::ItemType::Stone, 35);
+
+    CHECK(farm.GetRateModifier() == cse498::Building::DEFAULT_RATE_MODIFIER);
+    farm.SetRateModifier(0.5f);
+    CHECK(farm.GetRateModifier() == 0.5f);
+
+    CHECK(farm.SetCurrentLevel(2));
+    CHECK(farm.GetCurrentLevel() == 2);
+    CHECK_FALSE(farm.SetCurrentLevel(3));
+    CHECK_FALSE(farm.SetCurrentLevel(-1));
+    CHECK(farm.GetCurrentLevel() == 2);
+}
+
 TEST_CASE("Building stores banked resources for its lane", "[core][InteractiveWorld][Building]") {
     cse498::Building lumberYard(3, "Lumber Yard", world);
 

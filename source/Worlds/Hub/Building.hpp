@@ -1,7 +1,6 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
  * @brief Represents an upgradable building in the interactive game world.
- * @note Status: PROPOSAL
  **/
 
 #pragma once
@@ -23,15 +22,26 @@ namespace cse498 {
 ///        hauled resources for its production lane.
 class Building : public ResourceBank {
 public:
-    // The quantity and type of items needed for an upgrade
+    /// Default production multiplier added per building level.
+    static constexpr float DEFAULT_RATE_MODIFIER = 0.25f;
+
+    /**
+     * @struct BuildingUpgrade
+     * @brief Resource cost required to advance one building level.
+     */
     struct BuildingUpgrade {
-        ItemType item; // What item the upgrade requires
-        int quantity; // The quantity of items needed to upgrade
+        ItemType item; ///< Resource type required for the upgrade.
+        int quantity; ///< Quantity required for the upgrade.
     };
 
-    // Reason for rejecting an upgrade
+    /// Reason for rejecting an attempted upgrade.
     enum class UpgradeRejectionType { AlreadyMaxLevel, IncorrectItemType, NotEnoughItems };
 
+    /**
+     * @brief Convert an upgrade rejection reason to display text.
+     * @param rejection Rejection value to describe.
+     * @return Human-readable reason.
+     */
     static constexpr std::string_view UpgradeRejectionTypeToString(UpgradeRejectionType rejection) {
         switch (rejection) {
             case UpgradeRejectionType::AlreadyMaxLevel:
@@ -46,9 +56,9 @@ public:
     }
 
 private:
-    int m_level{}; // The current level of the building
-    float m_rateModifier = 0.25; // Percent increase as decimal ex: 0.25->25%
-    std::vector<BuildingUpgrade> m_upgrades{}; // The upgrade cost per level
+    int m_level{}; ///< Current building level.
+    float m_rateModifier = DEFAULT_RATE_MODIFIER; ///< Per-level production multiplier, e.g. 0.25 for +25%.
+    std::vector<BuildingUpgrade> m_upgrades{}; ///< Upgrade cost per level.
 
     /**
      * Get the next upgrade BuildingUpgrade struct without checking if one exists.
@@ -63,12 +73,13 @@ private:
 
     /**
      * Validate whether an upgrade can be applied to the building.
-     * @param itemType The type of item for for the upgrade
-     * @param quantity The quantity of items the player has available
+     * @param itemType The type of item offered for the upgrade.
+     * @param quantity The quantity available to spend.
      * @return void if the upgrade is successful, UpgradeRejectionType describing
      * why it failed
      */
-    std::expected<void, UpgradeRejectionType> ValidateUpgrade(const ItemType& itemType, int quantity) const {
+    [[nodiscard]] std::expected<void, UpgradeRejectionType> ValidateUpgrade(const ItemType& itemType,
+                                                                            int quantity) const {
         if (m_level >= GetMaxLevel())
             return std::unexpected(UpgradeRejectionType::AlreadyMaxLevel);
 
@@ -86,29 +97,28 @@ private:
 public:
     Building() = delete;
     /**
-     * Constructor
-     * @param id unique id for the building
-     * @param name name of the building
-     * @param world world this building belongs to
-     * @param buildingName
+     * @brief Construct an upgradable resource building.
+     * @param id Unique id for the building.
+     * @param name Name of the building.
+     * @param world World this building belongs to.
      */
     Building(size_t id, const std::string& name, const WorldBase& world) : ResourceBank(id, name, world) {}
     /**
      * Get Max level for this building
      * @return max level as an int
      */
-    int GetMaxLevel() const { return m_upgrades.size(); }
+    [[nodiscard]] int GetMaxLevel() const { return m_upgrades.size(); }
     /**
      * Get current building level
      * @return current level as int
      */
-    int GetCurrentLevel() const { return m_level; }
+    [[nodiscard]] int GetCurrentLevel() const { return m_level; }
     /**
      * Set the current building level
      * @param level level to set building to
      * @return bool if setting level was successful
      */
-    [[maybe_unused]] bool SetCurrentLevel(int level) {
+    [[nodiscard]] bool SetCurrentLevel(int level) {
         if (level < 0 || level > GetMaxLevel())
             return false;
         m_level = level;
@@ -121,7 +131,7 @@ public:
      * already max level, returns the current level.
      * @return next upgrade level as an int
      */
-    int GetNextUpgradeLevel() const {
+    [[nodiscard]] int GetNextUpgradeLevel() const {
         if (m_level >= GetMaxLevel())
             return m_level;
         return m_level + 1;
@@ -130,17 +140,17 @@ public:
      * Check if the current level is the max level
      * @return bool if the building is max level or not
      */
-    bool IsMaxLevel() const { return m_level >= GetMaxLevel(); }
+    [[nodiscard]] bool IsMaxLevel() const { return m_level >= GetMaxLevel(); }
     /**
-     * Set the rate modifier
-     * @param rate rate to set to
+     * @brief Set the per-level production modifier used by ResourceProducer.
+     * @param rate Modifier to set, where 0.25 means +25% output per level.
      */
     void SetRateModifier(float rate) { m_rateModifier = rate; }
     /**
-     * Get the rate modifier
-     * @return rate modifier
+     * @brief Get the per-level production modifier.
+     * @return Rate modifier.
      */
-    float GetRateModifier() const { return m_rateModifier; }
+    [[nodiscard]] float GetRateModifier() const { return m_rateModifier; }
     /**
      * Add an upgrade level to the building
      * @param item type of item needed for the upgrade
@@ -151,21 +161,22 @@ public:
         m_upgrades.push_back({item, quantity});
     }
     /**
-     * Upgrade the building
-     * @param itemType Type of item to use
-     * @param quantity Number of items in the players inventory.
-     * @return void if the upgrade is successful, UpgradeRejectionType if not
-     * successful
+     * @brief Apply the next upgrade level if the provided resource payment is valid.
+     *
+     * The caller is responsible for removing spent resources from the owning
+     * inventory. This method only validates the supplied payment and increments
+     * the building level.
+     *
+     * @param itemType Type of item to use.
+     * @param quantity Number of items available for payment.
+     * @return void if successful, otherwise an UpgradeRejectionType.
      */
-    std::expected<void, UpgradeRejectionType> Upgrade(const ItemType& itemType, int quantity) {
+    [[nodiscard]] std::expected<void, UpgradeRejectionType> Upgrade(const ItemType& itemType, int quantity) {
         auto result = ValidateUpgrade(itemType, quantity);
 
         if (!result)
             return std::unexpected(result.error());
 
-        // TODO: Have the player inventory change itself, not the building change it
-        // const auto& cost = GetNextUpgradeUnchecked();
-        // quantity -= cost.quantity;
         m_level++;
         return {};
     }
@@ -174,13 +185,13 @@ public:
      * Get all BuildingUpgrade structs for the building. For UI.
      * @return vector of all of the Upgrades
      */
-    const std::vector<BuildingUpgrade>& GetAllUpgrades() const { return m_upgrades; }
+    [[nodiscard]] const std::vector<BuildingUpgrade>& GetAllUpgrades() const { return m_upgrades; }
     /**
      * Get the BuildingUpgrade struct for the next upgrade. Safe accessor for UI
      * and other callers that may query a max-level building.
      * @return the next BuildingUpgrade struct if it exists
      */
-    std::optional<BuildingUpgrade> GetNextUpgradeInfo() const {
+    [[nodiscard]] std::optional<BuildingUpgrade> GetNextUpgradeInfo() const {
         if (m_level >= GetMaxLevel())
             return std::nullopt;
         return GetNextUpgradeUnchecked();

@@ -7,7 +7,9 @@
 
 #include "./WebInterface.hpp"
 #include "../../../../third-party/gsl/gsl"
+#include "../../../Agents/AI/FetchAgent.hpp"
 #include "../../../Agents/Classic/PlayerFeatures/Inventory.hpp"
+#include "../../../Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../../Agents/PacingAgent.hpp"
 #include "../../../Worlds/Dungeon/DungeonWorld.hpp"
 #include "../../../Worlds/Hub/InteractiveWorld.hpp"
@@ -36,18 +38,19 @@ namespace {
 // Asset path constants
 // -----------------------------------------------------------------------------
 constexpr const char* kPlayerImagePath = "/assets/agents/playerCharacter/agent_player.png";
-constexpr const char* kMonsterImagePath = "/assets/agents/monsters/agent_monster_goblin.png";
+constexpr const char* kGoblinImagePath = "/assets/agents/monsters/agent_monster_goblin.png";
+constexpr const char* kSkeletonImagePath = "/assets/agents/monsters/agent_monster_skeleton.png";
 constexpr const char* kInventoryBarImagePath = "/assets/gui/inventory_bar.png";
 constexpr const char* kEmptySlotImagePath = "/assets/gui/placeholder.png";
 
-constexpr const char* kOverworldGrassTile1Path = "assets/world/forest/floor_tiles/tile_grass_1.png";
-constexpr const char* kOverworldBorderTopForestPath = "assets/world/forest/walls/external/border_top_forest.png";
-constexpr const char* kOverworldLumberYardPath = "assets/tiles/lumber_yard.png";
-constexpr const char* kOverworldQuarryPath = "assets/tiles/quarry.png";
-constexpr const char* kOverworldOreMinePath = "assets/tiles/ore_mine.png";
-constexpr const char* kOverworldWoodSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_2.png";
-constexpr const char* kOverworldStoneSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_5.png";
-constexpr const char* kOverworldMetalSpawnTilePath = "assets/world/forest/floor_tiles/tile_grass_3.png";
+constexpr const char* kOverworldGrassTile1Path = "/assets/world/forest/floor_tiles/tile_grass_1.png";
+constexpr const char* kOverworldBorderTopForestPath = "/assets/world/forest/walls/external/border_top_forest.png";
+constexpr const char* kOverworldLumberYardPath = "/assets/tiles/lumber_yard.png";
+constexpr const char* kOverworldQuarryPath = "/assets/tiles/quarry.png";
+constexpr const char* kOverworldOreMinePath = "/assets/tiles/ore_mine.png";
+constexpr const char* kOverworldWoodSpawnTilePath = "/assets/world/forest/floor_tiles/tile_grass_2.png";
+constexpr const char* kOverworldStoneSpawnTilePath = "/assets/world/forest/floor_tiles/tile_grass_5.png";
+constexpr const char* kOverworldMetalSpawnTilePath = "/assets/world/forest/floor_tiles/tile_grass_3.png";
 
 constexpr const char kDungeonTrap = 't';
 constexpr const char kDungeonLoot = 'l';
@@ -141,6 +144,7 @@ constexpr int kPauseMenuWidthPx = 560;
 constexpr int kSettingsMenuWidthPx = 520;
 constexpr int kInventoryMenuWidthPx = 780;
 constexpr int kStatsMenuWidthPx = 560;
+constexpr int kResourceMenuWidthPx = 820;
 
 constexpr int kMenuBorderWidthPx = 1;
 constexpr int kMenuBorderRadiusPx = 26;
@@ -151,6 +155,8 @@ constexpr const char* kMenuBoxShadow = "0 28px 90px rgba(0, 0, 0, 0.42)";
 // -----------------------------------------------------------------------------
 constexpr int kMenuButtonWidthPx = 250;
 constexpr int kMenuButtonHeightPx = 54;
+constexpr int kResourceTabButtonWidthPx = 220;
+constexpr int kResourceOptionButtonWidthPx = 720;
 
 // -----------------------------------------------------------------------------
 // Inventory menu and HUD constants
@@ -199,6 +205,12 @@ constexpr const char* kStatsMenuEyebrowText = "DATA ANALYTICS";
 constexpr const char* kStatsMenuTitleText = "Session Stats";
 constexpr const char* kStatsMenuEmptyText = "No stats recorded yet.";
 
+constexpr const char* kResourceMenuEyebrowText = "RESOURCE MANAGEMENT";
+constexpr const char* kResourceMenuTitleText = "Supply Office";
+constexpr const char* kResourceMenuDescriptionText =
+        "Use these controls to upgrade buildings, unlock hauling lanes, and sell stored resources.";
+constexpr const char* kResourceMenuDefaultStatusText = "Select a tab, then choose an action.";
+
 constexpr const char* kNewGameButtonText = "New Game";
 constexpr const char* kSettingsButtonText = "Settings";
 constexpr const char* kQuitButtonText = "Quit";
@@ -210,7 +222,8 @@ constexpr const char* kQuitToMainMenuButtonText = "Quit to Main Menu";
 constexpr const char* kBackButtonText = "Back";
 constexpr const char* kCloseButtonText = "Close";
 
-constexpr const char* kDungeonHudText = "DUNGEON\n[E] Interact\n[I] Backpack\n[1-0] Hotbar\n[Esc] Pause";
+constexpr const char* kDungeonHudText =
+        "DUNGEON\n[E] Interact\n[I] Backpack\n[1-0] Hotbar\n[Esc] Pause\n--------------\n";
 
 void SetLayoutVisible(WebLayout* layout, bool visible) {
     if (!layout)
@@ -280,6 +293,110 @@ std::string BuildOverworldHudText(const InteractiveWorld& overworld) {
     out << std::left << std::setw(6) << "Metal" << " " << readAmount(ItemType::Metal);
     return out.str();
 }
+
+std::string BuildResourceMenuSummaryText(const InteractiveWorld& overworld, const ResourceManagementAgent& manager) {
+    std::ostringstream out;
+    out << "Stored resources\n";
+    out << "Wood: " << overworld.GetInventory().GetAmount(ItemType::Wood)
+        << "   Stone: " << overworld.GetInventory().GetAmount(ItemType::Stone)
+        << "   Metal: " << overworld.GetInventory().GetAmount(ItemType::Metal) << "\nGold: " << manager.GetGold();
+    return out.str();
+}
+
+std::string BuildManagedBuildingLabel(const Building& building, bool unlocked) {
+    std::ostringstream out;
+    out << building.GetName() << "  level " << building.GetCurrentLevel() << "/" << building.GetMaxLevel();
+
+    if (!unlocked) {
+        out << "  | locked";
+    } else if (const auto nextUpgrade = building.GetNextUpgradeInfo(); nextUpgrade.has_value()) {
+        out << "  | next: " << nextUpgrade->quantity << ' ' << ItemTypeToString(nextUpgrade->item);
+    } else {
+        out << "  | max level";
+    }
+
+    return out.str();
+}
+
+std::string BuildLaneLabel(const ResourceManagementAgent& manager, std::size_t laneIndex) {
+    std::ostringstream out;
+    out << manager.GetHireableLaneLabel(laneIndex) << "  | cost " << manager.GetHireableLaneCost(laneIndex)
+        << " gold  | " << (manager.IsLaneUnlocked(laneIndex) ? "active" : "locked");
+    return out.str();
+}
+
+std::string BuildSellLabel(const InteractiveWorld& overworld, const ResourceManagementAgent& manager,
+                           ItemType itemType) {
+    std::ostringstream out;
+    out << "Sell 1 " << ItemTypeToString(itemType) << "  | " << manager.GetSellPrice(itemType) << " gold each"
+        << "  | have " << overworld.GetInventory().GetAmount(itemType);
+    return out.str();
+}
+
+std::string GetResourceTabStatusText(int tabIndex) {
+    switch (tabIndex) {
+        case 0:
+            return "Select a building to spend stored resources on its next upgrade.";
+        case 1:
+            return "Select a hauling lane to spend gold and unlock its workers.";
+        case 2:
+            return "Select a resource to sell one unit from shared storage.";
+        default:
+            return kResourceMenuDefaultStatusText;
+    }
+}
+
+std::string GetOverworldBuildingImagePath(const Building& building) {
+    const std::string& name = building.GetName();
+    const bool upgraded = building.GetCurrentLevel() > 0;
+
+    if (name == "Lumber Yard") {
+        return upgraded ? "/assets/interactive_world/buildings/lumber_yard_upgraded.png"
+                        : "/assets/interactive_world/buildings/lumber_yard.png";
+    }
+
+    if (name == "Quarry") {
+        return upgraded ? "/assets/interactive_world/buildings/quarry_upgraded.png"
+                        : "/assets/interactive_world/buildings/quarry.png";
+    }
+
+    if (name == "Mine" || name == "Ore Mine") {
+        return upgraded ? "/assets/interactive_world/buildings/mine_upgraded.png"
+                        : "/assets/interactive_world/buildings/mine.png";
+    }
+
+    return "/assets/interactive_world/buildings/lumber_yard.png";
+}
+
+std::string GetOverworldResourceSpawnImagePath(const ResourceSpawn& spawn) {
+    const int fullThreshold = spawn.GetMaxCollectionQuantity() * 2;
+    const std::string stateSuffix = spawn.GetQuantity() == 0               ? "_empty"
+                                    : spawn.GetQuantity() >= fullThreshold ? "_full"
+                                                                           : "";
+
+    switch (spawn.GetItemType()) {
+        case ItemType::Wood:
+            return "/assets/interactive_world/resources/wood_spawn" + stateSuffix + ".png";
+        case ItemType::Stone:
+            return "/assets/interactive_world/resources/stone_spawn" + stateSuffix + ".png";
+        case ItemType::Metal:
+            return "/assets/interactive_world/resources/metal_spawn" + stateSuffix + ".png";
+    }
+
+    return "/assets/interactive_world/resources/wood_spawn.png";
+}
+
+std::string GetOverworldAgentImagePath(const AgentBase& agent) {
+    if (const auto* building = dynamic_cast<const Building*>(&agent)) {
+        return GetOverworldBuildingImagePath(*building);
+    }
+
+    if (const auto* spawn = dynamic_cast<const ResourceSpawn*>(&agent)) {
+        return GetOverworldResourceSpawnImagePath(*spawn);
+    }
+
+    return "";
+}
 } // namespace
 
 // handler for inventory slot clicks
@@ -340,36 +457,6 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
     const std::string castle = "castle/";
     const std::string floor = "floor_tiles/";
     const std::string wall = "walls/external/";
-
-    // Set up the symbol-to-path map for the interactive world
-    mSymbolPathOverworld['.'] = basePath + forest + floor + "tile_grass_1.png";
-    mSymbolPathOverworld['f'] = basePath + forest + floor + "tile_grass_5.png";
-    mSymbolPathOverworld['b'] = basePath + forest + floor + "tile_grass_4.png";
-    mSymbolPathOverworld['m'] = basePath + forest + floor + "tile_grass_3.png";
-    mSymbolPathOverworld['r'] = basePath + forest + floor + "tile_grass_2.png";
-    mSymbolPathOverworld['E'] = basePath + forest + wall + "door_left_forest.png";
-
-    mSymbolPathOverworld['T'] = "/assets/agents/playerCharacter/agent_player.png";
-    mSymbolPathOverworld['W'] = "/assets/tiles/lumber_yard.png";
-    mSymbolPathOverworld['Q'] = "/assets/tiles/quarry.png";
-    mSymbolPathOverworld['M'] = "/assets/tiles/ore_mine.png";
-
-    mSymbolPathOverworld['L'] = basePath + forest + wall + "border_left_forest.png";
-    mSymbolPathOverworld['R'] = basePath + forest + wall + "border_right_forest.png";
-    mSymbolPathOverworld['U'] = basePath + forest + wall + "border_top_forest.png";
-    mSymbolPathOverworld['B'] = basePath + forest + wall + "border_bottom_forest.png";
-
-    mSymbolPathOverworld['C'] = basePath + forest + wall + "border_top_forest.png";
-
-    mSymbolPathOverworld['X'] = basePath + forest + floor + "tile_grass_1.png";
-
-    mSymbolPathOverworld['1'] = kMonsterImagePath;
-    mSymbolPathOverworld['2'] = kMonsterImagePath;
-    mSymbolPathOverworld['3'] = kMonsterImagePath;
-    mSymbolPathOverworld['4'] = kMonsterImagePath;
-    mSymbolPathOverworld['5'] = kMonsterImagePath;
-    mSymbolPathOverworld['6'] = kMonsterImagePath;
-    mSymbolPathOverworld['7'] = "/assets/agents/monsters/agent_monster_skeleton.png";
 
     // Set up the symbol-to-path map for the dungeon world
 
@@ -458,14 +545,180 @@ WebInterface::WebInterface(std::unique_ptr<InteractiveWorld> overworld, std::uni
     SetupMainMenu();
     SetupSettingsMenu();
     SetupInventoryMenu();
+    SetupResourceMenu();
 
     SetupStatsMenu();
     mAnalyticsManager = std::make_shared<AnalyticsManager>();
     mStatsTracker = std::make_unique<StatsTracker>();
 
+    SetupOverworld();
+
+    mInteractiveWorld->SetAnalyticsManager(mAnalyticsManager);
+    mDungeon->SetAnalyticsManager(mAnalyticsManager);
+
     UpdateLayoutVisibility();
 
     RenderFrame();
+}
+
+void WebInterface::SetupOverworld() {
+    mInteractiveWorld->GetInventory().AddItem(ItemType::Wood, 10);
+    mInteractiveWorld->GetInventory().AddItem(ItemType::Stone, 5);
+
+    auto townHallPtr = std::make_unique<TownHall>(mInteractiveWorld->GetNextAgentId(), "Town Hall", *mInteractiveWorld,
+                                                  mInteractiveWorld->GetInventoryPtr());
+    townHallPtr->SetSymbol('T');
+    TownHall& townHall = mInteractiveWorld->AddAgent(std::move(townHallPtr));
+    mInteractiveWorld->AddTownHall(townHall, WorldPosition{8, 6});
+
+    Building& lumberYardRef = mInteractiveWorld->AddAgent<Building>("Lumber Yard");
+    lumberYardRef.SetSymbol('W');
+    lumberYardRef.AddUpgrade(ItemType::Wood, 15);
+
+    Building& quarryRef = mInteractiveWorld->AddAgent<Building>("Quarry");
+    quarryRef.SetSymbol('Q');
+    quarryRef.SetPosition(WorldPosition{100, 100}); // will be set correctly when added to world
+    quarryRef.AddUpgrade(ItemType::Wood, 50);
+    quarryRef.AddUpgrade(ItemType::Stone, 50);
+    quarryRef.AddUpgrade(ItemType::Metal, 35);
+
+    Building& mineRef = mInteractiveWorld->AddAgent<Building>("Mine");
+    mineRef.SetSymbol('M');
+    mineRef.SetPosition(WorldPosition{100, 100}); // will be set correctly when added to world
+    mineRef.AddUpgrade(ItemType::Stone, 100);
+    mineRef.AddUpgrade(ItemType::Metal, 50);
+    mineRef.AddUpgrade(ItemType::Metal, 100);
+
+    auto woodSpawnPtr = std::make_unique<ResourceSpawn>(mInteractiveWorld->GetNextAgentId(), "Wood Spawn",
+                                                        *mInteractiveWorld, ItemType::Wood);
+    woodSpawnPtr->SetSymbol('l');
+    ResourceSpawn& woodSpawnRef = mInteractiveWorld->AddAgent(std::move(woodSpawnPtr));
+    mInteractiveWorld->AddResourceSpawn(woodSpawnRef, WorldPosition{15, 1});
+
+    auto stoneSpawnPtr = std::make_unique<ResourceSpawn>(mInteractiveWorld->GetNextAgentId(), "Stone Spawn",
+                                                         *mInteractiveWorld, ItemType::Stone);
+    stoneSpawnPtr->SetSymbol('q');
+    ResourceSpawn& stoneSpawnRef = mInteractiveWorld->AddAgent(std::move(stoneSpawnPtr));
+    stoneSpawnRef.SetPosition(WorldPosition{100, 100}); // will be set correctly when added to world
+
+    auto metalSpawnPtr = std::make_unique<ResourceSpawn>(mInteractiveWorld->GetNextAgentId(), "Metal Spawn",
+                                                         *mInteractiveWorld, ItemType::Metal);
+    metalSpawnPtr->SetSymbol('o');
+    ResourceSpawn& metalSpawnRef = mInteractiveWorld->AddAgent(std::move(metalSpawnPtr));
+    metalSpawnRef.SetPosition(WorldPosition{100, 100}); // will be set correctly when added to world
+
+
+    mInteractiveWorld->AddProducer(std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2));
+    mInteractiveWorld->AddProducer(std::make_shared<ResourceProducer>(quarryRef, stoneSpawnRef, ItemType::Stone, 1));
+    mInteractiveWorld->AddProducer(std::make_shared<ResourceProducer>(mineRef, metalSpawnRef, ItemType::Metal, 0.5));
+
+    mInteractiveWorld->AddBuilding(lumberYardRef, WorldPosition{12, 3});
+
+    auto configureFetcher = [](FetchAgent& fetcher, AgentBase& origin, AgentBase& deposit, ItemType itemType,
+                               char symbol, WorldPosition position) {
+        fetcher.SetOrigin(origin).SetDepositPoint(deposit).SetItemType(itemType).SetSymbol(symbol).SetLocation(
+                position);
+    };
+
+    FetchAgent& woodToLumberYard = mInteractiveWorld->AddAgent<FetchAgent>("Wood To Lumber Yard");
+    configureFetcher(woodToLumberYard, woodSpawnRef, lumberYardRef, ItemType::Wood, '1', WorldPosition{14, 2});
+
+    FetchAgent& woodToTownHall = mInteractiveWorld->AddAgent<FetchAgent>("Lumber Yard To Town Hall");
+    configureFetcher(woodToTownHall, lumberYardRef, townHall, ItemType::Wood, '2', WorldPosition{12, 4});
+
+    FetchAgent& stoneToQuarry = mInteractiveWorld->AddAgent<FetchAgent>("Stone To Quarry");
+    stoneToQuarry.SetOrigin(stoneSpawnRef)
+            .SetDepositPoint(quarryRef)
+            .SetItemType(ItemType::Stone)
+            .SetSymbol('3')
+            .SetPosition(WorldPosition{100, 100});
+
+    FetchAgent& stoneToTownHall = mInteractiveWorld->AddAgent<FetchAgent>("Quarry To Town Hall");
+    stoneToTownHall.SetOrigin(quarryRef)
+            .SetDepositPoint(townHall)
+            .SetItemType(ItemType::Stone)
+            .SetSymbol('4')
+            .SetPosition(WorldPosition{100, 100});
+
+    FetchAgent& metalToMine = mInteractiveWorld->AddAgent<FetchAgent>("Metal To Mine");
+    metalToMine.SetOrigin(metalSpawnRef)
+            .SetDepositPoint(mineRef)
+            .SetItemType(ItemType::Metal)
+            .SetSymbol('5')
+            .SetPosition(WorldPosition{100, 100});
+
+    FetchAgent& metalToTownHall = mInteractiveWorld->AddAgent<FetchAgent>("Mine To Town Hall");
+    metalToTownHall.SetOrigin(mineRef)
+            .SetDepositPoint(townHall)
+            .SetItemType(ItemType::Metal)
+            .SetSymbol('6')
+            .SetPosition(WorldPosition{100, 100});
+
+    ResourceManagementAgent& resourceManager = mInteractiveWorld->AddAgent<ResourceManagementAgent>("Resource Manager");
+    resourceManager.SetInventory(mInteractiveWorld->GetInventoryPtr()).SetSymbol('7');
+    resourceManager.AddManagedBuilding(lumberYardRef, true);
+    resourceManager.AddManagedBuilding(quarryRef, false);
+    resourceManager.AddManagedBuilding(mineRef, false);
+    resourceManager.SetLocation(WorldPosition{2, 3});
+
+    woodToLumberYard.SetActive(true);
+    woodToTownHall.SetActive(true);
+    stoneToQuarry.SetActive(false);
+    stoneToTownHall.SetActive(false);
+    metalToMine.SetActive(false);
+    metalToTownHall.SetActive(false);
+
+    resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarryRef, 10,
+                                    [this, stoneSpawn = &stoneSpawnRef, quarry = &quarryRef,
+                                     firstHauler = &stoneToQuarry, secondHauler = &stoneToTownHall]() {
+                                        mInteractiveWorld->AddResourceSpawn(*stoneSpawn, WorldPosition{1, 11});
+                                        mInteractiveWorld->AddBuilding(*quarry, WorldPosition{4, 9});
+                                        firstHauler->SetLocation(WorldPosition{2, 10});
+                                        secondHauler->SetLocation(WorldPosition{5, 8});
+                                    });
+    resourceManager.AddHireableLane("Mine Lane", metalToMine, metalToTownHall, mineRef, 20,
+                                    [this, metalSpawn = &metalSpawnRef, mine = &mineRef, firstHauler = &metalToMine,
+                                     secondHauler = &metalToTownHall]() {
+                                        mInteractiveWorld->AddResourceSpawn(*metalSpawn, WorldPosition{15, 11});
+                                        mInteractiveWorld->AddBuilding(*mine, WorldPosition{12, 9});
+                                        firstHauler->SetLocation(WorldPosition{14, 10});
+                                        secondHauler->SetLocation(WorldPosition{12, 8});
+                                    });
+
+    PlayerAgent& player = *mInteractiveWorld->GetPlayer();
+    player.AddGold(10000); // starting gold for trading demo
+
+    // Set up the symbol-to-path map for the interactive world
+    mSymbolPathOverworld['.'] = "/assets/interactive_world/terrain/grass.png";
+    mSymbolPathOverworld['f'] = "/assets/interactive_world/terrain/grass_detail.png";
+    mSymbolPathOverworld['m'] = "/assets/interactive_world/terrain/path.png";
+    mSymbolPathOverworld['E'] = "/assets/interactive_world/terrain/entrance.png";
+
+    mSymbolPathOverworld['T'] = "/assets/interactive_world/buildings/town_hall.png";
+    mSymbolPathOverworld['W'] = "/assets/interactive_world/buildings/lumber_yard.png";
+    mSymbolPathOverworld['Q'] = "/assets/interactive_world/buildings/quarry.png";
+    mSymbolPathOverworld['M'] = "/assets/interactive_world/buildings/mine.png";
+
+    mSymbolPathOverworld['l'] = "/assets/interactive_world/resources/wood_spawn.png";
+    mSymbolPathOverworld['q'] = "/assets/interactive_world/resources/stone_spawn.png";
+    mSymbolPathOverworld['o'] = "/assets/interactive_world/resources/metal_spawn.png";
+
+    mSymbolPathOverworld['L'] = "/assets/interactive_world/terrain/wall.png";
+    mSymbolPathOverworld['R'] = "/assets/interactive_world/terrain/wall.png";
+    mSymbolPathOverworld['U'] = "/assets/interactive_world/terrain/wall.png";
+    mSymbolPathOverworld['B'] = "/assets/interactive_world/terrain/wall.png";
+
+    mSymbolPathOverworld['C'] = "/assets/interactive_world/terrain/wall.png";
+
+    mSymbolPathOverworld['X'] = "/assets/interactive_world/terrain/grass.png";
+
+    mSymbolPathOverworld['1'] = "/assets/interactive_world/agents/fetch_agent.png";
+    mSymbolPathOverworld['2'] = "/assets/interactive_world/agents/fetch_agent.png";
+    mSymbolPathOverworld['3'] = "/assets/interactive_world/agents/fetch_agent.png";
+    mSymbolPathOverworld['4'] = "/assets/interactive_world/agents/fetch_agent.png";
+    mSymbolPathOverworld['5'] = "/assets/interactive_world/agents/fetch_agent.png";
+    mSymbolPathOverworld['6'] = "/assets/interactive_world/agents/fetch_agent.png";
+    mSymbolPathOverworld['7'] = "/assets/interactive_world/agents/resource_manager.png";
 }
 
 void WebInterface::RunFrame(double currentTimeMs) {
@@ -495,11 +748,19 @@ void WebInterface::RunFrame(double currentTimeMs) {
             mLastActionChar = actionChar;
             if (actionChar != '\0') {
                 mPlayerTimer = 0.0;
+                if (actionChar == ACTION_INTERACT && TryOpenResourceManagerMenu()) {
+                    RenderFrame();
+                    return;
+                }
                 auto player = mInteractiveWorld->GetPlayer();
                 int result = player->SelectPlayerAction(actionChar);
                 mInteractiveWorld->DoAction(*player, result);
                 player->SetActionResult(result);
             }
+        }
+
+        for (const auto& producer: mInteractiveWorld->GetProducers()) {
+            producer->Update();
         }
 
         if (mAgentTimer >= kActionIntervalMs) {
@@ -542,7 +803,7 @@ void WebInterface::RunFrame(double currentTimeMs) {
 
 bool WebInterface::IsPaused() const {
     return mState == WebState::PAUSED || mState == WebState::SETTINGS || mState == WebState::MAIN_MENU ||
-           mState == WebState::INVENTORY || mState == WebState::STATS;
+           mState == WebState::INVENTORY || mState == WebState::STATS || mState == WebState::RESOURCE_MANAGEMENT;
 }
 
 /// Returns the active gameplay world.
@@ -610,7 +871,7 @@ std::string WebInterface::GetImagePath(char symbol) {
             return kPlayerImagePath;
         }
         if (symbol == '*') {
-            return kMonsterImagePath;
+            return kGoblinImagePath;
         }
 
         // Look up symbol in the pre-populated path map
@@ -674,6 +935,7 @@ void WebInterface::UpdateLayoutVisibility() {
     SetLayoutVisible(mSettingsMenu, mState == WebState::SETTINGS);
     SetLayoutVisible(mInventoryMenu, mState == WebState::INVENTORY);
     SetLayoutVisible(mStatsMenu, mState == WebState::STATS);
+    SetLayoutVisible(mResourceMenu, mState == WebState::RESOURCE_MANAGEMENT);
     mRoot->Apply();
 }
 
@@ -757,7 +1019,17 @@ void WebInterface::SetupPauseMenu() {
     addButton(kSettingsButtonText, [this]() { TransitionTo(WebState::SETTINGS); });
     addButton(kStatsButtonText, [this]() {
         if (mAnalyticsManager && mStatsTracker) {
+            GetCurrentWorld()->SyncAgentLogsToAnalytics();
             mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+            std::ostringstream oss{};
+            for (const auto& stat: mDashboardSnapshot.numericStats) {
+                oss << stat.label << ": " << stat.currentValue << "\n";
+            }
+            for (const auto& stat: mDashboardSnapshot.actionStats) {
+                oss << stat.label << ": " << stat.actionCount << "\n";
+            }
+            std::string snapshotText = oss.str();
+            mStatsMenuText->SetText(snapshotText.empty() ? kStatsMenuEmptyText : snapshotText);
         }
         TransitionTo(WebState::STATS);
     });
@@ -896,15 +1168,96 @@ void WebInterface::SetupStatsMenu() {
     titlePtr->MountToLayout(*mStatsMenu);
 
     mElements.emplace_back(std::make_unique<WebTextbox>(kStatsMenuEmptyText));
-    WebTextbox* bodyPtr = static_cast<WebTextbox*>(mElements.back().get());
-    StyleMenuBody(bodyPtr, kCompactMenuBodyFontSizePx);
-    bodyPtr->MountToLayout(*mStatsMenu);
+    mStatsMenuText = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(mStatsMenuText, kCompactMenuBodyFontSizePx);
+    mStatsMenuText->MountToLayout(*mStatsMenu);
 
     auto backButton = std::make_unique<WebButton>(kBackButtonText);
     backButton->SetCallback([this]() { TransitionTo(mPreviousState); });
     StyleMenuButton(backButton.get(), kButtonBackgroundMedium.ToHex());
     backButton->MountToLayout(*mStatsMenu, Alignment::Center);
     mElements.emplace_back(std::move(backButton));
+}
+
+void WebInterface::SetupResourceMenu() {
+    mElements.emplace_back(std::make_unique<WebLayout>("resource-menu"));
+    mResourceMenu = static_cast<WebLayout*>(mElements.back().get());
+    mResourceMenu->SetLayoutType(LayoutType::Vertical);
+    mResourceMenu->SetJustification(Justification::Start);
+    mResourceMenu->SetAlignItems(Alignment::Center);
+    mResourceMenu->SetSpacing(kInventoryMenuSpacingPx);
+    mResourceMenu->SetPadding(kMenuPaddingPx);
+    StyleMenuLayout(mResourceMenu, kResourceMenuWidthPx);
+    mResourceMenu->ToggleVisibility();
+    mResourceMenu->MountToLayout(*mRoot);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>(kResourceMenuEyebrowText));
+    WebTextbox* eyebrowPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(eyebrowPtr, kAccent.ToHex(), kMenuEyebrowFontSizePx);
+    eyebrowPtr->MountToLayout(*mResourceMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>(kResourceMenuTitleText));
+    WebTextbox* titlePtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuTitle(titlePtr, kTextPrimary.ToHex(), kSettingsMenuTitleFontSizePx);
+    titlePtr->MountToLayout(*mResourceMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>(kResourceMenuDescriptionText));
+    WebTextbox* descPtr = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(descPtr, kCompactMenuBodyFontSizePx);
+    descPtr->MountToLayout(*mResourceMenu);
+
+    mElements.emplace_back(std::make_unique<WebLayout>("resource-menu-tabs"));
+    WebLayout* tabLayout = static_cast<WebLayout*>(mElements.back().get());
+    tabLayout->SetLayoutType(LayoutType::Horizontal);
+    tabLayout->SetJustification(Justification::Center);
+    tabLayout->SetAlignItems(Alignment::Center);
+    tabLayout->SetSpacing(12);
+    tabLayout->MountToLayout(*mResourceMenu);
+
+    const std::array<std::string, 3> tabLabels = {"Upgrades", "Lanes", "Sell"};
+    mResourceTabButtons.clear();
+    for (std::size_t tabIndex = 0; tabIndex < tabLabels.size(); ++tabIndex) {
+        auto button = std::make_unique<WebButton>(tabLabels[tabIndex]);
+        WebButton* buttonPtr = button.get();
+        buttonPtr->SetSize(kResourceTabButtonWidthPx, kMenuButtonHeightPx);
+        buttonPtr->SetTextColor(kButtonTextWhite.ToHex());
+        buttonPtr->SetCallback([this, tabIndex]() { SetResourceMenuTab(static_cast<int>(tabIndex)); });
+        buttonPtr->MountToLayout(*tabLayout, Alignment::Center);
+        mResourceTabButtons.push_back(buttonPtr);
+        mElements.emplace_back(std::move(button));
+    }
+
+    mElements.emplace_back(std::make_unique<WebTextbox>(kResourceMenuDefaultStatusText));
+    mResourceMenuSummaryText = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(mResourceMenuSummaryText, kCompactMenuBodyFontSizePx);
+    mResourceMenuSummaryText->SetAlignment(WebTextbox::TextAlign::Left);
+    mResourceMenuSummaryText->SetColor(kTextPrimary.ToHex());
+    mResourceMenuSummaryText->SetMaxWidth(720.0f);
+    mResourceMenuSummaryText->MountToLayout(*mResourceMenu);
+
+    mElements.emplace_back(std::make_unique<WebTextbox>(kResourceMenuDefaultStatusText));
+    mResourceMenuStatusText = static_cast<WebTextbox*>(mElements.back().get());
+    StyleMenuBody(mResourceMenuStatusText, kCompactMenuBodyFontSizePx);
+    mResourceMenuStatusText->SetAlignment(WebTextbox::TextAlign::Left);
+    mResourceMenuStatusText->SetColor(kAccent.ToHex());
+    mResourceMenuStatusText->SetMaxWidth(720.0f);
+    mResourceMenuStatusText->MountToLayout(*mResourceMenu);
+
+    mElements.emplace_back(std::make_unique<WebLayout>("resource-menu-options"));
+    mResourceMenuOptionsLayout = static_cast<WebLayout*>(mElements.back().get());
+    mResourceMenuOptionsLayout->SetLayoutType(LayoutType::Vertical);
+    mResourceMenuOptionsLayout->SetJustification(Justification::Center);
+    mResourceMenuOptionsLayout->SetAlignItems(Alignment::Center);
+    mResourceMenuOptionsLayout->SetSpacing(12);
+    mResourceMenuOptionsLayout->MountToLayout(*mResourceMenu);
+
+    auto closeButton = std::make_unique<WebButton>(kCloseButtonText);
+    closeButton->SetCallback([this]() { CloseResourceMenu(); });
+    StyleMenuButton(closeButton.get(), kButtonBackgroundMedium.ToHex());
+    closeButton->MountToLayout(*mResourceMenu, Alignment::Center);
+    mElements.emplace_back(std::move(closeButton));
+
+    SetResourceMenuTab(0);
 }
 
 void WebInterface::PopulateInventoryMenu() {
@@ -957,6 +1310,209 @@ void WebInterface::OnInventorySlotClick(size_t slotIndex) {
             PopulateInventoryMenu();
         }
     }
+}
+
+bool WebInterface::TryOpenResourceManagerMenu() {
+    if (mState != WebState::OVERWORLD) {
+        return false;
+    }
+
+    PlayerAgent* player = mInteractiveWorld->GetPlayer();
+    if (player == nullptr || !player->GetLocation().IsPosition()) {
+        return false;
+    }
+
+    const WorldPosition playerPosition = player->GetLocation().AsWorldPosition();
+    const std::array<WorldPosition, 4> adjacent = {
+            playerPosition.Up(),
+            playerPosition.Down(),
+            playerPosition.Left(),
+            playerPosition.Right(),
+    };
+
+    for (const WorldPosition& adjacentPosition: adjacent) {
+        for (std::size_t i = 0; i < mInteractiveWorld->GetNumAgents(); ++i) {
+            AgentBase& agent = mInteractiveWorld->GetAgentByIndex(i);
+            if (!agent.GetLocation().IsPosition()) {
+                continue;
+            }
+
+            if (agent.GetLocation().AsWorldPosition() != adjacentPosition) {
+                continue;
+            }
+
+            auto* manager = dynamic_cast<ResourceManagementAgent*>(&agent);
+            if (manager == nullptr) {
+                continue;
+            }
+
+            OpenResourceMenu(*manager);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void WebInterface::OpenResourceMenu(ResourceManagementAgent& manager) {
+    mActiveResourceManager = &manager;
+    mResourceMenuTab = 0;
+    if (mResourceMenuStatusText != nullptr) {
+        mResourceMenuStatusText->SetText(GetResourceTabStatusText(mResourceMenuTab));
+    }
+    TransitionTo(WebState::RESOURCE_MANAGEMENT);
+    PopulateResourceMenu();
+    RenderFrame();
+}
+
+void WebInterface::CloseResourceMenu() {
+    mActiveResourceManager = nullptr;
+    TransitionTo(mGameState);
+    RenderFrame();
+}
+
+void WebInterface::EnsureResourceMenuOptionButtons(std::size_t count) {
+    if (mResourceMenuOptionsLayout == nullptr) {
+        return;
+    }
+
+    while (mResourceMenuOptionButtons.size() < count) {
+        auto button = std::make_unique<WebButton>("");
+        WebButton* buttonPtr = button.get();
+        buttonPtr->SetSize(kResourceOptionButtonWidthPx, kMenuButtonHeightPx);
+        buttonPtr->SetTextColor(kButtonTextWhite.ToHex());
+        buttonPtr->SetBackgroundColor(kButtonBackgroundDark.ToHex());
+        buttonPtr->MountToLayout(*mResourceMenuOptionsLayout, Alignment::Center);
+        mResourceMenuOptionButtons.push_back(buttonPtr);
+        mElements.emplace_back(std::move(button));
+    }
+
+    mRoot->Apply();
+}
+
+void WebInterface::SetResourceMenuTab(int tabIndex) {
+    if (tabIndex < 0 || tabIndex > 2) {
+        return;
+    }
+
+    mResourceMenuTab = tabIndex;
+    if (mResourceMenuStatusText != nullptr) {
+        mResourceMenuStatusText->SetText(GetResourceTabStatusText(tabIndex));
+    }
+    PopulateResourceMenu();
+    RenderFrame();
+}
+
+void WebInterface::PopulateResourceMenu() {
+    if (mActiveResourceManager == nullptr || mInteractiveWorld == nullptr) {
+        return;
+    }
+
+    if (mResourceMenuSummaryText != nullptr) {
+        mResourceMenuSummaryText->SetText(BuildResourceMenuSummaryText(*mInteractiveWorld, *mActiveResourceManager));
+    }
+
+    for (std::size_t index = 0; index < mResourceTabButtons.size(); ++index) {
+        WebButton* button = mResourceTabButtons[index];
+        if (button == nullptr) {
+            continue;
+        }
+        button->SetBackgroundColor(index == static_cast<std::size_t>(mResourceMenuTab)
+                                           ? kAccentStrong.ToHex()
+                                           : kButtonBackgroundMedium.ToHex());
+    }
+
+    std::size_t visibleButtonCount = 0;
+    if (mResourceMenuTab == 0) {
+        auto buildings = mInteractiveWorld->GetBuildings();
+        visibleButtonCount = buildings.size();
+        EnsureResourceMenuOptionButtons(visibleButtonCount);
+
+        for (std::size_t index = 0; index < buildings.size(); ++index) {
+            Building* building = buildings[index];
+            WebButton* button = mResourceMenuOptionButtons[index];
+            button->Show();
+            button->Enable();
+            button->SetLabel(
+                    BuildManagedBuildingLabel(*building, mActiveResourceManager->IsManagedBuildingUnlocked(index)));
+            button->SetCallback([this, index]() {
+                if (mActiveResourceManager == nullptr) {
+                    return;
+                }
+
+                std::string message;
+                mActiveResourceManager->UpgradeBuilding(index, &message);
+                auto buildings = mInteractiveWorld->GetBuildings();
+                if (index < buildings.size() && buildings[index] != nullptr &&
+                    buildings[index]->GetCurrentLevel() > 0) {
+                    mSymbolPathOverworld[buildings[index]->GetSymbol()] =
+                            GetOverworldBuildingImagePath(*buildings[index]);
+                }
+                if (mResourceMenuStatusText != nullptr) {
+                    mResourceMenuStatusText->SetText(message);
+                }
+                PopulateResourceMenu();
+                RenderFrame();
+            });
+        }
+    } else if (mResourceMenuTab == 1) {
+        visibleButtonCount = mActiveResourceManager->GetHireableLaneCount();
+        EnsureResourceMenuOptionButtons(visibleButtonCount);
+
+        for (std::size_t index = 0; index < visibleButtonCount; ++index) {
+            WebButton* button = mResourceMenuOptionButtons[index];
+            button->Show();
+            button->Enable();
+            button->SetLabel(BuildLaneLabel(*mActiveResourceManager, index));
+            button->SetCallback([this, index]() {
+                if (mActiveResourceManager == nullptr) {
+                    return;
+                }
+
+                std::string message;
+                mActiveResourceManager->HireLane(index, &message);
+                if (mResourceMenuStatusText != nullptr) {
+                    mResourceMenuStatusText->SetText(message);
+                }
+                PopulateResourceMenu();
+                RenderFrame();
+            });
+        }
+    } else {
+        constexpr std::array<ItemType, 3> items = {ItemType::Wood, ItemType::Stone, ItemType::Metal};
+        visibleButtonCount = items.size();
+        EnsureResourceMenuOptionButtons(visibleButtonCount);
+
+        for (std::size_t index = 0; index < items.size(); ++index) {
+            WebButton* button = mResourceMenuOptionButtons[index];
+            button->Show();
+            button->Enable();
+            button->SetLabel(BuildSellLabel(*mInteractiveWorld, *mActiveResourceManager, items[index]));
+            button->SetCallback([this, itemType = items[index]]() {
+                if (mActiveResourceManager == nullptr) {
+                    return;
+                }
+
+                std::string message;
+                mActiveResourceManager->SellResource(itemType, 1, &message);
+                if (mResourceMenuStatusText != nullptr) {
+                    mResourceMenuStatusText->SetText(message);
+                }
+                PopulateResourceMenu();
+                RenderFrame();
+            });
+        }
+    }
+
+    for (std::size_t index = visibleButtonCount; index < mResourceMenuOptionButtons.size(); ++index) {
+        mResourceMenuOptionButtons[index]->Hide();
+    }
+
+    if (visibleButtonCount == 0 && mResourceMenuStatusText != nullptr) {
+        mResourceMenuStatusText->SetText("No options are available on this tab yet.");
+    }
+
+    mRoot->Apply();
 }
 
 void WebInterface::TransitionTo(WebState newState) {
@@ -1076,7 +1632,9 @@ void WebInterface::RenderHUD() {
             leftOffset += itemDrawSize;
         }
 
-        mHUDTextbox->SetText(kDungeonHudText);
+        std::string dungeonHudText = std::format("{}Gold: {}", kDungeonHudText, GetCurrentPlayer()->GetGold());
+
+        mHUDTextbox->SetText(dungeonHudText);
     }
 }
 
@@ -1121,7 +1679,8 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
     canvasHeight = canvasHeight / dpr;
 
     const int drawSize = std::lround(canvasWidth / static_cast<double>(kVisibleGridWidth));
-    const double scale = drawSize / static_cast<double>(kTextureSourceImageSizePx);
+    const int textureSize = mGameState == WebState::OVERWORLD ? 64 : kTextureSourceImageSizePx;
+    const double scale = drawSize / static_cast<double>(textureSize);
 
     int visibleGridHeight = canvasHeight / drawSize;
     if (canvasHeight % drawSize != 0)
@@ -1210,7 +1769,7 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
 
     for (const auto& agentId: agentIds) {
         const AgentBase& agent = GetCurrentWorld()->GetAgent(agentId);
-        if (!agent.IsAlive()) {
+        if (!agent.IsAlive() || agent.IsPlayerAgent()) {
             continue;
         }
         WorldPosition pos = agent.GetPosition();
@@ -1221,8 +1780,35 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
             continue;
         }
 
+        std::string imagePath{};
+        if (mGameState == WebState::DUNGEON) {
+            if (agent.GetName().contains("Goblin")) {
+                imagePath = kGoblinImagePath;
+            } else if (agent.GetName().contains("Skeleton")) {
+                imagePath = kSkeletonImagePath;
+            } else if (agent.IsPlayerAgent()) {
+                imagePath = kPlayerImagePath;
+            } else {
+                imagePath = GetImagePath(agent.GetSymbol());
+            }
+
+            auto agentTexture = GetOrLoadBitmap(imagePath);
+            int agentLeft = CellXToScreenLeft(agentCellX);
+            int agentTop = CellYToScreenTop(agentCellY);
+            mCanvas->DrawTexture(agentTexture.as_handle(), agentLeft, agentTop, scale);
+
+            int healthTop = agentTop - agentTexture["height"].as<int>() * scale;
+            int healthLeft = agentLeft - agentTexture["width"].as<int>() * scale / 2;
+            mCanvas->DrawText(healthLeft, healthTop, std::format("Health: {:.0f}", agent.GetCurrentHealth()), "red",
+                              kCompactMenuBodyFontSizePx, kMenuFontFamily);
+            continue;
+        }
+
         char agentSymbol = agent.GetSymbol();
-        std::string imagePath = GetImagePath(agentSymbol);
+        imagePath = GetOverworldAgentImagePath(agent);
+        if (imagePath.empty()) {
+            imagePath = GetImagePath(agentSymbol);
+        }
 
         if (symbolPathMap.contains(agentSymbol)) {
             if (symbolPathMap.at(agentSymbol) != imagePath) {
@@ -1233,7 +1819,7 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
         }
 
         if (imagePath.empty() || !imagePath.contains(kPngFileExtension)) {
-            imagePath = kPlayerImagePath;
+            continue;
         }
 
         auto agentTexture = GetOrLoadBitmap(imagePath);
@@ -1249,10 +1835,23 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
         const int playerCellY = gsl::narrow_cast<int>(pos.CellY());
 
         if (playerCellX >= minX && playerCellX <= maxX && playerCellY >= minY && playerCellY <= maxY) {
-            auto playerTexture = GetOrLoadBitmap(kPlayerImagePath);
-            int playerLeft = CellXToScreenLeft(playerCellX);
-            int playerTop = CellYToScreenTop(playerCellY);
-            mCanvas->DrawTexture(playerTexture.as_handle(), playerLeft, playerTop, scale);
+            emscripten::val playerTexture{};
+            if (mGameState == WebState::OVERWORLD) {
+                playerTexture = GetOrLoadBitmap("/assets/interactive_world/agents/player.png");
+                int playerLeft = CellXToScreenLeft(playerCellX);
+                int playerTop = CellYToScreenTop(playerCellY);
+                mCanvas->DrawTexture(playerTexture.as_handle(), playerLeft, playerTop, scale);
+            } else {
+                playerTexture = GetOrLoadBitmap(kPlayerImagePath);
+                int playerLeft = CellXToScreenLeft(playerCellX);
+                int playerTop = CellYToScreenTop(playerCellY);
+                mCanvas->DrawTexture(playerTexture.as_handle(), playerLeft, playerTop, scale);
+
+                int healthTop = playerTop - playerTexture["height"].as<int>() * scale;
+                int healthLeft = playerLeft - playerTexture["width"].as<int>() * scale / 2;
+                mCanvas->DrawText(healthLeft, healthTop, std::format("Health: {:.0f}", player->GetCurrentHealth()),
+                                  "red", kCompactMenuBodyFontSizePx, kMenuFontFamily);
+            }
         }
     }
 }
@@ -1260,6 +1859,7 @@ void WebInterface::DrawGrid(const WorldGrid& grid, const std::vector<size_t>& ag
 void WebInterface::RenderFrame() {
     switch (mState) {
         case WebState::OVERWORLD:
+        case WebState::RESOURCE_MANAGEMENT:
             RenderOverworld();
             break;
         case WebState::DUNGEON:
@@ -1279,9 +1879,9 @@ void WebInterface::RenderFrame() {
 void WebInterface::HandlePause() {
     if (mState == WebState::OVERWORLD || mState == WebState::DUNGEON) {
         Pause();
-    } else if (mState == WebState::PAUSED ||
-               mState == WebState::SETTINGS ||
-               mState == WebState::INVENTORY ||
+    } else if (mState == WebState::RESOURCE_MANAGEMENT) {
+        CloseResourceMenu();
+    } else if (mState == WebState::PAUSED || mState == WebState::SETTINGS || mState == WebState::INVENTORY ||
                mState == WebState::STATS) {
         Resume();
     }
