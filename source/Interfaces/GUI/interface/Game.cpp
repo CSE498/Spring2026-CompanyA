@@ -1040,9 +1040,15 @@ void Game::HandleEvents() {
                     if (mState == GameState::OVERWORLD) {
                         // InteractiveWorld-only debug shortcut for upgrade testing.
                         auto& inventory = mOverWorld->GetInventory();
-                        inventory.AddItem(ItemType::Wood, 1000);
-                        inventory.AddItem(ItemType::Stone, 1000);
-                        inventory.AddItem(ItemType::Metal, 1000);
+                        auto fillResource = [&inventory](ItemType item) {
+                            const auto current = inventory.GetAmount(item);
+                            if (current < InteractiveWorldInventory::MAX_ITEMS_PER_TYPE) {
+                                inventory.AddItem(item, InteractiveWorldInventory::MAX_ITEMS_PER_TYPE - current);
+                            }
+                        };
+                        fillResource(ItemType::Wood);
+                        fillResource(ItemType::Stone);
+                        fillResource(ItemType::Metal);
                         mPickupMessage = "Debug: resources maxed.";
                         mPickupMessageTime = SDL_GetTicks();
                     }
