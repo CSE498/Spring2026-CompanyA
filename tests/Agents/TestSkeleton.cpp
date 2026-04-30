@@ -13,7 +13,18 @@
 #include "../../source/tools/DamageCalculator.hpp"
 
 namespace cse498 {
-class SkeletonTestWorld : public WorldBase {
+
+#define STD_CHECKS(world, skeleton, skelHp, playerHp, skelPos) \
+    do { \
+    CHECK(world.GetPlayer()->GetCurrentHealth() == playerHp); \
+    CHECK(skeleton.GetCurrentHealth() == skelHp); \
+    CHECK(WorldPosApprox(skeleton.GetPosition(), skelPos)); \
+    } while(0)
+
+
+
+
+class SkeletonTestWorld2 : public WorldBase {
 private:
     size_t mFloorId = 0;
     size_t mWallId = 0;
@@ -31,7 +42,7 @@ private:
     }
 
 public:
-    SkeletonTestWorld() : WorldBase() {
+    SkeletonTestWorld2() : WorldBase() {
 
         // KAREN: Create the player here to avoid interfering with other groups' demos (temp fix)
         auto p = std::make_unique<PlayerAgent>(GetNextAgentId(), "Player", *this);
@@ -43,7 +54,7 @@ public:
         mFloorId = main_grid.AddCellType("floor", "Walkable floor", ' ');
         mWallId = main_grid.AddCellType("wall", "Blocking wall", '#');
 
-        // SkeletonTestWorld::ConfigAgent(*GetPlayer());
+        // SkeletonTestWorld2::ConfigAgent(*GetPlayer());
         GetPlayer()->SetStats(AgentStats(40.0, 7.0, 2.0, 1, 0));
         GetPlayer()->SetLocation(WorldPosition(0, 0));
         main_grid.Load(std::vector<std::string>{
@@ -79,7 +90,9 @@ public:
                 next = next.GetOffset(1, 0);
                 break;
             case WorldActions::REMAIN_STILL:
+                break;
             case WorldActions::INTERACT:
+                break;
             case WorldActions::QUIT:
                 return 1;
             default:
@@ -125,7 +138,7 @@ bool WorldPosApprox(const WorldPosition& pos1, const WorldPosition& pos2)
 
 
 TEST_CASE("Skeleton factory applies definition, stats, actions, and spawn data", "[Skeleton][factory]") {
-    SkeletonTestWorld world;
+    SkeletonTestWorld2 world;
     const AgentDefinition def("EliteSkeleton", 5, {4, 7});
 
     auto skeleton = AgentFactory::CreateEnemySkeleton(def, world);
@@ -157,77 +170,79 @@ TEST_CASE("Skeleton factory applies definition, stats, actions, and spawn data",
 
 TEST_CASE("Simple test case with skeleton functionality")
 {
-    SkeletonTestWorld world;
+    SkeletonTestWorld2 world;
     auto temp = AgentFactory::CreateEnemySkeleton({"name", 0, {1,1}}, world);
     // so the skeleton is made but we have to add to the world
     auto& skeleton = world.AddAgent(std::move(temp));
     // now set player
     // player is set
-    auto stdChecks = [&world, &skeleton](size_t skelHp, size_t playerHp, const WorldPosition& skelPos)
-    {
-        CHECK(world.GetPlayer()->GetCurrentHealth() == playerHp);
-        CHECK(skeleton.GetCurrentHealth() == skelHp);
-        CHECK(WorldPosApprox(skeleton.GetPosition(), skelPos));
-    };
+
     world.SetPlayerPosition({6,1});
 
     for (int i = 0; i < 2; i++)
     { // Move two positions right things should be fine
-        stdChecks(100, 40, {1+i,1});
+        WorldPosition ttemp = {i+1, 1};
+        STD_CHECKS(world, skeleton, 100, 40, ttemp);
         world.RunNonPlayerAgents();
 
     }
     world.RunNonPlayerAgents();
-    stdChecks(100, 37, {3,1});
+    WorldPosition pos = {3, 1};
+    STD_CHECKS(world, skeleton, 100, 37, pos);
     world.RunNonPlayerAgents();
-    stdChecks(100, 34, {3,1});
+    STD_CHECKS(world, skeleton, 100, 34, pos);
 
     world.SetPlayerPosition({5,1}); // chase 1
     world.RunNonPlayerAgents();
-    stdChecks(100, 34, {2,1});
+    pos = {2,1};
+    STD_CHECKS(world, skeleton, 100, 34, pos);
 
     world.SetPlayerPosition({4,1}); // 2
     world.RunNonPlayerAgents();
-    stdChecks(100, 34, {1,1});
-
-    world.SetPlayerPosition({3,1}); // 3
-    world.RunNonPlayerAgents();
-    stdChecks(100, 34, {1,2});
+    pos = {1,1};
+    STD_CHECKS(world, skeleton, 100, 34, pos);
 
     world.SetPlayerPosition({2,1}); // 4
     world.RunNonPlayerAgents();
-    stdChecks(100, 34, {1,3});
+    pos = {1,2};
+    STD_CHECKS(world, skeleton, 100, 34, pos);
 
     world.SetPlayerPosition({1,1}); // 5
     world.RunNonPlayerAgents();
-    stdChecks(100, 34, {1,4});
+    pos = {1,3};
+    STD_CHECKS(world, skeleton, 100, 34, pos);
 
     world.SetPlayerPosition({1,2}); // MAX
     world.RunNonPlayerAgents();
-    stdChecks(100, 31, {1,4});
+    pos = {1,4};
+    STD_CHECKS(world, skeleton, 100, 34, pos);
 
     world.SetPlayerPosition({1,3}); // MAX
     world.RunNonPlayerAgents();
-    stdChecks(100, 28, {1,4});
+    pos = {1,4};
+    STD_CHECKS(world, skeleton, 100, 31, pos);
 
     world.SetPlayerPosition({1,2}); // Player Run away
     world.RunNonPlayerAgents(); // Skeleton attack again
-    stdChecks(100, 25, {1,4});
+    pos = {1,4};
+    STD_CHECKS(world, skeleton, 100, 28, pos);
 
     world.SetPlayerPosition({1,1}); // Player Run away
     world.RunNonPlayerAgents(); // Skeleton attack again
-    stdChecks(100, 22, {1,4});
+    pos = {1,4};
+    STD_CHECKS(world, skeleton, 100, 25, pos);
 
     world.SetPlayerPosition({2,1}); // Player Run away
     world.RunNonPlayerAgents(); // Skeleton moves closer
-    stdChecks(100, 22, {1,3});
+    pos = {1,3};
+    STD_CHECKS(world, skeleton, 100, 25, pos);
 
 
 
 }
 
 TEST_CASE("Skeleton chase fails cleanly when no path exists", "[Skeleton][safety][pathing]") {
-    SkeletonTestWorld world;
+    SkeletonTestWorld2 world;
     auto skeleton = AgentFactory::CreateEnemySkeleton({"Blocked", 0, {1, 1}}, world);
     REQUIRE(skeleton != nullptr);
     auto& stored = world.AddAgent(std::move(skeleton));
