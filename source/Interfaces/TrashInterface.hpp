@@ -2,7 +2,6 @@
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief A low-end text interface providing a bare-minimum level of
  *interaction.
- * @note Status: PROPOSAL
  **/
 
 #pragma once
@@ -10,8 +9,6 @@
 #include <iostream>
 #include <vector>
 
-#include "../Worlds/Hub/InteractiveWorld.hpp"
-#include "../Worlds/Hub/InteractiveWorldSaveManager.hpp"
 #include "../core/InterfaceBase.hpp"
 #include "../core/WorldBase.hpp"
 
@@ -43,6 +40,9 @@ protected:
         // Substitute in agents.
         for (const auto& agent_id: agent_ids) {
             const AgentBase& agent = world.GetAgent(agent_id);
+            if (!agent.GetLocation().IsPosition()) {
+                continue;
+            }
             WorldPosition pos = agent.GetLocation().AsWorldPosition();
             symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
         }
@@ -102,19 +102,9 @@ public:
             case 'e':
                 action_id = GetActionID("interact");
                 break;
-            case 'q': {
-                const auto* interactive_world = dynamic_cast<const InteractiveWorld*>(&world);
-                if (interactive_world) {
-                    InteractiveWorldSaveManager save_manager;
-                    if (save_manager.Save(*interactive_world, "interactive_world_save.json")) {
-                        std::cout << "\nGame saved to interactive_world_save.json\n";
-                    } else {
-                        std::cout << "\nFailed to save game.\n";
-                    }
-                }
-            }
-
-                exit(0); // Quit!
+            case 'q':
+                action_id = GetActionID("quit");
+                break;
         }
 
         // If we waited for input, but don't understand it, notify the user.

@@ -34,6 +34,7 @@ namespace cse498 {
 
     /// Get the attack action for an adjacent player.
     [[nodiscard]] std::optional<size_t> AttackActionForAdjacentPlayer() const;
+    [[nodiscard]] std::optional<size_t> BfsDistanceTo(const WorldGrid& grid, WorldPosition target) const;
 
     /// Check if there is a line of sight between two positions.
     [[nodiscard]] bool HasLineOfSight(const WorldGrid& grid, WorldPosition from, WorldPosition to) const;

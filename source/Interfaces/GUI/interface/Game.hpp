@@ -13,7 +13,7 @@
 #include <memory>
 #include <string>
 #include <cstdint>
-
+ 
 #include "../../../Analyze/ReplayDriver.hpp"
 #include "../../../Analyze/AnalyticsManager.hpp"
 #include "../../../Analyze/StatsTracker.hpp"
@@ -25,6 +25,7 @@
 #include "../source/Worlds/Dungeon/DungeonWorld.hpp"
 //#include "OverWorld.hpp"
 #include "../../../source/Agents/Classic/PlayerAgent.hpp"
+#include "../../../source/Agents/Classic/ResourceManagementAgent.hpp"
 #include "../../../source/Worlds/Hub/Building.hpp"
 #include "../../../source/Worlds/Hub/InteractiveWorld.hpp"
 #include "../../../source/Worlds/Hub/ResourceProducer.hpp"
@@ -42,13 +43,14 @@ namespace cse498
     {
         MAIN_MENU, /// Main menu screen
         OVERWORLD, /// Flat interactive world with dungeon entrance
-        REPLAYOVERWORLD, ////Replay for the over world
-        REPLAYDUNGEON,
         DUNGEON,   /// Procedurally generated dungeon world
         PAUSED,    /// Paused state (reachable from OVERWORLD or DUNGEON)
-        SETTINGS,  /// Settings screen (placeholder)
+        CONTROLS,  /// Controls Screen
         STATS,     /// Contains information captured in gameplay
+        REPLAYOVERWORLD, /// Replay for the over world
+        REPLAYDUNGEON,
         TRADING,   /// Trading with a merchant
+        RESOURCE_MANAGEMENT, /// Managing interactive-world resources
         QUIT       /// Exit state
     };
 
@@ -70,8 +72,6 @@ namespace cse498
         GameState mState = GameState::MAIN_MENU; /// Current game state
         GameState mPreviousState = GameState::MAIN_MENU; /// Used to resume after pause
 
-        ReplayDriver mReplayDriver;
-        uint32_t mLastReplayStepTime = 0; //Adds timing for replayDriver
         // -------------------------
         // Constants
         // -------------------------
@@ -138,14 +138,22 @@ namespace cse498
         std::unique_ptr<StatsTracker> mStatsTracker; /// Used to build GUI-friendly summaries from analytics data
         DashboardSnapshot mDashboardSnapshot; /// Stats snapshot for rendering
         Text mStatsText; /// Text object used for stats screen
+        size_t mLastSyncedActionCount = 0;
+        bool mCombatStatsFlushed = false;
+        ReplayDriver mReplayDriver;
+        uint32_t mLastReplayStepTime = 0; //Adds timing for replayDriver
         void SyncOverworldCameraToPlayer();
         void SyncDungeonCameraToPlayer();
+
         // -------------------------
         // Merchant system state
         // -------------------------
         MerchantAgent* mActiveMerchant = nullptr; /// Currently interacting merchant
-        int mTradeMenuSelection = 0;              /// Selected offer index in trade menu
-        bool mTradeBuyMode = true;                /// true = buying, false = selling resources
+        int mTradeMenuSelection = 0; /// Selected offer index in trade menu
+        bool mTradeBuyMode = true; /// true = buying, false = selling resources
+        ResourceManagementAgent* mActiveResourceManager = nullptr; /// Currently interacting resource manager
+        int mResourceMenuSelection = 0; /// Selected resource manager row
+        int mResourceMenuTab = 0; /// 0 = upgrades, 1 = lanes, 2 = sell resources
 
         // -------------------------
         // Runtime flags
@@ -153,6 +161,7 @@ namespace cse498
         bool mRunning = false; /// Controls main game loop execution
         bool mTurnTaken = false; /// True when player acts; consumed by UpdateOverworld
         bool mShowBackpack = false; /// Toggle backpack overlay
+        Uint32 mLastOverworldAgentTick = 0; /// Last autonomous overworld agent update
 
         // -------------------------
         // Core loop methods
@@ -170,10 +179,10 @@ namespace cse498
         void UpdateOverworld();
         void UpdateDungeon();
         void UpdatePaused();
-        void UpdateSettings();
+        void UpdateControls();
+        void UpdateStats();
         void ReplayOverworld();
         void ReplayDungeon();
-        void UpdateStats();
 
         /**
          * @brief Render functions for each game state.
@@ -182,9 +191,8 @@ namespace cse498
         void RenderOverworld();
         void RenderDungeon();
         void RenderPaused();
-        void RenderSettings();
+        void RenderControls();
         void RenderStats();
-
         void StartReplayDungeon();
         void StartReplayOverworld();
         void RenderHotbar(const Inventory& inventory);
@@ -193,13 +201,15 @@ namespace cse498
         void RenderPickupMessage();
         void UpdateTrading();
         void RenderTrading();
+        void UpdateResourceManagement();
+        void RenderResourceManagement();
 
         /**
          * @brief Convert SDL keycode to world action ID.
          * @param key SDL keycode (SDLK_w, SDLK_a, SDLK_s, SDLK_d)
          * @return Action ID matching WorldBase action conventions, 0 = remain still
          */
-        size_t KeyToAction(SDL_Keycode key);
+        size_t KeyToAction(SDL_Keycode key) const;
 
         /**
          * @brief Process player movement input.
@@ -319,11 +329,11 @@ namespace cse498
      */
     [[nodiscard]] std::shared_ptr<GameView> GetGameView() const { return mGameView; }
 
-        /**
-         * @brief Get the current game state.
-         * @return Current GameState
-         */
-        [[nodiscard]] GameState GetState() const { return mState; }
+    /**
+     * @brief Get the current game state.
+     * @return Current GameState
+     */
+    [[nodiscard]] GameState GetState() const { return mState; }
     };
 
 } // namespace cse498

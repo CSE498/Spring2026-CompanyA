@@ -154,6 +154,29 @@
           padding: 30px 28px 28px;
         }
 
+        #resource-menu {
+          width: min(860px, calc(100vw - 48px));
+          padding: 30px 28px 28px;
+        }
+
+        #resource-menu-tabs {
+          width: 100%;
+          display: grid !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px !important;
+        }
+
+        #resource-menu-options {
+          width: 100%;
+          display: grid !important;
+          gap: 12px !important;
+        }
+
+        #resource-menu-tabs button,
+        #resource-menu-options button {
+          width: 100% !important;
+        }
+
         #inventory-grid {
           width: 100%;
           display: grid !important;
@@ -203,7 +226,8 @@
           #main-menu,
           #pause-menu,
           #settings-menu,
-          #inventory-menu {
+          #inventory-menu,
+          #resource-menu {
             padding: 22px 18px;
           }
 
@@ -227,6 +251,7 @@
         <div id="settings-menu" class="modal-menu"></div>
         <div id="inventory-menu" class="modal-menu"></div>
         <div id="stats-menu" class="modal-menu"></div>
+        <div id="resource-menu" class="modal-menu"></div>
     </div>
     <script src="Group18_main.js"></script>
 </body>

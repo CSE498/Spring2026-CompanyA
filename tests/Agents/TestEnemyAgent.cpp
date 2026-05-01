@@ -16,11 +16,11 @@
 using namespace cse498;
 
 namespace {
-    /// World that never registers movement actions (for Initialize() failure tests).
-    struct NoMovementActionWorld : WorldBase {
-        void ConfigAgent(AgentBase &) override {}
-        int DoAction(AgentBase &, size_t) override { return 0; }
-    };
+/// World that never registers movement actions (for Initialize() failure tests).
+struct NoMovementActionWorld : WorldBase {
+    void ConfigAgent(AgentBase&) override {}
+    int DoAction(AgentBase&, size_t) override { return 0; }
+};
 } // namespace
 
 // ============================================================
@@ -29,7 +29,7 @@ namespace {
 
 TEST_CASE("EnemyAgent initializes with required actions", "[EnemyAgent]") {
     MazeWorld world;
-    auto &agent = world.AddAgent<EnemyAgent>("Enemy");
+    auto& agent = world.AddAgent<EnemyAgent>("Enemy");
     agent.SetLocation(WorldPosition{10, 7});
 
     CHECK(agent.Initialize());
@@ -58,7 +58,7 @@ TEST_CASE("EnemyAgent has correct name and ID", "[EnemyAgent]") {
     MazeWorld world;
     world.AddAgent<LearningExplorerAgent>("Explorer").SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     CHECK(enemy.GetName() == "Enemy");
@@ -73,11 +73,24 @@ TEST_CASE("EnemyAgent SelectAction returns non-zero action", "[EnemyAgent]") {
     MazeWorld world;
     world.AddAgent<LearningExplorerAgent>("Target").SetLocation(WorldPosition{5, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     size_t action = enemy.SelectAction(world.GetGrid());
     CHECK(action != 0);
+}
+
+TEST_CASE("EnemyAgent tie breaks using action order", "[EnemyAgent]") {
+    MazeWorld world;
+    world.AddAgent<LearningExplorerAgent>("Target").SetLocation(WorldPosition{18, 7});
+
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
+    enemy.SetLocation(WorldPosition{19, 8});
+
+    size_t action = enemy.SelectAction(world.GetGrid());
+
+    // Up and left are equally good, both valid, and up is checked first.
+    CHECK(action == enemy.GetActionID("up"));
 }
 
 // ============================================================
@@ -86,10 +99,10 @@ TEST_CASE("EnemyAgent SelectAction returns non-zero action", "[EnemyAgent]") {
 
 TEST_CASE("EnemyAgent moves closer to target on one step", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     WorldPosition start = enemy.GetLocation().AsWorldPosition();
@@ -111,10 +124,10 @@ TEST_CASE("EnemyAgent moves closer to target on one step", "[EnemyAgent]") {
 
 TEST_CASE("EnemyAgent pursues over multiple steps", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{15, 7});
 
     WorldPosition initial = enemy.GetLocation().AsWorldPosition();
@@ -137,16 +150,33 @@ TEST_CASE("EnemyAgent pursues over multiple steps", "[EnemyAgent]") {
     CHECK(final_dist < initial_dist);
 }
 
+TEST_CASE("EnemyAgent moves toward adjacent target", "[EnemyAgent]") {
+    MazeWorld world;
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
+    target.SetLocation(WorldPosition{9, 7});
+
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
+    enemy.SetLocation(WorldPosition{10, 7});
+
+    size_t action = enemy.SelectAction(world.GetGrid());
+    world.DoAction(enemy, action);
+
+    WorldPosition after = enemy.GetLocation().AsWorldPosition();
+
+    CHECK(after.CellX() == 9);
+    CHECK(after.CellY() == 7);
+}
+
 // ============================================================
 //  Wall avoidance
 // ============================================================
 
 TEST_CASE("EnemyAgent never occupies a wall cell", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 1});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{1, 7});
 
     const size_t wall_id = world.GetGrid().GetCellTypeID("wall");
@@ -162,16 +192,33 @@ TEST_CASE("EnemyAgent never occupies a wall cell", "[EnemyAgent]") {
     }
 }
 
+TEST_CASE("EnemyAgent avoids blocked optimal move", "[EnemyAgent]") {
+    MazeWorld world;
+    world.AddAgent<LearningExplorerAgent>("Target").SetLocation(WorldPosition{1, 1});
+
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
+    enemy.SetLocation(WorldPosition{1, 2});
+
+    size_t action = enemy.SelectAction(world.GetGrid());
+    int result = world.DoAction(enemy, action);
+    enemy.SetActionResult(result);
+
+    WorldPosition after = enemy.GetLocation().AsWorldPosition();
+
+    CHECK(world.GetGrid().IsValid(after));
+    CHECK(world.GetGrid()[after] != world.GetGrid().GetCellTypeID("wall"));
+}
+
 // ============================================================
 //  Movement validity
 // ============================================================
 
 TEST_CASE("EnemyAgent always stays on a valid grid position", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{15, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{5, 7});
 
     for (int step = 0; step < 40; ++step) {
@@ -186,10 +233,10 @@ TEST_CASE("EnemyAgent always stays on a valid grid position", "[EnemyAgent]") {
 
 TEST_CASE("EnemyAgent chases horizontally in open corridor", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 8});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 8});
 
     size_t action = enemy.SelectAction(world.GetGrid());
@@ -206,7 +253,7 @@ TEST_CASE("EnemyAgent chases vertically in open corridor", "[EnemyAgent]") {
     MazeWorld world;
     world.AddAgent<LearningExplorerAgent>("Target").SetLocation(WorldPosition{10, 2});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 8});
 
     size_t action = enemy.SelectAction(world.GetGrid());
@@ -219,7 +266,7 @@ TEST_CASE("EnemyAgent chases vertically in open corridor", "[EnemyAgent]") {
 
 TEST_CASE("EnemyAgent with no other agent still selects valid move", "[EnemyAgent]") {
     MazeWorld world;
-    auto &enemy = world.AddAgent<EnemyAgent>("Solo");
+    auto& enemy = world.AddAgent<EnemyAgent>("Solo");
     enemy.SetLocation(WorldPosition{10, 7});
 
     size_t action = enemy.SelectAction(world.GetGrid());
@@ -237,7 +284,7 @@ TEST_CASE("EnemyAgent with no other agent still selects valid move", "[EnemyAgen
 
 TEST_CASE("EnemyAgent Initialize returns true only when all four actions exist", "[EnemyAgent]") {
     MazeWorld world;
-    auto &agent = world.AddAgent<EnemyAgent>("Enemy");
+    auto& agent = world.AddAgent<EnemyAgent>("Enemy");
     agent.SetLocation(WorldPosition{10, 7});
 
     // MazeWorld adds all four actions, so Initialize should pass
@@ -257,7 +304,7 @@ TEST_CASE("EnemyAgent Initialize returns true only when all four actions exist",
 
 TEST_CASE("EnemyAgent Initialize can be called multiple times safely", "[EnemyAgent]") {
     MazeWorld world;
-    auto &agent = world.AddAgent<EnemyAgent>("Enemy");
+    auto& agent = world.AddAgent<EnemyAgent>("Enemy");
     agent.SetLocation(WorldPosition{10, 7});
 
     CHECK(agent.Initialize());
@@ -271,10 +318,10 @@ TEST_CASE("EnemyAgent Initialize can be called multiple times safely", "[EnemyAg
 
 TEST_CASE("EnemyAgent SetActionResult with failure does not corrupt state", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     WorldPosition before = enemy.GetLocation().AsWorldPosition();
@@ -295,10 +342,10 @@ TEST_CASE("EnemyAgent SetActionResult with failure does not corrupt state", "[En
 
 TEST_CASE("EnemyAgent SetActionResult with success updates position", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     WorldPosition before = enemy.GetLocation().AsWorldPosition();
@@ -314,10 +361,10 @@ TEST_CASE("EnemyAgent SetActionResult with success updates position", "[EnemyAge
 
 TEST_CASE("EnemyAgent handles repeated failed actions without crashing", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{1, 1});
 
     WorldPosition start = enemy.GetLocation().AsWorldPosition();
@@ -343,10 +390,10 @@ TEST_CASE("EnemyAgent handles repeated failed actions without crashing", "[Enemy
 
 TEST_CASE("EnemyAgent action ID 0 (REMAIN_STILL) keeps position unchanged", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     WorldPosition before = enemy.GetLocation().AsWorldPosition();
@@ -363,17 +410,17 @@ TEST_CASE("EnemyAgent action ID 0 (REMAIN_STILL) keeps position unchanged", "[En
 
 TEST_CASE("EnemyAgent GetName returns correct name", "[EnemyAgent]") {
     MazeWorld world;
-    auto &enemy = world.AddAgent<EnemyAgent>("TestEnemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("TestEnemy");
     enemy.SetLocation(WorldPosition{10, 7});
     CHECK(enemy.GetName() == "TestEnemy");
 }
 
 TEST_CASE("EnemyAgent GetID returns sequential IDs", "[EnemyAgent]") {
     MazeWorld world;
-    auto &first = world.AddAgent<EnemyAgent>("First");
+    auto& first = world.AddAgent<EnemyAgent>("First");
     first.SetLocation(WorldPosition{10, 7});
 
-    auto &second = world.AddAgent<EnemyAgent>("Second");
+    auto& second = world.AddAgent<EnemyAgent>("Second");
     second.SetLocation(WorldPosition{5, 7});
 
     CHECK(first.GetID() == 0);
@@ -382,7 +429,7 @@ TEST_CASE("EnemyAgent GetID returns sequential IDs", "[EnemyAgent]") {
 
 TEST_CASE("EnemyAgent GetLocation returns set position", "[EnemyAgent]") {
     MazeWorld world;
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     WorldPosition pos = enemy.GetLocation().AsWorldPosition();
@@ -392,7 +439,7 @@ TEST_CASE("EnemyAgent GetLocation returns set position", "[EnemyAgent]") {
 
 TEST_CASE("EnemyAgent SetSymbol and GetSymbol", "[EnemyAgent]") {
     MazeWorld world;
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{10, 7});
 
     enemy.SetSymbol('X');
@@ -408,10 +455,10 @@ TEST_CASE("EnemyAgent SetSymbol and GetSymbol", "[EnemyAgent]") {
 
 TEST_CASE("EnemyAgent cornered near walls still selects valid action", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{15, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     // Top-left corner area — walls above and to the left
     enemy.SetLocation(WorldPosition{1, 1});
 
@@ -428,10 +475,10 @@ TEST_CASE("EnemyAgent cornered near walls still selects valid action", "[EnemyAg
 
 TEST_CASE("EnemyAgent does not walk into walls after many steps at boundary", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{20, 5});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{1, 1});
 
     const size_t wall_id = world.GetGrid().GetCellTypeID("wall");
@@ -449,10 +496,10 @@ TEST_CASE("EnemyAgent does not walk into walls after many steps at boundary", "[
 
 TEST_CASE("EnemyAgent remains stable after long chase run", "[EnemyAgent]") {
     MazeWorld world;
-    auto &target = world.AddAgent<LearningExplorerAgent>("Target");
+    auto& target = world.AddAgent<LearningExplorerAgent>("Target");
     target.SetLocation(WorldPosition{1, 7});
 
-    auto &enemy = world.AddAgent<EnemyAgent>("Enemy");
+    auto& enemy = world.AddAgent<EnemyAgent>("Enemy");
     enemy.SetLocation(WorldPosition{15, 7});
 
     for (int step = 0; step < 200; ++step) {

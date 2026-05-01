@@ -1,7 +1,6 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
  * @brief Shared item and resource types for interactive world systems.
- * @note Status: PROPOSAL
  **/
 
 #pragma once

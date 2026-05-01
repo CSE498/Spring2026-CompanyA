@@ -53,6 +53,9 @@ private:
 
     [[nodiscard]] double ScoreAction(const WorldGrid& grid, size_t action_id, const WorldPosition& bfs_target) const;
 
+    [[nodiscard]] size_t GetInteractActionID() const;
+    [[nodiscard]] std::optional<size_t> InteractActionForAdjacentEnemy() const;
+
     void UpdateMemory(const WorldGrid& grid);
 
 public:

@@ -1,7 +1,6 @@
 /**
  * This file is for the Fall 2026 CSE 498 section 2 Capstone project.
- * @brief Represents a spawn point for resources that the Agents will grab from
- * @note Status: PROPOSAL
+ * @brief Resource node that accumulates resources for fetch agents.
  **/
 #pragma once
 #include <limits>
@@ -9,63 +8,88 @@
 #include "ItemType.hpp"
 
 namespace cse498 {
-/// @class Resource Spawn
-/// @brief In world spawn point
+/**
+ * @class ResourceSpawn
+ * @brief In-world resource node for one ItemType.
+ *
+ * ResourceSpawn stores raw resources produced by a ResourceProducer. The GUI
+ * uses quantity thresholds to render generated empty, partial, and full states.
+ * FetchAgent's default pickup waits until the spawn reaches the full state
+ * before collecting.
+ */
 class ResourceSpawn : public AgentBase {
 private:
-    ItemType m_itemType = ItemType::Wood;
-    int m_quantity = 0;
-    // Maximum amount an agent is allowed to collect at once
-    int m_maxCollectionQuantity = 10;
+    static constexpr int DEFAULT_MAX_COLLECTION_QUANTITY = 10; ///< Default pickup cap per collection.
+
+    ItemType m_itemType = ItemType::Wood; ///< Resource type stored by this spawn.
+    int m_quantity = 0; ///< Current amount waiting in the spawn.
+    int m_maxCollectionQuantity = DEFAULT_MAX_COLLECTION_QUANTITY; ///< Maximum amount collected per pickup.
 
 public:
     /**
-     * Constructor for Resource Spawn
-     * @param id unique entity ID
-     * @param name Name of entity
-     * @param world world this ResourceSpawn belongs to
-     * @param itemType type of item this resource pool holds
+     * @brief Construct a wood ResourceSpawn.
+     * @param id Unique entity ID.
+     * @param name Name of entity.
+     * @param world World this ResourceSpawn belongs to.
      */
     ResourceSpawn(size_t id, const std::string& name, const WorldBase& world) :
         AgentBase(id, name, world), m_itemType(ItemType::Wood) {}
 
+    /**
+     * @brief Construct a ResourceSpawn for a specific resource type.
+     * @param id Unique entity ID.
+     * @param name Name of entity.
+     * @param world World this ResourceSpawn belongs to.
+     * @param itemType Type of item this resource pool holds.
+     */
     ResourceSpawn(size_t id, const std::string& name, const WorldBase& world, const ItemType& itemType) :
         AgentBase(id, name, world), m_itemType(itemType) {}
 
     /**
-     * Get the quantity of item in the pool
-     * @return
+     * @brief Get the current quantity stored at this spawn.
+     * @return Amount of resource available.
      */
     int GetQuantity() const { return m_quantity; }
     /**
-     * Select action as agent. In this case do nothing
-     * @return
+     * @brief Resource spawns do not act autonomously.
+     * @return Remain-still action id.
      */
     size_t SelectAction(const WorldGrid&) override { return 0; }
 
     /**
-     * Add resources to the pool
-     * @param quantity quantity to add
+     * @brief Add resources to the pool.
+     * @param quantity Quantity to add. Non-positive and overflowing adds are ignored.
      */
     void AddResource(const int& quantity) {
+        if (quantity <= 0) {
+            return;
+        }
         // Check for integer overflow
         if (quantity > std::numeric_limits<int>::max() - m_quantity)
             return;
         m_quantity += quantity;
     }
     /**
-     * Set the max quantity an agent can collect at once
-     * @param maxQuant new max
+     * @brief Set the maximum quantity collected by one pickup.
+     *
+     * InteractiveWorld uses twice this amount as the full-state threshold for
+     * generated resource visuals and default FetchAgent pickup readiness.
+     *
+     * @param maxQuant New maximum collection quantity.
      */
-    void SetMaxCollectionQuantity(int maxQuant) { m_maxCollectionQuantity = maxQuant; }
+    void SetMaxCollectionQuantity(int maxQuant) {
+        if (maxQuant > 0) {
+            m_maxCollectionQuantity = maxQuant;
+        }
+    }
     /**
-     * Get the max quantity an agent can collect at once
-     * @return Current max quantity an agent can collect at once
+     * @brief Get the maximum quantity collected by one pickup.
+     * @return Current maximum collection quantity.
      */
     [[nodiscard]] int GetMaxCollectionQuantity() const { return m_maxCollectionQuantity; }
     /**
-     * Collect all resources from the resource spawn
-     * @return the quantity of items in the resource spawn
+     * @brief Collect resources from the spawn, capped by GetMaxCollectionQuantity().
+     * @return Quantity collected.
      */
     [[nodiscard]] int Collect() {
         int collectAmount = std::min(m_quantity, m_maxCollectionQuantity);
@@ -74,8 +98,8 @@ public:
     }
 
     /**
-     * Get the item type of the resource spawn
-     * @return
+     * @brief Get the item type stored by this spawn.
+     * @return Resource type.
      */
     ItemType GetItemType() const { return m_itemType; }
 };

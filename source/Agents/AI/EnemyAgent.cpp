@@ -72,6 +72,12 @@ int EnemyAgent::ManhattanDistance(WorldPosition a, WorldPosition b) const {
  * Actions that move closer to the player receive higher scores, while invalid
  * moves (out of bounds or into walls) are heavily penalized.
  *
+ * Assumptions:
+ * - The grid passed in is valid and matches the agent's world.
+ * - Movement actions ("up", "down", "left", "right") have already been registered.
+ * - Action ID 0 is treated as invalid/no-op for enemy movement selection.
+ * - If no other agent is known, the enemy scores moves relative to its current position.
+ *
  * @param grid The current world grid.
  * @param action_id The action being evaluated.
  * @return A score representing the desirability of the action.
@@ -94,7 +100,9 @@ double EnemyAgent::ScoreAction(const WorldGrid& grid, size_t action_id) const {
     // Get all known agents
     const std::vector<size_t> agent_ids = world.GetKnownAgents(*this);
 
-    // Default to current position in case no other agent is found.
+    // Intentional fallback: if no target agent is known, score moves relative
+    // to the current position. This gives the enemy deterministic wandering
+    // behavior instead of stalling with action 0.
     WorldPosition player_pos = current_pos;
 
     // Find the first other agent and treat it as the player.
@@ -104,6 +112,9 @@ double EnemyAgent::ScoreAction(const WorldGrid& grid, size_t action_id) const {
         }
 
         const AgentBase& known_agent = world.GetAgent(id);
+        if (!known_agent.GetLocation().IsPosition()) {
+            continue;
+        }
         player_pos = known_agent.GetLocation().AsWorldPosition();
         break;
     }
@@ -118,6 +129,9 @@ double EnemyAgent::ScoreAction(const WorldGrid& grid, size_t action_id) const {
 /**
  * Evaluates all possible movement actions and chooses the one with the highest score based on proximity to the
  * player.
+ *
+ * Assumes Initialize() has already succeeded, meaning all four movement
+ * actions are available before SelectAction() is called.
  *
  * @param grid The current world grid.
  * @return The ID of the selected action.

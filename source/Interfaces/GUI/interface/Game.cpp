@@ -18,8 +18,6 @@
 #include "../../../Agents/AI/LearningExplorerAgent.hpp"
 #include "../../../Agents/Classic/TradeSystem/TradeTypes.hpp"
 #include "../../../Agents/AI/EnemyAgent.hpp"
-#include "../../../Agents/AI/SmartEnemyAgent.hpp"
-#include "../../../Agents/AI/LearningExplorerAgent.hpp"
 #include "../../../Agents/AI/TrailblazerAgent.hpp"
 #include "../../../Agents/AI/FetchAgent.hpp"
 
@@ -27,6 +25,14 @@ namespace cse498
 {
 
     constexpr int TURN_DELAY = 100;
+    constexpr int TILE_SIZE = 64;
+    constexpr int ICON_SIZE = 48;
+    constexpr int PICKUP_MESSAGE_DURATION_MS = 1000;
+    constexpr int DUNGEON_SPAWN_X = 1;
+    constexpr int DUNGEON_SPAWN_Y = 1;
+
+    /// Autonomous overworld agent step delay. Dungeon agents remain turn-driven.
+    constexpr Uint32 OVERWORLD_AGENT_STEP_DELAY = 900;
 
     // -----------------------------------------------------------------------
     //  Initialization
@@ -35,7 +41,10 @@ namespace cse498
     bool Game::Initialize()
     {
         if (!mGameView->Initialize())
+        {
+            std::cerr << "GameView initialization failed." << std::endl;
             return false;
+        }
 
         std::cout << "Working directory: " << std::filesystem::current_path() << std::endl;
         std::cout << "Asset Dir: " << std::string(ASSETS_DIR) << std::endl;
@@ -45,13 +54,13 @@ namespace cse498
         // Title text
         mTitleText.SetRenderer(renderer);
         mTitleText.SetContent("Slay the Dungeon");
-        mTitleText.SetSize(48);
+        mTitleText.SetSize(ICON_SIZE);
         mTitleText.SetBold(true);
 
         // Pause text
         mPauseText.SetRenderer(renderer);
         mPauseText.SetContent("Paused");
-        mPauseText.SetSize(48);
+        mPauseText.SetSize(ICON_SIZE);
         mPauseText.SetBold(true);
 
         // Item pickup notifications
@@ -77,21 +86,80 @@ namespace cse498
         };
 
         // Overworld tiles
-        if (!LoadCheck("ow_grass", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_1.png")) return false;
-        if (!LoadCheck("ow_grass_flowers", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_5.png")) return false;
-        if (!LoadCheck("ow_grass_bones", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_4.png")) return false;
-        if (!LoadCheck("ow_grass_mud", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_3.png")) return false;
-        if (!LoadCheck("ow_grass_rock", std::string(ASSETS_DIR) + "/" + "world/forest/floor_tiles/tile_grass_2.png")) return false;
-        if (!LoadCheck("ow_entrance", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/door_left_forest.png")) return false;
-        if (!LoadCheck("ow_wall_left", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_left_forest.png")) return false;
-        if (!LoadCheck("ow_wall_right", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_right_forest.png")) return false;
-        if (!LoadCheck("ow_wall_top", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("ow_wall_bottom", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_bottom_forest.png")) return false;
-        if (!LoadCheck("ow_wall_corner", std::string(ASSETS_DIR) + "/" + "world/forest/walls/external/border_top_forest.png")) return false;
-        if (!LoadCheck("ow_building", std::string(ASSETS_DIR) + "/" + "tiles/lumber_yard.png")) return false;
-        if (!LoadCheck("ow_building_lumberyard", std::string(ASSETS_DIR) + "/" + "tiles/lumber_yard.png")) return false;
-        if (!LoadCheck("ow_building_quarry", std::string(ASSETS_DIR) + "/" + "tiles/quarry.png")) return false;
-        if (!LoadCheck("ow_building_mine", std::string(ASSETS_DIR) + "/" + "tiles/ore_mine.png")) return false;
+        if (!LoadCheck("ow_grass", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass.png"))
+            return false;
+        if (!LoadCheck("ow_grass_flowers", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass_detail.png"))
+            return false;
+        if (!LoadCheck("ow_grass_bones", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass_detail.png"))
+            return false;
+        if (!LoadCheck("ow_grass_mud", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/path.png"))
+            return false;
+        if (!LoadCheck("ow_grass_rock", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/grass.png"))
+            return false;
+        if (!LoadCheck("ow_entrance", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/entrance.png"))
+            return false;
+        if (!LoadCheck("ow_wall_left", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png"))
+            return false;
+        if (!LoadCheck("ow_wall_right", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png"))
+            return false;
+        if (!LoadCheck("ow_wall_top", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png"))
+            return false;
+        if (!LoadCheck("ow_wall_bottom", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png"))
+            return false;
+        if (!LoadCheck("ow_wall_corner", std::string(ASSETS_DIR) + "/" + "interactive_world/terrain/wall.png"))
+            return false;
+        if (!LoadCheck("ow_building", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/lumber_yard.png"))
+            return false;
+        if (!LoadCheck("ow_building_lumberyard",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/lumber_yard.png"))
+            return false;
+        if (!LoadCheck("ow_building_lumberyard_upgraded",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/lumber_yard_upgraded.png"))
+            return false;
+        if (!LoadCheck("ow_building_quarry", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/quarry.png"))
+            return false;
+        if (!LoadCheck("ow_building_quarry_upgraded",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/quarry_upgraded.png"))
+            return false;
+        if (!LoadCheck("ow_building_mine", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/mine.png"))
+            return false;
+        if (!LoadCheck("ow_building_mine_upgraded",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/mine_upgraded.png"))
+            return false;
+        if (!LoadCheck("ow_town_hall", std::string(ASSETS_DIR) + "/" + "interactive_world/buildings/town_hall.png"))
+            return false;
+        if (!LoadCheck("resource_wood_spawn", std::string(ASSETS_DIR) + "/" + "interactive_world/resources/wood_spawn.png"))
+            return false;
+        if (!LoadCheck("resource_wood_spawn_empty",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/wood_spawn_empty.png"))
+            return false;
+        if (!LoadCheck("resource_wood_spawn_full",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/wood_spawn_full.png"))
+            return false;
+        if (!LoadCheck("resource_stone_spawn",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/stone_spawn.png"))
+            return false;
+        if (!LoadCheck("resource_stone_spawn_empty",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/stone_spawn_empty.png"))
+            return false;
+        if (!LoadCheck("resource_stone_spawn_full",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/stone_spawn_full.png"))
+            return false;
+        if (!LoadCheck("resource_metal_spawn",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/metal_spawn.png"))
+            return false;
+        if (!LoadCheck("resource_metal_spawn_empty",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/metal_spawn_empty.png"))
+            return false;
+        if (!LoadCheck("resource_metal_spawn_full",
+                    std::string(ASSETS_DIR) + "/" + "interactive_world/resources/metal_spawn_full.png"))
+            return false;
+        if (!LoadCheck("resource_manager", std::string(ASSETS_DIR) + "/" + "interactive_world/agents/resource_manager.png"))
+            return false;
+        if (!LoadCheck("fetch_agent", std::string(ASSETS_DIR) + "/" + "interactive_world/agents/fetch_agent.png"))
+            return false;
+        if (!LoadCheck("interactive_player", std::string(ASSETS_DIR) + "/" + "interactive_world/agents/player.png"))
+            return false;
 
 
         // Mobs
@@ -167,7 +235,7 @@ namespace cse498
 
         // --- Shared special tiles ---
         if (!LoadCheck("wall_trap", std::string(ASSETS_DIR) + "/" +  "world/dungeon/floor_tiles/tile_stoneBrick_3.png")) return false;
-        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "items/item_potion_defense.png")) return false;
+        if (!LoadCheck("wall_loot", std::string(ASSETS_DIR) + "/" +  "tiles/item_spawn.png")) return false;
         if (!LoadCheck("wall_skeleton", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_skeleton.png")) return false;
         if (!LoadCheck("wall_goblin", std::string(ASSETS_DIR) + "/" +  "agents/monsters/agent_monster_goblin.png")) return false;
         // KAREN: Changes to match DungeonWorld
@@ -233,150 +301,229 @@ namespace cse498
         return true;
     }
 
-    void Game::SetupOverworld()
+    void BuildImageGridFromWorldGrid(const WorldGrid& worldGrid, ImageGrid& imageGrid)
     {
+    const size_t world_w = worldGrid.GetWidth();
+    const size_t world_h = worldGrid.GetHeight();
+
+    for (size_t y = 0; y < world_h; ++y)
+    {
+        for (size_t x = 0; x < world_w; ++x)
+        {
+            WorldPosition pos(x, y);
+            const std::string& cell_name = worldGrid.GetCellTypeName(worldGrid[pos]);
+            imageGrid.SetCell(x, y, cell_name);
+        }
+    }
+    }
+
+    void Game::SetupOverworld() {
         mOverWorld = std::make_shared<InteractiveWorld>();
 
-        mOverWorld->AddPacingAgent("skeleton", 2, 2, true);
-        /// @internal Group 17 AI hook: drops a @ref LearningExplorerAgent into the
-        /// overworld so the user sees an AI-driven NPC wandering alongside the
-        /// scripted @ref PacingAgent. Rendered as a goblin in RenderOverworld().
-        /// group 1 code is used to generate the agent
-        mOverWorld->AddLearningExplorerAgent(5, 5);
-
-        // Starting resources
         mOverWorld->GetInventory().AddItem(ItemType::Wood, 10);
         mOverWorld->GetInventory().AddItem(ItemType::Stone, 5);
 
-        // Buildings — world owns them via AddAgent
-        auto lumberYard = std::make_unique<Building>(1, "Lumber Yard", *mOverWorld);
-        lumberYard->SetSymbol('L');
-        lumberYard->AddUpgrade(ItemType::Wood, 15);
-        lumberYard->AddUpgrade(ItemType::Wood, 50);
-        lumberYard->AddUpgrade(ItemType::Stone, 50);
-        auto& lumberYardRef = mOverWorld->AddAgent<Building>(std::move(lumberYard));
-        mOverWorld->AddBuilding(lumberYardRef, WorldPosition{2, 1});
+        auto townHallPtr = std::make_unique<TownHall>(mOverWorld->GetNextAgentId(), "Town Hall", *mOverWorld,
+                                                    mOverWorld->GetInventoryPtr());
+        townHallPtr->SetSymbol('T');
+        TownHall& townHall = mOverWorld->AddAgent(std::move(townHallPtr));
+        mOverWorld->AddTownHall(townHall, WorldPosition{8, 6});
 
-        auto quarry = std::make_unique<Building>(2, "Quarry", *mOverWorld);
-        quarry->SetSymbol('Q');
-        quarry->AddUpgrade(ItemType::Wood, 50);
-        quarry->AddUpgrade(ItemType::Stone, 50);
-        quarry->AddUpgrade(ItemType::Metal, 35);
-        auto& quarryRef = mOverWorld->AddAgent<Building>(std::move(quarry));
-        mOverWorld->AddBuilding(quarryRef, WorldPosition{5, 3});
+        Building& lumberYardRef = mOverWorld->AddAgent<Building>("Lumber Yard");
+        lumberYardRef.SetSymbol('L');
+        lumberYardRef.AddUpgrade(ItemType::Wood, 15);
 
-        auto mine = std::make_unique<Building>(3, "Ore Mine", *mOverWorld);
-        mine->SetSymbol('M');
-        mine->AddUpgrade(ItemType::Stone, 100);
-        mine->AddUpgrade(ItemType::Metal, 50);
-        mine->AddUpgrade(ItemType::Metal, 100);
-        auto& mineRef = mOverWorld->AddAgent<Building>(std::move(mine));
-        mOverWorld->AddBuilding(mineRef, WorldPosition{8, 5});
+        Building& quarryRef = mOverWorld->AddAgent<Building>("Quarry");
+        quarryRef.SetSymbol('Q');
+        quarryRef.AddUpgrade(ItemType::Wood, 50);
+        quarryRef.AddUpgrade(ItemType::Stone, 50);
+        quarryRef.AddUpgrade(ItemType::Metal, 35);
 
-        // Resource spawns — placed adjacent to their buildings
-        auto woodSpawn = std::make_unique<ResourceSpawn>(100, "Wood Spawn", *mOverWorld, ItemType::Wood);
-        woodSpawn->SetLocation(WorldPosition{3, 1});  // next to Lumber Yard at {2,1}
-        auto& woodSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(woodSpawn));
+        Building& mineRef = mOverWorld->AddAgent<Building>("Mine");
+        mineRef.SetSymbol('M');
+        mineRef.AddUpgrade(ItemType::Stone, 100);
+        mineRef.AddUpgrade(ItemType::Metal, 50);
+        mineRef.AddUpgrade(ItemType::Metal, 100);
 
-        auto stoneSpawn = std::make_unique<ResourceSpawn>(101, "Stone Spawn", *mOverWorld, ItemType::Stone);
-        stoneSpawn->SetLocation(WorldPosition{5, 4});  // below Quarry at {5,3}
-        auto& stoneSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(stoneSpawn));
+        auto woodSpawnPtr =
+                std::make_unique<ResourceSpawn>(mOverWorld->GetNextAgentId(), "Wood Spawn", *mOverWorld, ItemType::Wood);
+        woodSpawnPtr->SetSymbol('l');
+        ResourceSpawn& woodSpawnRef = mOverWorld->AddAgent(std::move(woodSpawnPtr));
+        woodSpawnRef.SetMaxCollectionQuantity(10);
+        mOverWorld->AddResourceSpawn(woodSpawnRef, WorldPosition{15, 1});
 
-        auto metalSpawn = std::make_unique<ResourceSpawn>(102, "Metal Spawn", *mOverWorld, ItemType::Metal);
-        metalSpawn->SetLocation(WorldPosition{8, 6});  // below Ore Mine at {8,5}
-        auto& metalSpawnRef = mOverWorld->AddAgent<ResourceSpawn>(std::move(metalSpawn));
+        auto stoneSpawnPtr =
+                std::make_unique<ResourceSpawn>(mOverWorld->GetNextAgentId(), "Stone Spawn", *mOverWorld, ItemType::Stone);
+        stoneSpawnPtr->SetSymbol('q');
+        ResourceSpawn& stoneSpawnRef = mOverWorld->AddAgent(std::move(stoneSpawnPtr));
+        stoneSpawnRef.SetMaxCollectionQuantity(5);
+        stoneSpawnRef.SetLocation(WorldPosition{1, 11});
 
-        // Fetch Agent (Group 1 AI)
-        auto& fetcher = mOverWorld->AddAgent<FetchAgent>("Fetcher");
-        fetcher.SetLocation(WorldPosition{3, 2});
-        fetcher.SetOrigin(woodSpawnRef);        // where it collects from
-        fetcher.SetDepositPoint(lumberYardRef); // where it delivers to
+        auto metalSpawnPtr =
+                std::make_unique<ResourceSpawn>(mOverWorld->GetNextAgentId(), "Metal Spawn", *mOverWorld, ItemType::Metal);
+        metalSpawnPtr->SetSymbol('m');
+        ResourceSpawn& metalSpawnRef = mOverWorld->AddAgent(std::move(metalSpawnPtr));
+        metalSpawnRef.SetMaxCollectionQuantity(5);
+        metalSpawnRef.SetLocation(WorldPosition{15, 11});
 
-        auto& stoneFetcher = mOverWorld->AddAgent<FetchAgent>("StoneFetcher");
-        stoneFetcher.SetLocation(WorldPosition{5, 5});
-        stoneFetcher.SetOrigin(stoneSpawnRef);
-        stoneFetcher.SetDepositPoint(quarryRef);
+        // Wood starts unlocked and produces 10 wood every 5 seconds.
+        mOverWorld->AddProducer(std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2));
 
-        // Resource producers
-        auto woodProducer = std::make_shared<ResourceProducer>(lumberYardRef, woodSpawnRef, ItemType::Wood, 2.0f);
-        auto stoneProducer = std::make_shared<ResourceProducer>(quarryRef, stoneSpawnRef, ItemType::Stone, 1.0f);
-        auto metalProducer = std::make_shared<ResourceProducer>(mineRef, metalSpawnRef, ItemType::Metal, 0.5f);
-        mOverWorld->AddProducer(woodProducer);
-        mOverWorld->AddProducer(stoneProducer);
-        mOverWorld->AddProducer(metalProducer);
+        mOverWorld->AddBuilding(lumberYardRef, WorldPosition{12, 3});
+        quarryRef.SetLocation(WorldPosition{4, 9});
+        mineRef.SetLocation(WorldPosition{12, 9});
 
-        // Player
-        auto& player = mOverWorld->AddAgent<PlayerAgent>("Player");
-        player.SetLocation(WorldPosition{1, 1});
+        auto configureFetcher = [](FetchAgent& fetcher, AgentBase& origin, AgentBase& deposit, ItemType itemType,
+                                char symbol, WorldPosition position) {
+            fetcher.SetOrigin(origin).SetDepositPoint(deposit).SetItemType(itemType).SetSymbol(symbol).SetLocation(
+                    position);
+        };
+
+        FetchAgent& woodToLumberYard = mOverWorld->AddAgent<FetchAgent>("Wood To Lumber Yard");
+        configureFetcher(woodToLumberYard, woodSpawnRef, lumberYardRef, ItemType::Wood, '1', WorldPosition{14, 2});
+
+        FetchAgent& woodToTownHall = mOverWorld->AddAgent<FetchAgent>("Lumber Yard To Town Hall");
+        configureFetcher(woodToTownHall, lumberYardRef, townHall, ItemType::Wood, '2', WorldPosition{12, 4});
+
+        FetchAgent& stoneToQuarry = mOverWorld->AddAgent<FetchAgent>("Stone To Quarry");
+        stoneToQuarry.SetOrigin(stoneSpawnRef)
+                .SetDepositPoint(quarryRef)
+                .SetItemType(ItemType::Stone)
+                .SetSymbol('3')
+                .SetLocation(WorldPosition{2, 10});
+
+        FetchAgent& stoneToTownHall = mOverWorld->AddAgent<FetchAgent>("Quarry To Town Hall");
+        stoneToTownHall.SetOrigin(quarryRef)
+                .SetDepositPoint(townHall)
+                .SetItemType(ItemType::Stone)
+                .SetSymbol('4')
+                .SetLocation(WorldPosition{5, 8});
+
+        FetchAgent& metalToMine = mOverWorld->AddAgent<FetchAgent>("Metal To Mine");
+        metalToMine.SetOrigin(metalSpawnRef)
+                .SetDepositPoint(mineRef)
+                .SetItemType(ItemType::Metal)
+                .SetSymbol('5')
+                .SetLocation(WorldPosition{14, 10});
+
+        FetchAgent& metalToTownHall = mOverWorld->AddAgent<FetchAgent>("Mine To Town Hall");
+        metalToTownHall.SetOrigin(mineRef)
+                .SetDepositPoint(townHall)
+                .SetItemType(ItemType::Metal)
+                .SetSymbol('6')
+                .SetLocation(WorldPosition{12, 8});
+
+        ResourceManagementAgent& resourceManager = mOverWorld->AddAgent<ResourceManagementAgent>("Resource Manager");
+        resourceManager.SetInventory(mOverWorld->GetInventoryPtr()).SetSymbol('7');
+        resourceManager.AddManagedBuilding(lumberYardRef, true);
+        resourceManager.AddManagedBuilding(quarryRef, false);
+        resourceManager.AddManagedBuilding(mineRef, false);
+        resourceManager.SetLocation(WorldPosition{2, 3});
+
+        woodToLumberYard.SetActive(true);
+        woodToTownHall.SetActive(true);
+        stoneToQuarry.SetActive(false);
+        stoneToTownHall.SetActive(false);
+        metalToMine.SetActive(false);
+        metalToTownHall.SetActive(false);
+
+        // Locked lanes keep valid future positions for AI compatibility but
+        // are hidden/inactive until their hire callback places blockers and
+        // starts their producers.
+        resourceManager.AddHireableLane("Quarry Lane", stoneToQuarry, stoneToTownHall, quarryRef, 10,
+                                        [this, stoneSpawn = &stoneSpawnRef, quarry = &quarryRef,
+                                        firstHauler = &stoneToQuarry, secondHauler = &stoneToTownHall]() {
+                                            mOverWorld->AddResourceSpawn(*stoneSpawn, WorldPosition{1, 11});
+                                            mOverWorld->AddBuilding(*quarry, WorldPosition{4, 9});
+                                            // Stone produces 5 stone every 10 seconds after the lane unlocks.
+                                            mOverWorld->AddProducer(std::make_shared<ResourceProducer>(
+                                                    *quarry, *stoneSpawn, ItemType::Stone, 0.5f, std::chrono::seconds(10)));
+                                            firstHauler->SetLocation(WorldPosition{2, 10});
+                                            secondHauler->SetLocation(WorldPosition{5, 8});
+                                        });
+        resourceManager.AddHireableLane(
+                "Mine Lane", metalToMine, metalToTownHall, mineRef, 20,
+                [this, metalSpawn = &metalSpawnRef, mine = &mineRef, firstHauler = &metalToMine,
+                secondHauler = &metalToTownHall]() {
+                    mOverWorld->AddResourceSpawn(*metalSpawn, WorldPosition{15, 11});
+                    mOverWorld->AddBuilding(*mine, WorldPosition{12, 9});
+                    // Metal produces 5 metal every 15 seconds after the lane unlocks.
+                    mOverWorld->AddProducer(std::make_shared<ResourceProducer>(*mine, *metalSpawn, ItemType::Metal,
+                                                                            1.0f / 3.0f, std::chrono::seconds(15)));
+                    firstHauler->SetLocation(WorldPosition{14, 10});
+                    secondHauler->SetLocation(WorldPosition{12, 8});
+                });
+
+        PlayerAgent& player = *mOverWorld->GetPlayer();
         player.AddGold(10000); // starting gold for trading demo
         mOverworldPlayer = &player;
 
         // Farming merchant NPC
-        auto& farmer = mOverWorld->AddAgent<FarmingAgent>("Farmer");
-        farmer.SetLocation(WorldPosition{4, 5});
-        farmer.SetHomePosition(WorldPosition{4, 5});
-        farmer.SetAssignedBuilding(&lumberYardRef);
-        farmer.SetWorkInterval(20);
-        farmer.SetRestockAmount(3);
-        farmer.SetRestockItemName("wheat");
+        // auto& farmer = mOverWorld->AddAgent<FarmingAgent>("Farmer");
+        // farmer.SetLocation(WorldPosition{4, 6});
+        // farmer.SetHomePosition(WorldPosition{4, 6});
+        // farmer.SetAssignedBuilding(&lumberYardRef);
+        // farmer.SetWorkInterval(20);
+        // farmer.SetRestockAmount(3);
+        // farmer.SetRestockItemName("wheat");
 
-        // Set up the farmer's shop offers
-        farmer.AddInitialOffer(TradeOffer{
-            .mItemName = "wheat",
-            .mBuyPrice = 2,
-            .mSellPrice = 1,
-            .mItemValue = 2,
-            .mStockMode = TradeStockMode::Limited,
-            .mStock = 5
-        });
-        farmer.AddInitialOffer(TradeOffer{
-            .mItemName = "apple",
-            .mBuyPrice = 3,
-            .mSellPrice = 1,
-            .mItemValue = 3,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        farmer.SetGold(50);
+        // // Set up the farmer's shop offers
+        // farmer.AddInitialOffer(TradeOffer{
+        //     .mItemName = "wheat",
+        //     .mBuyPrice = 2,
+        //     .mSellPrice = 1,
+        //     .mItemValue = 2,
+        //     .mStockMode = TradeStockMode::Limited,
+        //     .mStock = 5
+        // });
+        // farmer.AddInitialOffer(TradeOffer{
+        //     .mItemName = "apple",
+        //     .mBuyPrice = 3,
+        //     .mSellPrice = 1,
+        //     .mItemValue = 3,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // farmer.SetGold(50);
 
-        // Resource trader — buys world resources for gold
-        auto& trader = mOverWorld->AddAgent<MerchantAgent>("Trader");
-        trader.SetLocation(WorldPosition{10, 5});
-        trader.SetTradeGreeting("I'll buy your resources.");
-        trader.SetGold(11000); // enough so that if anyone actually tries to buy the crown they can
+        // // Resource trader — buys world resources for gold
+        // auto& trader = mOverWorld->AddAgent<MerchantAgent>("Trader");
+        // trader.SetLocation(WorldPosition{10, 6});
+        // trader.SetTradeGreeting("I'll buy your resources.");
+        // trader.SetGold(11000); // enough so that if anyone actually tries to buy the crown they can
 
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Wood",
-            .mBuyPrice = 0,
-            .mSellPrice = 2,
-            .mItemValue = 2,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Stone",
-            .mBuyPrice = 0,
-            .mSellPrice = 3,
-            .mItemValue = 3,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Metal",
-            .mBuyPrice = 0,
-            .mSellPrice = 5,
-            .mItemValue = 5,
-            .mStockMode = TradeStockMode::Unlimited,
-            .mStock = 0
-        });
-        trader.AddInitialOffer(TradeOffer{
-            .mItemName = "Crown",
-            .mBuyPrice = 10000,
-            .mSellPrice = 5000,
-            .mItemValue = 10000,
-            .mStockMode = TradeStockMode::Limited,
-            .mStock = 1
-        });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Wood",
+        //     .mBuyPrice = 0,
+        //     .mSellPrice = 2,
+        //     .mItemValue = 2,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Stone",
+        //     .mBuyPrice = 0,
+        //     .mSellPrice = 3,
+        //     .mItemValue = 3,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Metal",
+        //     .mBuyPrice = 0,
+        //     .mSellPrice = 5,
+        //     .mItemValue = 5,
+        //     .mStockMode = TradeStockMode::Unlimited,
+        //     .mStock = 0
+        // });
+        // trader.AddInitialOffer(TradeOffer{
+        //     .mItemName = "Crown",
+        //     .mBuyPrice = 10000,
+        //     .mSellPrice = 5000,
+        //     .mItemValue = 10000,
+        //     .mStockMode = TradeStockMode::Limited,
+        //     .mStock = 1
+        // });
 
         // Build the image grid
         const WorldGrid& grid = mOverWorld->GetGrid();
@@ -385,18 +532,20 @@ namespace cse498
 
         mOverworldGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
 
-        for (size_t y = 0; y < world_h; ++y)
-        {
-            for (size_t x = 0; x < world_w; ++x)
-            {
+        for (size_t y = 0; y < world_h; ++y) {
+            for (size_t x = 0; x < world_w; ++x) {
                 WorldPosition pos(x, y);
-                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
+                std::string cell_name = grid.GetCellTypeName(grid[pos]);
+                if (cell_name == "ow_building") {
+                    cell_name = "ow_grass";
+                }
                 mOverworldGrid->SetCell(x, y, cell_name);
             }
         }
 
         mOverWorld->SetAnalyticsManager(mAnalyticsManager);
     }
+
 
 
     void Game::SetupDungeon()
@@ -407,13 +556,15 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
         // KAREN: DungeonWorld already creates a player in its constructor
         // auto& player = mDungeonWorld->AddAgent<PlayerAgent>("Player");
         // player.SetLocation(WorldPosition{1, 1});
         // mDungeonPlayer = &player;
         mDungeonPlayer = mDungeonWorld->GetPlayer();
+        mDungeonPlayer->SetMaxHealth(10);
+        mDungeonPlayer->SetHealth(10);
 
         std::cout << "Dungeon player ID: " << mDungeonPlayer->GetID() << std::endl;
 
@@ -428,7 +579,7 @@ namespace cse498
          * same tile.
          */
         std::unordered_set<std::string> usedPositions;
-
+        [[maybe_unused]]
         auto PlaceOnNextFloor = [&](AgentBase& agent) {
             for (size_t y = 0; y < world_h; ++y) {
                 for (size_t x = 0; x < world_w; ++x) {
@@ -482,24 +633,18 @@ namespace cse498
         size_t world_w = grid.GetWidth();
         size_t world_h = grid.GetHeight();
 
-        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, 64, 64);
+        mDungeonGrid = std::make_unique<ImageGrid>(world_w, world_h, TILE_SIZE, TILE_SIZE);
 
-        for (size_t y = 0; y < world_h; ++y) {
-            for (size_t x = 0; x < world_w; ++x) {
-                WorldPosition pos(x, y);
-                const std::string& cell_name = grid.GetCellTypeName(grid[pos]);
-                mDungeonGrid->SetCell(x, y, cell_name);
-            }
-        }
+        BuildImageGridFromWorldGrid(grid, *mDungeonGrid);
     }
 
     void Game::SetupMainMenu()
     {
         mMainMenu.Clear();
 
-        mMainMenu.AddOption("New Game", [this]() { TransitionTo(GameState::OVERWORLD); });
+        mMainMenu.AddOption("Enter Game", [this]() { TransitionTo(GameState::OVERWORLD); });
 
-        mMainMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
+        mMainMenu.AddOption("Controls", [this]() { TransitionTo(GameState::CONTROLS); });
 
         mMainMenu.AddOption("Quit", [this]() { Quit(); });
     }
@@ -523,6 +668,7 @@ namespace cse498
                                  TransitionTo(GameState::OVERWORLD);
                                  mPreviousState = GameState::OVERWORLD;
                              });
+
         mPauseMenu.AddOption("Replay Overworld", [this]() {
             StartReplayOverworld();
         });
@@ -530,9 +676,31 @@ namespace cse498
             StartReplayDungeon();
         });
 
-        mPauseMenu.AddOption("Stats", [this]() { TransitionTo(GameState::STATS); });
+        mPauseMenu.AddOption("Stats", [this]() {
+            if (mAnalyticsManager) {
+                // Sync action logs then clear so they don't re-count next visit
+                mOverWorld->SyncAgentLogsToAnalytics();
+                mDungeonWorld->SyncAgentLogsToAnalytics();
 
-        mPauseMenu.AddOption("Settings", [this]() { TransitionTo(GameState::SETTINGS); });
+                for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i)
+                    mOverWorld->GetAgentByIndex(i).GetActionLog().Clear();
+                for (size_t i = 0; i < mDungeonWorld->GetNumAgents(); ++i)
+                    mDungeonWorld->GetAgentByIndex(i).GetActionLog().Clear();
+
+                // Flush combat stats
+                const auto& runStats = mAnalyticsManager->GetCurrentRunStats();
+                if (runStats.damageDealt > 0 || runStats.enemiesKilled > 0) {
+                    mAnalyticsManager->LogDamageDealt(runStats.damageDealt);
+                    mAnalyticsManager->LogEnemiesKilled(runStats.enemiesKilled);
+                    mAnalyticsManager->ResetCurrentRunStats();
+                }
+
+                mDashboardSnapshot = mStatsTracker->BuildSnapshot(*mAnalyticsManager);
+            }
+            TransitionTo(GameState::STATS);
+        });
+
+        mPauseMenu.AddOption("Controls", [this]() { TransitionTo(GameState::CONTROLS); });
 
         mPauseMenu.AddOption("Quit to Main Menu", [this]() { TransitionTo(GameState::MAIN_MENU); });
     }
@@ -565,17 +733,20 @@ namespace cse498
             case GameState::STATS:
                 UpdateStats();
                 break;
-            case GameState::SETTINGS:
-                UpdateSettings();
-                break;
             case GameState::REPLAYOVERWORLD:
                 ReplayOverworld();
                 break;
             case GameState::REPLAYDUNGEON:
                 ReplayDungeon();
                 break;
+            case GameState::CONTROLS:
+                UpdateControls();
+                break;
             case GameState::TRADING:
                 UpdateTrading();
+                break;
+            case GameState::RESOURCE_MANAGEMENT:
+                UpdateResourceManagement();
                 break;
             default:
                 break;
@@ -590,12 +761,6 @@ namespace cse498
             case GameState::OVERWORLD:
                 RenderOverworld();
                 break;
-            case GameState::REPLAYOVERWORLD:
-                RenderOverworld();
-                break;
-            case GameState::REPLAYDUNGEON:
-                RenderDungeon();
-                break;
             case GameState::DUNGEON:
                 RenderDungeon();
                 break;
@@ -605,11 +770,20 @@ namespace cse498
             case GameState::STATS:
                 RenderStats();
                 break;
-            case GameState::SETTINGS:
-                RenderSettings();
+            case GameState::REPLAYOVERWORLD:
+                RenderOverworld();
+                break;
+            case GameState::REPLAYDUNGEON:
+                RenderDungeon();
+                break;
+            case GameState::CONTROLS:
+                RenderControls();
                 break;
             case GameState::TRADING:
                 RenderTrading();
+                break;
+            case GameState::RESOURCE_MANAGEMENT:
+                RenderResourceManagement();
                 break;
             default:
                 break;
@@ -656,6 +830,18 @@ namespace cse498
                             }
                             if (count > 0) mTradeMenuSelection = (mTradeMenuSelection - 1 + count) % count;
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager) {
+                            int count = 0;
+                            if (mResourceMenuTab == 0) {
+                                count = static_cast<int>(mOverWorld->GetBuildings().size());
+                            } else if (mResourceMenuTab == 1) {
+                                count = static_cast<int>(mActiveResourceManager->GetHireableLaneCount());
+                            } else {
+                                count = 3;
+                            }
+                            if (count > 0)
+                                mResourceMenuSelection = (mResourceMenuSelection - 1 + count) % count;
+                        }
                         break;
                     case SDLK_DOWN:
                         if (mState == GameState::MAIN_MENU)
@@ -673,6 +859,18 @@ namespace cse498
                             }
                             if (count > 0) mTradeMenuSelection = (mTradeMenuSelection + 1 + count) % count;
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager) {
+                            int count = 0;
+                            if (mResourceMenuTab == 0) {
+                                count = static_cast<int>(mOverWorld->GetBuildings().size());
+                            } else if (mResourceMenuTab == 1) {
+                                count = static_cast<int>(mActiveResourceManager->GetHireableLaneCount());
+                            } else {
+                                count = 3;
+                            }
+                            if (count > 0)
+                                mResourceMenuSelection = (mResourceMenuSelection + 1) % count;
+                        }
                         break;
 
                     case SDLK_LEFT:
@@ -680,6 +878,11 @@ namespace cse498
                         if (mState == GameState::TRADING) {
                             mTradeBuyMode = !mTradeBuyMode;
                             mTradeMenuSelection = 0;
+                        }
+                        if (mState == GameState::RESOURCE_MANAGEMENT) {
+                            const int direction = (event.key.keysym.sym == SDLK_RIGHT) ? 1 : 2;
+                            mResourceMenuTab = (mResourceMenuTab + direction) % 3;
+                            mResourceMenuSelection = 0;
                         }
                         break;
                     case SDLK_RETURN:
@@ -740,6 +943,33 @@ namespace cse498
                                 }
                             }
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager) {
+                            std::string message;
+                            if (mResourceMenuTab == 0) {
+                                mActiveResourceManager->UpgradeBuilding(static_cast<std::size_t>(mResourceMenuSelection),
+                                                                        &message);
+                            } else if (mResourceMenuTab == 1) {
+                                mActiveResourceManager->HireLane(static_cast<std::size_t>(mResourceMenuSelection),
+                                                                &message);
+                                const WorldGrid& grid = mOverWorld->GetGrid();
+                                for (size_t y = 0; y < grid.GetHeight(); ++y) {
+                                    for (size_t x = 0; x < grid.GetWidth(); ++x) {
+                                        WorldPosition pos(x, y);
+                                        std::string cellName = grid.GetCellTypeName(grid[pos]);
+                                        if (cellName == "ow_building") {
+                                            cellName = "ow_grass";
+                                        }
+                                        mOverworldGrid->SetCell(x, y, cellName);
+                                    }
+                                }
+                            } else {
+                                const std::array<ItemType, 3> items = {ItemType::Wood, ItemType::Stone, ItemType::Metal};
+                                mActiveResourceManager->SellResource(
+                                        items[static_cast<std::size_t>(mResourceMenuSelection)], 1, &message);
+                            }
+                            mPickupMessage = message;
+                            mPickupMessageTime = SDL_GetTicks();
+                        }
                         break;
 
                 case SDLK_w:
@@ -778,10 +1008,32 @@ namespace cse498
                     }
                     break;
 
+                case SDLK_x:
+                    if (mState == GameState::OVERWORLD) {
+                        // InteractiveWorld-only debug shortcut for upgrade testing.
+                        auto& inventory = mOverWorld->GetInventory();
+                        auto fillResource = [&inventory](ItemType item) {
+                            const auto current = inventory.GetAmount(item);
+                            if (current < InteractiveWorldInventory::MAX_ITEMS_PER_TYPE) {
+                                inventory.AddItem(item, InteractiveWorldInventory::MAX_ITEMS_PER_TYPE - current);
+                            }
+                        };
+                        fillResource(ItemType::Wood);
+                        fillResource(ItemType::Stone);
+                        fillResource(ItemType::Metal);
+                        mPickupMessage = "Debug: resources maxed.";
+                        mPickupMessageTime = SDL_GetTicks();
+                    }
+                    break;
+
                 case SDLK_e:
                     if (mState == GameState::TRADING) {
                         // Close trade menu
                         mActiveMerchant = nullptr;
+                        mState = mPreviousState;
+                    }
+                    else if (mState == GameState::RESOURCE_MANAGEMENT) {
+                        mActiveResourceManager = nullptr;
                         mState = mPreviousState;
                     }
                     else if ((mState == GameState::OVERWORLD) && !mShowBackpack)
@@ -793,6 +1045,7 @@ namespace cse498
                         };
 
                         bool openedTrade = false;
+                        bool openedResourceManager = false;
                         for (const auto& adjPos : adjacent) {
                             if (openedTrade) break;
                             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
@@ -812,17 +1065,55 @@ namespace cse498
                             }
                         }
 
-                        // If no merchant found, collect resources and try upgrade
                         if (!openedTrade) {
+                            for (const auto& adjPos: adjacent) {
+                                if (openedResourceManager)
+                                    break;
+                                for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+                                    AgentBase& agent = mOverWorld->GetAgentByIndex(i);
+                                    if (!agent.GetLocation().IsPosition())
+                                        continue;
+                                    if (agent.GetLocation().AsWorldPosition() != adjPos)
+                                        continue;
+
+                                    if (auto* manager = dynamic_cast<ResourceManagementAgent*>(&agent)) {
+                                        mActiveResourceManager = manager;
+                                        mResourceMenuSelection = 0;
+                                        mResourceMenuTab = 0;
+                                        mPreviousState = mState;
+                                        mState = GameState::RESOURCE_MANAGEMENT;
+                                        openedResourceManager = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        // If no merchant found, use the InteractiveWorld interaction path.
+                        // This lets the GUI reach Group14 agents such as Resource Manager.
+                        if (!openedTrade && !openedResourceManager) {
+                            constexpr size_t interactAction = 5;
+                            if (mOverWorld->DoAction(*mOverworldPlayer, interactAction)) {
+                                mPickupMessage = "Interaction complete.";
+                                mPickupMessageTime = SDL_GetTicks();
+                                mTurnTaken = true;
+                                break;
+                            }
+
                             std::string combined;
                             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
                                 AgentBase& agent = mOverWorld->GetAgentByIndex(i);
                                 if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
+                                    if (spawn->GetQuantity() < spawn->GetMaxCollectionQuantity() * 2) {
+                                        continue;
+                                    }
                                     int collected = spawn->Collect();
                                     if (collected > 0) {
                                         mOverWorld->GetInventory().AddItem(spawn->GetItemType(), collected);
-                                        if (!combined.empty()) combined += "  ";
-                                        combined += std::to_string(collected) + " " + std::string(ItemTypeToString(spawn->GetItemType()));
+                                        if (!combined.empty())
+                                            combined += "  ";
+                                        combined += std::to_string(collected) + " " +
+                                                    std::string(ItemTypeToString(spawn->GetItemType()));
                                     }
                                 }
                             }
@@ -922,6 +1213,15 @@ namespace cse498
                             }
                             mPickupMessageTime = SDL_GetTicks();
                         }
+                        if (mState == GameState::RESOURCE_MANAGEMENT && mActiveResourceManager && mResourceMenuTab == 2) {
+                            const std::array<ItemType, 3> items = {ItemType::Wood, ItemType::Stone, ItemType::Metal};
+                            ItemType item = items[static_cast<std::size_t>(mResourceMenuSelection)];
+                            std::string message;
+                            mActiveResourceManager->SellResource(item, mOverWorld->GetInventory().GetAmount(item),
+                                                                &message);
+                            mPickupMessage = message;
+                            mPickupMessageTime = SDL_GetTicks();
+                        }
                     break;
 
                 // Number keys 0-9: move backpack item to hotbar slot
@@ -963,13 +1263,17 @@ namespace cse498
                     {
                         Resume();
                     }
-                    else if (mState == GameState::SETTINGS || mState == GameState::STATS)
+                    else if (mState == GameState::CONTROLS || mState == GameState::STATS)
                     {
                         Resume();
                     }
                     else if (mState == GameState::TRADING)
                     {
                         mActiveMerchant = nullptr;
+                        mState = mPreviousState;
+                    }
+                    else if (mState == GameState::RESOURCE_MANAGEMENT) {
+                        mActiveResourceManager = nullptr;
                         mState = mPreviousState;
                     }
                     break;
@@ -992,8 +1296,12 @@ namespace cse498
             mAnalyticsManager->LogDamageDealt(mAnalyticsManager->GetCurrentRunStats().damageDealt);
             mAnalyticsManager->LogEnemiesKilled(mAnalyticsManager->GetCurrentRunStats().enemiesKilled);
             mAnalyticsManager->ResetCurrentRunStats();
+            }
+
+        // Don't overwrite mPreviousState when leaving PAUSED for a sub-screen
+        if (mState != GameState::PAUSED && mState != GameState::STATS && mState != GameState::CONTROLS) {
+            mPreviousState = mState;
         }
-        mPreviousState = mState;
         mState = new_state;
     }
 
@@ -1013,24 +1321,28 @@ namespace cse498
     void Game::UpdateMainMenu() {}
 
 
-void Game::UpdateOverworld()
+    void Game::UpdateOverworld()
     {
-        // Tick resource producers every frame regardless of turn
-        // Producers are private, and UpdateWorld function is also private so needed a getter
-        for (const auto& producer : mOverWorld->GetProducers()) {
+        // Producers use their own burst intervals, so ticking every frame does
+        // not create resources until an interval has elapsed.
+        for (const auto& producer: mOverWorld->GetProducers()) {
             producer->Update();
         }
 
-        if (mTurnTaken) {
+        const Uint32 now = SDL_GetTicks();
+        if (now - mLastOverworldAgentTick >= OVERWORLD_AGENT_STEP_DELAY) {
+            mLastOverworldAgentTick = now;
             for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
                 AgentBase& agent = mOverWorld->GetAgentByIndex(i);
-                if (&agent == mOverworldPlayer) continue;
+                if (&agent == mOverworldPlayer)
+                    continue;
 
                 size_t action = agent.SelectAction(mOverWorld->GetGrid());
                 mOverWorld->DoAction(agent, action);
             }
-            mTurnTaken = false;
         }
+
+        mTurnTaken = false;
     }
 
 
@@ -1053,12 +1365,21 @@ void Game::UpdateOverworld()
             }
 
             mDungeonWorld->RemoveDeadAgents(); // KAREN: just in case...
+            mDungeonWorld->CleanupSpawnedEnemyIds(); // mark, moved out of inner in dungeon world to here
             mTurnTaken = false;
+        }
+
+        // Transfer dungeon gold earnings to Interactive World Inventory
+        size_t gold = mDungeonWorld->DrainAccumulatedGold();
+        if (gold > 0) {
+            mOverworldPlayer->AddGold(gold);
+            mPickupMessage = "Gained " + std::to_string(gold) + " gold from defeated enemy!";
+            mPickupMessageTime = SDL_GetTicks();
         }
     }
 
     void Game::UpdatePaused() {}
-    void Game::UpdateSettings() {}
+    void Game::UpdateControls() {}
 
     void Game::UpdateStats() {
         if (mAnalyticsManager) {
@@ -1089,18 +1410,39 @@ void Game::UpdateOverworld()
         mMainMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
     }
 
-    // Z-layer ordering. Put here for future reference of probable Game draw logic
-    void Game::RenderOverworld()
-    {
+    // Draw base terrain first, then InteractiveWorld agents/objects. Locked
+    // lane objects retain world positions but are skipped until purchased.
+    void Game::RenderOverworld() {
         RenderWorld(*mOverworldGrid, mCamX, mCamY);
 
         int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
         int th = static_cast<int>(mOverworldGrid->GetTileHeight());
 
-        for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i)
-        {
+        bool quarryLaneUnlocked = false;
+        bool mineLaneUnlocked = false;
+        for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
+            if (auto* manager = dynamic_cast<ResourceManagementAgent*>(&mOverWorld->GetAgentByIndex(i))) {
+                for (std::size_t laneIndex = 0; laneIndex < manager->GetHireableLaneCount(); ++laneIndex) {
+                    if (manager->GetHireableLaneLabel(laneIndex) == "Quarry Lane") {
+                        quarryLaneUnlocked = manager->IsLaneUnlocked(laneIndex);
+                    } else if (manager->GetHireableLaneLabel(laneIndex) == "Mine Lane") {
+                        mineLaneUnlocked = manager->IsLaneUnlocked(laneIndex);
+                    }
+                }
+            }
+        }
+
+        for (size_t i = 0; i < mOverWorld->GetNumAgents(); ++i) {
             AgentBase& agent = mOverWorld->GetAgentByIndex(i);
-            if (!agent.GetLocation().IsPosition()) continue;
+            if (!agent.GetLocation().IsPosition())
+                continue;
+            if (const auto* fetcher = dynamic_cast<FetchAgent*>(&agent); fetcher != nullptr && !fetcher->IsActive())
+                continue;
+            if ((agent.GetName() == "Quarry" || agent.GetName() == "Stone Spawn") && !quarryLaneUnlocked)
+                continue;
+            if ((agent.GetName() == "Mine" || agent.GetName() == "Ore Mine" || agent.GetName() == "Metal Spawn") &&
+                !mineLaneUnlocked)
+                continue;
 
             const WorldPosition& pos = agent.GetLocation().AsWorldPosition();
 
@@ -1109,22 +1451,44 @@ void Game::UpdateOverworld()
 
             std::string sprite = "ow_grass";
             if (&agent == mOverworldPlayer) {
-                sprite = "player";
+                sprite = "interactive_player";
             } else if (agent.GetName() == "Explorer") {
                 sprite = "goblin";
-            } else if (dynamic_cast<Building*>(&agent)) {
+            } else if (agent.GetName() == "Town Hall") {
+                sprite = "ow_town_hall";
+            } else if (auto* building = dynamic_cast<Building*>(&agent)) {
                 const std::string& name = agent.GetName();
                 if (name == "Lumber Yard") {
-                    sprite = "ow_building_lumberyard";
+                    sprite = building->GetCurrentLevel() > 0 ? "ow_building_lumberyard_upgraded" : "ow_building_lumberyard";
                 } else if (name == "Quarry") {
-                    sprite = "ow_building_quarry";
-                } else if (name == "Ore Mine") {
-                    sprite = "ow_building_mine";
+                    sprite = building->GetCurrentLevel() > 0 ? "ow_building_quarry_upgraded" : "ow_building_quarry";
+                } else if (name == "Mine" || name == "Ore Mine") {
+                    sprite = building->GetCurrentLevel() > 0 ? "ow_building_mine_upgraded" : "ow_building_mine";
                 } else {
                     sprite = "ow_building_lumberyard";
                 }
-            } else if (dynamic_cast<ResourceSpawn*>(&agent)) {
-                continue;
+            } else if (auto* spawn = dynamic_cast<ResourceSpawn*>(&agent)) {
+                // Resource asset states are generated as empty, partial, full.
+                // The middle state uses the base resource_*_spawn sprite.
+                const int fullThreshold = spawn->GetMaxCollectionQuantity() * 2;
+                const std::string stateSuffix = spawn->GetQuantity() == 0               ? "_empty"
+                                                : spawn->GetQuantity() >= fullThreshold ? "_full"
+                                                                                        : "";
+                switch (spawn->GetItemType()) {
+                    case ItemType::Wood:
+                        sprite = "resource_wood_spawn" + stateSuffix;
+                        break;
+                    case ItemType::Stone:
+                        sprite = "resource_stone_spawn" + stateSuffix;
+                        break;
+                    case ItemType::Metal:
+                        sprite = "resource_metal_spawn" + stateSuffix;
+                        break;
+                }
+            } else if (dynamic_cast<ResourceManagementAgent*>(&agent)) {
+                sprite = "resource_manager";
+            } else if (dynamic_cast<FetchAgent*>(&agent)) {
+                sprite = "fetch_agent";
             } else if (agent.GetName() == "Trader" || agent.GetName() == "Farmer") {
                 sprite = "player"; // use player sprite as placeholder for trader and farmer
             } else {
@@ -1137,13 +1501,37 @@ void Game::UpdateOverworld()
         // World resource inventory at top
         RenderWorldInventory();
         RenderPickupMessage();
-        RenderHotbar(mOverworldPlayer->GetInventory());
-        if (mShowBackpack) RenderBackpack(mOverworldPlayer->GetInventory());
     }
 
     void Game::RenderDungeon()
     {
         RenderWorld(*mDungeonGrid, mDungeonCamX, mDungeonCamY);
+
+        // Draw floor underneath loot chest tiles so they don't have a black background
+        {
+            int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
+            int th = static_cast<int>(mDungeonGrid->GetTileHeight());
+            const WorldGrid& grid = mDungeonWorld->GetGrid();
+            std::string floorName;
+            switch (mDungeonWorld->GetLevel()) {
+                case 1:  floorName = "floor_l1v1"; break;
+                case 2:  floorName = "floor_l2v1"; break;
+                case 3:  floorName = "floor_l3v1"; break;
+                default: floorName = "floor_l1v1"; break;
+            }
+
+            for (size_t y = 0; y < grid.GetHeight(); ++y) {
+                for (size_t x = 0; x < grid.GetWidth(); ++x) {
+                    WorldPosition pos(x, y);
+                    if (grid.GetCellTypeName(grid[pos]) == "wall_loot") {
+                        int screen_x = (static_cast<int>(x) - mDungeonCamX) * tw;
+                        int screen_y = (static_cast<int>(y) - mDungeonCamY) * th;
+                        mImageManager->DrawImage(floorName, screen_x, screen_y, tw, th);
+                        mImageManager->DrawImage("wall_loot", screen_x, screen_y, tw, th);
+                    }
+                }
+            }
+        }
 
         int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
         int th = static_cast<int>(mDungeonGrid->GetTileHeight());
@@ -1160,12 +1548,26 @@ void Game::UpdateOverworld()
             std::string sprite;
             if (&agent == mDungeonPlayer) {
                 sprite = "player";
-            } else if (agent.GetName() == "Goblin") {
+            } else if (agent.GetName().rfind("Goblin", 0) == 0) {
                 sprite = "goblin";
             } else {
                 sprite = "dun_monster";
             }
             mImageManager->DrawImage(sprite, screen_x, screen_y, tw, th);
+        }
+
+        // Player health display
+        {
+            double currentHP = mDungeonPlayer->GetCurrentHealth();
+            double maxHP = mDungeonPlayer->GetMaxHealth();
+
+            std::string healthText = "HP: " + std::to_string(static_cast<int>(currentHP))
+                                   + " / " + std::to_string(static_cast<int>(maxHP));
+
+            mPickupText.SetSize(18);
+            mPickupText.SetBold(true);
+            mPickupText.SetContent(healthText);
+            mPickupText.Draw(80, mGameView->GetHeight() - 100);
         }
 
         RenderHotbar(mDungeonPlayer->GetInventory());
@@ -1203,9 +1605,59 @@ void Game::UpdateOverworld()
         mPauseMenu.DrawMenu(renderer, menu_x, menu_y, menu_w, menu_h);
     }
 
-    void Game::RenderSettings()
+    void Game::RenderControls()
     {
-        // TODO: render settings screen
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+        SDL_Rect bg = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &bg);
+
+        int y = 30;
+        const int LINE_H = 24;
+
+        mStatsText.SetContent("Controls");
+        mStatsText.SetSize(28);
+        mStatsText.SetBold(true);
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
+        y += LINE_H * 2;
+
+        mStatsText.SetSize(14);
+        mStatsText.SetBold(false);
+
+        auto drawLine = [&](const std::string& text) {
+            mStatsText.SetContent(text);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+        };
+
+        auto drawHeader = [&](const std::string& text) {
+            y += LINE_H / 2;
+            mStatsText.SetBold(true);
+            mStatsText.SetContent(text);
+            mStatsText.Draw(60, y);
+            y += LINE_H;
+            mStatsText.SetBold(false);
+        };
+
+        drawHeader("Movement & General");
+        drawLine("W/A/S/D - Move    E - Interact/Attack    TAB - Backpack    1-0 - Equip item");
+        drawLine("ESC - Pause    Arrows - Navigate menus    Enter - Confirm");
+
+        drawHeader("Overworld");
+        drawLine("E - Collect resources / Upgrade buildings / Open trade menu");
+        drawLine("Left/Right - Buy/Sell tabs    Up/Down - Browse    Enter - Confirm    R - Sell all");
+
+        drawHeader("Dungeon");
+        drawLine("E - Attack adjacent enemy / Interact with exit door");
+        drawLine("Walk into exit door to advance to next level");
+
+        y = h - 40;
+        mStatsText.SetSize(12);
+        mStatsText.SetContent("Press ESC to return");
+        mStatsText.Draw((w - mStatsText.GetWidth()) / 2, y);
     }
 
     void Game::RenderStats() {
@@ -1307,11 +1759,11 @@ void Game::UpdateOverworld()
             const auto& slot = slots[i];
             if (!slot.IsEmpty()) {
                 const Item* item = slot.GetItem();
-                int item_x = bar_x + static_cast<int>(i) * slot_size + (slot_size - 48) / 2;
-                int item_y = bar_y + (bar_h - 48) / 2;
+                int item_x = bar_x + static_cast<int>(i) * slot_size + (slot_size - ICON_SIZE) / 2;
+                int item_y = bar_y + (bar_h - ICON_SIZE) / 2;
 
                 // Draw item icon if loaded — uses the item's image path as key
-                mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                mImageManager->DrawImage(item->GetName(), item_x, item_y, ICON_SIZE, ICON_SIZE);
             }
         }
 
@@ -1367,9 +1819,9 @@ void Game::UpdateOverworld()
                 // Draw item if present
                 if (!slots[index].IsEmpty()) {
                     const Item* item = slots[index].GetItem();
-                    int item_x = x + (slot_size - 48) / 2;
-                    int item_y = y + (slot_size - 48) / 2;
-                    mImageManager->DrawImage(item->GetName(), item_x, item_y, 48, 48);
+                    int item_x = x + (slot_size - ICON_SIZE) / 2;
+                    int item_y = y + (slot_size - ICON_SIZE) / 2;
+                    mImageManager->DrawImage(item->GetName(), item_x, item_y, ICON_SIZE, ICON_SIZE);
                 }
 
                 // Cursor highlight
@@ -1396,9 +1848,10 @@ void Game::UpdateOverworld()
 
             const auto& inv = mOverWorld->GetInventory();
 
-            std::string text = "Wood: " + std::to_string(inv.GetAmount(ItemType::Wood))
-                             + "   Stone: " + std::to_string(inv.GetAmount(ItemType::Stone))
-                             + "   Metal: " + std::to_string(inv.GetAmount(ItemType::Metal));
+            std::string text = "Gold: " + std::to_string(mOverworldPlayer->GetGold())
+                 + "   Wood: " + std::to_string(inv.GetAmount(ItemType::Wood))
+                 + "   Stone: " + std::to_string(inv.GetAmount(ItemType::Stone))
+                 + "   Metal: " + std::to_string(inv.GetAmount(ItemType::Metal));
 
             mPickupText.SetContent(text);
             mPickupText.SetSize(18);
@@ -1411,7 +1864,7 @@ void Game::UpdateOverworld()
         if (mPickupMessage.empty()) return;
 
         Uint32 elapsed = SDL_GetTicks() - mPickupMessageTime;
-        if (elapsed > 1000) {
+        if (elapsed > PICKUP_MESSAGE_DURATION_MS) {
             mPickupMessage.clear();
             return;
         }
@@ -1427,6 +1880,10 @@ void Game::UpdateOverworld()
     void Game::UpdateTrading() {
         // Nothing to update — trade menu is event-driven
         // Put here for consistency or possible stat logging.
+    }
+
+    void Game::UpdateResourceManagement() {
+        // Resource management is event-driven.
     }
 
     void Game::RenderTrading() {
@@ -1558,8 +2015,140 @@ void Game::UpdateOverworld()
         text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
         mPickupText.Draw(text_x, y);
     }
+    
+    void Game::RenderResourceManagement() {
+        RenderOverworld();
 
-    size_t Game::KeyToAction(SDL_Keycode key) {
+        if (!mActiveResourceManager)
+            return;
+
+        SDL_Renderer* renderer = mGameView->GetRenderer();
+        int w = mGameView->GetWidth();
+        int h = mGameView->GetHeight();
+
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
+        SDL_Rect overlay = {0, 0, w, h};
+        SDL_RenderFillRect(renderer, &overlay);
+
+        int panel_w = 520;
+        int panel_h = 410;
+        int panel_x = (w - panel_w) / 2;
+        int panel_y = (h - panel_h) / 2;
+
+        SDL_SetRenderDrawColor(renderer, 30, 30, 40, 240);
+        SDL_Rect panel = {panel_x, panel_y, panel_w, panel_h};
+        SDL_RenderFillRect(renderer, &panel);
+        SDL_SetRenderDrawColor(renderer, 100, 100, 120, 255);
+        SDL_RenderDrawRect(renderer, &panel);
+
+        int y = panel_y + 15;
+
+        mPickupText.SetSize(20);
+        mPickupText.SetBold(true);
+        mPickupText.SetContent("Resource Management");
+        int text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
+        mPickupText.Draw(text_x, y);
+        y += 30;
+
+        const std::array<std::string, 3> tabs = {"UPGRADE", "LANES", "SELL"};
+        mPickupText.SetSize(18);
+        for (int i = 0; i < 3; ++i) {
+            mPickupText.SetBold(mResourceMenuTab == i);
+            mPickupText.SetContent(mResourceMenuTab == i ? "[ " + tabs[i] + " ]" : "  " + tabs[i] + "  ");
+            mPickupText.Draw(panel_x + (i + 1) * panel_w / 4 - mPickupText.GetWidth() / 2, y);
+        }
+        y += 34;
+
+        const auto& inv = mOverWorld->GetInventory();
+        mPickupText.SetSize(15);
+        mPickupText.SetBold(false);
+        mPickupText.SetContent("Stored: Wood " + std::to_string(inv.GetAmount(ItemType::Wood)) + "   Stone " +
+                            std::to_string(inv.GetAmount(ItemType::Stone)) + "   Metal " +
+                            std::to_string(inv.GetAmount(ItemType::Metal)) + "   Gold " +
+                            std::to_string(mActiveResourceManager->GetGold()));
+        mPickupText.Draw(panel_x + 20, y);
+        y += 28;
+
+        if (mResourceMenuTab == 0) {
+            auto buildings = mOverWorld->GetBuildings();
+            for (int i = 0; i < static_cast<int>(buildings.size()); ++i) {
+                Building* building = buildings[static_cast<std::size_t>(i)];
+                std::string line = building->GetName() + "  level " + std::to_string(building->GetCurrentLevel()) + "/" +
+                                std::to_string(building->GetMaxLevel());
+
+                if (!mActiveResourceManager->IsManagedBuildingUnlocked(static_cast<std::size_t>(i))) {
+                    line += "  locked";
+                } else if (auto upgrade = building->GetNextUpgradeInfo()) {
+                    line += "  next: " + std::to_string(upgrade->quantity) + " " +
+                            std::string(ItemTypeToString(upgrade->item));
+                } else {
+                    line += "  max level";
+                }
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(i == mResourceMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (i == mResourceMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 27;
+            }
+        } else if (mResourceMenuTab == 1) {
+            for (int i = 0; i < static_cast<int>(mActiveResourceManager->GetHireableLaneCount()); ++i) {
+                const bool unlocked = mActiveResourceManager->IsLaneUnlocked(static_cast<std::size_t>(i));
+                std::string line =
+                        mActiveResourceManager->GetHireableLaneLabel(static_cast<std::size_t>(i)) + "  cost " +
+                        std::to_string(mActiveResourceManager->GetHireableLaneCost(static_cast<std::size_t>(i))) +
+                        " gold  " + (unlocked ? "active" : "locked");
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(i == mResourceMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (i == mResourceMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 27;
+            }
+        } else {
+            const std::array<ItemType, 3> items = {ItemType::Wood, ItemType::Stone, ItemType::Metal};
+            for (int i = 0; i < 3; ++i) {
+                ItemType item = items[static_cast<std::size_t>(i)];
+                std::string line = std::string(ItemTypeToString(item)) + "  " +
+                                std::to_string(mActiveResourceManager->GetSellPrice(item)) + " gold each  (have " +
+                                std::to_string(inv.GetAmount(item)) + ")";
+
+                mPickupText.SetSize(16);
+                mPickupText.SetBold(i == mResourceMenuSelection);
+                mPickupText.SetContent(line);
+                mPickupText.Draw(panel_x + 30, y);
+
+                if (i == mResourceMenuSelection) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 180);
+                    SDL_Rect sel = {panel_x + 10, y - 2, panel_w - 20, 22};
+                    SDL_RenderDrawRect(renderer, &sel);
+                }
+                y += 27;
+            }
+        }
+
+        y = panel_y + panel_h - 30;
+        mPickupText.SetSize(12);
+        mPickupText.SetBold(false);
+        mPickupText.SetContent("LEFT/RIGHT: tabs  UP/DOWN: browse  ENTER: confirm  R: sell all selected  E: close");
+        text_x = panel_x + (panel_w - mPickupText.GetWidth()) / 2;
+        mPickupText.Draw(text_x, y);
+    }
+
+    size_t Game::KeyToAction(SDL_Keycode key) const{
         switch (key) {
         case SDLK_w: return 1; // MOVE_UP
         case SDLK_s: return 2; // MOVE_DOWN
@@ -1583,13 +2172,13 @@ void Game::UpdateOverworld()
 
             int tw = static_cast<int>(mOverworldGrid->GetTileWidth());
             int th = static_cast<int>(mOverworldGrid->GetTileHeight());
-            int Tiles_x = mGameView->GetWidth() / tw;
-            int Tiles_y = mGameView->GetHeight() / th;
-            int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - Tiles_x);
-            int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - Tiles_y);
+            int tiles_x = mGameView->GetWidth() / tw;
+            int tiles_y = mGameView->GetHeight() / th;
+            int max_cam_x = std::max(0, static_cast<int>(mOverworldGrid->GetWidth()) - tiles_x);
+            int max_cam_y = std::max(0, static_cast<int>(mOverworldGrid->GetHeight()) - tiles_y);
 
-            mCamX = std::clamp(mPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mCamY = std::clamp(mPlayerY - Tiles_y / 2, 0, max_cam_y);
+            mCamX = std::clamp(mPlayerX - tiles_x / 2, 0, max_cam_x);
+            mCamY = std::clamp(mPlayerY - tiles_y / 2, 0, max_cam_y);
         }
 
         else if (mState == GameState::DUNGEON) {
@@ -1609,7 +2198,8 @@ void Game::UpdateOverworld()
             mDungeonPlayerY = static_cast<int>(pos.CellY());
 
             // Detect level change — player was moved to (1,1) and grid was regenerated
-            if (pos.CellX() == 1 && pos.CellY() == 1 && pos_before.CellX() != 1 && pos_before.CellY() != 1) {
+            if (pos.CellX() == DUNGEON_SPAWN_X && pos.CellY() == DUNGEON_SPAWN_Y && pos_before.CellX()
+            != DUNGEON_SPAWN_X && pos_before.CellY() != DUNGEON_SPAWN_Y) {
                 RebuildDungeonGrid();
                 mPickupMessage = "Entering next level...";
                 mPickupMessageTime = SDL_GetTicks();
@@ -1632,13 +2222,13 @@ void Game::UpdateOverworld()
             // Update camera
             int tw = static_cast<int>(mDungeonGrid->GetTileWidth());
             int th = static_cast<int>(mDungeonGrid->GetTileHeight());
-            int Tiles_x = mGameView->GetWidth() / tw;
-            int Tiles_y = mGameView->GetHeight() / th;
-            int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - Tiles_x);
-            int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - Tiles_y);
+            int tiles_x = mGameView->GetWidth() / tw;
+            int tiles_y = mGameView->GetHeight() / th;
+            int max_cam_x = std::max(0, static_cast<int>(mDungeonGrid->GetWidth()) - tiles_x);
+            int max_cam_y = std::max(0, static_cast<int>(mDungeonGrid->GetHeight()) - tiles_y);
 
-            mDungeonCamX = std::clamp(mDungeonPlayerX - Tiles_x / 2, 0, max_cam_x);
-            mDungeonCamY = std::clamp(mDungeonPlayerY - Tiles_y / 2, 0, max_cam_y);
+            mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
+            mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
         }
 
         mTurnTaken = true;
@@ -1833,4 +2423,5 @@ void Game::UpdateOverworld()
         mDungeonCamX = std::clamp(mDungeonPlayerX - tiles_x / 2, 0, max_cam_x);
         mDungeonCamY = std::clamp(mDungeonPlayerY - tiles_y / 2, 0, max_cam_y);
     }
+
 } // namespace cse498

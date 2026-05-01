@@ -29,6 +29,9 @@ namespace cse498 {
      */
     class EnemyAgent : public AgentBase {
     private:
+        /// Bad score to prevent certain agent behavior
+        static constexpr int BadScore = -1000000;
+
         // Predict where this move would place the enemy.
         [[nodiscard]] WorldPosition PredictMove(WorldPosition pos, size_t action_id) const;
 
@@ -39,9 +42,6 @@ namespace cse498 {
         [[nodiscard]] double ScoreAction(const WorldGrid &grid, size_t action_id) const;
 
     public:
-        /// Bad score to prevent certain agent behavior
-        static constexpr int BadScore = -1000000;
-
         EnemyAgent(size_t id, const std::string &name, const WorldBase &world);
         /**
          * Default Deconstructor

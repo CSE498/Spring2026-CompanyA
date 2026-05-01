@@ -128,6 +128,16 @@ private:
      */
     [[nodiscard]] std::optional<size_t> ExecutePlanAction(const WorldGrid& grid, PlanAction action) const;
 
+    /**
+     * @brief Gets the action ID for world interaction/combat.
+     *
+     * @details Checks common interaction action names used across worlds. DungeonWorld
+     * uses "e", while other worlds may expose "interact".
+     *
+     * @return The interaction action ID, or 0 if no interaction action exists.
+     */
+    [[nodiscard]] size_t GetInteractActionID() const;
+
 public:
     /**
      * @brief Construct the agent.
