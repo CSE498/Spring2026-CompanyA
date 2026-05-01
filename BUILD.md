@@ -169,3 +169,9 @@ Alternatively, run:
 cd demos/WebUI
 python3 -m http.server 8000
 ```
+
+---
+
+## Final Demo
+
+Two fully-integrated demos are available - one web-based and one local. To run them, follow the instructions above for the Group 17 and Group 18 demos.
